@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { 
   User, 
   Mail, 
@@ -33,9 +33,84 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Perfil() {
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [profile, setProfile] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+    cpf_cnpj: "",
+    endereco: "",
+    cidade: "",
+    estado: "",
+    cep: "",
+  })
+
+  useEffect(() => {
+    if (!user) return
+    const load = async () => {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep")
+        .eq("user_id", user.id)
+        .maybeSingle()
+      if (error) {
+        console.error("Erro ao carregar perfil", error)
+        toast({ title: "Erro ao carregar perfil", description: error.message, variant: "destructive" })
+      }
+      setProfile({
+        nome: data?.nome ?? "",
+        email: data?.email ?? (user.email ?? ""),
+        telefone: data?.telefone ?? "",
+        cpf_cnpj: data?.cpf_cnpj ?? "",
+        endereco: data?.endereco ?? "",
+        cidade: data?.cidade ?? "",
+        estado: data?.estado ?? "",
+        cep: data?.cep ?? "",
+      })
+      setLoading(false)
+    }
+    load()
+  }, [user])
+
+  const handleChange = (field: keyof typeof profile) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setProfile((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleSave = async () => {
+    if (!user) return
+    setSaving(true)
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        nome: profile.nome,
+        email: profile.email,
+        telefone: profile.telefone,
+        cpf_cnpj: profile.cpf_cnpj,
+        endereco: profile.endereco,
+        cidade: profile.cidade,
+        estado: profile.estado,
+        cep: profile.cep,
+      })
+      .eq("user_id", user.id)
+    if (error) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" })
+    } else {
+      toast({ title: "Perfil atualizado", description: "Suas informações foram salvas." })
+      setIsEditing(false)
+    }
+    setSaving(false)
+  }
 
   return (
     <div className="space-y-6">
@@ -57,9 +132,9 @@ export default function Perfil() {
             {isEditing ? "Cancelar" : "Editar"}
           </Button>
           {isEditing && (
-            <Button className="bg-gradient-primary hover:bg-primary/90">
+            <Button className="bg-gradient-primary hover:bg-primary/90" onClick={handleSave} disabled={saving || loading}>
               <Save className="w-4 h-4 mr-2" />
-              Salvar
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           )}
         </div>
@@ -74,24 +149,22 @@ export default function Perfil() {
                 <div className="w-24 h-24 bg-gradient-primary rounded-full mx-auto mb-4 flex items-center justify-center">
                   <User className="w-12 h-12 text-white" />
                 </div>
-                <h3 className="font-bold text-lg">João Silva</h3>
-                <p className="text-muted-foreground">Administrador</p>
-                <p className="text-sm text-muted-foreground mt-1">Fazenda São José</p>
+                <h3 className="font-bold text-lg">{profile.nome || user?.email || 'Usuário'}</h3>
                 
                 <Separator className="my-4" />
                 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>joao@fazendadesao.com</span>
+                    <span>{profile.email || user?.email || '—'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>(11) 99999-9999</span>
+                    <span>{profile.telefone || '—'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>Ribeirão Preto, SP</span>
+                    <span>{profile.cidade ? `${profile.cidade}${profile.estado ? `, ${profile.estado}` : ''}` : '—'}</span>
                   </div>
                 </div>
               </div>
@@ -126,8 +199,9 @@ export default function Perfil() {
                       <Label htmlFor="nome">Nome Completo</Label>
                       <Input 
                         id="nome" 
-                        defaultValue="João Silva" 
-                        disabled={!isEditing}
+                        value={profile.nome}
+                        onChange={handleChange('nome')}
+                        disabled={!isEditing || loading}
                       />
                     </div>
                     <div className="space-y-2">
@@ -135,8 +209,9 @@ export default function Perfil() {
                       <Input 
                         id="email" 
                         type="email" 
-                        defaultValue="joao@fazendadesao.com" 
-                        disabled={!isEditing}
+                        value={profile.email}
+                        onChange={handleChange('email')}
+                        disabled={!isEditing || loading}
                       />
                     </div>
                   </div>
@@ -146,27 +221,30 @@ export default function Perfil() {
                       <Label htmlFor="telefone">Telefone</Label>
                       <Input 
                         id="telefone" 
-                        defaultValue="(11) 99999-9999" 
-                        disabled={!isEditing}
+                        value={profile.telefone}
+                        onChange={handleChange('telefone')}
+                        disabled={!isEditing || loading}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF</Label>
+                      <Label htmlFor="cpf">CPF/CNPJ</Label>
                       <Input 
                         id="cpf" 
-                        defaultValue="000.000.000-00" 
-                        disabled={!isEditing}
+                        value={profile.cpf_cnpj}
+                        onChange={handleChange('cpf_cnpj')}
+                        disabled={!isEditing || loading}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input 
-                      id="endereco" 
-                      defaultValue="Rua da Fazenda, 123 - Rural" 
-                      disabled={!isEditing}
-                    />
+                      <Label htmlFor="endereco">Endereço</Label>
+                      <Input 
+                        id="endereco" 
+                        value={profile.endereco}
+                        onChange={handleChange('endereco')}
+                        disabled={!isEditing || loading}
+                      />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
@@ -174,15 +252,16 @@ export default function Perfil() {
                       <Label htmlFor="cidade">Cidade</Label>
                       <Input 
                         id="cidade" 
-                        defaultValue="Ribeirão Preto" 
-                        disabled={!isEditing}
+                        value={profile.cidade}
+                        onChange={handleChange('cidade')}
+                        disabled={!isEditing || loading}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="estado">Estado</Label>
-                      <Select disabled={!isEditing}>
-                        <SelectTrigger>
-                          <SelectValue defaultValue="SP" />
+                      <Select disabled={!isEditing || loading} value={profile.estado || undefined} onValueChange={(v) => setProfile((p) => ({ ...p, estado: v }))}>
+                        <SelectTrigger id="estado">
+                          <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="SP">São Paulo</SelectItem>
@@ -195,8 +274,9 @@ export default function Perfil() {
                       <Label htmlFor="cep">CEP</Label>
                       <Input 
                         id="cep" 
-                        defaultValue="14000-000" 
-                        disabled={!isEditing}
+                        value={profile.cep}
+                        onChange={handleChange('cep')}
+                        disabled={!isEditing || loading}
                       />
                     </div>
                   </div>
@@ -221,7 +301,6 @@ export default function Perfil() {
                       <Label htmlFor="nomeEmpresa">Nome da Fazenda</Label>
                       <Input 
                         id="nomeEmpresa" 
-                        defaultValue="Fazenda São José" 
                         disabled={!isEditing}
                       />
                     </div>
@@ -229,7 +308,6 @@ export default function Perfil() {
                       <Label htmlFor="cnpj">CNPJ</Label>
                       <Input 
                         id="cnpj" 
-                        defaultValue="00.000.000/0001-00" 
                         disabled={!isEditing}
                       />
                     </div>
@@ -240,7 +318,6 @@ export default function Perfil() {
                       <Label htmlFor="inscricaoEstadual">Inscrição Estadual</Label>
                       <Input 
                         id="inscricaoEstadual" 
-                        defaultValue="000.000.000.000" 
                         disabled={!isEditing}
                       />
                     </div>
@@ -248,7 +325,6 @@ export default function Perfil() {
                       <Label htmlFor="telefoneEmpresa">Telefone Comercial</Label>
                       <Input 
                         id="telefoneEmpresa" 
-                        defaultValue="(16) 3000-0000" 
                         disabled={!isEditing}
                       />
                     </div>
@@ -256,16 +332,16 @@ export default function Perfil() {
 
                   <div className="space-y-2">
                     <Label htmlFor="atividade">Atividade Principal</Label>
-                    <Select disabled={!isEditing}>
-                      <SelectTrigger>
-                        <SelectValue defaultValue="agricultura" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="agricultura">Agricultura</SelectItem>
-                        <SelectItem value="pecuaria">Pecuária</SelectItem>
-                        <SelectItem value="mista">Atividade Mista</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <Select disabled={!isEditing}>
+                        <SelectTrigger id="atividade">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="agricultura">Agricultura</SelectItem>
+                          <SelectItem value="pecuaria">Pecuária</SelectItem>
+                          <SelectItem value="mista">Atividade Mista</SelectItem>
+                        </SelectContent>
+                      </Select>
                   </div>
 
                   <div className="space-y-2">
