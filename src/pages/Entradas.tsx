@@ -8,7 +8,9 @@ import {
   Upload,
   Eye,
   Edit,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText,
+  Download
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +47,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FileUpload } from "@/components/Entradas/FileUpload"
+import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada"
+import { NFData } from "@/components/Entradas/NFParser"
+import { useToast } from "@/hooks/use-toast"
 
 const entradas = [
   {
@@ -87,6 +94,48 @@ const entradas = [
 
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
+  const [nfData, setNfData] = useState<NFData | null>(null)
+  const [activeTab, setActiveTab] = useState("upload")
+  const { toast } = useToast()
+
+  const handleNFDataParsed = (data: NFData) => {
+    setNfData(data)
+    setActiveTab("formulario")
+    toast({
+      title: "NFe processada com sucesso",
+      description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens.length} itens.`,
+    })
+  }
+
+  const handleUploadError = (message: string) => {
+    toast({
+      title: "Erro no upload",
+      description: message,
+      variant: "destructive",
+    })
+  }
+
+  const handleFormSubmit = (dados: any) => {
+    console.log('Dados da entrada:', dados)
+    toast({
+      title: "Entrada registrada",
+      description: "A entrada foi registrada com sucesso no sistema.",
+    })
+    setIsNewEntryOpen(false)
+    setNfData(null)
+    setActiveTab("upload")
+  }
+
+  const handleFormCancel = () => {
+    setIsNewEntryOpen(false)
+    setNfData(null)
+    setActiveTab("upload")
+  }
+
+  const handleNovaEntradaManual = () => {
+    setNfData(null)
+    setActiveTab("formulario")
+  }
 
   return (
     <div className="space-y-6">
@@ -100,7 +149,14 @@ export default function Entradas() {
         </div>
         
         <div className="flex gap-3">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setIsNewEntryOpen(true)
+              setActiveTab("upload")
+            }}
+          >
             <Upload className="w-4 h-4 mr-2" />
             Importar XML
           </Button>
@@ -111,96 +167,59 @@ export default function Entradas() {
                 Nova Entrada
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Registrar Nova Entrada</DialogTitle>
                 <DialogDescription>
-                  Preencha os dados da entrada de produtos no estoque
+                  Importe uma NFe ou preencha os dados manualmente
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="produto">Produto</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o produto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="milho">Milho Híbrido</SelectItem>
-                        <SelectItem value="soja">Soja Premium</SelectItem>
-                        <SelectItem value="fertilizante">Fertilizante NPK</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lote">Número do Lote</Label>
-                    <Input id="lote" placeholder="Ex: MIL001" />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="quantidade">Quantidade</Label>
-                    <Input id="quantidade" type="number" placeholder="500" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="unidade">Unidade</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Unidade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sacas">Sacas</SelectItem>
-                        <SelectItem value="kg">Quilogramas</SelectItem>
-                        <SelectItem value="litros">Litros</SelectItem>
-                        <SelectItem value="unidades">Unidades</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="deposito">Depósito</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Depósito" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="armazem-a">Armazém A</SelectItem>
-                        <SelectItem value="armazem-b">Armazém B</SelectItem>
-                        <SelectItem value="deposito-campo">Depósito Campo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="upload" className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload NFe
+                  </TabsTrigger>
+                  <TabsTrigger value="formulario" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Formulário
+                  </TabsTrigger>
+                  <TabsTrigger value="manual" onClick={handleNovaEntradaManual} className="flex items-center gap-2">
+                    <Edit className="w-4 h-4" />
+                    Manual
+                  </TabsTrigger>
+                </TabsList>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="data">Data da Entrada</Label>
-                    <Input id="data" type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="origem">Origem</Label>
-                    <Input id="origem" placeholder="Ex: Cooperativa ABC" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="observacoes">Observações</Label>
-                  <Textarea 
-                    id="observacoes" 
-                    placeholder="Observações adicionais sobre a entrada..."
-                    rows={3}
+                <TabsContent value="upload" className="mt-6">
+                  <FileUpload 
+                    onNFDataParsed={handleNFDataParsed}
+                    onError={handleUploadError}
                   />
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setIsNewEntryOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={() => setIsNewEntryOpen(false)}>
-                  Registrar Entrada
-                </Button>
-              </div>
+                  
+                  <div className="mt-6 text-center">
+                    <Button variant="outline" onClick={handleNovaEntradaManual}>
+                      Ou preencher manualmente
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="formulario" className="mt-6">
+                  <FormularioEntrada
+                    nfData={nfData}
+                    onSubmit={handleFormSubmit}
+                    onCancel={handleFormCancel}
+                  />
+                </TabsContent>
+
+                <TabsContent value="manual" className="mt-6">
+                  <FormularioEntrada
+                    nfData={null}
+                    onSubmit={handleFormSubmit}
+                    onCancel={handleFormCancel}
+                  />
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
         </div>
