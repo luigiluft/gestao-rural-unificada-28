@@ -14,7 +14,645 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chamados_suporte: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data_resposta: string | null
+          descricao: string
+          id: string
+          prioridade: string | null
+          resposta: string | null
+          status: string | null
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data_resposta?: string | null
+          descricao: string
+          id?: string
+          prioridade?: string | null
+          resposta?: string | null
+          status?: string | null
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data_resposta?: string | null
+          descricao?: string
+          id?: string
+          prioridade?: string | null
+          resposta?: string | null
+          status?: string | null
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      depositos: {
+        Row: {
+          ativo: boolean | null
+          capacidade_total: number | null
+          created_at: string
+          descricao: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          capacidade_total?: number | null
+          created_at?: string
+          descricao?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          capacidade_total?: number | null
+          created_at?: string
+          descricao?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      entrada_itens: {
+        Row: {
+          created_at: string
+          data_validade: string | null
+          entrada_id: string
+          id: string
+          lote: string | null
+          produto_id: string
+          quantidade: number
+          user_id: string
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_validade?: string | null
+          entrada_id: string
+          id?: string
+          lote?: string | null
+          produto_id: string
+          quantidade: number
+          user_id: string
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_validade?: string | null
+          entrada_id?: string
+          id?: string
+          lote?: string | null
+          produto_id?: string
+          quantidade?: number
+          user_id?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrada_itens_entrada_id_fkey"
+            columns: ["entrada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrada_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entradas: {
+        Row: {
+          chave_nfe: string | null
+          created_at: string
+          data_emissao: string | null
+          data_entrada: string
+          deposito_id: string
+          fornecedor_id: string | null
+          id: string
+          numero_nfe: string | null
+          observacoes: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          valor_total: number | null
+          xml_content: string | null
+        }
+        Insert: {
+          chave_nfe?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_entrada: string
+          deposito_id: string
+          fornecedor_id?: string | null
+          id?: string
+          numero_nfe?: string | null
+          observacoes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          valor_total?: number | null
+          xml_content?: string | null
+        }
+        Update: {
+          chave_nfe?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_entrada?: string
+          deposito_id?: string
+          fornecedor_id?: string | null
+          id?: string
+          numero_nfe?: string | null
+          observacoes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_total?: number | null
+          xml_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entradas_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "depositos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque: {
+        Row: {
+          data_validade: string | null
+          deposito_id: string
+          id: string
+          lote: string | null
+          produto_id: string
+          quantidade_atual: number
+          quantidade_disponivel: number | null
+          quantidade_reservada: number
+          updated_at: string
+          user_id: string
+          valor_medio: number | null
+        }
+        Insert: {
+          data_validade?: string | null
+          deposito_id: string
+          id?: string
+          lote?: string | null
+          produto_id: string
+          quantidade_atual?: number
+          quantidade_disponivel?: number | null
+          quantidade_reservada?: number
+          updated_at?: string
+          user_id: string
+          valor_medio?: number | null
+        }
+        Update: {
+          data_validade?: string | null
+          deposito_id?: string
+          id?: string
+          lote?: string | null
+          produto_id?: string
+          quantidade_atual?: number
+          quantidade_disponivel?: number | null
+          quantidade_reservada?: number
+          updated_at?: string
+          user_id?: string
+          valor_medio?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "depositos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fornecedores: {
+        Row: {
+          ativo: boolean | null
+          cep: string | null
+          cidade: string | null
+          cnpj_cpf: string
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          ie: string | null
+          nome: string
+          nome_fantasia: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj_cpf: string
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          ie?: string | null
+          nome: string
+          nome_fantasia?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj_cpf?: string
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          ie?: string | null
+          nome?: string
+          nome_fantasia?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      movimentacoes: {
+        Row: {
+          created_at: string
+          data_movimentacao: string
+          deposito_id: string
+          id: string
+          lote: string | null
+          observacoes: string | null
+          produto_id: string
+          quantidade: number
+          referencia_id: string | null
+          referencia_tipo: string | null
+          tipo_movimentacao: string
+          user_id: string
+          valor_unitario: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_movimentacao?: string
+          deposito_id: string
+          id?: string
+          lote?: string | null
+          observacoes?: string | null
+          produto_id: string
+          quantidade: number
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          tipo_movimentacao: string
+          user_id: string
+          valor_unitario?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_movimentacao?: string
+          deposito_id?: string
+          id?: string
+          lote?: string | null
+          observacoes?: string | null
+          produto_id?: string
+          quantidade?: number
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          tipo_movimentacao?: string
+          user_id?: string
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "depositos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean | null
+          categoria: string | null
+          codigo: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          ncm: string | null
+          nome: string
+          unidade_medida: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria?: string | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ncm?: string | null
+          nome: string
+          unidade_medida: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ncm?: string | null
+          nome?: string
+          unidade_medida?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rastreamento_historico: {
+        Row: {
+          data_status: string
+          descricao: string | null
+          id: string
+          localizacao: string | null
+          rastreamento_id: string
+          status: string
+        }
+        Insert: {
+          data_status?: string
+          descricao?: string | null
+          id?: string
+          localizacao?: string | null
+          rastreamento_id: string
+          status: string
+        }
+        Update: {
+          data_status?: string
+          descricao?: string | null
+          id?: string
+          localizacao?: string | null
+          rastreamento_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rastreamento_historico_rastreamento_id_fkey"
+            columns: ["rastreamento_id"]
+            isOneToOne: false
+            referencedRelation: "rastreamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rastreamentos: {
+        Row: {
+          codigo_rastreamento: string | null
+          created_at: string
+          data_prevista_entrega: string | null
+          id: string
+          saida_id: string | null
+          status_atual: string | null
+          transportadora: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          codigo_rastreamento?: string | null
+          created_at?: string
+          data_prevista_entrega?: string | null
+          id?: string
+          saida_id?: string | null
+          status_atual?: string | null
+          transportadora?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          codigo_rastreamento?: string | null
+          created_at?: string
+          data_prevista_entrega?: string | null
+          id?: string
+          saida_id?: string | null
+          status_atual?: string | null
+          transportadora?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rastreamentos_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saida_itens: {
+        Row: {
+          created_at: string
+          id: string
+          lote: string | null
+          produto_id: string
+          quantidade: number
+          saida_id: string
+          user_id: string
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lote?: string | null
+          produto_id: string
+          quantidade: number
+          saida_id: string
+          user_id: string
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lote?: string | null
+          produto_id?: string
+          quantidade?: number
+          saida_id?: string
+          user_id?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saida_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saida_itens_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saidas: {
+        Row: {
+          created_at: string
+          data_saida: string
+          deposito_id: string
+          destinatario: string | null
+          id: string
+          observacoes: string | null
+          status: string | null
+          tipo_saida: string
+          updated_at: string
+          user_id: string
+          valor_total: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_saida: string
+          deposito_id: string
+          destinatario?: string | null
+          id?: string
+          observacoes?: string | null
+          status?: string | null
+          tipo_saida: string
+          updated_at?: string
+          user_id: string
+          valor_total?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_saida?: string
+          deposito_id?: string
+          destinatario?: string | null
+          id?: string
+          observacoes?: string | null
+          status?: string | null
+          tipo_saida?: string
+          updated_at?: string
+          user_id?: string
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saidas_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "depositos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
