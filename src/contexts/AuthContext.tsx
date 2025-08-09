@@ -16,10 +16,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const ensureProfile = async (u: User) => {
+      try {
+        const { data: existing, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', u.id)
+          .maybeSingle();
+        if (error) {
+          console.error('Erro ao buscar perfil:', error);
+          return;
+        }
+        if (!existing) {
+          const displayName = (u.user_metadata as any)?.nome || (u.email?.split('@')[0] || 'Usuário');
+          await supabase.from('profiles').insert({
+            user_id: u.id,
+            nome: displayName,
+            email: u.email ?? null,
+          });
+        }
+      } catch (e) {
+        console.error('Falha ao garantir perfil', e);
+      }
+    };
+
     // Listen first to avoid missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
+      if (newSession?.user) {
+        setTimeout(() => ensureProfile(newSession.user as User), 0);
+      }
       if (loading) setLoading(false);
     });
 
@@ -27,6 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      if (data.session?.user) {
+        setTimeout(() => ensureProfile(data.session!.user as User), 0);
+      }
       setLoading(false);
     });
 

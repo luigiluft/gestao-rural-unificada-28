@@ -12,6 +12,8 @@ import { toast } from "sonner";
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,12 +65,20 @@ export default function AuthPage() {
 
   const handleSignup = async () => {
     try {
+      if (!name.trim()) {
+        toast.error("Informe seu nome.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error("As senhas não coincidem.");
+        return;
+      }
       setLoading(true);
       const redirectUrl = `${window.location.origin}/`;
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: redirectUrl },
+        options: { emailRedirectTo: redirectUrl, data: { nome: name } },
       });
       if (error) throw error;
       toast.success("Conta criada! Verifique seu e-mail para confirmar o acesso.");
@@ -110,12 +120,20 @@ export default function AuthPage() {
               <TabsContent value="signup" className="mt-6">
                 <form onSubmit={(e) => { e.preventDefault(); handleSignup(); }} className="space-y-4">
                   <div className="space-y-2">
+                    <Label htmlFor="name">Nome</Label>
+                    <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="email2">E-mail</Label>
                     <Input id="email2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password2">Senha</Label>
                     <Input id="password2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                    <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Criando..." : "Criar conta"}

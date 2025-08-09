@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { 
   BarChart3, 
   Package, 
@@ -22,6 +23,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
@@ -39,6 +42,26 @@ export function AppSidebar() {
   const location = useLocation()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
+
+  const { user } = useAuth()
+  const [displayName, setDisplayName] = useState<string>("")
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("nome")
+        .eq("user_id", user.id)
+        .maybeSingle()
+      if (!error && data?.nome) {
+        setDisplayName(data.nome)
+      } else {
+        setDisplayName((user.user_metadata as any)?.nome || user.email?.split("@")[0] || "Usuário")
+      }
+    }
+    load()
+  }, [user])
 
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/"
@@ -103,7 +126,7 @@ export function AppSidebar() {
                 <User className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">João Silva</p>
+                <p className="text-sm font-medium text-foreground truncate">{displayName || "Usuário"}</p>
                 <p className="text-xs text-muted-foreground truncate">Fazenda São José</p>
               </div>
             </div>
