@@ -26,24 +26,20 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          {/* Rota pública */}
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
-          </Routes>
-          {/* Área protegida com layout */}
-          <AppLayout>
-            <Routes>
-              <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
-              <Route path="/entradas" element={<RequireAuth><Entradas /></RequireAuth>} />
-              <Route path="/estoque" element={<RequireAuth><Estoque /></RequireAuth>} />
-              <Route path="/saidas" element={<RequireAuth><Saidas /></RequireAuth>} />
-              <Route path="/rastreio" element={<RequireAuth><Rastreio /></RequireAuth>} />
-              <Route path="/relatorios" element={<RequireAuth><Relatorios /></RequireAuth>} />
-              <Route path="/suporte" element={<RequireAuth><Suporte /></RequireAuth>} />
-              <Route path="/perfil" element={<RequireAuth><Perfil /></RequireAuth>} />
+            <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+              <Route index element={<Dashboard />} />
+              <Route path="entradas" element={<Entradas />} />
+              <Route path="estoque" element={<Estoque />} />
+              <Route path="saidas" element={<Saidas />} />
+              <Route path="rastreio" element={<Rastreio />} />
+              <Route path="relatorios" element={<Relatorios />} />
+              <Route path="suporte" element={<Suporte />} />
+              <Route path="perfil" element={<Perfil />} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AppLayout>
+            </Route>
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

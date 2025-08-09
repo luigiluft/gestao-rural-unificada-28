@@ -1,10 +1,11 @@
 import { ReactNode } from "react"
+import { Outlet } from "react-router-dom"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
 import { AppHeader } from "./AppHeader"
 
 interface AppLayoutProps {
-  children: ReactNode
+  children?: ReactNode
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
@@ -15,7 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 flex flex-col">
           <AppHeader />
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
-            {children}
+            {children ?? <Outlet />}
           </main>
         </div>
       </div>
