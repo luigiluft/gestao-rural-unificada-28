@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react"
-import { 
-  BarChart3, 
-  Package, 
-  PackageOpen, 
-  LogOut, 
-  MapPin, 
-  FileText, 
-  HelpCircle, 
-  User 
+import {
+  BarChart3,
+  Package,
+  PackageOpen,
+  LogOut,
+  MapPin,
+  FileText,
+  HelpCircle,
+  User,
+  Users
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -45,7 +46,7 @@ export function AppSidebar() {
 
   const { user } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
-
+  const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -62,6 +63,29 @@ export function AppSidebar() {
     }
     load()
   }, [user])
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false)
+        return
+      }
+      try {
+        const { data, error } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+        if (!error && typeof data === 'boolean') {
+          setIsAdmin(data)
+          return
+        }
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        setIsAdmin(Array.isArray(roles) && roles.some((r: any) => r.role === 'admin'))
+      } catch {
+        setIsAdmin(false)
+      }
+    }
+    checkAdmin()
+  }, [user])
 
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/"
@@ -73,6 +97,13 @@ export function AppSidebar() {
       ? "bg-primary text-primary-foreground font-medium shadow-sm" 
       : "hover:bg-secondary/50 transition-all duration-200"
   }
+  const items = (() => {
+    const base = [...menuItems]
+    if (isAdmin) {
+      base.splice(6, 0, { title: "Franqueados", url: "/franqueados", icon: Users })
+    }
+    return base
+  })()
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
@@ -98,7 +129,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
