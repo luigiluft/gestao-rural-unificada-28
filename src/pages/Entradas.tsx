@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -52,51 +54,16 @@ import { FileUpload } from "@/components/Entradas/FileUpload"
 import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada"
 import { NFData } from "@/components/Entradas/NFParser"
 import { useToast } from "@/hooks/use-toast"
-
-const entradas = [
-  {
-    id: "ENT001",
-    produto: "Milho Híbrido",
-    lote: "MIL001",
-    quantidade: 500,
-    unidade: "sacas",
-    deposito: "Armazém A",
-    data: "2024-08-09",
-    origem: "Cooperativa ABC",
-    status: "Confirmada",
-    valor: "R$ 45.000,00"
-  },
-  {
-    id: "ENT002",
-    produto: "Fertilizante NPK",
-    lote: "NPK123",
-    quantidade: 2000,
-    unidade: "kg",
-    deposito: "Armazém B",
-    data: "2024-08-08",
-    origem: "Fornecedor XYZ",
-    status: "Pendente",
-    valor: "R$ 8.500,00"
-  },
-  {
-    id: "ENT003",
-    produto: "Soja Premium",
-    lote: "SOJ045",
-    quantidade: 300,
-    unidade: "sacas",
-    deposito: "Armazém A",
-    data: "2024-08-07",
-    origem: "Produtor Parceiro",
-    status: "Confirmada",
-    valor: "R$ 52.800,00"
-  }
-]
+import { useEntradas } from "@/hooks/useEntradas"
+import { useNavigate } from "react-router-dom"
 
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
   const [nfData, setNfData] = useState<NFData | null>(null)
   const [activeTab, setActiveTab] = useState("upload")
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const { data: entradas, isLoading } = useEntradas()
 
   const handleNFDataParsed = (data: NFData) => {
     setNfData(data)
@@ -255,71 +222,92 @@ export default function Entradas() {
         <CardHeader>
           <CardTitle>Lista de Entradas</CardTitle>
           <CardDescription>
-            {entradas.length} entradas registradas
+            {entradas?.length || 0} entradas registradas
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Lote</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead>Depósito</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entradas.map((entrada) => (
-                <TableRow key={entrada.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">{entrada.id}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Package className="w-4 h-4 text-primary" />
-                      </div>
-                      {entrada.produto}
-                    </div>
-                  </TableCell>
-                  <TableCell>{entrada.lote}</TableCell>
-                  <TableCell>{entrada.quantidade} {entrada.unidade}</TableCell>
-                  <TableCell>{entrada.deposito}</TableCell>
-                  <TableCell>{new Date(entrada.data).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell>{entrada.origem}</TableCell>
-                  <TableCell>
-                    <Badge variant={entrada.status === 'Confirmada' ? 'default' : 'secondary'}>
-                      {entrada.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-medium">{entrada.valor}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="w-4 h-4 mr-2" />
-                          Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Editar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : entradas && entradas.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número NFe</TableHead>
+                  <TableHead>Itens</TableHead>
+                  <TableHead>Depósito</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entradas.map((entrada) => (
+                  <TableRow key={entrada.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                          <Package className="w-4 h-4 text-primary" />
+                        </div>
+                        {entrada.entrada_itens?.length || 0} itens
+                      </div>
+                    </TableCell>
+                    <TableCell>{entrada.depositos?.nome}</TableCell>
+                    <TableCell>{new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>{entrada.fornecedores?.nome || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Badge variant={entrada.status === 'confirmado' ? 'default' : 'secondary'}>
+                        {entrada.status === 'confirmado' ? 'Confirmada' : 'Processando'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {entrada.valor_total 
+                        ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                        : 'N/A'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Visualizar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <EmptyState
+              icon={<Package className="w-8 h-8 text-muted-foreground" />}
+              title="Nenhuma entrada registrada"
+              description="Registre sua primeira entrada importando uma NFe ou preenchendo o formulário manual."
+              action={{
+                label: "Registrar Primeira Entrada",
+                onClick: () => setIsNewEntryOpen(true)
+              }}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

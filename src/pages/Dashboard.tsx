@@ -13,43 +13,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
-
-const recentMovements = [
-  {
-    id: 1,
-    type: "entrada",
-    product: "Milho - Lote MIL001",
-    quantity: "500 sacas",
-    time: "há 2 horas",
-    origin: "Fornecedor ABC"
-  },
-  {
-    id: 2,
-    type: "saida",
-    product: "Soja - Lote SOJ035",
-    quantity: "200 sacas",
-    time: "há 4 horas",
-    destination: "Cliente XYZ"
-  },
-  {
-    id: 3,
-    type: "entrada",
-    product: "Fertilizante NPK",
-    quantity: "100 kg",
-    time: "ontem",
-    origin: "Cooperativa"
-  }
-]
-
-const lowStockAlerts = [
-  { product: "Adubo Orgânico", current: 50, minimum: 100, unit: "kg" },
-  { product: "Sementes de Girassol", current: 15, minimum: 30, unit: "kg" },
-  { product: "Defensivo ABC", current: 8, minimum: 20, unit: "litros" }
-]
+import { useDashboardStats, useRecentMovements } from "@/hooks/useDashboard"
+import { formatDistanceToNow } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { data: stats, isLoading: statsLoading } = useDashboardStats()
+  const { data: recentMovements, isLoading: movementsLoading } = useRecentMovements()
 
   return (
     <div className="space-y-6">
@@ -80,37 +54,48 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total em Estoque"
-          value="1.247"
-          description="itens cadastrados"
-          icon={Package}
-          trend={{ value: 5.2, label: "vs mês anterior" }}
-          variant="default"
-        />
-        <StatCard
-          title="Produtos Ativos"
-          value="89"
-          description="diferentes produtos"
-          icon={PackageOpen}
-          trend={{ value: 2.1, label: "novos este mês" }}
-          variant="success"
-        />
-        <StatCard
-          title="Valor Total"
-          value="R$ 485.340"
-          description="valor do estoque"
-          icon={TrendingUp}
-          trend={{ value: 8.7, label: "crescimento" }}
-          variant="success"
-        />
-        <StatCard
-          title="Alertas"
-          value="3"
-          description="produtos com estoque baixo"
-          icon={AlertTriangle}
-          variant="warning"
-        />
+        {statsLoading ? (
+          <>
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="shadow-card">
+                <CardContent className="pt-6">
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : (
+          <>
+            <StatCard
+              title="Total em Estoque"
+              value={stats?.totalEstoque.toString() || "0"}
+              description="itens cadastrados"
+              icon={Package}
+              variant="default"
+            />
+            <StatCard
+              title="Produtos Ativos"
+              value={stats?.produtosAtivos.toString() || "0"}
+              description="diferentes produtos"
+              icon={PackageOpen}
+              variant="success"
+            />
+            <StatCard
+              title="Valor Total"
+              value={`R$ ${stats?.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}`}
+              description="valor do estoque"
+              icon={TrendingUp}
+              variant="success"
+            />
+            <StatCard
+              title="Alertas"
+              value={stats?.alertas.toString() || "0"}
+              description="produtos com estoque baixo"
+              icon={AlertTriangle}
+              variant="warning"
+            />
+          </>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -135,33 +120,58 @@ export default function Dashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentMovements.map((movement) => (
-                  <div key={movement.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${
-                        movement.type === 'entrada' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-warning/10 text-warning'
-                      }`}>
-                        <Package className="w-4 h-4" />
+              {movementsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : recentMovements && recentMovements.length > 0 ? (
+                <div className="space-y-4">
+                  {recentMovements.map((movement) => (
+                    <div key={movement.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${
+                          movement.tipo_movimentacao === 'entrada' 
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          <Package className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {movement.produtos?.nome} {movement.lote ? `- ${movement.lote}` : ''}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {movement.depositos?.nome}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">{movement.product}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {movement.type === 'entrada' ? movement.origin : movement.destination}
+                      <div className="text-right">
+                        <Badge variant={movement.tipo_movimentacao === 'entrada' ? 'default' : 'secondary'}>
+                          {movement.tipo_movimentacao === 'entrada' ? '+' : '-'}{movement.quantidade}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatDistanceToNow(new Date(movement.data_movimentacao), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant={movement.type === 'entrada' ? 'default' : 'secondary'}>
-                        {movement.type === 'entrada' ? '+' : '-'}{movement.quantity}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-1">{movement.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={<Package className="w-8 h-8 text-muted-foreground" />}
+                  title="Nenhuma movimentação encontrada"
+                  description="Quando você registrar entradas ou saídas, elas aparecerão aqui."
+                  action={{
+                    label: "Registrar Entrada",
+                    onClick: () => navigate('/entradas')
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
@@ -180,23 +190,44 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {lowStockAlerts.map((alert, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{alert.product}</span>
-                    <span className="text-muted-foreground">
-                      {alert.current}/{alert.minimum} {alert.unit}
-                    </span>
-                  </div>
-                  <Progress 
-                    value={(alert.current / alert.minimum) * 100} 
-                    className="h-2"
-                  />
+              {statsLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
                 </div>
-              ))}
-              <Button variant="outline" size="sm" className="w-full mt-4">
-                Ver todos os alertas
-              </Button>
+              ) : stats?.alertasDetalhes && stats.alertasDetalhes.length > 0 ? (
+                <>
+                  {stats.alertasDetalhes.slice(0, 3).map((alert) => (
+                    <div key={alert.id} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">{alert.produtos?.nome}</span>
+                        <span className="text-muted-foreground">
+                          {alert.quantidade_atual} {alert.produtos?.unidade_medida}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={Math.min((alert.quantidade_atual / 100) * 100, 100)} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-4"
+                    onClick={() => navigate('/estoque')}
+                  >
+                    Ver todos os alertas
+                  </Button>
+                </>
+              ) : (
+                <EmptyState
+                  icon={<AlertTriangle className="w-8 h-8 text-muted-foreground" />}
+                  title="Nenhum alerta de estoque"
+                  description="Todos os produtos estão com estoque adequado."
+                />
+              )}
             </CardContent>
           </Card>
 

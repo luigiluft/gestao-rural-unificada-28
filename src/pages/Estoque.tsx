@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -37,92 +39,17 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { useEstoque, useMovimentacoes } from "@/hooks/useEstoque"
+import { useNavigate } from "react-router-dom"
+import { formatDistanceToNow } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
-const estoque = [
-  {
-    id: "EST001",
-    produto: "Milho Híbrido",
-    lote: "MIL001",
-    quantidade: 450,
-    minimo: 100,
-    maximo: 1000,
-    unidade: "sacas",
-    deposito: "Armazém A",
-    status: "Normal",
-    validade: "2025-03-15",
-    valor: "R$ 40.500,00",
-    ultimaMovimentacao: "2024-08-09"
-  },
-  {
-    id: "EST002",
-    produto: "Fertilizante NPK",
-    lote: "NPK123",
-    quantidade: 50,
-    minimo: 100,
-    maximo: 500,
-    unidade: "kg",
-    deposito: "Armazém B",
-    status: "Baixo",
-    validade: "2025-12-30",
-    valor: "R$ 2.125,00",
-    ultimaMovimentacao: "2024-08-08"
-  },
-  {
-    id: "EST003",
-    produto: "Soja Premium",
-    lote: "SOJ045",
-    quantidade: 800,
-    minimo: 200,
-    maximo: 1200,
-    unidade: "sacas",
-    deposito: "Armazém A",
-    status: "Normal",
-    validade: "2025-06-20",
-    valor: "R$ 140.800,00",
-    ultimaMovimentacao: "2024-08-07"
-  },
-  {
-    id: "EST004",
-    produto: "Defensivo ABC",
-    lote: "DEF789",
-    quantidade: 15,
-    minimo: 20,
-    maximo: 100,
-    unidade: "litros",
-    deposito: "Depósito Campo",
-    status: "Crítico",
-    validade: "2024-11-30",
-    valor: "R$ 1.875,00",
-    ultimaMovimentacao: "2024-08-06"
-  }
-]
-
-const movimentacoes = [
-  {
-    data: "2024-08-09",
-    tipo: "Entrada",
-    quantidade: "+50 sacas",
-    origem: "Compra - Cooperativa ABC",
-    responsavel: "João Silva"
-  },
-  {
-    data: "2024-08-05",
-    tipo: "Saída",
-    quantidade: "-100 sacas",
-    origem: "Venda - Cliente XYZ",
-    responsavel: "Maria Santos"
-  },
-  {
-    data: "2024-08-01",
-    tipo: "Entrada",
-    quantidade: "+500 sacas",
-    origem: "Produção própria",
-    responsavel: "Pedro Costa"
-  }
-]
 
 export default function Estoque() {
-  const [selectedItem, setSelectedItem] = useState<typeof estoque[0] | null>(null)
+  const navigate = useNavigate()
+  const { data: estoque, isLoading } = useEstoque()
+  const [selectedItem, setSelectedItem] = useState<any>(null)
+  const { data: movimentacoes } = useMovimentacoes(selectedItem?.produto_id)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -137,9 +64,22 @@ export default function Estoque() {
     }
   }
 
-  const getStockLevel = (quantidade: number, minimo: number, maximo: number) => {
-    return (quantidade / maximo) * 100
+  const getStockLevel = (quantidade: number, maximo: number = 1000) => {
+    return Math.min((quantidade / maximo) * 100, 100)
   }
+
+  const getStockStats = () => {
+    if (!estoque) return { total: 0, normal: 0, baixo: 0, critico: 0 }
+    
+    const total = estoque.reduce((acc, item) => acc + item.quantidade_atual, 0)
+    const normal = estoque.filter(item => item.quantidade_atual >= 100).length
+    const baixo = estoque.filter(item => item.quantidade_atual < 100 && item.quantidade_atual >= 20).length
+    const critico = estoque.filter(item => item.quantidade_atual < 20).length
+    
+    return { total, normal, baixo, critico }
+  }
+
+  const stats = getStockStats()
 
   return (
     <div className="space-y-6">
@@ -167,7 +107,7 @@ export default function Estoque() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total de Produtos</p>
-                <p className="text-2xl font-bold">1.315</p>
+                <p className="text-2xl font-bold">{stats.total.toLocaleString('pt-BR')}</p>
               </div>
               <div className="p-2 bg-primary/10 rounded-lg">
                 <Package className="w-5 h-5 text-primary" />
@@ -181,7 +121,7 @@ export default function Estoque() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Estoque Normal</p>
-                <p className="text-2xl font-bold text-success">2</p>
+                <p className="text-2xl font-bold text-success">{stats.normal}</p>
               </div>
               <div className="p-2 bg-success/10 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-success" />
@@ -195,7 +135,7 @@ export default function Estoque() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Estoque Baixo</p>
-                <p className="text-2xl font-bold text-warning">1</p>
+                <p className="text-2xl font-bold text-warning">{stats.baixo}</p>
               </div>
               <div className="p-2 bg-warning/10 rounded-lg">
                 <Clock className="w-5 h-5 text-warning" />
@@ -209,7 +149,7 @@ export default function Estoque() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Estoque Crítico</p>
-                <p className="text-2xl font-bold text-destructive">1</p>
+                <p className="text-2xl font-bold text-destructive">{stats.critico}</p>
               </div>
               <div className="p-2 bg-destructive/10 rounded-lg">
                 <AlertTriangle className="w-5 h-5 text-destructive" />
@@ -245,175 +185,226 @@ export default function Estoque() {
         <CardHeader>
           <CardTitle>Produtos em Estoque</CardTitle>
           <CardDescription>
-            {estoque.length} produtos monitorados
+            {estoque?.length || 0} produtos monitorados
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produto</TableHead>
-                <TableHead>Lote</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead>Nível</TableHead>
-                <TableHead>Depósito</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Validade</TableHead>
-                <TableHead>Valor Total</TableHead>
-                <TableHead className="w-[100px]">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {estoque.map((item) => (
-                <TableRow key={item.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Package className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{item.produto}</p>
-                        <p className="text-sm text-muted-foreground">ID: {item.id}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.lote}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{item.quantidade} {item.unidade}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Min: {item.minimo} | Max: {item.maximo}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <Progress 
-                        value={getStockLevel(item.quantidade, item.minimo, item.maximo)} 
-                        className="h-2"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {Math.round(getStockLevel(item.quantidade, item.minimo, item.maximo))}%
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{item.deposito}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(item.status) as any}>
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(item.validade).toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell className="font-medium">{item.valor}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setSelectedItem(item)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[600px]">
-                          <DialogHeader>
-                            <DialogTitle>Detalhes do Produto</DialogTitle>
-                            <DialogDescription>
-                              Informações completas e histórico de movimentações
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          {selectedItem && (
-                            <Tabs defaultValue="details" className="w-full">
-                              <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="details">Detalhes</TabsTrigger>
-                                <TabsTrigger value="history">Histórico</TabsTrigger>
-                              </TabsList>
-                              
-                              <TabsContent value="details" className="space-y-4">
-                                <div className="grid gap-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <h4 className="font-medium">Produto</h4>
-                                      <p className="text-muted-foreground">{selectedItem.produto}</p>
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium">Lote</h4>
-                                      <p className="text-muted-foreground">{selectedItem.lote}</p>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <div>
-                                      <h4 className="font-medium">Quantidade Atual</h4>
-                                      <p className="text-muted-foreground">{selectedItem.quantidade} {selectedItem.unidade}</p>
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium">Estoque Mínimo</h4>
-                                      <p className="text-muted-foreground">{selectedItem.minimo} {selectedItem.unidade}</p>
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium">Estoque Máximo</h4>
-                                      <p className="text-muted-foreground">{selectedItem.maximo} {selectedItem.unidade}</p>
-                                    </div>
-                                  </div>
-
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <h4 className="font-medium">Depósito</h4>
-                                      <p className="text-muted-foreground">{selectedItem.deposito}</p>
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium">Validade</h4>
-                                      <p className="text-muted-foreground">
-                                        {new Date(selectedItem.validade).toLocaleDateString('pt-BR')}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <h4 className="font-medium">Valor Total</h4>
-                                    <p className="text-muted-foreground">{selectedItem.valor}</p>
-                                  </div>
-                                </div>
-                              </TabsContent>
-                              
-                              <TabsContent value="history" className="space-y-4">
-                                <div className="space-y-3">
-                                  {movimentacoes.map((mov, index) => (
-                                    <div key={index} className="flex items-center gap-3 p-3 rounded-lg border">
-                                      <div className={`p-2 rounded-full ${
-                                        mov.tipo === 'Entrada' 
-                                          ? 'bg-success/10 text-success' 
-                                          : 'bg-warning/10 text-warning'
-                                      }`}>
-                                        <History className="w-4 h-4" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="font-medium">{mov.tipo} - {mov.quantidade}</p>
-                                        <p className="text-sm text-muted-foreground">{mov.origem}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {new Date(mov.data).toLocaleDateString('pt-BR')} • {mov.responsavel}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </TabsContent>
-                            </Tabs>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : estoque && estoque.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Lote</TableHead>
+                  <TableHead>Quantidade</TableHead>
+                  <TableHead>Nível</TableHead>
+                  <TableHead>Depósito</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Valor Total</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {estoque.map((item) => {
+                  const stockLevel = getStockLevel(item.quantidade_atual)
+                  const status = item.quantidade_atual < 20 ? 'Crítico' : 
+                                item.quantidade_atual < 100 ? 'Baixo' : 'Normal'
+                  
+                  return (
+                    <TableRow key={item.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Package className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{item.produtos?.nome}</p>
+                            <p className="text-sm text-muted-foreground">ID: {item.id.slice(0, 8)}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.lote || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Disponível: {item.quantidade_disponivel || item.quantidade_atual}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Progress 
+                            value={stockLevel} 
+                            className="h-2"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {Math.round(stockLevel)}%
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{item.depositos?.nome}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(status) as any}>
+                          {status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {item.valor_medio && item.quantidade_atual
+                          ? `R$ ${(item.valor_medio * item.quantidade_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                          : 'N/A'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setSelectedItem(item)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[600px]">
+                              <DialogHeader>
+                                <DialogTitle>Detalhes do Produto</DialogTitle>
+                                <DialogDescription>
+                                  Informações completas e histórico de movimentações
+                                </DialogDescription>
+                              </DialogHeader>
+                              
+                              {selectedItem && (
+                                <Tabs defaultValue="details" className="w-full">
+                                  <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="details">Detalhes</TabsTrigger>
+                                    <TabsTrigger value="history">Histórico</TabsTrigger>
+                                  </TabsList>
+                                  
+                                  <TabsContent value="details" className="space-y-4">
+                                    <div className="grid gap-4">
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <h4 className="font-medium">Produto</h4>
+                                          <p className="text-muted-foreground">{selectedItem.produtos?.nome}</p>
+                                        </div>
+                                        <div>
+                                          <h4 className="font-medium">Lote</h4>
+                                          <p className="text-muted-foreground">{selectedItem.lote || 'N/A'}</p>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                          <h4 className="font-medium">Quantidade Atual</h4>
+                                          <p className="text-muted-foreground">
+                                            {selectedItem.quantidade_atual} {selectedItem.produtos?.unidade_medida}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <h4 className="font-medium">Disponível</h4>
+                                          <p className="text-muted-foreground">
+                                            {selectedItem.quantidade_disponivel || selectedItem.quantidade_atual} {selectedItem.produtos?.unidade_medida}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <h4 className="font-medium">Reservado</h4>
+                                          <p className="text-muted-foreground">
+                                            {selectedItem.quantidade_reservada} {selectedItem.produtos?.unidade_medida}
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <h4 className="font-medium">Depósito</h4>
+                                          <p className="text-muted-foreground">{selectedItem.depositos?.nome}</p>
+                                        </div>
+                                        <div>
+                                          <h4 className="font-medium">Valor Médio</h4>
+                                          <p className="text-muted-foreground">
+                                            {selectedItem.valor_medio 
+                                              ? `R$ ${selectedItem.valor_medio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                              : 'N/A'
+                                            }
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {selectedItem.data_validade && (
+                                        <div>
+                                          <h4 className="font-medium">Validade</h4>
+                                          <p className="text-muted-foreground">
+                                            {new Date(selectedItem.data_validade).toLocaleDateString('pt-BR')}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </TabsContent>
+                                  
+                                  <TabsContent value="history" className="space-y-4">
+                                    <div className="space-y-3">
+                                      {movimentacoes && movimentacoes.length > 0 ? (
+                                        movimentacoes.map((mov) => (
+                                          <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                                            <div className={`p-2 rounded-full ${
+                                              mov.tipo_movimentacao === 'entrada' 
+                                                ? 'bg-success/10 text-success' 
+                                                : 'bg-warning/10 text-warning'
+                                            }`}>
+                                              <History className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                              <p className="font-medium">
+                                                {mov.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'} - {mov.quantidade}
+                                              </p>
+                                              <p className="text-sm text-muted-foreground">{mov.depositos?.nome}</p>
+                                              <p className="text-xs text-muted-foreground">
+                                                {formatDistanceToNow(new Date(mov.data_movimentacao), { 
+                                                  addSuffix: true, 
+                                                  locale: ptBR 
+                                                })}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <EmptyState
+                                          icon={<History className="w-8 h-8 text-muted-foreground" />}
+                                          title="Nenhuma movimentação"
+                                          description="Ainda não há movimentações para este produto."
+                                        />
+                                      )}
+                                    </div>
+                                  </TabsContent>
+                                </Tabs>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <EmptyState
+              icon={<Package className="w-8 h-8 text-muted-foreground" />}
+              title="Nenhum produto em estoque"
+              description="Registre entradas de produtos para começar a controlar seu estoque."
+              action={{
+                label: "Registrar Primeira Entrada",
+                onClick: () => navigate('/entradas')
+              }}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
