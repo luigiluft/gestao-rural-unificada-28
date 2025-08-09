@@ -100,7 +100,10 @@ export function AppSidebar() {
   const items = (() => {
     const base = [...menuItems]
     if (isAdmin) {
-      base.splice(6, 0, { title: "Franqueados", url: "/franqueados", icon: Users })
+      base.splice(6, 0,
+        { title: "Usuários", url: "/usuarios", icon: User },
+        { title: "Franqueados", url: "/franqueados", icon: Users },
+      )
     }
     return base
   })()

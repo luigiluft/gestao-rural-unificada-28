@@ -15,6 +15,7 @@ import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import Franqueados from "./pages/Franqueados";
+import Usuarios from "./pages/Usuarios";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="saidas" element={<Saidas />} />
               <Route path="rastreio" element={<Rastreio />} />
               <Route path="relatorios" element={<Relatorios />} />
+              <Route path="usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
               <Route path="franqueados" element={<RequireAdmin><Franqueados /></RequireAdmin>} />
               <Route path="suporte" element={<Suporte />} />
               <Route path="perfil" element={<Perfil />} />
