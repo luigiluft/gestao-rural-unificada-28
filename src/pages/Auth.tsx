@@ -37,9 +37,39 @@ export default function AuthPage() {
   // Check for invite parameters in URL and pre-fill email
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    const inviteToken = urlParams.get('invite_token');
     const token = urlParams.get('token') || urlParams.get('access_token');
     
-    if (token) {
+    if (inviteToken) {
+      // New invite flow with token
+      setIsInviteFlow(true);
+      setActiveTab("signup"); // Open signup tab for invited users
+      
+      // Get email from pending_invites using the token
+      const getEmailFromInviteToken = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('pending_invites')
+            .select('email')
+            .eq('invite_token', inviteToken)
+            .eq('used_at', null)
+            .single();
+          
+          if (data && !error) {
+            setInviteEmail(data.email);
+            setEmail(data.email);
+          } else {
+            console.log('Invalid or expired invite token');
+            toast.error('Convite inválido ou expirado');
+          }
+        } catch (error) {
+          console.log('Could not get email from invite token:', error);
+        }
+      };
+      
+      getEmailFromInviteToken();
+    } else if (token) {
+      // Legacy invite flow (from old inviteUserByEmail)
       setIsInviteFlow(true);
       setActiveTab("signup"); // Open signup tab for invited users
       
@@ -122,20 +152,54 @@ export default function AuthPage() {
       // If this is an invite flow and signup was successful, process the invite
       if (isInviteFlow && data.user) {
         try {
-          // Call the function to complete invite processing
-          const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
-            _user_id: data.user.id,
-            _email: email
-          });
+          // Get the invite token from URL to validate it's the correct invite
+          const urlParams = new URLSearchParams(window.location.search);
+          const inviteToken = urlParams.get('invite_token');
           
-          if (rpcError) {
-            console.error('Error processing invite:', rpcError);
+          if (inviteToken) {
+            // Validate and process invite using the token
+            const { data: inviteData, error: inviteError } = await supabase
+              .from('pending_invites')
+              .select('*')
+              .eq('invite_token', inviteToken)
+              .eq('email', email.toLowerCase())
+              .eq('used_at', null)
+              .single();
+            
+            if (inviteData && !inviteError) {
+              // Call the function to complete invite processing
+              const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
+                _user_id: data.user.id,
+                _email: email
+              });
+              
+              if (rpcError) {
+                console.error('Error processing invite:', rpcError);
+                toast.error('Erro ao processar convite');
+              } else {
+                toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");
+              }
+            } else {
+              toast.error('Convite inválido ou já utilizado');
+            }
+          } else {
+            // Legacy invite flow without token
+            const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
+              _user_id: data.user.id,
+              _email: email
+            });
+            
+            if (rpcError) {
+              console.error('Error processing invite:', rpcError);
+            }
+            
+            toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");
           }
         } catch (inviteError) {
           console.log('Could not process invite:', inviteError);
+          toast.error('Erro ao processar convite');
         }
         
-        toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");
         // After successful signup in invite flow, go to login tab
         setActiveTab("login");
         setPassword("");

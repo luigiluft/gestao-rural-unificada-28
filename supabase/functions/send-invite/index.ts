@@ -35,8 +35,8 @@ serve(async (req) => {
 
     console.log('Supabase client created')
 
-    // Save pending invite first
-    const { error: inviteError } = await supabaseAdmin
+    // Save pending invite first (generates unique token automatically)
+    const { data: inviteData, error: inviteError } = await supabaseAdmin
       .from('pending_invites')
       .insert({
         email: email,
@@ -45,19 +45,23 @@ serve(async (req) => {
         role: role,
         permissions: permissions
       })
+      .select('invite_token')
+      .single()
 
     if (inviteError) {
       console.error('Pending invite error:', inviteError)
       throw new Error('Erro ao salvar convite: ' + inviteError.message)
     }
 
-    console.log('Pending invite saved')
+    console.log('Pending invite saved with token:', inviteData.invite_token)
 
-    // Send invitation email
+    // For now, we'll still use Supabase's invite system but in the future
+    // we could implement custom email sending using Resend
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth`,
+      redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`,
       data: {
         nome: email.split('@')[0],
+        invite_token: inviteData.invite_token,
       }
     })
 

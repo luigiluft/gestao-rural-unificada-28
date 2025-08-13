@@ -391,6 +391,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          invite_token: string | null
           inviter_user_id: string
           parent_user_id: string | null
           permissions: Database["public"]["Enums"]["permission_code"][]
@@ -401,6 +402,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          invite_token?: string | null
           inviter_user_id: string
           parent_user_id?: string | null
           permissions?: Database["public"]["Enums"]["permission_code"][]
@@ -411,6 +413,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          invite_token?: string | null
           inviter_user_id?: string
           parent_user_id?: string | null
           permissions?: Database["public"]["Enums"]["permission_code"][]
