@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { MailPlus, Users } from "lucide-react";
+import { MailPlus, Users, Copy, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface FranqueadoData {
@@ -26,6 +26,7 @@ export default function Franqueados() {
   const [sendingInvite, setSendingInvite] = useState(false);
   const [franqueados, setFranqueados] = useState<FranqueadoData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   const loadFranqueados = async () => {
     try {
@@ -125,12 +126,16 @@ export default function Franqueados() {
         }
       });
       if (error) throw error;
+      
+      // Show the invite link that can be copied and sent manually
+      const inviteUrl = data.invite_url || `${window.location.origin}/auth?invite_token=${data.invite_token}`;
+      setInviteLink(inviteUrl);
+      
       toast({
-        title: "Convite enviado",
-        description: "Enviamos um link de confirmação por email. O franqueado precisa clicar no link para completar o cadastro.",
+        title: "Convite criado",
+        description: "Link de convite gerado. Copie o link abaixo e envie para o franqueado.",
       });
-      setInviteOpen(false);
-      setInviteEmail("");
+      
       // Reload the list to show new franchisees
       loadFranqueados();
     } catch (err: any) {
@@ -142,6 +147,22 @@ export default function Franqueados() {
     } finally {
       setSendingInvite(false);
     }
+  };
+
+  const copyInviteLink = () => {
+    if (inviteLink) {
+      navigator.clipboard.writeText(inviteLink);
+      toast({
+        title: "Link copiado",
+        description: "O link de convite foi copiado para a área de transferência.",
+      });
+    }
+  };
+
+  const closeInviteDialog = () => {
+    setInviteOpen(false);
+    setInviteEmail("");
+    setInviteLink(null);
   };
 
   useEffect(() => {
@@ -205,16 +226,49 @@ export default function Franqueados() {
                     placeholder="email@exemplo.com"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
+                    disabled={!!inviteLink}
                   />
                 </div>
+                {inviteLink && (
+                  <div className="grid gap-2">
+                    <Label>Link de Convite</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={inviteLink} 
+                        readOnly 
+                        className="font-mono text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={copyInviteLink}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Copie este link e envie para o franqueado por email ou WhatsApp.
+                    </p>
+                  </div>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="secondary" onClick={() => setInviteOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                  {sendingInvite ? "Enviando..." : "Enviar convite"}
-                </Button>
+                {inviteLink ? (
+                  <Button onClick={closeInviteDialog} className="w-full">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Concluído
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="secondary" onClick={closeInviteDialog}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
+                      {sendingInvite ? "Gerando..." : "Gerar convite"}
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
