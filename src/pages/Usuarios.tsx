@@ -1,10 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MailPlus } from "lucide-react";
 
 interface ProfileRow {
   user_id: string;
@@ -16,6 +20,32 @@ export default function Usuarios() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const sendInvite = async () => {
+    if (!inviteEmail) {
+      toast({ title: "Informe um email", description: "Digite um email válido para enviar o convite.", variant: "destructive" });
+      return;
+    }
+    try {
+      setSendingInvite(true);
+      const { error } = await supabase.auth.signInWithOtp({
+        email: inviteEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Convite enviado", description: "Enviamos um link de acesso para o email informado." });
+      setInviteOpen(false);
+      setInviteEmail("");
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar convite", description: err.message ?? "Tente novamente.", variant: "destructive" });
+    } finally {
+      setSendingInvite(false);
+    }
+  };
   useEffect(() => {
     document.title = "Usuários | AgroStock";
     const metaDesc = document.querySelector('meta[name="description"]');
@@ -83,8 +113,46 @@ export default function Usuarios() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
-        <p className="text-muted-foreground">Visualize todos os usuários e conceda acesso de administrador.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
+            <p className="text-muted-foreground">Visualize todos os usuários e conceda acesso de administrador.</p>
+          </div>
+          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <MailPlus className="mr-2" />
+                Convidar usuário
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Convidar novo usuário</DialogTitle>
+                <DialogDescription>Envie um link de acesso por email. O usuário poderá entrar imediatamente.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="invite-email">Email</Label>
+                  <Input
+                    id="invite-email"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="secondary" onClick={() => setInviteOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
+                  {sendingInvite ? "Enviando..." : "Enviar convite"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
 
       <section className="rounded-lg border border-border bg-card p-4">
