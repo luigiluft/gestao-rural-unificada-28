@@ -26,6 +26,17 @@ serve(async (req) => {
       }
     )
 
+    // Check if user already exists
+    const { data: existingUser, error: userCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(email)
+    
+    if (userCheckError && userCheckError.message !== 'User not found') {
+      throw userCheckError
+    }
+
+    if (existingUser.user) {
+      throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
+    }
+
     // Save pending invite
     const { error: inviteError } = await supabaseAdmin
       .from('pending_invites')

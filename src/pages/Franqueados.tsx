@@ -31,19 +31,26 @@ export default function Franqueados() {
     try {
       setLoading(true);
       
-      // Get users with franqueado role by joining with profiles
+      // Get user_roles with franqueado role, then join with profiles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'franqueado');
+
+      if (rolesError) throw rolesError;
+
+      if (!userRoles || userRoles.length === 0) {
+        setFranqueados([]);
+        return;
+      }
+
+      const userIds = userRoles.map(role => role.user_id);
+
+      // Get profiles for users with franqueado role
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          user_id,
-          nome,
-          email,
-          created_at,
-          user_roles!inner (
-            role
-          )
-        `)
-        .eq('user_roles.role', 'franqueado');
+        .select('user_id, nome, email, created_at')
+        .in('user_id', userIds);
 
       if (profilesError) throw profilesError;
 
