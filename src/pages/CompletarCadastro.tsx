@@ -41,9 +41,14 @@ export default function CompletarCadastro() {
   useEffect(() => {
     const token = searchParams.get('token');
     const type = searchParams.get('type');
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
     
-    if (!token || type !== 'invite') {
-      // If not from invite, redirect to auth
+    console.log('URL params:', { token, type, accessToken, refreshToken });
+    
+    // Allow access if coming from invite or already has tokens
+    if (!token && !accessToken && type !== 'invite') {
+      console.log('No valid tokens found, redirecting to auth');
       navigate('/auth');
     }
   }, [searchParams, navigate]);
@@ -90,18 +95,25 @@ export default function CompletarCadastro() {
 
       const token = searchParams.get('token');
       const type = searchParams.get('type');
+      const accessToken = searchParams.get('access_token');
 
-      if (!token || type !== 'invite') {
-        throw new Error('Token de convite inválido');
+      console.log('Starting signup process...', { token, type, accessToken });
+
+      // If we have access tokens, user is already authenticated from invite
+      if (accessToken) {
+        console.log('User already authenticated via access token');
+      } else if (token && type === 'invite') {
+        // Complete the signup process with the token
+        const { error: signUpError } = await supabase.auth.verifyOtp({
+          token_hash: token,
+          type: 'invite'
+        });
+
+        if (signUpError) {
+          console.error('Signup error:', signUpError);
+          throw signUpError;
+        }
       }
-
-      // Complete the signup process with the token and user's password
-      const { error: signUpError } = await supabase.auth.verifyOtp({
-        token_hash: token,
-        type: 'invite'
-      });
-
-      if (signUpError) throw signUpError;
 
       // Update user password
       const { error: passwordError } = await supabase.auth.updateUser({
