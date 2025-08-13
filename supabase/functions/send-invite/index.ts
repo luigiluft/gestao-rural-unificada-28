@@ -55,28 +55,19 @@ serve(async (req) => {
 
     console.log('Pending invite saved with token:', inviteData.invite_token)
 
-    // For now, we'll still use Supabase's invite system but in the future
-    // we could implement custom email sending using Resend
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`,
-      data: {
-        nome: email.split('@')[0],
-        invite_token: inviteData.invite_token,
-      }
-    })
+    // TODO: Send custom email with invite link
+    // For now, we'll just log the invite URL that should be sent via email
+    const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
+    console.log('Invite URL to be sent via email:', inviteUrl)
 
-    if (error) {
-      console.error('Invitation error:', error)
-      if (error.message.includes('already been registered') || error.message.includes('already exists')) {
-        throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
-      }
-      throw new Error('Erro ao enviar convite: ' + error.message)
-    }
-
-    console.log('Invitation sent successfully')
+    console.log('Invitation saved successfully')
 
     return new Response(
-      JSON.stringify({ success: true, data: data }),
+      JSON.stringify({ 
+        success: true, 
+        invite_token: inviteData.invite_token,
+        invite_url: inviteUrl 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
