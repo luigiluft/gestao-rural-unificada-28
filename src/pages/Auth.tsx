@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export default function AuthPage() {
@@ -18,6 +19,10 @@ export default function AuthPage() {
   const [isInviteFlow, setIsInviteFlow] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [activeTab, setActiveTab] = useState("login");
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
@@ -130,10 +135,9 @@ export default function AuthPage() {
       const mustChangePassword = data.user?.user_metadata?.must_change_password;
       
       if (mustChangePassword) {
-        // Redirect to change password flow
+        // Show mandatory password change modal
+        setShowChangePassword(true);
         toast.success("Login realizado! Por favor, altere sua senha padrão.");
-        // You can implement a password change modal or redirect to a change password page
-        afterLoginRedirect();
       } else {
         toast.success("Login realizado com sucesso!");
         afterLoginRedirect();
@@ -229,6 +233,51 @@ export default function AuthPage() {
     }
   };
 
+  const handleChangePassword = async () => {
+    try {
+      if (!newPassword.trim()) {
+        toast.error("Informe a nova senha.");
+        return;
+      }
+      if (newPassword !== confirmNewPassword) {
+        toast.error("As senhas não coincidem.");
+        return;
+      }
+      if (newPassword.length < 6) {
+        toast.error("A senha deve ter pelo menos 6 caracteres.");
+        return;
+      }
+
+      setChangingPassword(true);
+      
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (updateError) throw updateError;
+
+      // Remove the must_change_password flag
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { must_change_password: false }
+      });
+
+      if (metadataError) {
+        console.error('Error updating metadata:', metadataError);
+      }
+
+      toast.success("Senha alterada com sucesso!");
+      setShowChangePassword(false);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      afterLoginRedirect();
+    } catch (err: any) {
+      toast.error(err.message || "Não foi possível alterar a senha");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <main className="w-full max-w-md">
@@ -306,6 +355,51 @@ export default function AuthPage() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Modal obrigatório para alteração de senha */}
+        <Dialog open={showChangePassword} onOpenChange={() => {}}>
+          <DialogContent className="sm:max-w-md [&>button]:hidden">
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                Alterar Senha Obrigatória
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Por segurança, você deve alterar sua senha padrão antes de acessar a plataforma.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nova senha</Label>
+                <Input 
+                  id="newPassword" 
+                  type="password" 
+                  value={newPassword} 
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Digite sua nova senha"
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmNewPassword">Confirmar nova senha</Label>
+                <Input 
+                  id="confirmNewPassword" 
+                  type="password" 
+                  value={confirmNewPassword} 
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="Confirme sua nova senha"
+                  required 
+                />
+              </div>
+              <Button 
+                onClick={handleChangePassword} 
+                className="w-full" 
+                disabled={changingPassword}
+              >
+                {changingPassword ? "Alterando..." : "Alterar Senha"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
