@@ -4,9 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { MailPlus } from "lucide-react";
+import { MailPlus, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+
+interface FranqueadoData {
+  id: string;
+  nome: string;
+  email: string;
+  created_at: string;
+  ativo: boolean;
+}
 
 export default function Franqueados() {
   const { toast } = useToast();
@@ -14,6 +24,48 @@ export default function Franqueados() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [franqueados, setFranqueados] = useState<FranqueadoData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadFranqueados = async () => {
+    try {
+      setLoading(true);
+      
+      // Get users with franqueado role by joining with profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          user_id,
+          nome,
+          email,
+          created_at,
+          user_roles!inner (
+            role
+          )
+        `)
+        .eq('user_roles.role', 'franqueado');
+
+      if (profilesError) throw profilesError;
+
+      const franqueadosData = profiles?.map(profile => ({
+        id: profile.user_id,
+        nome: profile.nome || 'Nome não informado',
+        email: profile.email || 'Email não informado',
+        created_at: profile.created_at || '',
+        ativo: true // Franqueados são sempre ativos
+      })) || [];
+
+      setFranqueados(franqueadosData);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar franqueados",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sendInvite = async () => {
     if (!inviteEmail) {
@@ -46,6 +98,8 @@ export default function Franqueados() {
       });
       setInviteOpen(false);
       setInviteEmail("");
+      // Reload the list to show new franchisees
+      loadFranqueados();
     } catch (err: any) {
       toast({
         title: "Erro ao enviar convite",
@@ -80,6 +134,8 @@ export default function Franqueados() {
       l.setAttribute("href", canonicalUrl);
       document.head.appendChild(l);
     }
+    
+    loadFranqueados();
   }, []);
 
   return (
@@ -132,10 +188,51 @@ export default function Franqueados() {
         </div>
       </header>
 
-      <section className="rounded-lg border border-border bg-card p-6">
-        <p className="text-muted-foreground">
-          Em breve: lista de franqueados, convites e permissões.
-        </p>
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Lista de Franqueados
+            </CardTitle>
+            <CardDescription>
+              Franqueados cadastrados no sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Carregando franqueados...</p>
+              </div>
+            ) : franqueados.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum franqueado cadastrado ainda.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {franqueados.map((franqueado) => (
+                  <div
+                    key={franqueado.id}
+                    className="flex items-center justify-between p-4 border border-border rounded-lg"
+                  >
+                    <div className="space-y-1">
+                      <h3 className="font-medium">{franqueado.nome}</h3>
+                      <p className="text-sm text-muted-foreground">{franqueado.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Cadastrado em: {new Date(franqueado.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={franqueado.ativo ? "default" : "secondary"}>
+                        {franqueado.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </section>
     </main>
   );

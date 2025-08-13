@@ -43,7 +43,7 @@ serve(async (req) => {
 
     // Use admin API to invite user by email
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'supabase.co')}/auth/v1/verify?token={token}&type=invite&redirect_to=${encodeURIComponent('https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/completar-cadastro')}`,
+      redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/completar-cadastro`,
       data: {
         nome: email.split('@')[0],
       }
