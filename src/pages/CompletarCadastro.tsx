@@ -40,10 +40,13 @@ export default function CompletarCadastro() {
   // Redirect if user is already fully registered
   useEffect(() => {
     if (user && session) {
-      // Check if user has completed registration by checking if they have a password set
-      // (users invited via magic link won't have password initially)
-      const isTemporaryUser = searchParams.get('type') === 'signup' || searchParams.get('type') === 'invite';
-      if (!isTemporaryUser) {
+      // Check if this is a new signup by checking URL params
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+      const type = searchParams.get('type');
+      
+      // If no tokens in URL, user is already logged in and completed registration
+      if (!accessToken && !refreshToken && type !== 'signup') {
         navigate('/');
       }
     }

@@ -40,16 +40,20 @@ export default function Franqueados() {
 
       if (inviteError) throw inviteError;
 
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signUp({
         email: inviteEmail,
+        password: 'temp123456', // Senha temporária que será alterada
         options: {
           emailRedirectTo: `${window.location.origin}/completar-cadastro`,
+          data: {
+            nome: inviteEmail.split('@')[0], // Nome temporário
+          }
         },
       });
       if (error) throw error;
       toast({
         title: "Convite enviado",
-        description: "Enviamos um link de acesso para o email informado. O franqueado será automaticamente configurado.",
+        description: "Enviamos um link de confirmação por email. O franqueado precisa clicar no link para completar o cadastro.",
       });
       setInviteOpen(false);
       setInviteEmail("");
