@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileRow {
   user_id: string;
@@ -39,25 +39,32 @@ export default function Usuarios() {
     },
   });
 
-  const { data: rolesMap, isLoading: loadingRoles } = useQuery({
-    queryKey: ["roles-all"],
+  const { data: roleMap, isLoading: loadingRoles } = useQuery({
+    queryKey: ["computed-roles", (profiles ?? []).map((p) => p.user_id)],
+    enabled: !!profiles,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-      if (error) throw error;
-      const map = new Map<string, string[]>();
-      (data ?? []).forEach((r: any) => {
-        const arr = map.get(r.user_id) ?? [];
-        if (!arr.includes(r.role)) arr.push(r.role);
-        map.set(r.user_id, arr);
-      });
-      return map as Map<string, string[]>;
+      const map = new Map<string, string>();
+      if (!profiles) return map;
+      // Check roles via security-definer RPC to avoid RLS recursion
+      const results = await Promise.all(
+        profiles.map(async (p) => {
+          const [adminRes, franqRes] = await Promise.all([
+            supabase.rpc('has_role', { _user_id: p.user_id, _role: 'admin' }),
+            supabase.rpc('has_role', { _user_id: p.user_id, _role: 'franqueado' }),
+          ])
+          const isAdmin = adminRes.data === true
+          const isFranqueado = franqRes.data === true
+          const label = isAdmin ? 'Admin' : isFranqueado ? 'Franqueado' : 'Produtor'
+          return [p.user_id, label] as const
+        })
+      )
+      results.forEach(([id, label]) => map.set(id, label))
+      return map as Map<string, string>
     },
-  });
+  })
 
   const makeAdmin = async (userId: string) => {
-    const alreadyAdmin = rolesMap?.get(userId)?.includes("admin");
+    const alreadyAdmin = roleMap?.get(userId) === "Admin";
     if (alreadyAdmin) return;
     const { error } = await supabase
       .from("user_roles")
@@ -66,7 +73,8 @@ export default function Usuarios() {
       toast({ title: "Erro ao promover", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Usuário promovido", description: "Permissão de admin concedida." });
-      await qc.invalidateQueries({ queryKey: ["roles-all"] });
+      await qc.invalidateQueries({ queryKey: ["computed-roles"] });
+      await qc.invalidateQueries({ queryKey: ["profiles-all"] });
     }
   };
 
@@ -94,27 +102,18 @@ export default function Usuarios() {
             </TableHeader>
             <TableBody>
               {profiles?.map((p) => {
-                const roles = rolesMap?.get(p.user_id) ?? [];
-                const isAdmin = roles.includes("admin");
+                const label = roleMap?.get(p.user_id) ?? null;
+                const isAdmin = label === "Admin";
                 return (
                   <TableRow key={p.user_id}>
                     <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
                     <TableCell>{p.email ?? "—"}</TableCell>
                     <TableCell>
-                      {(() => {
-                        const primary = isAdmin
-                          ? "Admin"
-                          : roles.includes("franqueado")
-                            ? "Franqueado"
-                            : roles.includes("produtor")
-                              ? "Produtor"
-                              : null
-                        return primary ? (
-                          <Badge variant={isAdmin ? "default" : "secondary"}>{primary}</Badge>
-                        ) : (
-                          <Badge variant="secondary">sem função</Badge>
-                        )
-                      })()}
+                      {label ? (
+                        <Badge variant={isAdmin ? "default" : "secondary"}>{label}</Badge>
+                      ) : (
+                        <Badge variant="secondary">sem função</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" onClick={() => makeAdmin(p.user_id)} disabled={isAdmin}>
