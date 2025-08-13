@@ -127,9 +127,21 @@ export default function Franqueados() {
       });
       if (error) throw error;
       
-      // Show the invite link that can be copied and sent manually (as backup)
-      const inviteUrl = data.invite_url || `${window.location.origin}/auth?invite_token=${data.invite_token}`;
-      setInviteLink(inviteUrl);
+      // Show success message with login credentials
+      const credentials = `Email: ${inviteEmail}\nSenha: ${data.default_password}`;
+      
+      toast({
+        title: "Franqueado criado com sucesso!",
+        description: `O usuário foi criado e pode fazer login imediatamente. Credenciais copiadas para a área de transferência.`,
+      });
+
+      // Copy credentials to clipboard
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(credentials);
+      }
+
+      // Set invite link to show credentials in the modal
+      setInviteLink(`Email: ${inviteEmail}\nSenha padrão: ${data.default_password}`);
       
       toast({
         title: "Convite enviado",
@@ -240,14 +252,34 @@ export default function Franqueados() {
                     onChange={(e) => setInviteEmail(e.target.value)}
                   />
                 </div>
+                {inviteLink && (
+                  <div className="grid gap-2">
+                    <Label>Credenciais de Acesso</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <pre className="text-sm whitespace-pre-wrap font-mono">{inviteLink}</pre>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Credenciais copiadas automaticamente. O franqueado deve alterar a senha no primeiro login.
+                    </p>
+                  </div>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="secondary" onClick={closeInviteDialog}>
-                  Cancelar
-                </Button>
-                <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                  {sendingInvite ? "Enviando..." : "Enviar convite"}
-                </Button>
+                {inviteLink ? (
+                  <Button onClick={closeInviteDialog} className="w-full">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Concluído
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="secondary" onClick={closeInviteDialog}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
+                      {sendingInvite ? "Criando usuário..." : "Criar franqueado"}
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>

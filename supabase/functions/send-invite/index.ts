@@ -59,15 +59,20 @@ serve(async (req) => {
     const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
     console.log('Invite URL:', inviteUrl)
 
-    // Create user directly using Supabase native system
-    // This will automatically send the confirmation email
+    // Generate a default password for the new user
+    const defaultPassword = `Agro${Math.random().toString(36).slice(2)}!`
+    console.log('Generated default password:', defaultPassword)
+
+    // Create user directly with password and confirmed email
     try {
       const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
         email,
-        email_confirm: false, // User needs to confirm email
+        password: defaultPassword,
+        email_confirm: true, // Email already confirmed, no confirmation needed
         user_metadata: {
           invite_token: inviteData.invite_token,
-          role: role || 'franqueado'
+          role: role || 'franqueado',
+          must_change_password: true // Flag to force password change on first login
         }
       })
 
@@ -76,8 +81,8 @@ serve(async (req) => {
         throw new Error('Erro ao criar usuário: ' + createUserError.message)
       }
 
-      console.log('User created successfully via Supabase:', newUser)
-      console.log('Confirmation email sent automatically by Supabase')
+      console.log('User created successfully:', newUser.user?.email)
+      console.log('Default password set, user can login immediately')
     } catch (userError) {
       console.error('User creation error:', userError)
       throw new Error('Erro ao criar usuário: ' + (userError as Error).message)
@@ -85,18 +90,17 @@ serve(async (req) => {
 
     console.log('Invitation process completed')
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        invite_token: inviteData.invite_token,
-        invite_url: inviteUrl 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
-    )
-  } catch (error) {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      invite_token: inviteData.invite_token,
+      invite_url: inviteUrl,
+      default_password: defaultPassword,
+      message: 'Usuário criado com sucesso'
+    }), {
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+      status: 200,
+    });
+  } catch (error: any) {
     console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),

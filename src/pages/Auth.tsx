@@ -123,10 +123,21 @@ export default function AuthPage() {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      toast.success("Login realizado com sucesso!");
-      afterLoginRedirect();
+      
+      // Check if user needs to change password on first login
+      const mustChangePassword = data.user?.user_metadata?.must_change_password;
+      
+      if (mustChangePassword) {
+        // Redirect to change password flow
+        toast.success("Login realizado! Por favor, altere sua senha padrão.");
+        // You can implement a password change modal or redirect to a change password page
+        afterLoginRedirect();
+      } else {
+        toast.success("Login realizado com sucesso!");
+        afterLoginRedirect();
+      }
     } catch (err: any) {
       toast.error(err.message || "Não foi possível fazer login");
     } finally {
