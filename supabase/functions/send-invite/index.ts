@@ -29,11 +29,13 @@ serve(async (req) => {
     // Check if user already exists
     const { data: existingUser, error: userCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(email)
     
-    if (userCheckError && userCheckError.message !== 'User not found') {
+    if (userCheckError && !userCheckError.message.includes('User not found')) {
+      console.error('Error checking user:', userCheckError)
       throw userCheckError
     }
 
-    if (existingUser.user) {
+    if (existingUser && existingUser.user) {
+      console.log('User already exists:', email)
       throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
     }
 
@@ -61,6 +63,10 @@ serve(async (req) => {
     })
 
     if (error) {
+      console.error('Invite error:', error)
+      if (error.message.includes('already been registered')) {
+        throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
+      }
       throw error
     }
 

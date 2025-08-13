@@ -30,6 +30,7 @@ export default function Franqueados() {
   const loadFranqueados = async () => {
     try {
       setLoading(true);
+      console.log('Loading franqueados...');
       
       // Get user_roles with franqueado role, then join with profiles
       const { data: userRoles, error: rolesError } = await supabase
@@ -37,14 +38,21 @@ export default function Franqueados() {
         .select('user_id')
         .eq('role', 'franqueado');
 
-      if (rolesError) throw rolesError;
+      console.log('User roles result:', { userRoles, rolesError });
+
+      if (rolesError) {
+        console.error('Roles error:', rolesError);
+        throw rolesError;
+      }
 
       if (!userRoles || userRoles.length === 0) {
+        console.log('No franqueados found');
         setFranqueados([]);
         return;
       }
 
       const userIds = userRoles.map(role => role.user_id);
+      console.log('User IDs:', userIds);
 
       // Get profiles for users with franqueado role
       const { data: profiles, error: profilesError } = await supabase
@@ -52,7 +60,12 @@ export default function Franqueados() {
         .select('user_id, nome, email, created_at')
         .in('user_id', userIds);
 
-      if (profilesError) throw profilesError;
+      console.log('Profiles result:', { profiles, profilesError });
+
+      if (profilesError) {
+        console.error('Profiles error:', profilesError);
+        throw profilesError;
+      }
 
       const franqueadosData = profiles?.map(profile => ({
         id: profile.user_id,
@@ -62,8 +75,10 @@ export default function Franqueados() {
         ativo: true // Franqueados são sempre ativos
       })) || [];
 
+      console.log('Final franqueados data:', franqueadosData);
       setFranqueados(franqueadosData);
     } catch (error: any) {
+      console.error('Load franqueados error:', error);
       toast({
         title: "Erro ao carregar franqueados",
         description: error.message,

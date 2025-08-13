@@ -782,6 +782,13 @@ export type Database = {
         Args: { _viewer: string; _owner: string }
         Returns: boolean
       }
+      check_user_role_safe: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       has_permission: {
         Args: {
           _user_id: string
