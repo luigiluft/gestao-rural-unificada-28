@@ -88,7 +88,7 @@ export default function Usuarios() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Funções</TableHead>
+                <TableHead>Função</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -100,14 +100,21 @@ export default function Usuarios() {
                   <TableRow key={p.user_id}>
                     <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
                     <TableCell>{p.email ?? "—"}</TableCell>
-                    <TableCell className="space-x-2">
-                      {roles.length === 0 ? (
-                        <Badge variant="secondary">sem função</Badge>
-                      ) : (
-                        roles.map((r) => (
-                          <Badge key={r} variant={r === "admin" ? "default" : "outline"}>{r}</Badge>
-                        ))
-                      )}
+                    <TableCell>
+                      {(() => {
+                        const primary = isAdmin
+                          ? "Admin"
+                          : roles.includes("franqueado")
+                            ? "Franqueado"
+                            : roles.includes("produtor")
+                              ? "Produtor"
+                              : null
+                        return primary ? (
+                          <Badge variant={isAdmin ? "default" : "secondary"}>{primary}</Badge>
+                        ) : (
+                          <Badge variant="secondary">sem função</Badge>
+                        )
+                      })()}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" onClick={() => makeAdmin(p.user_id)} disabled={isAdmin}>
