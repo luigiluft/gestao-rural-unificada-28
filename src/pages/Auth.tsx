@@ -112,22 +112,27 @@ export default function AuthPage() {
       }
       setLoading(true);
       const redirectUrl = `${window.location.origin}/`;
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: redirectUrl, data: { nome: name } },
       });
       if (error) throw error;
       
-      // If this is an invite flow, mark the invite as used
-      if (isInviteFlow) {
+      // If this is an invite flow and signup was successful, process the invite
+      if (isInviteFlow && data.user) {
         try {
-          await supabase
-            .from('pending_invites')
-            .update({ used_at: new Date().toISOString() })
-            .eq('email', email.toLowerCase());
+          // Call the function to complete invite processing
+          const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
+            _user_id: data.user.id,
+            _email: email
+          });
+          
+          if (rpcError) {
+            console.error('Error processing invite:', rpcError);
+          }
         } catch (inviteError) {
-          console.log('Could not mark invite as used:', inviteError);
+          console.log('Could not process invite:', inviteError);
         }
         
         toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");

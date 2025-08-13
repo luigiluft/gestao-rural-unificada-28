@@ -789,6 +789,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      complete_invite_signup: {
+        Args: { _user_id: string; _email: string }
+        Returns: boolean
+      }
       has_permission: {
         Args: {
           _user_id: string
