@@ -1,10 +1,27 @@
 import { useEffect, useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Package } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { useForm, Controller } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/AuthContext"
+import { Package, Plus } from "lucide-react"
 
 interface Produto {
   id: string
@@ -18,7 +35,49 @@ interface Produto {
 
 export default function Catalogo() {
   const [q, setQ] = useState("")
+  const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
 
+  const schema = z.object({
+    nome: z.string().min(1, "Nome obrigatório"),
+    unidade_medida: z.string().min(1, "Unidade obrigatória"),
+    codigo: z.string().optional(),
+    categoria: z.string().optional(),
+    descricao: z.string().optional(),
+    ativo: z.boolean().default(true),
+  })
+  type FormValues = z.infer<typeof schema>
+
+  const { register, control, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { nome: "", unidade_medida: "", codigo: "", categoria: "", descricao: "", ativo: true }
+  })
+
+  const onSubmit = async (values: FormValues) => {
+    if (!user) {
+      toast({ variant: "destructive", description: "Você precisa estar autenticado." })
+      return
+    }
+    const { error } = await supabase.from("produtos").insert({
+      user_id: user.id,
+      nome: values.nome,
+      unidade_medida: values.unidade_medida,
+      codigo: values.codigo || null,
+      categoria: values.categoria || null,
+      descricao: values.descricao || null,
+      ativo: values.ativo,
+    })
+    if (error) {
+      toast({ variant: "destructive", description: "Erro ao cadastrar produto." })
+      return
+    }
+    toast({ description: "Produto cadastrado com sucesso." })
+    setOpen(false)
+    reset()
+    queryClient.invalidateQueries({ queryKey: ["produtos"] })
+  }
   const { data: produtos = [], isLoading, error } = useQuery<Produto[]>({
     queryKey: ["produtos"],
     queryFn: async () => {
@@ -71,9 +130,63 @@ export default function Catalogo() {
 
   return (
     <article>
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Catálogo de Produtos</h1>
-        <p className="text-sm text-muted-foreground">Consulte os produtos cadastrados e filtre pelo nome, código ou categoria.</p>
+      <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Catálogo de Produtos</h1>
+          <p className="text-sm text-muted-foreground">Consulte os produtos cadastrados e filtre pelo nome, código ou categoria.</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-primary hover:bg-primary/90">
+              <Plus className="w-4 h-4" />
+              Novo produto
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Novo produto</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome</Label>
+                  <Input id="nome" {...register("nome")} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="codigo">Código</Label>
+                  <Input id="codigo" {...register("codigo")} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="categoria">Categoria</Label>
+                  <Input id="categoria" {...register("categoria")} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unidade_medida">Unidade de medida</Label>
+                  <Input id="unidade_medida" placeholder="ex: kg, un, lt" {...register("unidade_medida")} required />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="descricao">Descrição</Label>
+                <Textarea id="descricao" rows={3} {...register("descricao")} />
+              </div>
+              <Controller
+                name="ativo"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex items-center gap-2">
+                    <Switch id="ativo" checked={field.value} onCheckedChange={field.onChange} />
+                    <Label htmlFor="ativo">Ativo</Label>
+                  </div>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Salvando..." : "Salvar"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </header>
 
       <section className="mb-6">
