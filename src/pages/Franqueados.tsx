@@ -226,7 +226,6 @@ export default function Franqueados() {
                     placeholder="email@exemplo.com"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    disabled={!!inviteLink}
                   />
                 </div>
                 {inviteLink && (

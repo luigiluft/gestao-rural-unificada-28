@@ -61,9 +61,12 @@ export default function AuthPage() {
           } else {
             console.log('Invalid or expired invite token');
             toast.error('Convite inválido ou expirado');
+            // If token is invalid, don't pre-fill or disable the email field
+            setIsInviteFlow(false);
           }
         } catch (error) {
           console.log('Could not get email from invite token:', error);
+          setIsInviteFlow(false);
         }
       };
       
@@ -83,6 +86,7 @@ export default function AuthPage() {
           }
         } catch (error) {
           console.log('Could not get email from token:', error);
+          setIsInviteFlow(false);
         }
       };
       
