@@ -59,29 +59,10 @@ serve(async (req) => {
     const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
     console.log('Invite URL:', inviteUrl)
 
-    // Send invitation email using Supabase native email system
-    try {
-      const { data: inviteResponse, error: inviteEmailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        email,
-        {
-          redirectTo: inviteUrl,
-          data: {
-            invite_token: inviteData.invite_token,
-            role: role || 'franqueado'
-          }
-        }
-      )
-
-      if (inviteEmailError) {
-        console.error('Supabase invite email error:', inviteEmailError)
-        throw new Error('Erro ao enviar email de convite: ' + inviteEmailError.message)
-      }
-
-      console.log('Invitation email sent successfully via Supabase:', inviteResponse)
-    } catch (emailError) {
-      console.error('Email sending error:', emailError)
-      throw new Error('Erro ao enviar email de convite: ' + (emailError as Error).message)
-    }
+    // For now, we'll return the invite URL and let the frontend handle email sending
+    // In a production environment, you would integrate with an email service here
+    console.log(`Invite created for ${email} with token ${inviteData.invite_token}`)
+    console.log(`Invite URL: ${inviteUrl}`)
 
     console.log('Invitation process completed')
 

@@ -132,8 +132,8 @@ export default function Franqueados() {
       setInviteLink(inviteUrl);
       
       toast({
-        title: "Convite enviado",
-        description: "O convite foi enviado por email automaticamente. O link de backup está disponível abaixo.",
+        title: "Convite criado",
+        description: "Use o link abaixo para enviar o convite por email ou WhatsApp. (Email automático será implementado em breve)",
       });
       
       // Reload the list to show new franchisees
@@ -259,7 +259,7 @@ export default function Franqueados() {
                       </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Um email foi enviado automaticamente. Este é o link de backup caso seja necessário.
+                      Copie este link e envie por email ou WhatsApp para o franqueado se cadastrar.
                     </p>
                   </div>
                 )}
