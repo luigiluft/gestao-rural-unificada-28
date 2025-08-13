@@ -131,6 +131,30 @@ export default function AuthPage() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
+      // Check if there's a pending invite for this user
+      try {
+        const { data: pendingInvite } = await supabase
+          .from('pending_invites')
+          .select('*')
+          .eq('email', email.toLowerCase())
+          .is('used_at', null)
+          .single();
+        
+        if (pendingInvite && data.user) {
+          // Process the pending invite
+          const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
+            _user_id: data.user.id,
+            _email: email
+          });
+          
+          if (!rpcError) {
+            toast.success("Convite processado com sucesso!");
+          }
+        }
+      } catch (inviteError) {
+        console.log('No pending invite found or error processing:', inviteError);
+      }
+      
       // Check if user needs to change password on first login
       const mustChangePassword = data.user?.user_metadata?.must_change_password;
       
