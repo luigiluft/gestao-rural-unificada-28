@@ -128,44 +128,62 @@ export default function AuthPage() {
   const handleLogin = async () => {
     try {
       setLoading(true);
+      console.log('Starting login process for email:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      console.log('Login successful for user:', data.user?.email);
+      console.log('Login successful for user:', data.user?.email, 'User ID:', data.user?.id);
       
       // Check if there's a pending invite for this user
       try {
         console.log('Checking for pending invites for email:', email);
-        const { data: pendingInvite, error: inviteError } = await supabase
+        const { data: pendingInvites, error: inviteError } = await supabase
           .from('pending_invites')
           .select('*')
           .eq('email', email.toLowerCase())
           .is('used_at', null)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .order('created_at', { ascending: false });
         
-        console.log('Pending invite check result:', { pendingInvite, inviteError });
+        console.log('All pending invites for email:', pendingInvites);
+        console.log('Pending invite query error:', inviteError);
         
-        if (pendingInvite && data.user) {
-          console.log('Processing pending invite for user:', data.user.id);
+        if (pendingInvites && pendingInvites.length > 0 && data.user) {
+          const pendingInvite = pendingInvites[0]; // Get the most recent one
+          console.log('Processing pending invite:', pendingInvite);
+          console.log('Calling complete_invite_signup with:', {
+            _user_id: data.user.id,
+            _email: email
+          });
+          
           // Process the pending invite
           const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
             _user_id: data.user.id,
             _email: email
           });
           
-          console.log('RPC result:', { rpcResult, rpcError });
+          console.log('RPC complete_invite_signup result:', { rpcResult, rpcError });
           
           if (!rpcError && rpcResult) {
-            toast.success("Convite processado com sucesso!");
-            console.log('Invite processed successfully');
+            console.log('Invite processed successfully, result:', rpcResult);
+            
+            // Verify the role was actually assigned
+            const { data: userRoles, error: rolesError } = await supabase
+              .from('user_roles')
+              .select('*')
+              .eq('user_id', data.user.id);
+            
+            console.log('User roles after processing invite:', userRoles, 'Error:', rolesError);
+            
+            toast.success("Convite de franqueado processado com sucesso!");
           } else if (rpcError) {
             console.error('Error processing invite:', rpcError);
             toast.error("Erro ao processar convite: " + rpcError.message);
+          } else {
+            console.log('RPC returned false, invite not processed');
           }
         } else {
-          console.log('No pending invite found or invite error:', inviteError);
+          console.log('No pending invites found for this email');
         }
       } catch (inviteError) {
         console.error('Error checking/processing invite:', inviteError);
