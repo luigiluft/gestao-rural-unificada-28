@@ -175,7 +175,9 @@ export default function AuthPage() {
             
             console.log('User roles after processing invite:', userRoles, 'Error:', rolesError);
             
-            toast.success("Convite de franqueado processado com sucesso!");
+            toast.success("Convite processado com sucesso! Redirecionando...");
+            // Force page reload to update role
+            window.location.reload();
           } else if (rpcError) {
             console.error('Error processing invite:', rpcError);
             toast.error("Erro ao processar convite: " + rpcError.message);
