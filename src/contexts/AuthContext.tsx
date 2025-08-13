@@ -35,6 +35,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: u.email ?? null,
           });
         }
+
+        // Check and process pending invites after creating/finding profile
+        try {
+          console.log('Checking for pending invites for user:', u.email);
+          const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
+            _user_id: u.id,
+            _email: u.email || ''
+          });
+          
+          console.log('Invite processing result:', { rpcResult, rpcError });
+          
+          if (rpcResult) {
+            console.log('Invite processed successfully for user:', u.email);
+            // Force a page reload to update the role in the UI
+            setTimeout(() => window.location.reload(), 100);
+          }
+        } catch (inviteError) {
+          console.error('Error processing invite:', inviteError);
+        }
       } catch (e) {
         console.error('Falha ao garantir perfil', e);
       }
