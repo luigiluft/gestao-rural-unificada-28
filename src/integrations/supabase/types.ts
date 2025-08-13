@@ -674,6 +674,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: Database["public"]["Enums"]["permission_code"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: Database["public"]["Enums"]["permission_code"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: Database["public"]["Enums"]["permission_code"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -704,6 +725,13 @@ export type Database = {
         Args: { _viewer: string; _owner: string }
         Returns: boolean
       }
+      has_permission: {
+        Args: {
+          _user_id: string
+          _perm: Database["public"]["Enums"]["permission_code"]
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -711,9 +739,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_ancestor: {
+        Args: { _parent: string; _child: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "franqueado" | "produtor"
+      permission_code:
+        | "estoque.view"
+        | "estoque.manage"
+        | "entradas.manage"
+        | "saidas.manage"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -842,6 +879,12 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "franqueado", "produtor"],
+      permission_code: [
+        "estoque.view",
+        "estoque.manage",
+        "entradas.manage",
+        "saidas.manage",
+      ],
     },
   },
 } as const
