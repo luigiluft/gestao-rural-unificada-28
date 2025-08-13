@@ -43,7 +43,7 @@ export default function Franqueados() {
       const { error } = await supabase.auth.signInWithOtp({
         email: inviteEmail,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/completar-cadastro`,
         },
       });
       if (error) throw error;

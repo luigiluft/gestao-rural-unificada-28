@@ -15,6 +15,7 @@ import Suporte from "./pages/Suporte";
 import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
+import CompletarCadastroPage from "./pages/CompletarCadastro";
 import Franqueados from "./pages/Franqueados";
 import Usuarios from "./pages/Usuarios";
 import Produtores from "./pages/Produtores";
@@ -33,6 +34,7 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastroPage /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<Dashboard />} />
               <Route path="catalogo" element={<Catalogo />} />
