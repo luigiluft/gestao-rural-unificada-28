@@ -52,7 +52,7 @@ export default function AuthPage() {
             .from('pending_invites')
             .select('email')
             .eq('invite_token', inviteToken)
-            .eq('used_at', null)
+            .is('used_at', null)
             .single();
           
           if (data && !error) {

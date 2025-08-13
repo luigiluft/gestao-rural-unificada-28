@@ -127,13 +127,13 @@ export default function Franqueados() {
       });
       if (error) throw error;
       
-      // Show the invite link that can be copied and sent manually
+      // Show the invite link that can be copied and sent manually (as backup)
       const inviteUrl = data.invite_url || `${window.location.origin}/auth?invite_token=${data.invite_token}`;
       setInviteLink(inviteUrl);
       
       toast({
-        title: "Convite criado",
-        description: "Link de convite gerado. Copie o link abaixo e envie para o franqueado.",
+        title: "Convite enviado",
+        description: "O convite foi enviado por email automaticamente. O link de backup está disponível abaixo.",
       });
       
       // Reload the list to show new franchisees
@@ -248,7 +248,7 @@ export default function Franqueados() {
                       </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Copie este link e envie para o franqueado por email ou WhatsApp.
+                      Um email foi enviado automaticamente. Este é o link de backup caso seja necessário.
                     </p>
                   </div>
                 )}
@@ -265,7 +265,7 @@ export default function Franqueados() {
                       Cancelar
                     </Button>
                     <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                      {sendingInvite ? "Gerando..." : "Gerar convite"}
+                      {sendingInvite ? "Enviando..." : "Enviar convite"}
                     </Button>
                   </>
                 )}

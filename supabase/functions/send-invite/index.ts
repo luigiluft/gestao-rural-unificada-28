@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from "npm:resend@2.0.0"
+import React from 'npm:react@18.3.1'
+import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { InviteEmail } from './_templates/invite-email.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -55,12 +61,43 @@ serve(async (req) => {
 
     console.log('Pending invite saved with token:', inviteData.invite_token)
 
-    // TODO: Send custom email with invite link
-    // For now, we'll just log the invite URL that should be sent via email
+    // Create invite URL
     const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
-    console.log('Invite URL to be sent via email:', inviteUrl)
+    console.log('Invite URL:', inviteUrl)
 
-    console.log('Invitation saved successfully')
+    // Get inviter's name for the email
+    const { data: inviterProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('nome')
+      .eq('user_id', inviterUserId)
+      .single()
+
+    const inviterName = inviterProfile?.nome || 'Administrador'
+
+    // Send email using Resend
+    try {
+      const html = await renderAsync(
+        React.createElement(InviteEmail, {
+          inviteUrl,
+          inviterName,
+          role: role || 'franqueado',
+        })
+      )
+
+      const emailResponse = await resend.emails.send({
+        from: 'AgroStock <convites@resend.dev>',
+        to: [email],
+        subject: 'Convite para o AgroStock - Sistema de Gestão Rural',
+        html,
+      })
+
+      console.log('Email sent successfully:', emailResponse)
+    } catch (emailError) {
+      console.error('Email sending error:', emailError)
+      // Continue execution even if email fails - user can still get the link
+    }
+
+    console.log('Invitation process completed')
 
     return new Response(
       JSON.stringify({ 
