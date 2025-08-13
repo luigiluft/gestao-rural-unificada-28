@@ -21,6 +21,7 @@ export default function CompletarCadastro() {
     empresa: "",
     senha: "",
     confirmarSenha: "",
+    email: "",
   });
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function CompletarCadastro() {
     }
   }, []);
 
-  // Check if user came from invite confirmation
+  // Check if user came from invite confirmation and pre-fill email
   useEffect(() => {
     const token = searchParams.get('token');
     const type = searchParams.get('type');
@@ -50,7 +51,32 @@ export default function CompletarCadastro() {
     if (!token && !accessToken && type !== 'invite') {
       console.log('No valid tokens found, redirecting to auth');
       navigate('/auth');
+      return;
     }
+
+    // Try to get email from session or URL for pre-filling
+    const getEmailFromInvite = async () => {
+      try {
+        // First try to get from current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession?.user?.email) {
+          setFormData(prev => ({ ...prev, email: currentSession.user.email || '' }));
+          return;
+        }
+
+        // If no session yet, try to get from access token in URL
+        if (accessToken) {
+          const { data: { user: tokenUser } } = await supabase.auth.getUser(accessToken);
+          if (tokenUser?.email) {
+            setFormData(prev => ({ ...prev, email: tokenUser.email || '' }));
+          }
+        }
+      } catch (error) {
+        console.log('Could not get email for pre-filling:', error);
+      }
+    };
+
+    getEmailFromInvite();
   }, [searchParams, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,6 +195,20 @@ export default function CompletarCadastro() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="seu.email@exemplo.com"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={!!formData.email}
+                className="disabled:opacity-60"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo *</Label>
               <Input

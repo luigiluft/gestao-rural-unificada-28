@@ -67,12 +67,23 @@ export default function Franqueados() {
         throw profilesError;
       }
 
+      // Check if there are pending invites that haven't been completed
+      const { data: pendingInvites, error: pendingError } = await supabase
+        .from('pending_invites')
+        .select('email, used_at')
+        .eq('role', 'franqueado')
+        .is('used_at', null);
+
+      console.log('Pending invites result:', { pendingInvites, pendingError });
+
+      const pendingEmails = new Set(pendingInvites?.map(invite => invite.email.toLowerCase()) || []);
+
       const franqueadosData = profiles?.map(profile => ({
         id: profile.user_id,
         nome: profile.nome || 'Nome não informado',
         email: profile.email || 'Email não informado',
         created_at: profile.created_at || '',
-        ativo: true // Franqueados são sempre ativos
+        ativo: !pendingEmails.has((profile.email || '').toLowerCase()) // Ativo apenas se não estiver em pending
       })) || [];
 
       console.log('Final franqueados data:', franqueadosData);

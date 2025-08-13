@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isInviteFlow, setIsInviteFlow] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
@@ -22,6 +23,17 @@ export default function AuthPage() {
   useEffect(() => {
     if (session) navigate("/", { replace: true });
   }, [session, navigate]);
+
+  // Check for invite parameters in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || urlParams.get('access_token');
+    
+    if (token) {
+      // User came from an invitation email - redirect to complete registration
+      navigate("/completar-cadastro" + window.location.search, { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     document.title = "Login | Sistema de Estoque";
