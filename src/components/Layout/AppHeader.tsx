@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client"
 export function AppHeader() {
   const { user } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
-
+  const [roleLabel, setRoleLabel] = useState<string>("Produtor")
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -34,6 +34,28 @@ export function AppHeader() {
       }
     }
     load()
+  }, [user])
+
+  useEffect(() => {
+    const loadRole = async () => {
+      if (!user) { setRoleLabel("Produtor"); return }
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (error) throw error
+        const roles = (data || []).map((r: any) => r.role)
+        let label = 'Produtor'
+        if (roles.includes('admin')) label = 'Admin'
+        else if (roles.includes('franqueado')) label = 'Franqueado'
+        else if (roles.includes('produtor')) label = 'Produtor'
+        setRoleLabel(label)
+      } catch {
+        setRoleLabel('Produtor')
+      }
+    }
+    loadRole()
   }, [user])
 
   const initials = (displayName || user?.email || "U")
@@ -54,7 +76,10 @@ export function AppHeader() {
       {/* Left side - Mobile trigger + Search */}
       <div className="flex items-center gap-4 flex-1">
         <SidebarTrigger className="lg:hidden" />
-        
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>Visão:</span>
+          <Badge variant="secondary">{roleLabel}</Badge>
+        </div>
         <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
