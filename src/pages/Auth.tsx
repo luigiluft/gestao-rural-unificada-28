@@ -131,32 +131,49 @@ export default function AuthPage() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
+      console.log('Login successful for user:', data.user?.email);
+      
       // Check if there's a pending invite for this user
       try {
-        const { data: pendingInvite } = await supabase
+        console.log('Checking for pending invites for email:', email);
+        const { data: pendingInvite, error: inviteError } = await supabase
           .from('pending_invites')
           .select('*')
           .eq('email', email.toLowerCase())
           .is('used_at', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .single();
         
+        console.log('Pending invite check result:', { pendingInvite, inviteError });
+        
         if (pendingInvite && data.user) {
+          console.log('Processing pending invite for user:', data.user.id);
           // Process the pending invite
-          const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
+          const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
             _user_id: data.user.id,
             _email: email
           });
           
-          if (!rpcError) {
+          console.log('RPC result:', { rpcResult, rpcError });
+          
+          if (!rpcError && rpcResult) {
             toast.success("Convite processado com sucesso!");
+            console.log('Invite processed successfully');
+          } else if (rpcError) {
+            console.error('Error processing invite:', rpcError);
+            toast.error("Erro ao processar convite: " + rpcError.message);
           }
+        } else {
+          console.log('No pending invite found or invite error:', inviteError);
         }
       } catch (inviteError) {
-        console.log('No pending invite found or error processing:', inviteError);
+        console.error('Error checking/processing invite:', inviteError);
       }
       
       // Check if user needs to change password on first login
       const mustChangePassword = data.user?.user_metadata?.must_change_password;
+      console.log('Must change password:', mustChangePassword);
       
       if (mustChangePassword) {
         // Redirect to profile security tab for first-time password change
@@ -167,6 +184,7 @@ export default function AuthPage() {
         afterLoginRedirect();
       }
     } catch (err: any) {
+      console.error('Login error:', err);
       toast.error(err.message || "Não foi possível fazer login");
     } finally {
       setLoading(false);
