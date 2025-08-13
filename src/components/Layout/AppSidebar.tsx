@@ -8,7 +8,8 @@ import {
   FileText,
   HelpCircle,
   User,
-  Users
+  Users,
+  Boxes
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -29,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client"
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
+  { title: "Catálogo", url: "/catalogo", icon: Boxes },
   { title: "Entradas", url: "/entradas", icon: Package },
   { title: "Estoque", url: "/estoque", icon: PackageOpen },
   { title: "Saídas", url: "/saidas", icon: LogOut },

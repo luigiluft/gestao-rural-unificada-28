@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import Catalogo from "./pages/Catalogo";
 import Entradas from "./pages/Entradas";
 import Estoque from "./pages/Estoque";
 import Saidas from "./pages/Saidas";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<Dashboard />} />
+              <Route path="catalogo" element={<Catalogo />} />
               <Route path="entradas" element={<Entradas />} />
               <Route path="estoque" element={<Estoque />} />
               <Route path="saidas" element={<Saidas />} />
