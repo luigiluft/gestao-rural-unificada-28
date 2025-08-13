@@ -55,7 +55,7 @@ serve(async (req) => {
 
     // Send invitation email
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/completar-cadastro`,
+      redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth`,
       data: {
         nome: email.split('@')[0],
       }
