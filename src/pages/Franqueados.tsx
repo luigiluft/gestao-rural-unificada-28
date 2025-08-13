@@ -29,26 +29,15 @@ export default function Franqueados() {
     try {
       setSendingInvite(true);
 
-      // Save pending invite with franqueado role and hierarchy
-      const { error: inviteError } = await supabase.from("pending_invites").insert({
-        email: inviteEmail,
-        inviter_user_id: user.id,
-        parent_user_id: user.id, // hierarchy: admin becomes parent
-        role: "franqueado",
-        permissions: ['estoque.view', 'estoque.manage', 'entradas.manage', 'saidas.manage'], // full permissions for franqueado
-      });
-
-      if (inviteError) throw inviteError;
-
-      const { error } = await supabase.auth.signUp({
-        email: inviteEmail,
-        password: 'temp123456', // Senha temporária que será alterada
-        options: {
-          emailRedirectTo: `${window.location.origin}/completar-cadastro`,
-          data: {
-            nome: inviteEmail.split('@')[0], // Nome temporário
-          }
-        },
+      // Call edge function to send invite
+      const { data, error } = await supabase.functions.invoke('send-invite', {
+        body: {
+          email: inviteEmail,
+          inviterUserId: user.id,
+          parentUserId: user.id,
+          role: "franqueado",
+          permissions: ['estoque.view', 'estoque.manage', 'entradas.manage', 'saidas.manage']
+        }
       });
       if (error) throw error;
       toast({
