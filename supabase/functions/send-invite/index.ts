@@ -59,10 +59,29 @@ serve(async (req) => {
     const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
     console.log('Invite URL:', inviteUrl)
 
-    // For now, we'll return the invite URL and let the frontend handle email sending
-    // In a production environment, you would integrate with an email service here
-    console.log(`Invite created for ${email} with token ${inviteData.invite_token}`)
-    console.log(`Invite URL: ${inviteUrl}`)
+    // Create user directly using Supabase native system
+    // This will automatically send the confirmation email
+    try {
+      const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: false, // User needs to confirm email
+        user_metadata: {
+          invite_token: inviteData.invite_token,
+          role: role || 'franqueado'
+        }
+      })
+
+      if (createUserError) {
+        console.error('Supabase create user error:', createUserError)
+        throw new Error('Erro ao criar usuário: ' + createUserError.message)
+      }
+
+      console.log('User created successfully via Supabase:', newUser)
+      console.log('Confirmation email sent automatically by Supabase')
+    } catch (userError) {
+      console.error('User creation error:', userError)
+      throw new Error('Erro ao criar usuário: ' + (userError as Error).message)
+    }
 
     console.log('Invitation process completed')
 

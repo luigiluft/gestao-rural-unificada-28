@@ -132,8 +132,8 @@ export default function Franqueados() {
       setInviteLink(inviteUrl);
       
       toast({
-        title: "Convite criado",
-        description: "Use o link abaixo para enviar o convite por email ou WhatsApp. (Email automático será implementado em breve)",
+        title: "Convite enviado",
+        description: "O email de confirmação foi enviado automaticamente pelo Supabase. O franqueado deve verificar a caixa de entrada.",
       });
       
       // Reload the list to show new franchisees
@@ -240,46 +240,14 @@ export default function Franqueados() {
                     onChange={(e) => setInviteEmail(e.target.value)}
                   />
                 </div>
-                {inviteLink && (
-                  <div className="grid gap-2">
-                    <Label>Link de Convite</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        value={inviteLink} 
-                        readOnly 
-                        className="font-mono text-sm"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={copyInviteLink}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Copie este link e envie por email ou WhatsApp para o franqueado se cadastrar.
-                    </p>
-                  </div>
-                )}
               </div>
               <DialogFooter>
-                {inviteLink ? (
-                  <Button onClick={closeInviteDialog} className="w-full">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Concluído
-                  </Button>
-                ) : (
-                  <>
-                    <Button variant="secondary" onClick={closeInviteDialog}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                      {sendingInvite ? "Enviando..." : "Enviar convite"}
-                    </Button>
-                  </>
-                )}
+                <Button variant="secondary" onClick={closeInviteDialog}>
+                  Cancelar
+                </Button>
+                <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
+                  {sendingInvite ? "Enviando..." : "Enviar convite"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
