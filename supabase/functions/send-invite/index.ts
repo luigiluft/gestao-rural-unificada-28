@@ -12,15 +12,16 @@ serve(async (req) => {
   }
 
   try {
-    const { email, inviterUserId, parentUserId, role, permissions } = await req.json()
+    const requestBody = await req.json()
+    const { email, inviterUserId, parentUserId, role, permissions } = requestBody
     
-    console.log('Received invite request:', { email, inviterUserId, parentUserId, role, permissions })
+    console.log('Received request:', { email, inviterUserId, parentUserId, role, permissions })
 
     if (!email) {
       throw new Error('Email é obrigatório')
     }
 
-    // Create Supabase client with service role key for admin operations
+    // Create Supabase client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -32,26 +33,9 @@ serve(async (req) => {
       }
     )
 
-    console.log('Checking if user already exists:', email)
+    console.log('Supabase client created')
 
-    // Check if user already exists
-    const { data: existingUser, error: userCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(email)
-    
-    console.log('User check result:', { existingUser, userCheckError })
-
-    if (userCheckError && !userCheckError.message.includes('User not found')) {
-      console.error('Error checking user:', userCheckError)
-      throw userCheckError
-    }
-
-    if (existingUser && existingUser.user) {
-      console.log('User already exists:', email)
-      throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
-    }
-
-    console.log('Saving pending invite...')
-
-    // Save pending invite
+    // Save pending invite first
     const { error: inviteError } = await supabaseAdmin
       .from('pending_invites')
       .insert({
@@ -63,13 +47,13 @@ serve(async (req) => {
       })
 
     if (inviteError) {
-      console.error('Invite error:', inviteError)
-      throw inviteError
+      console.error('Pending invite error:', inviteError)
+      throw new Error('Erro ao salvar convite: ' + inviteError.message)
     }
 
-    console.log('Sending email invitation...')
+    console.log('Pending invite saved')
 
-    // Use admin API to invite user by email
+    // Send invitation email
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/completar-cadastro`,
       data: {
@@ -78,24 +62,24 @@ serve(async (req) => {
     })
 
     if (error) {
-      console.error('Invite error:', error)
-      if (error.message.includes('already been registered')) {
+      console.error('Invitation error:', error)
+      if (error.message.includes('already been registered') || error.message.includes('already exists')) {
         throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
       }
-      throw error
+      throw new Error('Erro ao enviar convite: ' + error.message)
     }
 
-    console.log('Invitation sent successfully:', data)
+    console.log('Invitation sent successfully')
 
     return new Response(
-      JSON.stringify({ success: true, data }),
+      JSON.stringify({ success: true, data: data }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       },
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
