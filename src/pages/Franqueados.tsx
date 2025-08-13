@@ -159,6 +159,12 @@ export default function Franqueados() {
     }
   };
 
+  const openInviteDialog = () => {
+    setInviteEmail(""); // Sempre limpar o email ao abrir
+    setInviteLink(null);
+    setInviteOpen(true);
+  };
+
   const closeInviteDialog = () => {
     setInviteOpen(false);
     setInviteEmail("");
@@ -202,9 +208,15 @@ export default function Franqueados() {
               Gerencie os franqueados e seus acessos.
             </p>
           </div>
-          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <Dialog open={inviteOpen} onOpenChange={(open) => {
+            if (open) {
+              openInviteDialog();
+            } else {
+              closeInviteDialog();
+            }
+          }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={openInviteDialog}>
                 <MailPlus className="mr-2" />
                 Convidar franqueado
               </Button>
