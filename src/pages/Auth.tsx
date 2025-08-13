@@ -16,24 +16,44 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [isInviteFlow, setIsInviteFlow] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [activeTab, setActiveTab] = useState("login");
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
 
   useEffect(() => {
-    if (session) navigate("/", { replace: true });
-  }, [session, navigate]);
+    // Don't redirect invited users to home page
+    if (session && !isInviteFlow) {
+      navigate("/", { replace: true });
+    }
+  }, [session, navigate, isInviteFlow]);
 
-  // Check for invite parameters in URL
+  // Check for invite parameters in URL and pre-fill email
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token') || urlParams.get('access_token');
     
     if (token) {
-      // User came from an invitation email - redirect to complete registration
-      navigate("/completar-cadastro" + window.location.search, { replace: true });
+      setIsInviteFlow(true);
+      setActiveTab("signup"); // Open signup tab for invited users
+      
+      // Try to get email from token
+      const getEmailFromToken = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser(token);
+          if (user?.email) {
+            setInviteEmail(user.email);
+            setEmail(user.email);
+          }
+        } catch (error) {
+          console.log('Could not get email from token:', error);
+        }
+      };
+      
+      getEmailFromToken();
     }
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     document.title = "Login | Sistema de Estoque";
@@ -93,7 +113,26 @@ export default function AuthPage() {
         options: { emailRedirectTo: redirectUrl, data: { nome: name } },
       });
       if (error) throw error;
-      toast.success("Conta criada! Verifique seu e-mail para confirmar o acesso.");
+      
+      // If this is an invite flow, mark the invite as used
+      if (isInviteFlow) {
+        try {
+          await supabase
+            .from('pending_invites')
+            .update({ used_at: new Date().toISOString() })
+            .eq('email', email.toLowerCase());
+        } catch (inviteError) {
+          console.log('Could not mark invite as used:', inviteError);
+        }
+        
+        toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");
+        // After successful signup in invite flow, go to login tab
+        setActiveTab("login");
+        setPassword("");
+        setConfirmPassword("");
+      } else {
+        toast.success("Conta criada! Verifique seu e-mail para confirmar o acesso.");
+      }
     } catch (err: any) {
       toast.error(err.message || "Não foi possível criar a conta");
     } finally {
@@ -106,10 +145,17 @@ export default function AuthPage() {
       <main className="w-full max-w-md">
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-center">Acesse sua conta</CardTitle>
+            <CardTitle className="text-center">
+              {isInviteFlow ? "Complete seu cadastro de franqueado" : "Acesse sua conta"}
+            </CardTitle>
+            {isInviteFlow && (
+              <p className="text-sm text-muted-foreground text-center">
+                Você foi convidado para se tornar um franqueado. Complete as informações abaixo.
+              </p>
+            )}
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="signup">Criar conta</TabsTrigger>
@@ -137,7 +183,20 @@ export default function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email2">E-mail</Label>
-                    <Input id="email2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Input 
+                      id="email2" 
+                      type="email" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      disabled={isInviteFlow && !!inviteEmail}
+                      className={isInviteFlow && !!inviteEmail ? "disabled:opacity-60" : ""}
+                      required 
+                    />
+                    {isInviteFlow && !!inviteEmail && (
+                      <p className="text-xs text-muted-foreground">
+                        Este email veio do seu convite de franqueado
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password2">Senha</Label>
