@@ -135,9 +135,9 @@ export default function AuthPage() {
       const mustChangePassword = data.user?.user_metadata?.must_change_password;
       
       if (mustChangePassword) {
-        // Show mandatory password change modal
-        setShowChangePassword(true);
-        toast.success("Login realizado! Por favor, altere sua senha padrão.");
+        // Redirect to profile security tab for first-time password change
+        toast.success("Login realizado! Redirecionando para alterar sua senha padrão.");
+        navigate("/perfil?tab=security", { replace: true });
       } else {
         toast.success("Login realizado com sucesso!");
         afterLoginRedirect();
@@ -277,64 +277,6 @@ export default function AuthPage() {
       setChangingPassword(false);
     }
   };
-
-  // Se precisa trocar senha, mostra apenas o modal obrigatório
-  if (showChangePassword) {
-    return (
-      <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 relative">
-        {/* Overlay que impede interação */}
-        <div className="absolute inset-0 bg-background/80 z-40" />
-        
-        {/* Modal obrigatório para alteração de senha */}
-        <div className="relative z-50 w-full max-w-md">
-          <Card className="shadow-card border-2 border-primary/20">
-            <CardHeader>
-              <CardTitle className="text-center text-destructive">
-                🔒 Alterar Senha Obrigatória
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  Por segurança, você deve alterar sua senha padrão antes de acessar a plataforma.
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nova senha</Label>
-                  <Input 
-                    id="newPassword" 
-                    type="password" 
-                    value={newPassword} 
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Digite sua nova senha (mín. 6 caracteres)"
-                    required 
-                    autoFocus
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmNewPassword">Confirmar nova senha</Label>
-                  <Input 
-                    id="confirmNewPassword" 
-                    type="password" 
-                    value={confirmNewPassword} 
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="Confirme sua nova senha"
-                    required 
-                  />
-                </div>
-                <Button 
-                  onClick={handleChangePassword} 
-                  className="w-full" 
-                  disabled={changingPassword || !newPassword || !confirmNewPassword}
-                >
-                  {changingPassword ? "Alterando..." : "Alterar Senha"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

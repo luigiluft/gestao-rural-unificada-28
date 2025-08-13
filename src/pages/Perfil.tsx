@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import { 
   User, 
   Mail, 
@@ -40,9 +41,12 @@ import { useToast } from "@/hooks/use-toast"
 export default function Perfil() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
   const [profile, setProfile] = useState({
     nome: "",
     email: "",
@@ -53,6 +57,14 @@ export default function Perfil() {
     estado: "",
     cep: "",
   })
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  })
+
+  // Get default tab from URL params
+  const defaultTab = searchParams.get("tab") || "personal"
 
   useEffect(() => {
     if (!user) return
@@ -110,6 +122,83 @@ export default function Perfil() {
       setIsEditing(false)
     }
     setSaving(false)
+  }
+
+  const handlePasswordChange = async () => {
+    if (!user) return
+
+    if (!passwordData.currentPassword.trim()) {
+      toast({ title: "Erro", description: "Informe sua senha atual", variant: "destructive" })
+      return
+    }
+
+    if (!passwordData.newPassword.trim()) {
+      toast({ title: "Erro", description: "Informe a nova senha", variant: "destructive" })
+      return
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({ title: "Erro", description: "As senhas não coincidem", variant: "destructive" })
+      return
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({ title: "Erro", description: "A senha deve ter pelo menos 6 caracteres", variant: "destructive" })
+      return
+    }
+
+    setChangingPassword(true)
+
+    try {
+      // First verify current password by attempting to sign in
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: passwordData.currentPassword
+      })
+
+      if (verifyError) {
+        toast({ title: "Erro", description: "Senha atual incorreta", variant: "destructive" })
+        setChangingPassword(false)
+        return
+      }
+
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      })
+
+      if (updateError) throw updateError
+
+      // Remove the must_change_password flag if it exists
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { must_change_password: false }
+      })
+
+      if (metadataError) {
+        console.error('Error updating metadata:', metadataError)
+      }
+
+      toast({ title: "Sucesso", description: "Senha alterada com sucesso!" })
+      
+      // Clear password fields
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      })
+
+      // If this was a mandatory password change, redirect to dashboard
+      if (user.user_metadata?.must_change_password) {
+        setTimeout(() => {
+          navigate("/", { replace: true })
+        }, 1500)
+      }
+
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível alterar a senha", variant: "destructive" })
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
   return (
@@ -174,7 +263,7 @@ export default function Perfil() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <Tabs defaultValue="personal" className="w-full">
+          <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="personal">Pessoal</TabsTrigger>
               <TabsTrigger value="business">Empresa</TabsTrigger>
@@ -435,24 +524,55 @@ export default function Perfil() {
                     Gerencie a segurança da sua conta
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Alterar Senha</h4>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="senhaAtual">Senha Atual</Label>
-                          <Input id="senhaAtual" type="password" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="novaSenha">Nova Senha</Label>
-                          <Input id="novaSenha" type="password" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="confirmarSenha">Confirmar Nova Senha</Label>
-                          <Input id="confirmarSenha" type="password" />
-                        </div>
-                        <Button>Alterar Senha</Button>
+                 <CardContent className="space-y-6">
+                   {user?.user_metadata?.must_change_password && (
+                     <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                       <h4 className="font-medium text-destructive mb-2">⚠️ Alteração de Senha Obrigatória</h4>
+                       <p className="text-sm text-muted-foreground">
+                         Por segurança, você deve alterar sua senha padrão antes de continuar usando a plataforma.
+                       </p>
+                     </div>
+                   )}
+                   <div className="space-y-4">
+                     <div>
+                       <h4 className="font-medium mb-2">Alterar Senha</h4>
+                       <div className="space-y-3">
+                         <div className="space-y-2">
+                           <Label htmlFor="senhaAtual">Senha Atual</Label>
+                           <Input 
+                             id="senhaAtual" 
+                             type="password" 
+                             value={passwordData.currentPassword}
+                             onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                             placeholder="Digite sua senha atual"
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="novaSenha">Nova Senha</Label>
+                           <Input 
+                             id="novaSenha" 
+                             type="password" 
+                             value={passwordData.newPassword}
+                             onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                             placeholder="Digite sua nova senha (mín. 6 caracteres)"
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="confirmarSenha">Confirmar Nova Senha</Label>
+                           <Input 
+                             id="confirmarSenha" 
+                             type="password" 
+                             value={passwordData.confirmPassword}
+                             onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                             placeholder="Confirme sua nova senha"
+                           />
+                         </div>
+                         <Button 
+                           onClick={handlePasswordChange}
+                           disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                         >
+                           {changingPassword ? "Alterando..." : "Alterar Senha"}
+                         </Button>
                       </div>
                     </div>
                     
