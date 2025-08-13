@@ -386,6 +386,63 @@ export type Database = {
           },
         ]
       }
+      pending_invites: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          inviter_user_id: string
+          parent_user_id: string | null
+          permissions: Database["public"]["Enums"]["permission_code"][]
+          role: Database["public"]["Enums"]["app_role"] | null
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          inviter_user_id: string
+          parent_user_id?: string | null
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          role?: Database["public"]["Enums"]["app_role"] | null
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          inviter_user_id?: string
+          parent_user_id?: string | null
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          role?: Database["public"]["Enums"]["app_role"] | null
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      produtores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           ativo: boolean | null

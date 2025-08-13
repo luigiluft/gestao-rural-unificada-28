@@ -30,8 +30,21 @@ export default function Usuarios() {
       toast({ title: "Informe um email", description: "Digite um email válido para enviar o convite.", variant: "destructive" });
       return;
     }
+    if (!user) return;
+
     try {
       setSendingInvite(true);
+
+      // Save pending invite - subconta with hierarchy and default permissions
+      const { error: inviteError } = await supabase.from("pending_invites").insert({
+        email: inviteEmail,
+        inviter_user_id: user.id,
+        parent_user_id: user.id, // hierarchy: admin becomes parent
+        permissions: ['estoque.view'], // default permission for subconta
+      });
+
+      if (inviteError) throw inviteError;
+
       const { error } = await supabase.auth.signInWithOtp({
         email: inviteEmail,
         options: {
@@ -39,7 +52,7 @@ export default function Usuarios() {
         },
       });
       if (error) throw error;
-      toast({ title: "Convite enviado", description: "Enviamos um link de acesso para o email informado." });
+      toast({ title: "Convite enviado", description: "Enviamos um link de acesso para o email informado. A subconta será automaticamente vinculada." });
       setInviteOpen(false);
       setInviteEmail("");
     } catch (err: any) {

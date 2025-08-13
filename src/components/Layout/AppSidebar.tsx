@@ -9,7 +9,8 @@ import {
   HelpCircle,
   User,
   Users,
-  Boxes
+  Boxes,
+  Tractor
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -105,6 +106,7 @@ export function AppSidebar() {
       base.splice(6, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
         { title: "Franqueados", url: "/franqueados", icon: Users },
+        { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     }
     return base

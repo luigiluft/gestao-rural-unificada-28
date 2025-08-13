@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { MailPlus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Franqueados() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [sendingInvite, setSendingInvite] = useState(false);
@@ -22,8 +24,22 @@ export default function Franqueados() {
       });
       return;
     }
+    if (!user) return;
+
     try {
       setSendingInvite(true);
+
+      // Save pending invite with franqueado role and hierarchy
+      const { error: inviteError } = await supabase.from("pending_invites").insert({
+        email: inviteEmail,
+        inviter_user_id: user.id,
+        parent_user_id: user.id, // hierarchy: admin becomes parent
+        role: "franqueado",
+        permissions: ['estoque.view', 'estoque.manage', 'entradas.manage', 'saidas.manage'], // full permissions for franqueado
+      });
+
+      if (inviteError) throw inviteError;
+
       const { error } = await supabase.auth.signInWithOtp({
         email: inviteEmail,
         options: {
@@ -33,7 +49,7 @@ export default function Franqueados() {
       if (error) throw error;
       toast({
         title: "Convite enviado",
-        description: "Enviamos um link de acesso para o email informado.",
+        description: "Enviamos um link de acesso para o email informado. O franqueado será automaticamente configurado.",
       });
       setInviteOpen(false);
       setInviteEmail("");
