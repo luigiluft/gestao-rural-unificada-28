@@ -23,6 +23,11 @@ export default function AuthPage() {
   const { session } = useAuth();
 
   useEffect(() => {
+    // If user has a session but came from invite, force logout to complete registration
+    if (session && isInviteFlow) {
+      supabase.auth.signOut();
+      return;
+    }
     // Don't redirect invited users to home page
     if (session && !isInviteFlow) {
       navigate("/", { replace: true });
