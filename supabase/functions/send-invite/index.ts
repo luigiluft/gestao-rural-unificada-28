@@ -13,6 +13,12 @@ serve(async (req) => {
 
   try {
     const { email, inviterUserId, parentUserId, role, permissions } = await req.json()
+    
+    console.log('Received invite request:', { email, inviterUserId, parentUserId, role, permissions })
+
+    if (!email) {
+      throw new Error('Email é obrigatório')
+    }
 
     // Create Supabase client with service role key for admin operations
     const supabaseAdmin = createClient(
@@ -26,9 +32,13 @@ serve(async (req) => {
       }
     )
 
+    console.log('Checking if user already exists:', email)
+
     // Check if user already exists
     const { data: existingUser, error: userCheckError } = await supabaseAdmin.auth.admin.getUserByEmail(email)
     
+    console.log('User check result:', { existingUser, userCheckError })
+
     if (userCheckError && !userCheckError.message.includes('User not found')) {
       console.error('Error checking user:', userCheckError)
       throw userCheckError
@@ -38,6 +48,8 @@ serve(async (req) => {
       console.log('User already exists:', email)
       throw new Error('Este email já possui uma conta cadastrada. Use um email diferente.')
     }
+
+    console.log('Saving pending invite...')
 
     // Save pending invite
     const { error: inviteError } = await supabaseAdmin
@@ -51,8 +63,11 @@ serve(async (req) => {
       })
 
     if (inviteError) {
+      console.error('Invite error:', inviteError)
       throw inviteError
     }
+
+    console.log('Sending email invitation...')
 
     // Use admin API to invite user by email
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
@@ -69,6 +84,8 @@ serve(async (req) => {
       }
       throw error
     }
+
+    console.log('Invitation sent successfully:', data)
 
     return new Response(
       JSON.stringify({ success: true, data }),
