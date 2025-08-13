@@ -37,20 +37,16 @@ export default function CompletarCadastro() {
     }
   }, []);
 
-  // Redirect if user is already fully registered
+  // Check if user came from invite confirmation
   useEffect(() => {
-    if (user && session) {
-      // Check if this is a new signup by checking URL params
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      const type = searchParams.get('type');
-      
-      // If no tokens in URL, user is already logged in and completed registration
-      if (!accessToken && !refreshToken && type !== 'signup') {
-        navigate('/');
-      }
+    const token = searchParams.get('token');
+    const type = searchParams.get('type');
+    
+    if (!token || type !== 'invite') {
+      // If not from invite, redirect to auth
+      navigate('/auth');
     }
-  }, [user, session, navigate, searchParams]);
+  }, [searchParams, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -92,6 +88,21 @@ export default function CompletarCadastro() {
     try {
       setLoading(true);
 
+      const token = searchParams.get('token');
+      const type = searchParams.get('type');
+
+      if (!token || type !== 'invite') {
+        throw new Error('Token de convite inválido');
+      }
+
+      // Complete the signup process with the token and user's password
+      const { error: signUpError } = await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'invite'
+      });
+
+      if (signUpError) throw signUpError;
+
       // Update user password
       const { error: passwordError } = await supabase.auth.updateUser({
         password: formData.senha
@@ -100,23 +111,30 @@ export default function CompletarCadastro() {
       if (passwordError) throw passwordError;
 
       // Update profile information
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          nome: formData.nome,
-          telefone: formData.telefone || null,
-          empresa: formData.empresa || null,
-        })
-        .eq('user_id', user?.id);
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (currentUser) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            nome: formData.nome,
+            telefone: formData.telefone || null,
+            empresa: formData.empresa || null,
+          })
+          .eq('user_id', currentUser.id);
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+      }
+
+      // Sign out the user so they need to login manually
+      await supabase.auth.signOut();
 
       toast({
         title: "Cadastro completado!",
-        description: "Seu cadastro foi finalizado com sucesso.",
+        description: "Agora você pode fazer login com seu email e senha.",
       });
 
-      navigate('/');
+      navigate('/auth');
     } catch (err: any) {
       toast({
         title: "Erro ao completar cadastro",

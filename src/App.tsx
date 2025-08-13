@@ -34,7 +34,7 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastroPage /></RequireAuth>} />
+            <Route path="/completar-cadastro" element={<CompletarCadastroPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<Dashboard />} />
               <Route path="catalogo" element={<Catalogo />} />
