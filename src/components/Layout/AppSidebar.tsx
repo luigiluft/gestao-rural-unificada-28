@@ -10,7 +10,8 @@ import {
   User,
   Users,
   Boxes,
-  Tractor
+  Tractor,
+  UserCheck
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -37,6 +38,7 @@ const menuItems = [
   { title: "Saídas", url: "/saidas", icon: LogOut },
   { title: "Rastreio", url: "/rastreio", icon: MapPin },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
+  { title: "Subcontas", url: "/subcontas", icon: UserCheck },
   { title: "Suporte", url: "/suporte", icon: HelpCircle },
   { title: "Perfil", url: "/perfil", icon: User },
 ]

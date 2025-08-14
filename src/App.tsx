@@ -18,6 +18,7 @@ import AuthPage from "./pages/Auth";
 import Franqueados from "./pages/Franqueados";
 import Usuarios from "./pages/Usuarios";
 import Produtores from "./pages/Produtores";
+import Subcontas from "./pages/Subcontas";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
               <Route path="franqueados" element={<RequireAdmin><Franqueados /></RequireAdmin>} />
               <Route path="produtores" element={<RequireAdminOrFranqueado><Produtores /></RequireAdminOrFranqueado>} />
+              <Route path="subcontas" element={<Subcontas />} />
               <Route path="suporte" element={<Suporte />} />
               <Route path="perfil" element={<Perfil />} />
               <Route path="*" element={<NotFound />} />
