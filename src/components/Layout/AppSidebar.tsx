@@ -11,7 +11,8 @@ import {
   Users,
   Boxes,
   Tractor,
-  UserCheck
+  UserCheck,
+  Building2
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -112,6 +113,7 @@ export function AppSidebar() {
     if (isAdmin) {
       base.splice(7, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
+        { title: "Franquias", url: "/franquias", icon: Building2 },
         { title: "Franqueados", url: "/franqueados", icon: Users },
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )

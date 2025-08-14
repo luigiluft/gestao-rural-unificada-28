@@ -38,7 +38,7 @@ export default function Subcontas() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>('produtor');
-  const [selectedFranqueado, setSelectedFranqueado] = useState<string>("");
+  const [selectedFranquia, setSelectedFranquia] = useState<string>("");
   const [invitePermissions, setInvitePermissions] = useState<Record<PermissionCode, boolean>>({
     'estoque.view': false,
     'estoque.manage': false,
@@ -141,25 +141,28 @@ export default function Subcontas() {
     },
   });
 
-  // Get list of franqueados for admin selection
-  const { data: franqueados = [] } = useQuery({
-    queryKey: ["franqueados-list"],
-    enabled: userRole === 'admin',
+  // Get list of franquias for admin selection
+  const { data: franquias = [] } = useQuery({
+    queryKey: ["franquias-list"],
+    enabled: userRole === 'admin' && inviteRole === 'produtor',
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_roles")
+        .from("franquias")
         .select(`
-          user_id,
-          profiles!inner(user_id, nome, email)
+          id,
+          nome,
+          master_franqueado_id,
+          profiles!franquias_master_franqueado_id_fkey(nome, email)
         `)
-        .eq("role", "franqueado");
+        .eq("ativo", true);
       
       if (error) throw error;
       
       return (data ?? []).map((item: any) => ({
-        user_id: item.profiles.user_id,
-        nome: item.profiles.nome,
-        email: item.profiles.email,
+        id: item.id,
+        nome: item.nome,
+        master_franqueado_id: item.master_franqueado_id,
+        master_nome: item.profiles.nome || item.profiles.email,
       }));
     },
   });
@@ -170,11 +173,11 @@ export default function Subcontas() {
       return;
     }
 
-    // Validate franqueado selection for admin creating produtor
-    if (userRole === 'admin' && inviteRole === 'produtor' && !selectedFranqueado) {
+    // Validate franquia selection for admin creating produtor
+    if (userRole === 'admin' && inviteRole === 'produtor' && !selectedFranquia) {
       toast({ 
-        title: "Franqueado obrigatório", 
-        description: "Selecione um franqueado para associar ao produtor.", 
+        title: "Franquia obrigatória", 
+        description: "Selecione uma franquia para associar ao produtor.", 
         variant: "destructive" 
       });
       return;
@@ -183,14 +186,19 @@ export default function Subcontas() {
     try {
       setSendingInvite(true);
 
-      // Determine parent user based on role and rules
+      // Determine parent user and franquia based on role and rules
       let parentUserId = user.id;
+      let franquiaId = null;
       
       if (userRole === 'admin' && inviteRole === 'produtor') {
-        // Admin creating produtor: use selected franqueado
-        parentUserId = selectedFranqueado;
+        // Admin creating produtor: use selected franquia's master
+        const selectedFranquiaData = franquias.find(f => f.id === selectedFranquia);
+        if (selectedFranquiaData) {
+          parentUserId = selectedFranquiaData.master_franqueado_id;
+          franquiaId = selectedFranquia;
+        }
       } else if (userRole === 'franqueado' || userRole === 'produtor') {
-        // Franqueado or subconta creating: find the master franqueado
+        // Franqueado or subconta creating: find the master franqueado and franquia
         const { data: hierarchy } = await supabase
           .from("user_hierarchy")
           .select(`
@@ -205,7 +213,19 @@ export default function Subcontas() {
           // This user is a subconta, use the master franqueado
           parentUserId = hierarchy.parent_user_id;
         }
-        // If no hierarchy found, user is already a master franqueado, use user.id
+        
+        // Get the franquia for this user/master
+        if (inviteRole === 'produtor') {
+          const { data: franquiaData } = await supabase
+            .from("franquias")
+            .select("id")
+            .eq("master_franqueado_id", parentUserId)
+            .maybeSingle();
+          
+          if (franquiaData) {
+            franquiaId = franquiaData.id;
+          }
+        }
       }
 
       // Get selected permissions
@@ -213,13 +233,20 @@ export default function Subcontas() {
         .filter(([, selected]) => selected)
         .map(([permission]) => permission);
 
-      const { error: inviteError } = await supabase.from("pending_invites").insert({
+      const inviteData: any = {
         email: inviteEmail,
         inviter_user_id: user.id,
         parent_user_id: parentUserId,
         role: inviteRole,
         permissions: selectedPermissions,
-      });
+      };
+
+      // Add franquia_id for produtor invites
+      if (inviteRole === 'produtor' && franquiaId) {
+        inviteData.franquia_id = franquiaId;
+      }
+
+      const { error: inviteError } = await supabase.from("pending_invites").insert(inviteData);
 
       if (inviteError) throw inviteError;
 
@@ -240,7 +267,7 @@ export default function Subcontas() {
       setInviteOpen(false);
       setInviteEmail("");
       setInviteRole('produtor');
-      setSelectedFranqueado("");
+      setSelectedFranquia("");
       setInvitePermissions({
         'estoque.view': false,
         'estoque.manage': false,
@@ -399,15 +426,15 @@ export default function Subcontas() {
                 </div>
                 {userRole === 'admin' && inviteRole === 'produtor' && (
                   <div className="grid gap-2">
-                    <Label htmlFor="franqueado-select">Franqueado Master *</Label>
-                    <Select value={selectedFranqueado} onValueChange={setSelectedFranqueado}>
+                    <Label htmlFor="franquia-select">Franquia *</Label>
+                    <Select value={selectedFranquia} onValueChange={setSelectedFranquia}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um franqueado" />
+                        <SelectValue placeholder="Selecione uma franquia" />
                       </SelectTrigger>
                       <SelectContent>
-                        {franqueados.map((franqueado) => (
-                          <SelectItem key={franqueado.user_id} value={franqueado.user_id}>
-                            {franqueado.nome || franqueado.email}
+                        {franquias.map((franquia) => (
+                          <SelectItem key={franquia.id} value={franquia.id}>
+                            {franquia.nome} - {franquia.master_nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -438,7 +465,7 @@ export default function Subcontas() {
                   setInviteOpen(false);
                   setInviteEmail("");
                   setInviteRole('produtor');
-                  setSelectedFranqueado("");
+                  setSelectedFranquia("");
                   setInvitePermissions({
                     'estoque.view': false,
                     'estoque.manage': false,

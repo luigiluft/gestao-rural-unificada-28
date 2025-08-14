@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -323,6 +323,54 @@ export type Database = {
         }
         Relationships: []
       }
+      franquias: {
+        Row: {
+          ativo: boolean | null
+          cep: string | null
+          cidade: string | null
+          created_at: string | null
+          descricao: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          master_franqueado_id: string
+          nome: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          master_franqueado_id: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          master_franqueado_id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           created_at: string
@@ -426,6 +474,7 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          franquia_id: string | null
           id: string
           updated_at: string
           user_id: string
@@ -433,6 +482,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           created_at?: string
+          franquia_id?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -440,11 +490,20 @@ export type Database = {
         Update: {
           ativo?: boolean
           created_at?: string
+          franquia_id?: string | null
           id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produtores_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtos: {
         Row: {
@@ -782,36 +841,40 @@ export type Database = {
     }
     Functions: {
       can_view_user_data: {
-        Args: { _viewer: string; _owner: string }
+        Args: { _owner: string; _viewer: string }
         Returns: boolean
       }
       check_user_role_safe: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       complete_invite_signup: {
-        Args: { _user_id: string; _email: string }
+        Args: { _email: string; _user_id: string }
         Returns: boolean
+      }
+      get_user_franquia: {
+        Args: { _user_id: string }
+        Returns: string
       }
       has_permission: {
         Args: {
-          _user_id: string
           _perm: Database["public"]["Enums"]["permission_code"]
+          _user_id: string
         }
         Returns: boolean
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       is_ancestor: {
-        Args: { _parent: string; _child: string }
+        Args: { _child: string; _parent: string }
         Returns: boolean
       }
     }
