@@ -38,6 +38,7 @@ export default function Subcontas() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>('produtor');
+  const [selectedFranqueado, setSelectedFranqueado] = useState<string>("");
   const [invitePermissions, setInvitePermissions] = useState<Record<PermissionCode, boolean>>({
     'estoque.view': false,
     'estoque.manage': false,
@@ -140,14 +141,72 @@ export default function Subcontas() {
     },
   });
 
+  // Get list of franqueados for admin selection
+  const { data: franqueados = [] } = useQuery({
+    queryKey: ["franqueados-list"],
+    enabled: userRole === 'admin',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select(`
+          user_id,
+          profiles!inner(user_id, nome, email)
+        `)
+        .eq("role", "franqueado");
+      
+      if (error) throw error;
+      
+      return (data ?? []).map((item: any) => ({
+        user_id: item.profiles.user_id,
+        nome: item.profiles.nome,
+        email: item.profiles.email,
+      }));
+    },
+  });
+
   const sendInvite = async () => {
     if (!inviteEmail || !user) {
       toast({ title: "Dados incompletos", description: "Informe email e função.", variant: "destructive" });
       return;
     }
 
+    // Validate franqueado selection for admin creating produtor
+    if (userRole === 'admin' && inviteRole === 'produtor' && !selectedFranqueado) {
+      toast({ 
+        title: "Franqueado obrigatório", 
+        description: "Selecione um franqueado para associar ao produtor.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     try {
       setSendingInvite(true);
+
+      // Determine parent user based on role and rules
+      let parentUserId = user.id;
+      
+      if (userRole === 'admin' && inviteRole === 'produtor') {
+        // Admin creating produtor: use selected franqueado
+        parentUserId = selectedFranqueado;
+      } else if (userRole === 'franqueado' || userRole === 'produtor') {
+        // Franqueado or subconta creating: find the master franqueado
+        const { data: hierarchy } = await supabase
+          .from("user_hierarchy")
+          .select(`
+            parent_user_id,
+            user_roles!inner(role)
+          `)
+          .eq("child_user_id", user.id)
+          .eq("user_roles.role", "franqueado")
+          .maybeSingle();
+        
+        if (hierarchy?.parent_user_id) {
+          // This user is a subconta, use the master franqueado
+          parentUserId = hierarchy.parent_user_id;
+        }
+        // If no hierarchy found, user is already a master franqueado, use user.id
+      }
 
       // Get selected permissions
       const selectedPermissions: PermissionCode[] = (Object.entries(invitePermissions) as [PermissionCode, boolean][])
@@ -157,7 +216,7 @@ export default function Subcontas() {
       const { error: inviteError } = await supabase.from("pending_invites").insert({
         email: inviteEmail,
         inviter_user_id: user.id,
-        parent_user_id: user.id,
+        parent_user_id: parentUserId,
         role: inviteRole,
         permissions: selectedPermissions,
       });
@@ -181,6 +240,7 @@ export default function Subcontas() {
       setInviteOpen(false);
       setInviteEmail("");
       setInviteRole('produtor');
+      setSelectedFranqueado("");
       setInvitePermissions({
         'estoque.view': false,
         'estoque.manage': false,
@@ -337,6 +397,23 @@ export default function Subcontas() {
                     </SelectContent>
                   </Select>
                 </div>
+                {userRole === 'admin' && inviteRole === 'produtor' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="franqueado-select">Franqueado Master *</Label>
+                    <Select value={selectedFranqueado} onValueChange={setSelectedFranqueado}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um franqueado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {franqueados.map((franqueado) => (
+                          <SelectItem key={franqueado.user_id} value={franqueado.user_id}>
+                            {franqueado.nome || franqueado.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="grid gap-2">
                   <Label>Permissões</Label>
                   <div className="grid gap-3 p-3 border rounded-lg">
@@ -361,6 +438,7 @@ export default function Subcontas() {
                   setInviteOpen(false);
                   setInviteEmail("");
                   setInviteRole('produtor');
+                  setSelectedFranqueado("");
                   setInvitePermissions({
                     'estoque.view': false,
                     'estoque.manage': false,
