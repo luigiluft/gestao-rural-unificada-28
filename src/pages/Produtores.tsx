@@ -67,22 +67,11 @@ export default function Produtores() {
   const { data: franqueados } = useQuery({
     queryKey: ["franqueados-for-invite"],
     queryFn: async () => {
-      // Get users with franqueado role
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "franqueado");
-      
-      if (roleError) throw roleError;
-      
-      if (!roleData || roleData.length === 0) return [];
-      
-      const userIds = roleData.map(r => r.user_id);
-      
+      // Get users with franqueado role directly from profiles
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, nome")
-        .in("user_id", userIds);
+        .eq("role", "franqueado");
       
       if (error) throw error;
       return (data ?? []) as FranqueadoOption[];

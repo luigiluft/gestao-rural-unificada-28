@@ -112,8 +112,9 @@ export default function Usuarios() {
     const alreadyAdmin = roleMap?.get(userId) === "Admin";
     if (alreadyAdmin) return;
     const { error } = await supabase
-      .from("user_roles")
-      .upsert({ user_id: userId, role: "admin" as any }, { onConflict: "user_id,role" });
+      .from("profiles")
+      .update({ role: "admin" })
+      .eq("user_id", userId);
     if (error) {
       toast({ title: "Erro ao promover", description: error.message, variant: "destructive" });
     } else {

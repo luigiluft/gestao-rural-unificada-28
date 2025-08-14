@@ -16,13 +16,13 @@ export function RequireAdminOrFranqueado({ children }: { children: ReactNode }) 
         return;
       }
       try {
-        const { data: roles } = await supabase
-          .from("user_roles")
+        const { data: profile } = await supabase
+          .from("profiles")
           .select("role")
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .single();
         
-        const hasRequiredRole = Array.isArray(roles) && 
-          roles.some((r: any) => r.role === "admin" || r.role === "franqueado");
+        const hasRequiredRole = profile?.role === "admin" || profile?.role === "franqueado";
         
         if (!hasRequiredRole) {
           navigate("/", { replace: true, state: { from: location.pathname } });

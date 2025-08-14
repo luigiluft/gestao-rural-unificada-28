@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user_id: u.id,
             nome: displayName,
             email: u.email ?? null,
+            role: 'produtor', // role padrão
           });
         }
 

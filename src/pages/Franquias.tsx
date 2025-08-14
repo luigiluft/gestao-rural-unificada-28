@@ -90,11 +90,8 @@ const Franquias = () => {
     queryKey: ["franqueados-masters"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("user_roles")
-        .select(`
-          user_id,
-          profiles!inner(user_id, nome, email)
-        `)
+        .from("profiles")
+        .select("user_id, nome, email")
         .eq("role", "franqueado");
       
       if (error) throw error;
@@ -104,9 +101,9 @@ const Franquias = () => {
       
       return (data ?? [])
         .map((item: any) => ({
-          user_id: item.profiles.user_id,
-          nome: item.profiles.nome,
-          email: item.profiles.email,
+          user_id: item.user_id,
+          nome: item.nome,
+          email: item.email,
         }))
         .filter((fm: FranqueadoMaster) => 
           editingFranquia 

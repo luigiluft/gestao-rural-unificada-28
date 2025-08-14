@@ -168,12 +168,13 @@ export default function AuthPage() {
             console.log('Invite processed successfully, result:', rpcResult);
             
             // Verify the role was actually assigned
-            const { data: userRoles, error: rolesError } = await supabase
-              .from('user_roles')
-              .select('*')
-              .eq('user_id', data.user.id);
+            const { data: profile, error: rolesError } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('user_id', data.user.id)
+              .single();
             
-            console.log('User roles after processing invite:', userRoles, 'Error:', rolesError);
+            console.log('User profile after processing invite:', profile, 'Error:', rolesError);
             
             toast.success("Convite processado com sucesso! Redirecionando...");
             // Force page reload to update role

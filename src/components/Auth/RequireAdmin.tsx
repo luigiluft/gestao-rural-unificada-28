@@ -24,12 +24,13 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
           setChecking(false);
           return;
         }
-        const { data: roles } = await supabase
-          .from("user_roles")
+        // Fallback: check directly in profiles table
+        const { data: profile } = await supabase
+          .from("profiles")
           .select("role")
-          .eq("user_id", user.id);
-        const isAdmin = Array.isArray(roles) && roles.some((r: any) => r.role === "admin");
-        if (!isAdmin) {
+          .eq("user_id", user.id)
+          .single();
+        if (profile?.role !== "admin") {
           navigate("/", { replace: true, state: { from: location.pathname } });
         }
       } finally {

@@ -569,6 +569,7 @@ export type Database = {
           estado: string | null
           id: string
           nome: string
+          role: Database["public"]["Enums"]["app_role"]
           telefone: string | null
           updated_at: string
           user_id: string
@@ -583,6 +584,7 @@ export type Database = {
           estado?: string | null
           id?: string
           nome: string
+          role: Database["public"]["Enums"]["app_role"]
           telefone?: string | null
           updated_at?: string
           user_id: string
@@ -597,6 +599,7 @@ export type Database = {
           estado?: string | null
           id?: string
           nome?: string
+          role?: Database["public"]["Enums"]["app_role"]
           telefone?: string | null
           updated_at?: string
           user_id?: string
@@ -825,27 +828,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -865,6 +847,10 @@ export type Database = {
       complete_invite_signup: {
         Args: { _email: string; _user_id: string }
         Returns: boolean
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_franquia: {
         Args: { _user_id: string }

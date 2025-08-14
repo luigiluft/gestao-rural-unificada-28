@@ -33,39 +33,23 @@ export default function Franqueados() {
       setLoading(true);
       console.log('Loading franqueados...');
       
-      // Get user_roles with franqueado role, then join with profiles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'franqueado');
-
-      console.log('User roles result:', { userRoles, rolesError });
-
-      if (rolesError) {
-        console.error('Roles error:', rolesError);
-        throw rolesError;
-      }
-
-      if (!userRoles || userRoles.length === 0) {
-        console.log('No franqueados found');
-        setFranqueados([]);
-        return;
-      }
-
-      const userIds = userRoles.map(role => role.user_id);
-      console.log('User IDs:', userIds);
-
-      // Get profiles for users with franqueado role
+      // Get profiles with franqueado role directly
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, email, created_at')
-        .in('user_id', userIds);
+        .eq('role', 'franqueado');
 
       console.log('Profiles result:', { profiles, profilesError });
 
       if (profilesError) {
         console.error('Profiles error:', profilesError);
         throw profilesError;
+      }
+
+      if (!profiles || profiles.length === 0) {
+        console.log('No franqueados found');
+        setFranqueados([]);
+        return;
       }
 
       // Check if there are pending invites that haven't been completed

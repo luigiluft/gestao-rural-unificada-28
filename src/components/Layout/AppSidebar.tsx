@@ -78,14 +78,15 @@ export function AppSidebar() {
         return
       }
       try {
-        const { data: roles } = await supabase
-          .from('user_roles')
+        const { data: profile } = await supabase
+          .from('profiles')
           .select('role')
           .eq('user_id', user.id)
+          .single()
         
-        if (Array.isArray(roles)) {
-          setIsAdmin(roles.some((r: any) => r.role === 'admin'))
-          setIsFranqueado(roles.some((r: any) => r.role === 'franqueado'))
+        if (profile?.role) {
+          setIsAdmin(profile.role === 'admin')
+          setIsFranqueado(profile.role === 'franqueado')
         } else {
           setIsAdmin(false)
           setIsFranqueado(false)
