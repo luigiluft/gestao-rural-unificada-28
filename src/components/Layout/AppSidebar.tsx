@@ -110,13 +110,13 @@ export function AppSidebar() {
   const items = (() => {
     const base = [...menuItems]
     if (isAdmin) {
-      base.splice(6, 0,
+      base.splice(7, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
         { title: "Franqueados", url: "/franqueados", icon: Users },
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     } else if (isFranqueado) {
-      base.splice(6, 0,
+      base.splice(7, 0,
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     }
