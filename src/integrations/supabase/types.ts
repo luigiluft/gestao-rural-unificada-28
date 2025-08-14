@@ -438,6 +438,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          franquia_id: string | null
           id: string
           invite_token: string | null
           inviter_user_id: string
@@ -449,6 +450,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          franquia_id?: string | null
           id?: string
           invite_token?: string | null
           inviter_user_id: string
@@ -460,6 +462,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          franquia_id?: string | null
           id?: string
           invite_token?: string | null
           inviter_user_id?: string
@@ -468,7 +471,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"] | null
           used_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pending_invites_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtores: {
         Row: {
