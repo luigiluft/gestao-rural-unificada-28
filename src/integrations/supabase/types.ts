@@ -269,6 +269,51 @@ export type Database = {
           },
         ]
       }
+      fazendas: {
+        Row: {
+          ativo: boolean
+          cep: string | null
+          cidade: string | null
+          created_at: string
+          endereco: string
+          estado: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nome: string
+          produtor_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          endereco: string
+          estado?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome: string
+          produtor_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          endereco?: string
+          estado?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+          produtor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fornecedores: {
         Row: {
           ativo: boolean | null

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2 } from "lucide-react"
 import { useEstoque } from "@/hooks/useEstoque"
 import { useAuth } from "@/contexts/AuthContext"
-import { useProfile, useProdutores } from "@/hooks/useProfile"
+import { useProfile, useProdutores, useFazendas } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
@@ -40,7 +40,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     destinatario: "",
     observacoes: "",
     deposito_id: "",
-    produtor_destinatario: ""
+    produtor_destinatario: "",
+    fazenda_id: ""
   })
 
   const [itens, setItens] = useState<ItemSaida[]>([])
@@ -54,14 +55,18 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     valor_total: 0
   })
 
+  // Detectar tipo de usuário
+  const isProdutor = profile?.role === 'produtor'
+  const isFranqueado = profile?.role === 'franqueado'
+  
+  // Get the target producer ID for farms (current user if producer, selected producer if franchisee)
+  const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
+  const { data: fazendas } = useFazendas(targetProdutorId)
+
   // Filtrar estoque disponível (quantidade > 0)
   const estoqueDisponivel = estoque?.filter(item => 
     (item.quantidade_atual || 0) > 0
   ) || []
-
-  // Detectar tipo de usuário
-  const isProdutor = profile?.role === 'produtor'
-  const isFranqueado = profile?.role === 'franqueado'
 
   const handleProdutoChange = (produtoId: string) => {
     const produto = estoqueDisponivel.find(item => item.id === produtoId)
@@ -398,13 +403,38 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
               </div>
             </div>
 
+            {/* Seleção de Fazenda - aparece quando tipo é entrega_propriedade */}
+            {dadosSaida.tipo_saida === "entrega_propriedade" && (
+              <div className="space-y-2">
+                <Label htmlFor="fazenda_id">Fazenda para Entrega</Label>
+                <Select 
+                  value={dadosSaida.fazenda_id} 
+                  onValueChange={(value) => setDadosSaida(prev => ({ ...prev, fazenda_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a fazenda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fazendas?.map((fazenda) => (
+                      <SelectItem key={fazenda.id} value={fazenda.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{fazenda.nome}</span>
+                          <span className="text-xs text-muted-foreground">{fazenda.endereco}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="observacoes">Observações</Label>
               <Textarea
                 id="observacoes"
                 value={dadosSaida.observacoes}
                 onChange={(e) => setDadosSaida(prev => ({ ...prev, observacoes: e.target.value }))}
-                placeholder={isProdutor ? "Local de entrega, instruções especiais..." : "Observações sobre a saída..."}
+                placeholder={isProdutor ? "Instruções especiais..." : "Observações sobre a saída..."}
                 rows={3}
               />
             </div>

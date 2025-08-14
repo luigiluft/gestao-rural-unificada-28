@@ -38,3 +38,26 @@ export const useProdutores = () => {
     },
   })
 }
+
+export const useFazendas = (produtorId?: string) => {
+  return useQuery({
+    queryKey: ["fazendas", produtorId],
+    queryFn: async () => {
+      let query = supabase
+        .from("fazendas")
+        .select("*")
+        .eq("ativo", true)
+        .order("nome")
+
+      if (produtorId) {
+        query = query.eq("produtor_id", produtorId)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!produtorId,
+  })
+}
