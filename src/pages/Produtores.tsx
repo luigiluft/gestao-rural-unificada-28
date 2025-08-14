@@ -89,25 +89,45 @@ export default function Produtores() {
   });
 
   // Fetch produtores with profiles
-  const { data: produtores, isLoading } = useQuery({
+  const { data: produtores, isLoading, error } = useQuery({
     queryKey: ["produtores-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("produtores")
-        .select(`
-          user_id,
-          ativo,
-          created_at,
-          profiles!inner(nome, email)
-        `);
-      if (error) throw error;
-      return (data ?? []).map((p: any) => ({
-        user_id: p.user_id,
-        nome: p.profiles?.nome || null,
-        email: p.profiles?.email || null,
-        ativo: p.ativo,
-        created_at: p.created_at,
-      })) as ProdutorRow[];
+      try {
+        // First get produtores
+        const { data: produtoresData, error: produtoresError } = await supabase
+          .from("produtores")
+          .select("user_id, ativo, created_at");
+        
+        if (produtoresError) throw produtoresError;
+        if (!produtoresData || produtoresData.length === 0) return [];
+
+        // Then get profiles for those users
+        const userIds = produtoresData.map(p => p.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, nome, email")
+          .in("user_id", userIds);
+        
+        if (profilesError) {
+          console.warn("Error fetching profiles:", profilesError);
+          // Continue without profiles data if there's an error
+        }
+
+        // Combine the data
+        return produtoresData.map((p: any) => {
+          const profile = profilesData?.find(prof => prof.user_id === p.user_id);
+          return {
+            user_id: p.user_id,
+            nome: profile?.nome || null,
+            email: profile?.email || null,
+            ativo: p.ativo,
+            created_at: p.created_at,
+          };
+        }) as ProdutorRow[];
+      } catch (err) {
+        console.error("Error fetching produtores:", err);
+        throw err;
+      }
     },
   });
 
@@ -247,8 +267,19 @@ export default function Produtores() {
 
       <section className="rounded-lg border border-border bg-card p-4">
         {isLoading ? (
-          <div className="text-muted-foreground">Carregando produtores...</div>
-        ) : (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-muted-foreground">Carregando produtores...</div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <p className="text-destructive mb-2">Erro ao carregar produtores</p>
+              <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["produtores-list"] })}>
+                Tentar novamente
+              </Button>
+            </div>
+          </div>
+        ) : produtores && produtores.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -260,7 +291,7 @@ export default function Produtores() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {produtores?.map((p) => (
+              {produtores.map((p) => (
                 <TableRow key={p.user_id}>
                   <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
                   <TableCell>{p.email ?? "—"}</TableCell>
@@ -277,15 +308,22 @@ export default function Produtores() {
                   </TableCell>
                 </TableRow>
               ))}
-              {produtores?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Nenhum produtor cadastrado
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+              <MailPlus className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Nenhum produtor cadastrado</h3>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Comece convidando produtores rurais para gerenciar seu estoque e operações no sistema.
+            </p>
+            <Button onClick={() => setInviteOpen(true)}>
+              <MailPlus className="mr-2 h-4 w-4" />
+              Convidar primeiro produtor
+            </Button>
+          </div>
         )}
       </section>
     </div>
