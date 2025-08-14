@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MailPlus, Settings2 } from "lucide-react";
+import { MailPlus, Settings2, Copy, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProdutorRow {
@@ -50,6 +50,7 @@ export default function Produtores() {
     'saidas.manage': false,
   });
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteCredentials, setInviteCredentials] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Produtores | AgroStock";
@@ -163,20 +164,16 @@ export default function Produtores() {
       
       if (error) throw error;
       
-      // Show success message with login credentials
+      // Show credentials in the modal instead of copying automatically
       const credentials = `Email: ${inviteEmail}\nSenha: ${data.default_password}`;
+      setInviteCredentials(credentials);
       
       toast({
         title: "Produtor criado com sucesso!",
-        description: `O usuário foi criado e pode fazer login imediatamente. Credenciais copiadas para a área de transferência.`,
+        description: "O usuário foi criado e pode fazer login imediatamente.",
       });
 
-      // Copy credentials to clipboard
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(credentials);
-      }
-
-      setInviteOpen(false);
+      // Reset form but keep dialog open to show credentials
       setInviteEmail("");
       setSelectedFranqueado("");
       setPermissions({
@@ -195,6 +192,29 @@ export default function Produtores() {
     }
   };
 
+  const closeInviteDialog = () => {
+    setInviteOpen(false);
+    setInviteEmail("");
+    setSelectedFranqueado("");
+    setInviteCredentials(null);
+    setPermissions({
+      'estoque.view': true,
+      'estoque.manage': false,
+      'entradas.manage': false,
+      'saidas.manage': false,
+    });
+  };
+
+  const copyCredentials = async () => {
+    if (inviteCredentials && navigator.clipboard) {
+      await navigator.clipboard.writeText(inviteCredentials);
+      toast({
+        title: "Credenciais copiadas",
+        description: "As credenciais foram copiadas para a área de transferência.",
+      });
+    }
+  };
+
   return (
     <div>
       <header className="mb-6">
@@ -203,7 +223,10 @@ export default function Produtores() {
             <h1 className="text-3xl font-bold text-foreground">Produtores</h1>
             <p className="text-muted-foreground">Gerencie produtores rurais e suas associações com franqueados.</p>
           </div>
-          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <Dialog open={inviteOpen} onOpenChange={(open) => {
+            if (!open) closeInviteDialog();
+            else setInviteOpen(true);
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <MailPlus className="mr-2" />
@@ -260,14 +283,40 @@ export default function Produtores() {
                     </div>
                   ))}
                 </div>
+                {inviteCredentials && (
+                  <div className="grid gap-2">
+                    <Label>Credenciais de Acesso</Label>
+                    <div className="p-3 bg-muted rounded-md">
+                      <pre className="text-sm whitespace-pre-wrap font-mono">{inviteCredentials}</pre>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={copyCredentials} className="flex-1">
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copiar credenciais
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      O produtor deve alterar a senha no primeiro login.
+                    </p>
+                  </div>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="secondary" onClick={() => setInviteOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail || !selectedFranqueado}>
-                  {sendingInvite ? "Criando usuário..." : "Criar produtor"}
-                </Button>
+                {inviteCredentials ? (
+                  <Button onClick={closeInviteDialog} className="w-full">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Concluído
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="secondary" onClick={closeInviteDialog}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail || !selectedFranqueado}>
+                      {sendingInvite ? "Criando usuário..." : "Criar produtor"}
+                    </Button>
+                  </>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
