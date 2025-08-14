@@ -68,10 +68,16 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     (item.quantidade_atual || 0) > 0
   ) || []
 
+  // Debug - verificar estrutura dos dados
+  console.log("Estoque disponível:", estoqueDisponivel)
+
   // Agrupar estoque por produto para evitar duplicatas
   const produtosDisponiveis = estoqueDisponivel.reduce((acc, item) => {
     const produtoId = item.produto_id
-    const produtoNome = item.produtos?.nome || 'Produto sem nome'
+    const produtoNome = item.produtos?.nome || `Produto ${item.id}`
+    
+    console.log("Item estoque:", item)
+    console.log("Produto nome:", produtoNome)
     
     if (!acc[produtoId]) {
       acc[produtoId] = {
