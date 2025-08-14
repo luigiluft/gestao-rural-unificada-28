@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { NFData, NFItem } from "./NFParser";
 import { Plus, Trash2 } from "lucide-react";
+import { SeletorDeposito } from "./SeletorDeposito";
 
 interface FormularioEntradaProps {
   nfData?: NFData | null;
@@ -46,7 +47,8 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
     serie: '',
     dataEntrada: '',
     origem: '',
-    observacoes: ''
+    observacoes: '',
+    depositoId: ''
   });
 
   const [itens, setItens] = useState<ItemEntrada[]>([]);
@@ -68,7 +70,8 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         serie: nfData.serie,
         dataEntrada: nfData.dataEmissao,
         origem: nfData.emitente.nome,
-        observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`
+        observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
+        depositoId: ''
       });
 
       // Converter itens da NFe para itens de entrada
@@ -172,13 +175,20 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="origem">Origem/Fornecedor</Label>
-            <Input
-              id="origem"
-              value={dadosEntrada.origem}
-              onChange={(e) => setDadosEntrada({...dadosEntrada, origem: e.target.value})}
-              placeholder="Ex: Cooperativa ABC"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="origem">Origem/Fornecedor</Label>
+              <Input
+                id="origem"
+                value={dadosEntrada.origem}
+                onChange={(e) => setDadosEntrada({...dadosEntrada, origem: e.target.value})}
+                placeholder="Ex: Cooperativa ABC"
+              />
+            </div>
+
+            <SeletorDeposito
+              value={dadosEntrada.depositoId}
+              onValueChange={(value) => setDadosEntrada({...dadosEntrada, depositoId: value})}
             />
           </div>
 

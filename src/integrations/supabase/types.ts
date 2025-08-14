@@ -481,6 +481,39 @@ export type Database = {
           },
         ]
       }
+      produtor_franqueado_depositos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_autorizacao: string
+          deposito_id: string
+          franqueado_id: string
+          id: string
+          produtor_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_autorizacao?: string
+          deposito_id: string
+          franqueado_id: string
+          id?: string
+          produtor_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_autorizacao?: string
+          deposito_id?: string
+          franqueado_id?: string
+          id?: string
+          produtor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       produtores: {
         Row: {
           ativo: boolean
@@ -851,6 +884,15 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_producer_available_deposits: {
+        Args: { _producer_id: string }
+        Returns: {
+          deposito_id: string
+          deposito_nome: string
+          franqueado_id: string
+          franqueado_nome: string
+        }[]
       }
       get_user_franquia: {
         Args: { _user_id: string }
