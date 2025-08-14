@@ -56,6 +56,8 @@ import { NFData } from "@/components/Entradas/NFParser"
 import { useToast } from "@/hooks/use-toast"
 import { useEntradas } from "@/hooks/useEntradas"
 import { useNavigate } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
@@ -63,7 +65,8 @@ export default function Entradas() {
   const [activeTab, setActiveTab] = useState("upload")
   const { toast } = useToast()
   const navigate = useNavigate()
-  const { data: entradas, isLoading } = useEntradas()
+  const { data: entradas, isLoading, refetch } = useEntradas()
+  const { user } = useAuth()
 
   const handleNFDataParsed = (data: NFData) => {
     setNfData(data)
@@ -82,15 +85,72 @@ export default function Entradas() {
     })
   }
 
-  const handleFormSubmit = (dados: any) => {
-    console.log('Dados da entrada:', dados)
-    toast({
-      title: "Entrada registrada",
-      description: "A entrada foi registrada com sucesso no sistema.",
-    })
-    setIsNewEntryOpen(false)
-    setNfData(null)
-    setActiveTab("upload")
+  const handleFormSubmit = async (dados: any) => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      // Criar a entrada
+      const { data: entrada, error: entradaError } = await supabase
+        .from('entradas')
+        .insert({
+          user_id: user.id,
+          numero_nfe: dados.numeroNF || null,
+          data_entrada: dados.dataEntrada,
+          data_emissao: dados.dataEntrada,
+          valor_total: dados.valorTotal,
+          deposito_id: null, // Por enquanto deixar nulo, depois pode implementar select de depósitos
+          observacoes: dados.observacoes,
+          status: 'confirmado',
+          xml_content: dados.tipo === 'nfe' ? 'XML importado' : null
+        })
+        .select()
+        .single()
+
+      if (entradaError) throw entradaError
+
+      // Criar os itens da entrada
+      if (dados.itens && dados.itens.length > 0) {
+        const itensEntrada = dados.itens.map((item: any) => ({
+          user_id: user.id,
+          entrada_id: entrada.id,
+          produto_id: null, // Por enquanto nulo, depois pode implementar busca/criação de produtos
+          quantidade: item.quantidade,
+          valor_unitario: item.valorUnitario,
+          valor_total: item.valorTotal,
+          lote: item.lote
+        }))
+
+        const { error: itensError } = await supabase
+          .from('entrada_itens')
+          .insert(itensEntrada)
+
+        if (itensError) throw itensError
+      }
+
+      toast({
+        title: "Entrada registrada",
+        description: "A entrada foi registrada com sucesso no sistema.",
+      })
+      
+      setIsNewEntryOpen(false)
+      setNfData(null)
+      setActiveTab("upload")
+      refetch() // Recarregar a lista de entradas
+    } catch (error) {
+      console.error('Erro ao registrar entrada:', error)
+      toast({
+        title: "Erro ao registrar entrada",
+        description: "Ocorreu um erro ao salvar a entrada no sistema.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleFormCancel = () => {
