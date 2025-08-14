@@ -99,7 +99,7 @@ export type Database = {
           entrada_id: string
           id: string
           lote: string | null
-          produto_id: string
+          produto_id: string | null
           quantidade: number
           user_id: string
           valor_total: number | null
@@ -111,7 +111,7 @@ export type Database = {
           entrada_id: string
           id?: string
           lote?: string | null
-          produto_id: string
+          produto_id?: string | null
           quantidade: number
           user_id: string
           valor_total?: number | null
@@ -123,7 +123,7 @@ export type Database = {
           entrada_id?: string
           id?: string
           lote?: string | null
-          produto_id?: string
+          produto_id?: string | null
           quantidade?: number
           user_id?: string
           valor_total?: number | null
@@ -152,7 +152,7 @@ export type Database = {
           created_at: string
           data_emissao: string | null
           data_entrada: string
-          deposito_id: string
+          deposito_id: string | null
           fornecedor_id: string | null
           id: string
           numero_nfe: string | null
@@ -168,7 +168,7 @@ export type Database = {
           created_at?: string
           data_emissao?: string | null
           data_entrada: string
-          deposito_id: string
+          deposito_id?: string | null
           fornecedor_id?: string | null
           id?: string
           numero_nfe?: string | null
@@ -184,7 +184,7 @@ export type Database = {
           created_at?: string
           data_emissao?: string | null
           data_entrada?: string
-          deposito_id?: string
+          deposito_id?: string | null
           fornecedor_id?: string | null
           id?: string
           numero_nfe?: string | null
