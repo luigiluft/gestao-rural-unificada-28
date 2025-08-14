@@ -50,6 +50,7 @@ export function AppSidebar() {
   const { user } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isFranqueado, setIsFranqueado] = useState(false)
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -67,27 +68,31 @@ export function AppSidebar() {
     load()
   }, [user])
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkRoles = async () => {
       if (!user) {
         setIsAdmin(false)
+        setIsFranqueado(false)
         return
       }
       try {
-        const { data, error } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
-        if (!error && typeof data === 'boolean') {
-          setIsAdmin(data)
-          return
-        }
         const { data: roles } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-        setIsAdmin(Array.isArray(roles) && roles.some((r: any) => r.role === 'admin'))
+        
+        if (Array.isArray(roles)) {
+          setIsAdmin(roles.some((r: any) => r.role === 'admin'))
+          setIsFranqueado(roles.some((r: any) => r.role === 'franqueado'))
+        } else {
+          setIsAdmin(false)
+          setIsFranqueado(false)
+        }
       } catch {
         setIsAdmin(false)
+        setIsFranqueado(false)
       }
     }
-    checkAdmin()
+    checkRoles()
   }, [user])
 
   const isActive = (path: string) => {
@@ -106,6 +111,10 @@ export function AppSidebar() {
       base.splice(6, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
         { title: "Franqueados", url: "/franqueados", icon: Users },
+        { title: "Produtores", url: "/produtores", icon: Tractor },
+      )
+    } else if (isFranqueado) {
+      base.splice(6, 0,
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     }
