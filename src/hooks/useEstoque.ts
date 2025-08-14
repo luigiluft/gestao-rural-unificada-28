@@ -17,6 +17,9 @@ export const useEstoque = () => {
       if (error) throw error
       return data || []
     },
+    // Force refetch every time the component mounts
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   })
 }
 
