@@ -252,16 +252,19 @@ export default function Saidas() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
-                          {saida.saida_itens?.slice(0, 2).map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                                <Package className="w-3 h-3 text-primary" />
+                          {saida.saida_itens?.slice(0, 2).map((item, idx) => {
+                            console.log("Rendering item:", item); // Debug log
+                            return (
+                              <div key={idx} className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
+                                  <Package className="w-3 h-3 text-primary" />
+                                </div>
+                                <span className="text-sm">
+                                  {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
+                                </span>
                               </div>
-                              <span className="text-sm">
-                                {item.produtos?.nome} ({item.quantidade} {item.produtos?.unidade_medida})
-                              </span>
-                            </div>
-                          ))}
+                            );
+                          })}
                           {(saida.saida_itens?.length || 0) > 2 && (
                             <span className="text-xs text-muted-foreground">
                               +{(saida.saida_itens?.length || 0) - 2} mais
@@ -272,11 +275,11 @@ export default function Saidas() {
                       <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>{saida.destinatario || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{saida.tipo_saida}</Badge>
+                        <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(saida.status) as any}>
-                          {saida.status}
+                        <Badge variant={getStatusColor(saida.status || "preparando") as "default" | "secondary" | "outline" | "destructive"}>
+                          {saida.status || "Preparando"}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">
