@@ -69,19 +69,30 @@ const Franquias = () => {
   const { data: franquias = [], isLoading } = useQuery({
     queryKey: ["franquias"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: franquiasData, error } = await supabase
         .from("franquias")
-        .select(`
-          *,
-          master_franqueado:profiles!franquias_master_franqueado_id_fkey(nome, email)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data.map((item: any) => ({
-        ...item,
-        master_franqueado: item.master_franqueado || { nome: "", email: "" }
-      })) as Franquia[];
+      
+      // Get master franqueado details separately
+      const franquiasWithMaster = await Promise.all(
+        (franquiasData || []).map(async (franquia) => {
+          const { data: masterData } = await supabase
+            .from("profiles")
+            .select("nome, email")
+            .eq("user_id", franquia.master_franqueado_id)
+            .single();
+          
+          return {
+            ...franquia,
+            master_franqueado: masterData || { nome: "", email: "" }
+          };
+        })
+      );
+      
+      return franquiasWithMaster as Franquia[];
     },
   });
 
