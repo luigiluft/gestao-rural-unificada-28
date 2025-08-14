@@ -20,6 +20,7 @@ import Usuarios from "./pages/Usuarios";
 import Produtores from "./pages/Produtores";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
+import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -43,7 +44,7 @@ const App = () => (
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
               <Route path="franqueados" element={<RequireAdmin><Franqueados /></RequireAdmin>} />
-              <Route path="produtores" element={<RequireAdmin><Produtores /></RequireAdmin>} />
+              <Route path="produtores" element={<RequireAdminOrFranqueado><Produtores /></RequireAdminOrFranqueado>} />
               <Route path="suporte" element={<Suporte />} />
               <Route path="perfil" element={<Perfil />} />
               <Route path="*" element={<NotFound />} />
