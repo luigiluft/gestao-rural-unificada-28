@@ -208,7 +208,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     {estoqueDisponivel.map((item) => (
                       <SelectItem key={item.id} value={item.id}>
                         <div className="flex flex-col">
-                          <span>{item.produtos?.nome}</span>
+                          <span className="font-medium">{item.produtos?.nome}</span>
                           <span className="text-xs text-muted-foreground">
                             Disponível: {item.quantidade_atual} {item.produtos?.unidade_medida}
                             {item.lote && ` - Lote: ${item.lote}`}
