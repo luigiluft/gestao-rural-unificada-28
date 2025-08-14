@@ -63,21 +63,46 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
   const { data: fazendas } = useFazendas(targetProdutorId)
 
-  // Filtrar estoque disponível (quantidade > 0)
+  // Filtrar estoque disponível (quantidade > 0) e agrupar por produto
   const estoqueDisponivel = estoque?.filter(item => 
     (item.quantidade_atual || 0) > 0
   ) || []
 
+  // Agrupar estoque por produto para evitar duplicatas
+  const produtosDisponiveis = estoqueDisponivel.reduce((acc, item) => {
+    const produtoId = item.produto_id
+    const produtoNome = item.produtos?.nome || 'Produto sem nome'
+    
+    if (!acc[produtoId]) {
+      acc[produtoId] = {
+        id: produtoId,
+        nome: produtoNome,
+        unidade_medida: item.produtos?.unidade_medida || '',
+        quantidade_total: 0,
+        itens: []
+      }
+    }
+    
+    acc[produtoId].quantidade_total += item.quantidade_atual || 0
+    acc[produtoId].itens.push(item)
+    
+    return acc
+  }, {} as Record<string, any>)
+
+  const produtosArray = Object.values(produtosDisponiveis)
+
   const handleProdutoChange = (produtoId: string) => {
-    const produto = estoqueDisponivel.find(item => item.id === produtoId)
+    const produto = produtosDisponiveis[produtoId]
     if (produto) {
+      // Pegar o primeiro item disponível para preencher os dados
+      const primeiroItem = produto.itens[0]
       setNovoItem({
         ...novoItem,
         produto_id: produtoId,
-        produtoNome: produto.produtos?.nome || "",
-        unidade: produto.produtos?.unidade_medida || "",
-        lote: produto.lote || "",
-        valor_unitario: produto.valor_medio || 0
+        produtoNome: produto.nome,
+        unidade: produto.unidade_medida,
+        lote: primeiroItem?.lote || "",
+        valor_unitario: primeiroItem?.valor_medio || 0
       })
     }
   }
@@ -108,8 +133,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     }
 
     // Verificar disponibilidade no estoque
-    const itemEstoque = estoqueDisponivel.find(item => item.id === novoItem.produto_id)
-    if (!itemEstoque || (itemEstoque.quantidade_atual || 0) < novoItem.quantidade) {
+    const produto = produtosDisponiveis[novoItem.produto_id]
+    if (!produto || produto.quantidade_total < novoItem.quantidade) {
       toast.error("Quantidade indisponível no estoque")
       return
     }
@@ -210,13 +235,12 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     <SelectValue placeholder="Selecione o produto" />
                   </SelectTrigger>
                   <SelectContent>
-                    {estoqueDisponivel.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
+                    {produtosArray.map((produto) => (
+                      <SelectItem key={produto.id} value={produto.id}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{item.produtos?.nome}</span>
+                          <span className="font-medium">{produto.nome}</span>
                           <span className="text-xs text-muted-foreground">
-                            Disponível: {item.quantidade_atual} {item.produtos?.unidade_medida}
-                            {item.lote && ` - Lote: ${item.lote}`}
+                            Disponível: {produto.quantidade_total} {produto.unidade_medida}
                           </span>
                         </div>
                       </SelectItem>
