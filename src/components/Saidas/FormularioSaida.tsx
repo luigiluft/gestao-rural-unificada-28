@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2 } from "lucide-react"
 import { useEstoque } from "@/hooks/useEstoque"
 import { useAuth } from "@/contexts/AuthContext"
+import { useProfile, useProdutores } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
@@ -30,13 +31,16 @@ interface ItemSaida {
 export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const { user } = useAuth()
   const { data: estoque } = useEstoque()
+  const { data: profile } = useProfile()
+  const { data: produtores } = useProdutores()
 
   const [dadosSaida, setDadosSaida] = useState({
     data_saida: new Date().toISOString().split('T')[0],
     tipo_saida: "",
     destinatario: "",
     observacoes: "",
-    deposito_id: ""
+    deposito_id: "",
+    produtor_destinatario: ""
   })
 
   const [itens, setItens] = useState<ItemSaida[]>([])
@@ -54,6 +58,10 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const estoqueDisponivel = estoque?.filter(item => 
     (item.quantidade_atual || 0) > 0
   ) || []
+
+  // Detectar tipo de usuário
+  const isProdutor = profile?.role === 'produtor'
+  const isFranqueado = profile?.role === 'franqueado'
 
   const handleProdutoChange = (produtoId: string) => {
     const produto = estoqueDisponivel.find(item => item.id === produtoId)
@@ -178,67 +186,13 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
 
   return (
     <div className="space-y-6">
-      {/* Dados da Saída */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da Saída</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="data_saida">Data da Saída</Label>
-              <Input
-                id="data_saida"
-                type="date"
-                value={dadosSaida.data_saida}
-                onChange={(e) => setDadosSaida(prev => ({ ...prev, data_saida: e.target.value }))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tipo_saida">Tipo de Saída</Label>
-              <Select value={dadosSaida.tipo_saida} onValueChange={(value) => setDadosSaida(prev => ({ ...prev, tipo_saida: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="venda">Venda</SelectItem>
-                  <SelectItem value="transferencia">Transferência</SelectItem>
-                  <SelectItem value="uso_interno">Uso Interno</SelectItem>
-                  <SelectItem value="perda">Perda/Descarte</SelectItem>
-                  <SelectItem value="doacao">Doação</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="destinatario">Destinatário</Label>
-              <Input
-                id="destinatario"
-                value={dadosSaida.destinatario}
-                onChange={(e) => setDadosSaida(prev => ({ ...prev, destinatario: e.target.value }))}
-                placeholder="Nome do destinatário"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
-              value={dadosSaida.observacoes}
-              onChange={(e) => setDadosSaida(prev => ({ ...prev, observacoes: e.target.value }))}
-              placeholder="Observações sobre a saída..."
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Adicionar Itens */}
+      {/* Seleção de Produtos - PRIMEIRO */}
       <Card>
         <CardHeader>
           <CardTitle>Itens da Saída</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Selecione os produtos que serão enviados
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Formulário de novo item */}
@@ -356,6 +310,107 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Dados da Saída - SEGUNDO, só aparece se tem itens */}
+      {itens.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados da Saída</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Preencha os dados da saída dos produtos
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data_saida">Data da Saída</Label>
+                <Input
+                  id="data_saida"
+                  type="date"
+                  value={dadosSaida.data_saida}
+                  onChange={(e) => setDadosSaida(prev => ({ ...prev, data_saida: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tipo_saida">Tipo de Saída</Label>
+                <Select value={dadosSaida.tipo_saida} onValueChange={(value) => setDadosSaida(prev => ({ ...prev, tipo_saida: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isProdutor ? (
+                      // Para produtores: apenas entrega
+                      <>
+                        <SelectItem value="entrega_propriedade">Entrega na Propriedade</SelectItem>
+                        <SelectItem value="retirada_deposito">Retirada no Depósito</SelectItem>
+                      </>
+                    ) : (
+                      // Para franqueados: opções tradicionais
+                      <>
+                        <SelectItem value="venda">Venda</SelectItem>
+                        <SelectItem value="transferencia">Transferência</SelectItem>
+                        <SelectItem value="uso_interno">Uso Interno</SelectItem>
+                        <SelectItem value="perda">Perda/Descarte</SelectItem>
+                        <SelectItem value="doacao">Doação</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="destinatario">
+                  {isFranqueado ? "Produtor Destinatário" : "Destinatário"}
+                </Label>
+                {isFranqueado ? (
+                  <Select 
+                    value={dadosSaida.produtor_destinatario} 
+                    onValueChange={(value) => {
+                      const produtor = produtores?.find(p => p.user_id === value)
+                      setDadosSaida(prev => ({ 
+                        ...prev, 
+                        produtor_destinatario: value,
+                        destinatario: produtor?.nome || ""
+                      }))
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o produtor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {produtores?.map((produtor) => (
+                        <SelectItem key={produtor.user_id} value={produtor.user_id}>
+                          {produtor.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="destinatario"
+                    value={isProdutor ? profile?.nome || "" : dadosSaida.destinatario}
+                    onChange={(e) => setDadosSaida(prev => ({ ...prev, destinatario: e.target.value }))}
+                    placeholder={isProdutor ? "Seu nome" : "Nome do destinatário"}
+                    disabled={isProdutor}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={dadosSaida.observacoes}
+                onChange={(e) => setDadosSaida(prev => ({ ...prev, observacoes: e.target.value }))}
+                placeholder={isProdutor ? "Local de entrega, instruções especiais..." : "Observações sobre a saída..."}
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Botões de Ação */}
       <div className="flex justify-end gap-3">
