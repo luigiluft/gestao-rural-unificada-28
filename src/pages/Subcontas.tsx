@@ -38,6 +38,12 @@ export default function Subcontas() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>('produtor');
+  const [invitePermissions, setInvitePermissions] = useState<Record<PermissionCode, boolean>>({
+    'estoque.view': false,
+    'estoque.manage': false,
+    'entradas.manage': false,
+    'saidas.manage': false,
+  });
   const [sendingInvite, setSendingInvite] = useState(false);
 
   const [permOpen, setPermOpen] = useState(false);
@@ -143,17 +149,17 @@ export default function Subcontas() {
     try {
       setSendingInvite(true);
 
-      // Default permissions based on role
-      const defaultPermissions: PermissionCode[] = inviteRole === 'admin' 
-        ? ['estoque.view', 'estoque.manage', 'entradas.manage', 'saidas.manage']
-        : ['estoque.view'];
+      // Get selected permissions
+      const selectedPermissions: PermissionCode[] = (Object.entries(invitePermissions) as [PermissionCode, boolean][])
+        .filter(([, selected]) => selected)
+        .map(([permission]) => permission);
 
       const { error: inviteError } = await supabase.from("pending_invites").insert({
         email: inviteEmail,
         inviter_user_id: user.id,
         parent_user_id: user.id,
         role: inviteRole,
-        permissions: defaultPermissions,
+        permissions: selectedPermissions,
       });
 
       if (inviteError) throw inviteError;
@@ -175,6 +181,12 @@ export default function Subcontas() {
       setInviteOpen(false);
       setInviteEmail("");
       setInviteRole('produtor');
+      setInvitePermissions({
+        'estoque.view': false,
+        'estoque.manage': false,
+        'entradas.manage': false,
+        'saidas.manage': false,
+      });
     } catch (err: any) {
       toast({ title: "Erro ao enviar convite", description: err.message, variant: "destructive" });
     } finally {
@@ -325,9 +337,37 @@ export default function Subcontas() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid gap-2">
+                  <Label>Permissões</Label>
+                  <div className="grid gap-3 p-3 border rounded-lg">
+                    {PERMISSIONS.map((perm) => (
+                      <div key={perm.code} className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-sm">{perm.label}</div>
+                        </div>
+                        <Switch
+                          checked={invitePermissions[perm.code]}
+                          onCheckedChange={(checked) => 
+                            setInvitePermissions(prev => ({ ...prev, [perm.code]: checked }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <DialogFooter>
-                <Button variant="secondary" onClick={() => setInviteOpen(false)}>
+                <Button variant="secondary" onClick={() => {
+                  setInviteOpen(false);
+                  setInviteEmail("");
+                  setInviteRole('produtor');
+                  setInvitePermissions({
+                    'estoque.view': false,
+                    'estoque.manage': false,
+                    'entradas.manage': false,
+                    'saidas.manage': false,
+                  });
+                }}>
                   Cancelar
                 </Button>
                 <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
