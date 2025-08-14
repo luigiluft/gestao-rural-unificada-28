@@ -145,31 +145,37 @@ export default function Produtores() {
     try {
       setSendingInvite(true);
 
-      // Save pending invite with permissions
+      // Get selected permissions
       const selectedPermissions = (Object.entries(permissions) as [PermissionCode, boolean][])
         .filter(([, enabled]) => enabled)
         .map(([code]) => code);
 
-      const { error: inviteError } = await supabase.from("pending_invites").insert({
-        email: inviteEmail,
-        inviter_user_id: user.id,
-        parent_user_id: selectedFranqueado,
-        role: "produtor",
-        permissions: selectedPermissions,
+      // Call edge function to send invite
+      const { data, error } = await supabase.functions.invoke('send-invite', {
+        body: {
+          email: inviteEmail,
+          inviterUserId: user.id,
+          parentUserId: selectedFranqueado,
+          role: "produtor",
+          permissions: selectedPermissions
+        }
       });
-
-      if (inviteError) throw inviteError;
-
-      // Send OTP
-      const { error } = await supabase.auth.signInWithOtp({
-        email: inviteEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+      
       if (error) throw error;
+      
+      // Show success message with login credentials
+      const credentials = `Email: ${inviteEmail}\nSenha: ${data.default_password}`;
+      
+      toast({
+        title: "Produtor criado com sucesso!",
+        description: `O usuário foi criado e pode fazer login imediatamente. Credenciais copiadas para a área de transferência.`,
+      });
 
-      toast({ title: "Convite enviado", description: "Enviamos um link de acesso para o email informado. O produtor será automaticamente associado ao franqueado selecionado." });
+      // Copy credentials to clipboard
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(credentials);
+      }
+
       setInviteOpen(false);
       setInviteEmail("");
       setSelectedFranqueado("");
@@ -179,6 +185,9 @@ export default function Produtores() {
         'entradas.manage': false,
         'saidas.manage': false,
       });
+      
+      // Refresh produtores list
+      qc.invalidateQueries({ queryKey: ["produtores-list"] });
     } catch (err: any) {
       toast({ title: "Erro ao enviar convite", description: err.message ?? "Tente novamente.", variant: "destructive" });
     } finally {
@@ -198,14 +207,14 @@ export default function Produtores() {
             <DialogTrigger asChild>
               <Button>
                 <MailPlus className="mr-2" />
-                Convidar produtor
+                Criar produtor
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Convidar produtor rural</DialogTitle>
+                <DialogTitle>Criar produtor rural</DialogTitle>
                 <DialogDescription>
-                  Convide um produtor e associe-o a um franqueado responsável.
+                  Crie um produtor com senha padrão e associe-o a um franqueado responsável.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -257,7 +266,7 @@ export default function Produtores() {
                   Cancelar
                 </Button>
                 <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail || !selectedFranqueado}>
-                  {sendingInvite ? "Enviando..." : "Enviar convite"}
+                  {sendingInvite ? "Criando usuário..." : "Criar produtor"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -321,7 +330,7 @@ export default function Produtores() {
             </p>
             <Button onClick={() => setInviteOpen(true)}>
               <MailPlus className="mr-2 h-4 w-4" />
-              Convidar primeiro produtor
+              Criar primeiro produtor
             </Button>
           </div>
         )}
