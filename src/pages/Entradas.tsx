@@ -81,6 +81,45 @@ export default function Entradas() {
     setProdutorError(null)
     setProdutorIdentificado(null)
 
+    // Verificar se a NFe já foi importada
+    if (data.chaveNFe) {
+      const { data: entradaExistente } = await supabase
+        .from('entradas')
+        .select('id, numero_nfe, serie')
+        .eq('chave_nfe', data.chaveNFe)
+        .maybeSingle();
+
+      if (entradaExistente) {
+        toast({
+          title: "NFe já importada",
+          description: `A Nota Fiscal ${entradaExistente.numero_nfe}/${entradaExistente.serie} com esta chave já foi importada no sistema.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Verificar se a NFe pertence ao usuário (quando não for admin/franqueado)
+    if (currentUserProfile?.role === 'produtor') {
+      if (!data.destinatarioCpfCnpj) {
+        toast({
+          title: "NFe inválida",
+          description: "A NFe não contém CPF/CNPJ do destinatário",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (currentUserProfile.cpf_cnpj !== data.destinatarioCpfCnpj) {
+        toast({
+          title: "NFe não autorizada",
+          description: "Esta NFe não pertence ao seu CPF/CNPJ cadastrado",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Se admin/franqueado está fazendo upload, tentar identificar o produtor
     if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'franqueado') {
       if (data.destinatarioCpfCnpj) {
