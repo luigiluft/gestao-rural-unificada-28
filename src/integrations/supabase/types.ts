@@ -95,6 +95,7 @@ export type Database = {
       entrada_itens: {
         Row: {
           created_at: string
+          data_fabricacao: string | null
           data_validade: string | null
           entrada_id: string
           id: string
@@ -102,12 +103,14 @@ export type Database = {
           nome_produto: string | null
           produto_id: string | null
           quantidade: number
+          quantidade_lote: number | null
           user_id: string
           valor_total: number | null
           valor_unitario: number | null
         }
         Insert: {
           created_at?: string
+          data_fabricacao?: string | null
           data_validade?: string | null
           entrada_id: string
           id?: string
@@ -115,12 +118,14 @@ export type Database = {
           nome_produto?: string | null
           produto_id?: string | null
           quantidade: number
+          quantidade_lote?: number | null
           user_id: string
           valor_total?: number | null
           valor_unitario?: number | null
         }
         Update: {
           created_at?: string
+          data_fabricacao?: string | null
           data_validade?: string | null
           entrada_id?: string
           id?: string
@@ -128,6 +133,7 @@ export type Database = {
           nome_produto?: string | null
           produto_id?: string | null
           quantidade?: number
+          quantidade_lote?: number | null
           user_id?: string
           valor_total?: number | null
           valor_unitario?: number | null

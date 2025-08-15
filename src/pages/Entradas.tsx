@@ -332,7 +332,9 @@ export default function Entradas() {
           valor_total: item.valorTotal,
           lote: item.lote,
           nome_produto: item.produto, // Adicionar o nome correto do produto
-          data_validade: item.dataValidade || null // Adicionar data de validade se disponível
+          data_validade: item.dataValidade || null, // Adicionar data de validade se disponível
+          quantidade_lote: item.quantidadeLote || null, // Adicionar quantidade do lote
+          data_fabricacao: item.dataFabricacao || null // Adicionar data de fabricação
         }))
 
         const { error: itensError } = await supabase
