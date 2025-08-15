@@ -331,7 +331,8 @@ export default function Entradas() {
           valor_unitario: item.valorUnitario,
           valor_total: item.valorTotal,
           lote: item.lote,
-          nome_produto: item.produto // Adicionar o nome correto do produto
+          nome_produto: item.produto, // Adicionar o nome correto do produto
+          data_validade: item.dataValidade || null // Adicionar data de validade se disponível
         }))
 
         const { error: itensError } = await supabase

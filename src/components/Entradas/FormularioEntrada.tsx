@@ -39,6 +39,7 @@ interface ItemEntrada {
   valorUnitario: number;
   valorTotal: number;
   observacoes?: string;
+  dataValidade?: string;
 }
 
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
@@ -81,14 +82,15 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       });
 
       // Converter itens da NFe para itens de entrada
-      const itensConvertidos: ItemEntrada[] = nfData.itens.map((item, index) => ({
+      const itensConvertidos: ItemEntrada[] = nfData.itens.map((item) => ({
         produto: item.descricao,
-        lote: `NF${nfData.numeroNF}-${String(index + 1).padStart(3, '0')}`,
+        lote: item.lote || '', // Usar o lote real do XML
         quantidade: item.quantidade,
         unidade: item.unidade,
         deposito: 'Armazém A', // Padrão
         valorUnitario: item.valorUnitario,
-        valorTotal: item.valorTotal
+        valorTotal: item.valorTotal,
+        dataValidade: item.dataValidade // Incluir data de validade se disponível
       }));
 
       setItens(itensConvertidos);
