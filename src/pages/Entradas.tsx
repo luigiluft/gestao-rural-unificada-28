@@ -229,7 +229,8 @@ export default function Entradas() {
           quantidade: item.quantidade,
           valor_unitario: item.valorUnitario,
           valor_total: item.valorTotal,
-          lote: item.lote
+          lote: item.lote,
+          nome_produto: item.produto // Adicionar o nome correto do produto
         }))
 
         const { error: itensError } = await supabase
