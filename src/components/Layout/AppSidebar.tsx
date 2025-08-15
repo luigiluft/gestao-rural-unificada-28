@@ -12,7 +12,8 @@ import {
   Boxes,
   Tractor,
   UserCheck,
-  Building2
+  Building2,
+  TreePine
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -54,6 +55,7 @@ export function AppSidebar() {
   const [displayName, setDisplayName] = useState<string>("")
   const [isAdmin, setIsAdmin] = useState(false)
   const [isFranqueado, setIsFranqueado] = useState(false)
+  const [isProdutor, setIsProdutor] = useState(false)
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -75,6 +77,7 @@ export function AppSidebar() {
       if (!user) {
         setIsAdmin(false)
         setIsFranqueado(false)
+        setIsProdutor(false)
         return
       }
       try {
@@ -87,13 +90,16 @@ export function AppSidebar() {
         if (profile?.role) {
           setIsAdmin(profile.role === 'admin')
           setIsFranqueado(profile.role === 'franqueado')
+          setIsProdutor(profile.role === 'produtor')
         } else {
           setIsAdmin(false)
           setIsFranqueado(false)
+          setIsProdutor(false)
         }
       } catch {
         setIsAdmin(false)
         setIsFranqueado(false)
+        setIsProdutor(false)
       }
     }
     checkRoles()
@@ -121,6 +127,10 @@ export function AppSidebar() {
     } else if (isFranqueado) {
       base.splice(7, 0,
         { title: "Produtores", url: "/produtores", icon: Tractor },
+      )
+    } else if (isProdutor) {
+      base.splice(7, 0,
+        { title: "Fazendas", url: "/fazendas", icon: TreePine },
       )
     }
     return base
