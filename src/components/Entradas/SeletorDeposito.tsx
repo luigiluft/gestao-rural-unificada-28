@@ -44,7 +44,7 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
       </Select>
       {depositos?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nenhuma franquia disponível. Todas as franquias ativas estão automaticamente disponíveis.
+          Nenhuma franquia disponível. Você precisa estar vinculado a um franqueado para acessar suas franquias.
         </p>
       )}
     </div>
