@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Building2, User, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Franquia {
   id: string;
@@ -409,59 +410,112 @@ const Franquias = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {franquias.map((franquia) => (
-              <Card key={franquia.id} className="relative">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5" />
-                        {franquia.nome}
-                      </CardTitle>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-4 w-4" />
-                        {franquia.master_franqueado?.nome || franquia.master_franqueado?.email}
-                      </div>
-                    </div>
-                    <Badge variant={franquia.ativo ? "default" : "secondary"}>
-                      {franquia.ativo ? "Ativa" : "Inativa"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {franquia.descricao && (
-                    <p className="text-sm text-muted-foreground">{franquia.descricao}</p>
-                  )}
-                  
-                  {(franquia.cidade || franquia.estado) && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      {[franquia.cidade, franquia.estado].filter(Boolean).join(", ")}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openDialog(franquia)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteFranquia.mutate(franquia.id)}
-                      disabled={deleteFranquia.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Lista de Franquias</CardTitle>
+              <CardDescription>
+                {franquias.length} franquias cadastradas no sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Franqueado Master</TableHead>
+                      <TableHead>Localização</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data Criação</TableHead>
+                      <TableHead className="w-[100px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {franquias.map((franquia) => (
+                      <TableRow key={franquia.id} className="hover:bg-muted/50">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                              <Building2 className="w-4 h-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{franquia.nome}</p>
+                              {franquia.descricao && (
+                                <p className="text-sm text-muted-foreground line-clamp-1">{franquia.descricao}</p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {franquia.master_franqueado?.nome || franquia.master_franqueado?.email || 'N/A'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {(franquia.cidade || franquia.estado) ? (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {[franquia.cidade, franquia.estado].filter(Boolean).join(", ")}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Não informado</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {franquia.email && (
+                              <p className="text-sm">{franquia.email}</p>
+                            )}
+                            {franquia.telefone && (
+                              <p className="text-sm text-muted-foreground">{franquia.telefone}</p>
+                            )}
+                            {!franquia.email && !franquia.telefone && (
+                              <span className="text-muted-foreground text-sm">Não informado</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={franquia.ativo ? "default" : "secondary"}>
+                            {franquia.ativo ? "Ativa" : "Inativa"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(franquia.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openDialog(franquia)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteFranquia.mutate(franquia.id)}
+                              disabled={deleteFranquia.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
