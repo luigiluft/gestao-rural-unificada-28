@@ -242,18 +242,18 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         <CardContent className="space-y-4">
           {/* Formulário de novo item */}
           <div className="border rounded-lg p-4 bg-muted/30">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-3">
-              <div className="md:col-span-2 space-y-1">
-                <Label className="text-xs">Produto</Label>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
+              <div className="lg:col-span-4 space-y-1">
+                <Label className="text-xs font-medium">Produto</Label>
                 <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione o produto" />
                   </SelectTrigger>
                   <SelectContent>
                     {produtosArray.map((produto) => (
                       <SelectItem key={produto.id} value={produto.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{produto.nome}</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-sm">{produto.nome}</span>
                           <span className="text-xs text-muted-foreground">
                             Disponível: {produto.quantidade_total} {produto.unidade_medida}
                           </span>
@@ -264,8 +264,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs">Quantidade</Label>
+              <div className="lg:col-span-2 space-y-1">
+                <Label className="text-xs font-medium">Quantidade</Label>
                 <Input
                   type="number"
                   min="0.01"
@@ -273,27 +273,32 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   value={novoItem.quantidade || ''}
                   onChange={(e) => handleQuantidadeChange(parseFloat(e.target.value) || 0)}
                   placeholder="0"
+                  className="h-9"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs">Unidade</Label>
-                <Input value={novoItem.unidade} disabled />
+              <div className="lg:col-span-2 space-y-1">
+                <Label className="text-xs font-medium">Unidade</Label>
+                <Input 
+                  value={novoItem.unidade} 
+                  disabled 
+                  className="h-9 bg-muted"
+                />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs">Valor Unit. (Custo Médio)</Label>
+              <div className="lg:col-span-3 space-y-1">
+                <Label className="text-xs font-medium">Valor Unit. (Custo Médio)</Label>
                 <Input
                   type="number"
                   value={novoItem.valor_unitario?.toFixed(2) || '0.00'}
                   disabled
-                  className="bg-muted"
+                  className="h-9 bg-muted"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs">Ação</Label>
-                <Button onClick={adicionarItem} size="sm" className="w-full">
+              <div className="lg:col-span-1 space-y-1">
+                <Label className="text-xs font-medium">Ação</Label>
+                <Button onClick={adicionarItem} size="sm" className="w-full h-9">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
