@@ -284,45 +284,111 @@ export type Database = {
       }
       fazendas: {
         Row: {
+          area_total_ha: number | null
           ativo: boolean
+          bairro: string | null
+          cadastro_ambiental_rural: string | null
+          capacidade_armazenagem_ton: number | null
           cep: string | null
           cidade: string | null
+          codigo_ibge_municipio: string | null
+          codigo_imovel_rural: string | null
+          complemento: string | null
+          cpf_cnpj_proprietario: string | null
           created_at: string
+          email_contato: string | null
           endereco: string
           estado: string | null
           id: string
+          infraestrutura: string | null
+          inscricao_estadual: string | null
           latitude: number | null
           longitude: number | null
+          municipio: string | null
           nome: string
+          nome_logradouro: string | null
+          nome_responsavel: string | null
+          numero: string | null
           produtor_id: string
+          referencia: string | null
+          situacao_cadastral: string | null
+          telefone_contato: string | null
+          tipo_logradouro: string | null
+          tipo_producao: string | null
+          uf: string | null
+          uf_ie: string | null
           updated_at: string
         }
         Insert: {
+          area_total_ha?: number | null
           ativo?: boolean
+          bairro?: string | null
+          cadastro_ambiental_rural?: string | null
+          capacidade_armazenagem_ton?: number | null
           cep?: string | null
           cidade?: string | null
+          codigo_ibge_municipio?: string | null
+          codigo_imovel_rural?: string | null
+          complemento?: string | null
+          cpf_cnpj_proprietario?: string | null
           created_at?: string
+          email_contato?: string | null
           endereco: string
           estado?: string | null
           id?: string
+          infraestrutura?: string | null
+          inscricao_estadual?: string | null
           latitude?: number | null
           longitude?: number | null
+          municipio?: string | null
           nome: string
+          nome_logradouro?: string | null
+          nome_responsavel?: string | null
+          numero?: string | null
           produtor_id: string
+          referencia?: string | null
+          situacao_cadastral?: string | null
+          telefone_contato?: string | null
+          tipo_logradouro?: string | null
+          tipo_producao?: string | null
+          uf?: string | null
+          uf_ie?: string | null
           updated_at?: string
         }
         Update: {
+          area_total_ha?: number | null
           ativo?: boolean
+          bairro?: string | null
+          cadastro_ambiental_rural?: string | null
+          capacidade_armazenagem_ton?: number | null
           cep?: string | null
           cidade?: string | null
+          codigo_ibge_municipio?: string | null
+          codigo_imovel_rural?: string | null
+          complemento?: string | null
+          cpf_cnpj_proprietario?: string | null
           created_at?: string
+          email_contato?: string | null
           endereco?: string
           estado?: string | null
           id?: string
+          infraestrutura?: string | null
+          inscricao_estadual?: string | null
           latitude?: number | null
           longitude?: number | null
+          municipio?: string | null
           nome?: string
+          nome_logradouro?: string | null
+          nome_responsavel?: string | null
+          numero?: string | null
           produtor_id?: string
+          referencia?: string | null
+          situacao_cadastral?: string | null
+          telefone_contato?: string | null
+          tipo_logradouro?: string | null
+          tipo_producao?: string | null
+          uf?: string | null
+          uf_ie?: string | null
           updated_at?: string
         }
         Relationships: []
