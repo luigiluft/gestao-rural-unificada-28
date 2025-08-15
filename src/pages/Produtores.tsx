@@ -207,7 +207,7 @@ export default function Produtores() {
   return (
     <div>
       <header className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Produtores</h1>
             <p className="text-muted-foreground">Gerencie produtores rurais e suas associações com franqueados.</p>
@@ -217,12 +217,12 @@ export default function Produtores() {
             else setInviteOpen(true);
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
                 Criar produtor
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Criar produtor rural</DialogTitle>
                 <DialogDescription>
@@ -327,36 +327,38 @@ export default function Produtores() {
             </div>
           </div>
         ) : produtores && produtores.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data de Criação</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {produtores.map((p) => (
-                <TableRow key={p.user_id}>
-                  <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
-                  <TableCell>{p.email ?? "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={p.ativo ? "default" : "secondary"}>
-                      {p.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(p.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="sm" variant="outline">
-                      <Settings2 className="mr-1 h-4 w-4" /> Gerenciar
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data de Criação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {produtores.map((p) => (
+                  <TableRow key={p.user_id}>
+                    <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
+                    <TableCell>{p.email ?? "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant={p.ativo ? "default" : "secondary"}>
+                        {p.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(p.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="outline">
+                        <Settings2 className="mr-1 h-4 w-4" /> Gerenciar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">

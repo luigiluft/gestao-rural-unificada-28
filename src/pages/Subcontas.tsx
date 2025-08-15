@@ -377,7 +377,7 @@ export default function Subcontas() {
   return (
     <div>
       <header className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Subcontas</h1>
             <p className="text-muted-foreground">
@@ -386,12 +386,12 @@ export default function Subcontas() {
           </div>
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
                 Criar subconta
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Criar nova subconta</DialogTitle>
                 <DialogDescription>

@@ -28,7 +28,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">
@@ -40,12 +40,12 @@ export default function Dashboard() {
             })}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => navigate('/entradas')} className="bg-gradient-primary hover:bg-primary/90">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <Button onClick={() => navigate('/entradas')} className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Nova Entrada
           </Button>
-          <Button variant="outline" onClick={() => navigate('/saidas')}>
+          <Button variant="outline" onClick={() => navigate('/saidas')} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Nova Saída
           </Button>
@@ -53,7 +53,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {statsLoading ? (
           <>
             {[...Array(4)].map((_, i) => (

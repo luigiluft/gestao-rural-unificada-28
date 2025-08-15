@@ -90,15 +90,15 @@ export default function Saidas() {
           </p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Dialog open={isNewSaidaOpen} onOpenChange={setIsNewSaidaOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-primary hover:bg-primary/90">
+              <Button className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Saída
               </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
                 <DialogHeader>
                   <DialogTitle>Registrar Nova Saída</DialogTitle>
                   <DialogDescription>
@@ -115,7 +115,7 @@ export default function Saidas() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <Card className="shadow-card">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -230,80 +230,82 @@ export default function Saidas() {
                 </Button>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Produtos</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Destinatário</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Valor Total</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {saidasFiltradas.map((saida) => (
-                    <TableRow key={saida.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        SAI{saida.id.slice(-3).toUpperCase()}
-                      </TableCell>
-                      <TableCell>
-                         <div className="flex flex-col gap-1">
-                           {saida.saida_itens?.slice(0, 2).map((item, idx) => (
-                             <div key={idx} className="flex items-center gap-2">
-                               <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                                 <Package className="w-3 h-3 text-primary" />
-                               </div>
-                               <span className="text-sm">
-                                 {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
-                               </span>
-                             </div>
-                           ))}
-                          {(saida.saida_itens?.length || 0) > 2 && (
-                            <span className="text-xs text-muted-foreground">
-                              +{(saida.saida_itens?.length || 0) - 2} mais
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
-                      <TableCell>{saida.destinatario || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(saida.status || "preparando") as "default" | "secondary" | "outline" | "destructive"}>
-                          {saida.status || "Preparando"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        R$ {(saida.valor_total || 0).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Produtos</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Destinatário</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Valor Total</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {saidasFiltradas.map((saida) => (
+                      <TableRow key={saida.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
+                          SAI{saida.id.slice(-3).toUpperCase()}
+                        </TableCell>
+                        <TableCell>
+                           <div className="flex flex-col gap-1">
+                             {saida.saida_itens?.slice(0, 2).map((item, idx) => (
+                               <div key={idx} className="flex items-center gap-2">
+                                 <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
+                                   <Package className="w-3 h-3 text-primary" />
+                                 </div>
+                                 <span className="text-sm">
+                                   {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
+                                 </span>
+                               </div>
+                             ))}
+                            {(saida.saida_itens?.length || 0) > 2 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{(saida.saida_itens?.length || 0) - 2} mais
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell>{saida.destinatario || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusColor(saida.status || "preparando") as "default" | "secondary" | "outline" | "destructive"}>
+                            {saida.status || "Preparando"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          R$ {(saida.valor_total || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Visualizar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -247,19 +247,19 @@ export default function Usuarios() {
   return (
     <div>
       <header className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
             <p className="text-muted-foreground">Visualize todos os usuários e conceda acesso de administrador.</p>
           </div>
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
                 Convidar usuário
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Convidar novo usuário</DialogTitle>
                 <DialogDescription>Envie um link de acesso por email. O usuário poderá entrar imediatamente.</DialogDescription>
@@ -293,58 +293,60 @@ export default function Usuarios() {
         {isLoading ? (
           <div className="text-muted-foreground">Carregando usuários...</div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Função</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles?.map((p) => {
-                const label = roleMap?.get(p.user_id) ?? null;
-                const isAdmin = label === "Admin";
-                return (
-                  <TableRow key={p.user_id}>
-                    <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
-                    <TableCell>{p.email ?? "—"}</TableCell>
-                    <TableCell>
-                      {label ? (
-                        <Badge variant={isAdmin ? "default" : "secondary"}>{label}</Badge>
-                      ) : (
-                        <Badge variant="secondary">sem função</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button size="sm" onClick={() => makeAdmin(p.user_id)} disabled={isAdmin}>
-                          {isAdmin ? "Já é admin" : "Tornar admin"}
-                        </Button>
-                        {user && p.user_id !== user.id && (
-                          myChildrenIds.has(p.user_id) ? (
-                            <>
-                              <Button size="sm" variant="secondary" onClick={() => openPerms(p)}>
-                                <Settings2 className="mr-1 h-4 w-4" /> Permissões
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => unlinkChild(p.user_id)}>
-                                <Unlink className="mr-1 h-4 w-4" /> Desvincular
-                              </Button>
-                            </>
-                          ) : (
-                            <Button size="sm" variant="outline" onClick={() => linkChild(p.user_id)}>
-                              <LinkIcon className="mr-1 h-4 w-4" /> Vincular subconta
-                            </Button>
-                          )
+          <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {profiles?.map((p) => {
+                  const label = roleMap?.get(p.user_id) ?? null;
+                  const isAdmin = label === "Admin";
+                  return (
+                    <TableRow key={p.user_id}>
+                      <TableCell className="font-medium">{p.nome ?? "—"}</TableCell>
+                      <TableCell>{p.email ?? "—"}</TableCell>
+                      <TableCell>
+                        {label ? (
+                          <Badge variant={isAdmin ? "default" : "secondary"}>{label}</Badge>
+                        ) : (
+                          <Badge variant="secondary">sem função</Badge>
                         )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          <Button size="sm" onClick={() => makeAdmin(p.user_id)} disabled={isAdmin}>
+                            {isAdmin ? "Já é admin" : "Tornar admin"}
+                          </Button>
+                          {user && p.user_id !== user.id && (
+                            myChildrenIds.has(p.user_id) ? (
+                              <>
+                                <Button size="sm" variant="secondary" onClick={() => openPerms(p)}>
+                                  <Settings2 className="mr-1 h-4 w-4" /> Permissões
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => unlinkChild(p.user_id)}>
+                                  <Unlink className="mr-1 h-4 w-4" /> Desvincular
+                                </Button>
+                              </>
+                            ) : (
+                              <Button size="sm" variant="outline" onClick={() => linkChild(p.user_id)}>
+                                <LinkIcon className="mr-1 h-4 w-4" /> Vincular subconta
+                              </Button>
+                            )
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </section>
 

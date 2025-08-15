@@ -197,7 +197,7 @@ export default function Franqueados() {
   return (
     <main>
       <header className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Franqueados</h1>
             <p className="text-muted-foreground">
@@ -212,12 +212,12 @@ export default function Franqueados() {
             }
           }}>
             <DialogTrigger asChild>
-              <Button onClick={openInviteDialog}>
+              <Button onClick={openInviteDialog} className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
                 Convidar franqueado
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Convidar franqueado</DialogTitle>
                 <DialogDescription>
