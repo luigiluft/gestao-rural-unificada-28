@@ -377,10 +377,12 @@ export type Database = {
       franquias: {
         Row: {
           ativo: boolean | null
+          capacidade_total: number | null
           cep: string | null
           cidade: string | null
           created_at: string | null
           descricao: string | null
+          descricao_deposito: string | null
           email: string | null
           endereco: string | null
           estado: string | null
@@ -392,10 +394,12 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          capacidade_total?: number | null
           cep?: string | null
           cidade?: string | null
           created_at?: string | null
           descricao?: string | null
+          descricao_deposito?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -407,10 +411,12 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          capacidade_total?: number | null
           cep?: string | null
           cidade?: string | null
           created_at?: string | null
           descricao?: string | null
+          descricao_deposito?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
