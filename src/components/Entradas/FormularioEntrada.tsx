@@ -45,7 +45,10 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
   const [dadosEntrada, setDadosEntrada] = useState({
     numeroNF: '',
     serie: '',
+    chaveNFe: '',
+    naturezaOperacao: '',
     dataEntrada: '',
+    dataEmissao: '',
     origem: '',
     observacoes: '',
     depositoId: ''
@@ -68,7 +71,10 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       setDadosEntrada({
         numeroNF: nfData.numeroNF,
         serie: nfData.serie,
+        chaveNFe: nfData.chaveNFe,
+        naturezaOperacao: nfData.naturezaOperacao,
         dataEntrada: nfData.dataEmissao,
+        dataEmissao: nfData.dataEmissao,
         origem: nfData.emitente.nome,
         observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
         depositoId: ''
@@ -118,7 +124,8 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       ...dadosEntrada,
       itens,
       valorTotal: calcularValorTotal(),
-      tipo: nfData ? 'nfe' : 'manual'
+      tipo: nfData ? 'nfe' : 'manual',
+      xmlContent: nfData?.xmlContent
     };
     onSubmit(dadosCompletos);
   };
@@ -174,6 +181,30 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
               />
             </div>
           </div>
+          
+          {nfData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="chaveNFe">Chave da NFe</Label>
+                <Input
+                  id="chaveNFe"
+                  value={dadosEntrada.chaveNFe}
+                  onChange={(e) => setDadosEntrada({...dadosEntrada, chaveNFe: e.target.value})}
+                  placeholder="Chave de 44 dígitos"
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="naturezaOperacao">Natureza da Operação</Label>
+                <Input
+                  id="naturezaOperacao"
+                  value={dadosEntrada.naturezaOperacao}
+                  onChange={(e) => setDadosEntrada({...dadosEntrada, naturezaOperacao: e.target.value})}
+                  placeholder="Ex: Venda de Mercadoria"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

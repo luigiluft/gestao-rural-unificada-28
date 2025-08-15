@@ -39,6 +39,9 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
           throw new Error('Erro ao processar dados da NFe');
         }
 
+        // Adicionar o conteúdo XML completo aos dados
+        nfData.xmlContent = content;
+
         onNFDataParsed(nfData);
         setUploadStatus('success');
       } else if (fileName.endsWith('.pdf') || fileType === 'application/pdf') {

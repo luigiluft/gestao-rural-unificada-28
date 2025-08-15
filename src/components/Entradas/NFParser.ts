@@ -11,10 +11,14 @@ export interface NFItem {
 export interface NFData {
   numeroNF: string;
   serie: string;
+  chaveNFe: string;
+  naturezaOperacao: string;
   dataEmissao: string;
+  xmlContent?: string;
   emitente: {
     cnpj: string;
     nome: string;
+    nomeFantasia?: string;
     endereco: string;
   };
   destinatario: {
@@ -38,10 +42,15 @@ export class NFParser {
         throw new Error('XML não é uma NFe válida');
       }
 
+      // Extrair chave da NFe
+      const infNFe = xmlDoc.querySelector('infNFe');
+      const chaveNFe = infNFe?.getAttribute('Id')?.replace('NFe', '') || '';
+
       // Extrair dados básicos da NFe
       const ide = xmlDoc.querySelector('ide');
       const numeroNF = ide?.querySelector('nNF')?.textContent || '';
       const serie = ide?.querySelector('serie')?.textContent || '';
+      const naturezaOperacao = ide?.querySelector('natOp')?.textContent || '';
       const dataEmissao = ide?.querySelector('dhEmi')?.textContent?.split('T')[0] || '';
 
       // Extrair dados do emitente
@@ -49,6 +58,7 @@ export class NFParser {
       const emitente = {
         cnpj: emit?.querySelector('CNPJ')?.textContent || '',
         nome: emit?.querySelector('xNome')?.textContent || '',
+        nomeFantasia: emit?.querySelector('xFant')?.textContent || undefined,
         endereco: this.formatarEndereco(emit?.querySelector('enderEmit'))
       };
 
@@ -86,7 +96,10 @@ export class NFParser {
       return {
         numeroNF,
         serie,
+        chaveNFe,
+        naturezaOperacao,
         dataEmissao,
+        xmlContent,
         emitente,
         destinatario,
         itens,

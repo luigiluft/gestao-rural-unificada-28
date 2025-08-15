@@ -155,8 +155,10 @@ export type Database = {
           deposito_id: string | null
           fornecedor_id: string | null
           id: string
+          natureza_operacao: string | null
           numero_nfe: string | null
           observacoes: string | null
+          serie: string | null
           status: string | null
           updated_at: string
           user_id: string
@@ -171,8 +173,10 @@ export type Database = {
           deposito_id?: string | null
           fornecedor_id?: string | null
           id?: string
+          natureza_operacao?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
+          serie?: string | null
           status?: string | null
           updated_at?: string
           user_id: string
@@ -187,8 +191,10 @@ export type Database = {
           deposito_id?: string | null
           fornecedor_id?: string | null
           id?: string
+          natureza_operacao?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
+          serie?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string

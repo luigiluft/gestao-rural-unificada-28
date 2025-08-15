@@ -96,19 +96,55 @@ export default function Entradas() {
     }
 
     try {
+      let fornecedorId = null;
+      
+      // Se temos dados do emitente da NFe, criar/encontrar o fornecedor
+      if (nfData?.emitente) {
+        const { data: fornecedorExistente } = await supabase
+          .from('fornecedores')
+          .select('id')
+          .eq('cnpj_cpf', nfData.emitente.cnpj)
+          .single();
+
+        if (fornecedorExistente) {
+          fornecedorId = fornecedorExistente.id;
+        } else {
+          // Criar novo fornecedor
+          const { data: novoFornecedor, error: fornecedorError } = await supabase
+            .from('fornecedores')
+            .insert({
+              user_id: user.id,
+              nome: nfData.emitente.nome,
+              nome_fantasia: nfData.emitente.nomeFantasia,
+              cnpj_cpf: nfData.emitente.cnpj,
+              endereco: nfData.emitente.endereco,
+              ativo: true
+            })
+            .select()
+            .single();
+
+          if (fornecedorError) throw fornecedorError;
+          fornecedorId = novoFornecedor.id;
+        }
+      }
+
       // Criar a entrada
       const { data: entrada, error: entradaError } = await supabase
         .from('entradas')
         .insert({
           user_id: user.id,
           numero_nfe: dados.numeroNF || null,
+          serie: dados.serie || null,
+          chave_nfe: dados.chaveNFe || null,
+          natureza_operacao: dados.naturezaOperacao || null,
           data_entrada: dados.dataEntrada,
-          data_emissao: dados.dataEntrada,
+          data_emissao: dados.dataEmissao || dados.dataEntrada,
           valor_total: dados.valorTotal,
           deposito_id: null, // Por enquanto deixar nulo, depois pode implementar select de depósitos
+          fornecedor_id: fornecedorId,
           observacoes: dados.observacoes,
           status: 'confirmado',
-          xml_content: dados.tipo === 'nfe' ? 'XML importado' : null
+          xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null
         })
         .select()
         .single()
@@ -320,7 +356,7 @@ export default function Entradas() {
                       </TableCell>
                       <TableCell>
                         <span className="text-muted-foreground text-sm">
-                          N/A
+                          {(entrada as any).serie || 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -333,11 +369,16 @@ export default function Entradas() {
                           <span className="text-sm font-medium truncate block">
                             {entrada.fornecedores?.nome || 'N/A'}
                           </span>
+                          {(entrada.fornecedores as any)?.nome_fantasia && (
+                            <span className="text-xs text-muted-foreground truncate block">
+                              {(entrada.fornecedores as any).nome_fantasia}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm font-mono">
-                          N/A
+                          {(entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -356,7 +397,7 @@ export default function Entradas() {
                       <TableCell>
                         <div className="max-w-[120px]">
                           <span className="text-xs text-muted-foreground truncate block">
-                            N/A
+                            {(entrada as any).natureza_operacao || 'N/A'}
                           </span>
                         </div>
                       </TableCell>
