@@ -69,13 +69,32 @@ export default function Catalogo() {
       toast({ variant: "destructive", description: "Você precisa estar autenticado." })
       return
     }
+    
+    // Verificar se já existe um produto com o mesmo nome e código
+    const { data: existingProduct } = await supabase
+      .from("produtos")
+      .select("id")
+      .eq("nome", values.nome.trim())
+      .eq("codigo", values.codigo?.trim() || null)
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .maybeSingle()
+    
+    if (existingProduct) {
+      toast({ 
+        variant: "destructive", 
+        description: "Já existe um produto ativo com este nome e código." 
+      })
+      return
+    }
+    
     const { error } = await supabase.from("produtos").insert({
       user_id: user.id,
-      nome: values.nome,
+      nome: values.nome.trim(),
       unidade_medida: values.unidade_medida,
-      codigo: values.codigo || null,
-      categoria: values.categoria || null,
-      descricao: values.descricao || null,
+      codigo: values.codigo?.trim() || null,
+      categoria: values.categoria?.trim() || null,
+      descricao: values.descricao?.trim() || null,
       ativo: values.ativo,
     })
     if (error) {
