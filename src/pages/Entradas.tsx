@@ -392,7 +392,7 @@ export default function Entradas() {
           </p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Button 
             variant="outline" 
             size="sm"
@@ -400,18 +400,19 @@ export default function Entradas() {
               setIsNewEntryOpen(true)
               setActiveTab("upload")
             }}
+            className="w-full sm:w-auto"
           >
             <Upload className="w-4 h-4 mr-2" />
             Importar XML
           </Button>
           <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-primary hover:bg-primary/90">
+              <Button className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Entrada
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Registrar Nova Entrada</DialogTitle>
                 <DialogDescription>
@@ -549,7 +550,7 @@ export default function Entradas() {
             </div>
           ) : entradas && entradas.length > 0 ? (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-[1200px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Número NFe</TableHead>

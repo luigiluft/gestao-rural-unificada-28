@@ -196,7 +196,8 @@ export default function Estoque() {
               ))}
             </div>
           ) : estoque && estoque.length > 0 ? (
-            <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Produto</TableHead>
@@ -393,7 +394,8 @@ export default function Estoque() {
                   )
                 })}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           ) : (
             <EmptyState
               icon={<Package className="w-8 h-8 text-muted-foreground" />}

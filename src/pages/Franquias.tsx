@@ -244,7 +244,7 @@ const Franquias = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Franquias</h1>
           <p className="text-muted-foreground">
@@ -253,12 +253,12 @@ const Franquias = () => {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => openDialog()}>
+            <Button onClick={() => openDialog()} className="w-full sm:w-auto">
               <Building2 className="mr-2 h-4 w-4" />
               Nova Franquia
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>
                 {editingFranquia ? "Editar Franquia" : "Nova Franquia"}
@@ -409,7 +409,7 @@ const Franquias = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {franquias.map((franquia) => (
               <Card key={franquia.id} className="relative">
                 <CardHeader>
