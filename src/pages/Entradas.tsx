@@ -550,22 +550,22 @@ export default function Entradas() {
             </div>
           ) : entradas && entradas.length > 0 ? (
             <div className="overflow-x-auto">
-              <Table className="min-w-[900px]">
+              <Table className="min-w-[750px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Número NFe</TableHead>
-                    <TableHead>Série</TableHead>
-                    <TableHead>Chave NFe</TableHead>
-                    <TableHead>Emitente</TableHead>
-                    <TableHead>CNPJ/CPF Emitente</TableHead>
-                    <TableHead>Data Emissão</TableHead>
-                    <TableHead>Data Entrada</TableHead>
-                    <TableHead>Nat. Operação</TableHead>
-                    <TableHead>Itens</TableHead>
-                    <TableHead>Depósito</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Valor Total</TableHead>
-                    <TableHead className="w-[50px]">Ações</TableHead>
+                    <TableHead className="min-w-[80px]">Número NFe</TableHead>
+                    <TableHead className="min-w-[60px]">Série</TableHead>
+                    <TableHead className="min-w-[120px]">Chave NFe</TableHead>
+                    <TableHead className="min-w-[120px]">Emitente</TableHead>
+                    <TableHead className="min-w-[100px]">CNPJ/CPF</TableHead>
+                    <TableHead className="min-w-[80px]">Data Emissão</TableHead>
+                    <TableHead className="min-w-[80px]">Data Entrada</TableHead>
+                    <TableHead className="min-w-[100px]">Nat. Operação</TableHead>
+                    <TableHead className="min-w-[80px]">Itens</TableHead>
+                    <TableHead className="min-w-[80px]">Depósito</TableHead>
+                    <TableHead className="min-w-[80px]">Status</TableHead>
+                    <TableHead className="min-w-[100px]">Valor Total</TableHead>
+                    <TableHead className="min-w-[80px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
