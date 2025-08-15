@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -67,6 +67,16 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const estoqueDisponivel = estoque?.filter(item => 
     (item.quantidade_atual || 0) > 0
   ) || []
+
+  // Definir deposito_id automaticamente se não estiver definido
+  useEffect(() => {
+    if (!dadosSaida.deposito_id && estoqueDisponivel.length > 0) {
+      const primeiroDeposito = estoqueDisponivel[0]?.deposito_id
+      if (primeiroDeposito) {
+        setDadosSaida(prev => ({ ...prev, deposito_id: primeiroDeposito }))
+      }
+    }
+  }, [estoqueDisponivel, dadosSaida.deposito_id])
 
   // Agrupar estoque por produto para evitar duplicatas
   const produtosDisponiveis = estoqueDisponivel.reduce((acc, item) => {
@@ -170,6 +180,11 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
       return
     }
 
+    if (!dadosSaida.deposito_id) {
+      toast.error("Nenhum depósito disponível para realizar a saída")
+      return
+    }
+
     try {
       // Criar a saída
       const { data: saida, error: saidaError } = await supabase
@@ -180,7 +195,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           tipo_saida: dadosSaida.tipo_saida,
           destinatario: dadosSaida.destinatario,
           observacoes: dadosSaida.observacoes,
-          deposito_id: dadosSaida.deposito_id || null,
+          deposito_id: dadosSaida.deposito_id,
           valor_total: calcularValorTotal(),
           status: 'preparando'
         })
