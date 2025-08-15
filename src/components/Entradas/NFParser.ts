@@ -77,9 +77,22 @@ export class NFParser {
       detElements.forEach(det => {
         const prod = det.querySelector('prod');
         if (prod) {
+          // Primeiro tenta pegar o nome comercial (xProd), depois outros campos possíveis
+          let descricao = prod.querySelector('xProd')?.textContent || '';
+          
+          // Se a descrição contém apenas números ou parece ser numeração de NFe, 
+          // tentar outros campos possíveis
+          if (!descricao || /^\d+$/.test(descricao.trim()) || descricao.includes('NFe')) {
+            // Tentar campo de descrição mais detalhada se existir
+            descricao = prod.querySelector('descricao')?.textContent || 
+                       prod.querySelector('nome')?.textContent || 
+                       prod.querySelector('produto')?.textContent ||
+                       descricao;
+          }
+          
           const item: NFItem = {
             codigo: prod.querySelector('cProd')?.textContent || '',
-            descricao: prod.querySelector('xProd')?.textContent || '',
+            descricao: descricao || 'Produto sem descrição',
             quantidade: parseFloat(prod.querySelector('qCom')?.textContent || '0'),
             unidade: prod.querySelector('uCom')?.textContent || '',
             valorUnitario: parseFloat(prod.querySelector('vUnCom')?.textContent || '0'),
