@@ -184,6 +184,24 @@ export default function Entradas() {
         }
       }
 
+      // Verificar se a NFe já foi importada (se há chave_nfe)
+      if (dados.chaveNFe) {
+        const { data: entradaExistente } = await supabase
+          .from('entradas')
+          .select('id, numero_nfe, serie')
+          .eq('chave_nfe', dados.chaveNFe)
+          .maybeSingle();
+
+        if (entradaExistente) {
+          toast({
+            title: "NFe já importada",
+            description: `A Nota Fiscal ${entradaExistente.numero_nfe}/${entradaExistente.serie} com esta chave já foi importada no sistema.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       console.log('Dados da entrada a serem salvos:', {
         user_id: entradaUserId,
         produtor_identificado: produtorIdentificado?.nome,
