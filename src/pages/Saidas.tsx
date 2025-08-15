@@ -39,7 +39,7 @@ import {
 import { FormularioSaida } from "@/components/Saidas/FormularioSaida"
 import { useSaidas, useSaidaStats } from "@/hooks/useSaidas"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AppLayout } from "@/components/Layout/AppLayout"
+
 import { useQueryClient } from "@tanstack/react-query"
 
 export default function Saidas() {
@@ -80,24 +80,23 @@ export default function Saidas() {
   ) || []
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Saídas</h1>
-            <p className="text-muted-foreground">
-              Registre e acompanhe as saídas de produtos do estoque
-            </p>
-          </div>
-          
-          <div className="flex gap-3">
-            <Dialog open={isNewSaidaOpen} onOpenChange={setIsNewSaidaOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-primary hover:bg-primary/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Saída
-                </Button>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Saídas</h1>
+          <p className="text-muted-foreground">
+            Registre e acompanhe as saídas de produtos do estoque
+          </p>
+        </div>
+        
+        <div className="flex gap-3">
+          <Dialog open={isNewSaidaOpen} onOpenChange={setIsNewSaidaOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Saída
+              </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -308,7 +307,6 @@ export default function Saidas() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </AppLayout>
+    </div>
   )
 }
