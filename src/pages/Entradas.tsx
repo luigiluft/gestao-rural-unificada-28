@@ -413,7 +413,7 @@ export default function Entradas() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {entrada.depositos?.nome || 'N/A'}
+                          {(entrada as any).franquias?.nome || 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>

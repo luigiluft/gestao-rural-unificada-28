@@ -16,7 +16,7 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <Label>Depósito</Label>
+        <Label>Franquia</Label>
         <div className="h-10 bg-muted animate-pulse rounded-md" />
       </div>
     )
@@ -24,10 +24,10 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="deposito">Depósito de Destino</Label>
+      <Label htmlFor="deposito">Franquia de Destino</Label>
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger>
-          <SelectValue placeholder="Selecione um depósito" />
+          <SelectValue placeholder="Selecione uma franquia" />
         </SelectTrigger>
         <SelectContent>
           {depositos?.map((item) => (
@@ -44,7 +44,7 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
       </Select>
       {depositos?.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nenhum depósito disponível. Entre em contato com um franqueado para autorização.
+          Nenhuma franquia disponível. Todas as franquias ativas estão automaticamente disponíveis.
         </p>
       )}
     </div>

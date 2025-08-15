@@ -15,7 +15,7 @@ export default function DepositosProdutor() {
 
   // Agrupar estoque por depósito
   const estoquePorDeposito = estoque?.reduce((acc, item) => {
-    const depositoId = item.depositos?.nome || 'Sem depósito'
+    const depositoId = (item as any).franquias?.nome || 'Sem depósito'
     if (!acc[depositoId]) {
       acc[depositoId] = []
     }

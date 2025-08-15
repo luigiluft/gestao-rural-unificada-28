@@ -49,18 +49,37 @@ export const useRecentMovements = () => {
   return useQuery({
     queryKey: ["recent-movements"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: movimentacoes, error } = await supabase
         .from("movimentacoes")
         .select(`
           *,
-          produtos(nome),
-          depositos(nome)
+          produtos(nome)
         `)
         .order("data_movimentacao", { ascending: false })
         .limit(5)
 
       if (error) throw error
-      return data || []
+
+      // Get franquia names for each movement
+      const movimentacoesWithFranquias = await Promise.all(
+        (movimentacoes || []).map(async (mov) => {
+          if (mov.deposito_id) {
+            const { data: franquia } = await supabase
+              .from("franquias")
+              .select("nome")
+              .eq("id", mov.deposito_id)
+              .single()
+            
+            return {
+              ...mov,
+              franquias: franquia
+            }
+          }
+          return mov
+        })
+      )
+
+      return movimentacoesWithFranquias || []
     },
   })
 }

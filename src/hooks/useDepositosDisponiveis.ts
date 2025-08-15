@@ -21,12 +21,12 @@ export const useDepositosDisponiveis = (produtorId?: string) => {
 
 export const useDepositosFranqueado = () => {
   return useQuery({
-    queryKey: ["depositos-franqueado"],
+    queryKey: ["franquias-franqueado"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("depositos")
+        .from("franquias")
         .select("*")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id || '')
+        .eq("master_franqueado_id", (await supabase.auth.getUser()).data.user?.id || '')
         .eq("ativo", true)
         .order("nome")
 
@@ -36,37 +36,5 @@ export const useDepositosFranqueado = () => {
   })
 }
 
-export const useRelacionamentosProdutorFranqueado = () => {
-  return useQuery({
-    queryKey: ["relacionamentos-produtor-franqueado"],
-    queryFn: async () => {
-      const { data: relations, error } = await supabase
-        .from("produtor_franqueado_depositos")
-        .select("*")
-        .eq("ativo", true)
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      
-      if (!relations || relations.length === 0) return []
-
-      // Get related data
-      const produtorIds = relations.map(r => r.produtor_id)
-      const depositoIds = relations.map(r => r.deposito_id)
-      
-      const [produtores, depositos] = await Promise.all([
-        supabase.from("profiles").select("user_id, nome, email").in("user_id", produtorIds),
-        supabase.from("depositos").select("id, nome").in("id", depositoIds)
-      ])
-
-      // Combine data
-      const result = relations.map(rel => ({
-        ...rel,
-        produtor: produtores.data?.find(p => p.user_id === rel.produtor_id),
-        depositos: depositos.data?.find(d => d.id === rel.deposito_id)
-      }))
-
-      return result
-    },
-  })
-}
+// Função removida: useRelacionamentosProdutorFranqueado
+// Agora todos os produtores têm acesso automático a todas as franquias ativas

@@ -5,11 +5,10 @@ export const useEntradas = () => {
   return useQuery({
     queryKey: ["entradas"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: entradas, error } = await supabase
         .from("entradas")
         .select(`
           *,
-          depositos(nome),
           fornecedores(nome),
           entrada_itens(
             *,
@@ -19,7 +18,27 @@ export const useEntradas = () => {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      return data || []
+
+      // Get franquia names for each entrada
+      const entradasWithFranquias = await Promise.all(
+        (entradas || []).map(async (entrada) => {
+          if (entrada.deposito_id) {
+            const { data: franquia } = await supabase
+              .from("franquias")
+              .select("nome")
+              .eq("id", entrada.deposito_id)
+              .single()
+            
+            return {
+              ...entrada,
+              franquias: franquia
+            }
+          }
+          return entrada
+        })
+      )
+
+      return entradasWithFranquias || []
     },
   })
 }

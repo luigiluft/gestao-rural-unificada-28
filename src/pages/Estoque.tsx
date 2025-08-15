@@ -248,7 +248,7 @@ export default function Estoque() {
                           </p>
                         </div>
                       </TableCell>
-                      <TableCell>{item.depositos?.nome}</TableCell>
+                      <TableCell>{(item as any).franquias?.nome}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusColor(status) as any}>
                           {status}
@@ -364,7 +364,7 @@ export default function Estoque() {
                                               <p className="font-medium">
                                                 {mov.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'} - {mov.quantidade}
                                               </p>
-                                              <p className="text-sm text-muted-foreground">{mov.depositos?.nome}</p>
+                                              <p className="text-sm text-muted-foreground">{(mov as any).franquias?.nome}</p>
                                               <p className="text-xs text-muted-foreground">
                                                 {formatDistanceToNow(new Date(mov.data_movimentacao), { 
                                                   addSuffix: true, 

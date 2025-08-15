@@ -143,7 +143,7 @@ export default function Dashboard() {
                             {movement.produtos?.nome} {movement.lote ? `- ${movement.lote}` : ''}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {movement.depositos?.nome}
+                            {(movement as any).franquias?.nome}
                           </p>
                         </div>
                       </div>
