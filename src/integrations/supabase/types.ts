@@ -203,13 +203,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "entradas_deposito_id_fkey"
-            columns: ["deposito_id"]
-            isOneToOne: false
-            referencedRelation: "depositos"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "entradas_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
             isOneToOne: false
@@ -259,13 +252,6 @@ export type Database = {
           valor_medio?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "estoque_deposito_id_fkey"
-            columns: ["deposito_id"]
-            isOneToOne: false
-            referencedRelation: "depositos"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "estoque_produto_id_fkey"
             columns: ["produto_id"]
@@ -475,13 +461,6 @@ export type Database = {
           valor_unitario?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "movimentacoes_deposito_id_fkey"
-            columns: ["deposito_id"]
-            isOneToOne: false
-            referencedRelation: "depositos"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "movimentacoes_produto_id_fkey"
             columns: ["produto_id"]
@@ -866,15 +845,7 @@ export type Database = {
           user_id?: string
           valor_total?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "saidas_deposito_id_fkey"
-            columns: ["deposito_id"]
-            isOneToOne: false
-            referencedRelation: "depositos"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_hierarchy: {
         Row: {
