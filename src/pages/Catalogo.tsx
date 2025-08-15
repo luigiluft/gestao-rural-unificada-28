@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
   DialogContent,
@@ -201,57 +210,106 @@ export default function Catalogo() {
       {/* Structured data for SEO */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <section aria-busy={isLoading} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {isLoading && Array.from({ length: 6 }).map((_, i) => (
-          <Card key={`skeleton-${i}`} className="shadow-card animate-pulse">
-            <CardHeader>
-              <div className="h-5 w-2/3 bg-muted rounded" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="h-4 w-1/2 bg-muted rounded" />
-              <div className="h-4 w-1/3 bg-muted rounded" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="rounded-md border bg-background">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">
+                <Package className="h-4 w-4" />
+              </TableHead>
+              <TableHead className="font-semibold">Nome</TableHead>
+              <TableHead className="font-semibold">Código</TableHead>
+              <TableHead className="font-semibold">Categoria</TableHead>
+              <TableHead className="font-semibold">Unidade</TableHead>
+              <TableHead className="font-semibold">Descrição</TableHead>
+              <TableHead className="font-semibold text-center">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={`skeleton-${i}`}>
+                <TableCell>
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[120px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[80px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[60px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[150px]" />
+                </TableCell>
+                <TableCell className="text-center">
+                  <Skeleton className="h-6 w-16 mx-auto rounded-full" />
+                </TableCell>
+              </TableRow>
+            ))}
 
-        {!isLoading && error && (
-          <div className="col-span-full text-destructive">Erro ao carregar produtos.</div>
-        )}
+            {!isLoading && error && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                  Erro ao carregar produtos.
+                </TableCell>
+              </TableRow>
+            )}
 
-        {!isLoading && !error && filtered.length === 0 && (
-          <Card className="shadow-card col-span-full">
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhum produto encontrado.
-            </CardContent>
-          </Card>
-        )}
+            {!isLoading && !error && filtered.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  Nenhum produto encontrado.
+                </TableCell>
+              </TableRow>
+            )}
 
-        {!isLoading && !error && filtered.map((p) => (
-          <Card key={p.id} className="shadow-card">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
-                  <Package className="w-4 h-4" />
-                </div>
-                <CardTitle className="text-base">{p.nome}</CardTitle>
-              </div>
-              <Badge variant={p.ativo ? "default" : "secondary"}>{p.ativo ? "Ativo" : "Inativo"}</Badge>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm text-muted-foreground">
-              {p.codigo && (
-                <p><span className="font-medium text-foreground">Código:</span> {p.codigo}</p>
-              )}
-              {p.categoria && (
-                <p><span className="font-medium text-foreground">Categoria:</span> {p.categoria}</p>
-              )}
-              <p><span className="font-medium text-foreground">Unidade:</span> {p.unidade_medida}</p>
-              {p.descricao && (
-                <p className="line-clamp-2"><span className="font-medium text-foreground">Descrição:</span> {p.descricao}</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+            {!isLoading && !error && filtered.map((p) => (
+              <TableRow key={p.id} className="hover:bg-muted/50">
+                <TableCell>
+                  <div className="w-8 h-8 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+                    <Package className="w-4 h-4" />
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium">
+                  {p.nome}
+                </TableCell>
+                <TableCell>
+                  <span className="font-mono text-sm">
+                    {p.codigo || '-'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm">
+                    {p.categoria || '-'}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm font-medium">
+                    {p.unidade_medida}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="max-w-[200px]">
+                    <span className="text-sm text-muted-foreground line-clamp-2">
+                      {p.descricao || '-'}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Badge variant={p.ativo ? "default" : "secondary"}>
+                    {p.ativo ? "Ativo" : "Inativo"}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </article>
   )
 }
