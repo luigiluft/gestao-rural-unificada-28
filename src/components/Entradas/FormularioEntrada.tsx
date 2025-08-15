@@ -40,6 +40,8 @@ interface ItemEntrada {
   valorTotal: number;
   observacoes?: string;
   dataValidade?: string;
+  quantidadeLote?: number;
+  dataFabricacao?: string;
 }
 
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
@@ -90,7 +92,9 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         deposito: 'Armazém A', // Padrão
         valorUnitario: item.valorUnitario,
         valorTotal: item.valorTotal,
-        dataValidade: item.dataValidade // Incluir data de validade se disponível
+        dataValidade: item.dataValidade, // Incluir data de validade se disponível
+        quantidadeLote: item.quantidadeLote, // Incluir quantidade do lote
+        dataFabricacao: item.dataFabricacao // Incluir data de fabricação
       }));
 
       setItens(itensConvertidos);

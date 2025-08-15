@@ -8,6 +8,8 @@ export interface NFItem {
   valorTotal: number;
   lote?: string;
   dataValidade?: string;
+  quantidadeLote?: number;
+  dataFabricacao?: string;
 }
 
 export interface NFData {
@@ -94,10 +96,12 @@ export class NFParser {
                        descricao;
           }
           
-          // Extrair dados de rastreabilidade (lote e data de validade)
+          // Extrair dados de rastreabilidade (lote, data de validade, quantidade do lote e data de fabricação)
           const rastro = prod.querySelector('rastro');
           let lote = '';
           let dataValidade: string | undefined;
+          let quantidadeLote: number | undefined;
+          let dataFabricacao: string | undefined;
           
           if (rastro) {
             // nLote = número do lote
@@ -106,6 +110,16 @@ export class NFParser {
             const dVal = rastro.querySelector('dVal')?.textContent;
             if (dVal) {
               dataValidade = dVal;
+            }
+            // qLote = quantidade do lote
+            const qLote = rastro.querySelector('qLote')?.textContent;
+            if (qLote) {
+              quantidadeLote = parseFloat(qLote);
+            }
+            // dFab = data de fabricação no formato YYYY-MM-DD
+            const dFab = rastro.querySelector('dFab')?.textContent;
+            if (dFab) {
+              dataFabricacao = dFab;
             }
           }
           
@@ -117,7 +131,9 @@ export class NFParser {
             valorUnitario: parseFloat(prod.querySelector('vUnCom')?.textContent || '0'),
             valorTotal: parseFloat(prod.querySelector('vProd')?.textContent || '0'),
             lote,
-            dataValidade
+            dataValidade,
+            quantidadeLote,
+            dataFabricacao
           };
           itens.push(item);
         }
