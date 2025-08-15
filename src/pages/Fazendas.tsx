@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react"
 import { Plus, Edit, Trash2, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -326,87 +326,79 @@ export default function Fazendas() {
       </div>
 
       {fazendas.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center h-64 text-center">
-            <MapPin className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              Nenhuma fazenda cadastrada
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Comece cadastrando sua primeira propriedade rural
-            </p>
-            <Button onClick={() => setDialogOpen(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Cadastrar Fazenda
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="border border-dashed border-border rounded-lg p-12 text-center">
+          <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            Nenhuma fazenda cadastrada
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            Comece cadastrando sua primeira propriedade rural
+          </p>
+          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Cadastrar Fazenda
+          </Button>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {fazendas.map((fazenda) => (
-            <Card key={fazenda.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{fazenda.nome}</CardTitle>
-                  <Badge variant={fazenda.ativo ? "default" : "secondary"}>
-                    {fazenda.ativo ? "Ativa" : "Inativa"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Endereço</p>
-                  <p className="text-sm">{fazenda.endereco}</p>
-                </div>
-                
-                {(fazenda.cidade || fazenda.estado) && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Localização</p>
-                    <p className="text-sm">
-                      {[fazenda.cidade, fazenda.estado].filter(Boolean).join(" - ")}
-                    </p>
-                  </div>
-                )}
-
-                {fazenda.cep && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">CEP</p>
-                    <p className="text-sm">{fazenda.cep}</p>
-                  </div>
-                )}
-
-                {(fazenda.latitude && fazenda.longitude) && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Coordenadas</p>
-                    <p className="text-sm">
-                      {fazenda.latitude.toFixed(4)}, {fazenda.longitude.toFixed(4)}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEdit(fazenda)}
-                    className="gap-1"
-                  >
-                    <Edit className="w-3 h-3" />
-                    Editar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDelete(fazenda.id)}
-                    className="gap-1 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Excluir
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Endereço</TableHead>
+                <TableHead>Cidade/Estado</TableHead>
+                <TableHead>CEP</TableHead>
+                <TableHead>Coordenadas</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fazendas.map((fazenda) => (
+                <TableRow key={fazenda.id}>
+                  <TableCell className="font-medium">{fazenda.nome}</TableCell>
+                  <TableCell>{fazenda.endereco}</TableCell>
+                  <TableCell>
+                    {[fazenda.cidade, fazenda.estado].filter(Boolean).join(" - ") || "-"}
+                  </TableCell>
+                  <TableCell>{fazenda.cep || "-"}</TableCell>
+                  <TableCell>
+                    {(fazenda.latitude && fazenda.longitude) 
+                      ? `${fazenda.latitude.toFixed(4)}, ${fazenda.longitude.toFixed(4)}`
+                      : "-"
+                    }
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={fazenda.ativo ? "default" : "secondary"}>
+                      {fazenda.ativo ? "Ativa" : "Inativa"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(fazenda)}
+                        className="gap-1"
+                      >
+                        <Edit className="w-3 h-3" />
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(fazenda.id)}
+                        className="gap-1 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Excluir
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
