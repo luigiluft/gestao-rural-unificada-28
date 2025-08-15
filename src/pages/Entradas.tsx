@@ -81,22 +81,44 @@ export default function Entradas() {
     setProdutorError(null)
     setProdutorIdentificado(null)
 
-    // Verificar se a NFe já foi importada
+    // Verificar se a NFe já foi importada (validação mais robusta)
+    let entradaExistente = null;
+    
+    // Primeira validação: por chave NFe
     if (data.chaveNFe) {
-      const { data: entradaExistente } = await supabase
+      const { data: entradaPorChave } = await supabase
         .from('entradas')
-        .select('id, numero_nfe, serie')
+        .select('id, numero_nfe, serie, emitente_nome')
         .eq('chave_nfe', data.chaveNFe)
         .maybeSingle();
 
-      if (entradaExistente) {
-        toast({
-          title: "NFe já importada",
-          description: `A Nota Fiscal ${entradaExistente.numero_nfe}/${entradaExistente.serie} com esta chave já foi importada no sistema.`,
-          variant: "destructive",
-        });
-        return;
+      if (entradaPorChave) {
+        entradaExistente = entradaPorChave;
       }
+    }
+    
+    // Segunda validação: por número + série + CNPJ do emitente
+    if (!entradaExistente && data.numeroNF && data.serie && data.emitente.cnpj) {
+      const { data: entradaPorDados } = await supabase
+        .from('entradas')
+        .select('id, numero_nfe, serie, emitente_nome')
+        .eq('numero_nfe', data.numeroNF)
+        .eq('serie', data.serie)
+        .eq('emitente_cnpj', data.emitente.cnpj)
+        .maybeSingle();
+
+      if (entradaPorDados) {
+        entradaExistente = entradaPorDados;
+      }
+    }
+
+    if (entradaExistente) {
+      toast({
+        title: "NFe já importada",
+        description: `A Nota Fiscal ${entradaExistente.numero_nfe}/${entradaExistente.serie} do emitente ${entradaExistente.emitente_nome || data.emitente.nome} já foi importada no sistema.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     // Verificar se a NFe pertence ao usuário (quando não for admin/franqueado)
@@ -223,22 +245,44 @@ export default function Entradas() {
         }
       }
 
-      // Verificar se a NFe já foi importada (se há chave_nfe)
+      // Verificar duplicatas de NFe (validação mais robusta)
+      let entradaExistente = null;
+      
+      // Primeira validação: por chave NFe
       if (dados.chaveNFe) {
-        const { data: entradaExistente } = await supabase
+        const { data: entradaPorChave } = await supabase
           .from('entradas')
-          .select('id, numero_nfe, serie')
+          .select('id, numero_nfe, serie, emitente_nome')
           .eq('chave_nfe', dados.chaveNFe)
           .maybeSingle();
 
-        if (entradaExistente) {
-          toast({
-            title: "NFe já importada",
-            description: `A Nota Fiscal ${entradaExistente.numero_nfe}/${entradaExistente.serie} com esta chave já foi importada no sistema.`,
-            variant: "destructive",
-          });
-          return;
+        if (entradaPorChave) {
+          entradaExistente = entradaPorChave;
         }
+      }
+      
+      // Segunda validação: por número + série + CNPJ do emitente
+      if (!entradaExistente && dados.numeroNF && dados.serie && nfData?.emitente?.cnpj) {
+        const { data: entradaPorDados } = await supabase
+          .from('entradas')
+          .select('id, numero_nfe, serie, emitente_nome')
+          .eq('numero_nfe', dados.numeroNF)
+          .eq('serie', dados.serie)
+          .eq('emitente_cnpj', nfData.emitente.cnpj)
+          .maybeSingle();
+
+        if (entradaPorDados) {
+          entradaExistente = entradaPorDados;
+        }
+      }
+
+      if (entradaExistente) {
+        toast({
+          title: "NFe já importada",
+          description: `A Nota Fiscal ${entradaExistente.numero_nfe}/${entradaExistente.serie} do emitente ${entradaExistente.emitente_nome || nfData?.emitente?.nome || 'N/A'} já foi importada no sistema.`,
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log('Dados da entrada a serem salvos:', {
