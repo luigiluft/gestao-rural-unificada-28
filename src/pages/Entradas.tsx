@@ -293,70 +293,129 @@ export default function Entradas() {
               ))}
             </div>
           ) : entradas && entradas.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número NFe</TableHead>
-                  <TableHead>Itens</TableHead>
-                  <TableHead>Depósito</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entradas.map((entrada) => (
-                  <TableRow key={entrada.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">
-                      {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <Package className="w-4 h-4 text-primary" />
-                        </div>
-                        {entrada.entrada_itens?.length || 0} itens
-                      </div>
-                    </TableCell>
-                    <TableCell>{entrada.depositos?.nome}</TableCell>
-                    <TableCell>{new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell>{entrada.fornecedores?.nome || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Badge variant={entrada.status === 'confirmado' ? 'default' : 'secondary'}>
-                        {entrada.status === 'confirmado' ? 'Confirmada' : 'Processando'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {entrada.valor_total 
-                        ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                        : 'N/A'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Visualizar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número NFe</TableHead>
+                    <TableHead>Série</TableHead>
+                    <TableHead>Chave NFe</TableHead>
+                    <TableHead>Emitente</TableHead>
+                    <TableHead>CNPJ/CPF Emitente</TableHead>
+                    <TableHead>Data Emissão</TableHead>
+                    <TableHead>Data Entrada</TableHead>
+                    <TableHead>Nat. Operação</TableHead>
+                    <TableHead>Itens</TableHead>
+                    <TableHead>Depósito</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Valor Total</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {entradas.map((entrada) => (
+                    <TableRow key={entrada.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-muted-foreground text-sm">
+                          N/A
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-muted-foreground text-xs font-mono">
+                          {entrada.chave_nfe ? entrada.chave_nfe.substring(0, 16) + '...' : 'N/A'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[150px]">
+                          <span className="text-sm font-medium truncate block">
+                            {entrada.fornecedores?.nome || 'N/A'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-mono">
+                          N/A
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {entrada.data_emissao 
+                            ? new Date(entrada.data_emissao).toLocaleDateString('pt-BR')
+                            : 'N/A'
+                          }
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[120px]">
+                          <span className="text-xs text-muted-foreground truncate block">
+                            N/A
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Package className="w-4 h-4 text-primary" />
+                          </div>
+                          <span className="text-sm">
+                            {entrada.entrada_itens?.length || 0} itens
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {entrada.depositos?.nome || 'N/A'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={entrada.status === 'confirmado' ? 'default' : 'secondary'}>
+                          {entrada.status === 'confirmado' ? 'Confirmada' : 'Processando'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {entrada.valor_total 
+                          ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                          : 'N/A'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            {entrada.xml_content && (
+                              <DropdownMenuItem>
+                                <Download className="w-4 h-4 mr-2" />
+                                Download XML
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <EmptyState
               icon={<Package className="w-8 h-8 text-muted-foreground" />}
