@@ -282,21 +282,12 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Valor Unit.</Label>
+                <Label className="text-xs">Valor Unit. (Custo Médio)</Label>
                 <Input
                   type="number"
-                  min="0"
-                  step="0.01"
-                  value={novoItem.valor_unitario || ''}
-                  onChange={(e) => {
-                    const valor = parseFloat(e.target.value) || 0
-                    setNovoItem({
-                      ...novoItem,
-                      valor_unitario: valor,
-                      valor_total: valor * novoItem.quantidade
-                    })
-                  }}
-                  placeholder="0,00"
+                  value={novoItem.valor_unitario?.toFixed(2) || '0.00'}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
 
