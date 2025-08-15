@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { MailPlus, Users, Copy, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface FranqueadoData {
   id: string;
@@ -278,7 +279,7 @@ export default function Franqueados() {
               Lista de Franqueados
             </CardTitle>
             <CardDescription>
-              Franqueados cadastrados no sistema
+              {franqueados.length} franqueados cadastrados no sistema
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -288,29 +289,68 @@ export default function Franqueados() {
               </div>
             ) : franqueados.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Nenhum franqueado cadastrado ainda.</p>
+                <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <Users className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Nenhum franqueado cadastrado</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Comece convidando franqueados para gerenciar operações no sistema.
+                </p>
+                <Button onClick={() => setInviteOpen(true)}>
+                  <MailPlus className="mr-2 h-4 w-4" />
+                  Convidar primeiro franqueado
+                </Button>
               </div>
             ) : (
-              <div className="grid gap-4">
-                {franqueados.map((franqueado) => (
-                  <div
-                    key={franqueado.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg"
-                  >
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{franqueado.nome}</h3>
-                      <p className="text-sm text-muted-foreground">{franqueado.email}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Cadastrado em: {new Date(franqueado.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={franqueado.ativo ? "default" : "secondary"}>
-                        {franqueado.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <Table className="min-w-[600px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data de Cadastro</TableHead>
+                      <TableHead className="w-[100px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {franqueados.map((franqueado) => (
+                      <TableRow key={franqueado.id} className="hover:bg-muted/50">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                              <Users className="w-4 h-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{franqueado.nome}</p>
+                              <p className="text-sm text-muted-foreground">ID: {franqueado.id.slice(0, 8)}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm">{franqueado.email}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={franqueado.ativo ? "default" : "secondary"}>
+                            {franqueado.ativo ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(franqueado.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm">
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
