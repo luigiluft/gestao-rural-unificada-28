@@ -6,6 +6,8 @@ export interface NFItem {
   unidade: string;
   valorUnitario: number;
   valorTotal: number;
+  lote?: string;
+  dataValidade?: string;
 }
 
 export interface NFData {
@@ -92,13 +94,30 @@ export class NFParser {
                        descricao;
           }
           
+          // Extrair dados de rastreabilidade (lote e data de validade)
+          const rastro = prod.querySelector('rastro');
+          let lote = '';
+          let dataValidade: string | undefined;
+          
+          if (rastro) {
+            // nLote = número do lote
+            lote = rastro.querySelector('nLote')?.textContent || '';
+            // dVal = data de validade no formato YYYY-MM-DD
+            const dVal = rastro.querySelector('dVal')?.textContent;
+            if (dVal) {
+              dataValidade = dVal;
+            }
+          }
+          
           const item: NFItem = {
             codigo: prod.querySelector('cProd')?.textContent || '',
             descricao: descricao || 'Produto sem descrição',
             quantidade: parseFloat(prod.querySelector('qCom')?.textContent || '0'),
             unidade: prod.querySelector('uCom')?.textContent || '',
             valorUnitario: parseFloat(prod.querySelector('vUnCom')?.textContent || '0'),
-            valorTotal: parseFloat(prod.querySelector('vProd')?.textContent || '0')
+            valorTotal: parseFloat(prod.querySelector('vProd')?.textContent || '0'),
+            lote,
+            dataValidade
           };
           itens.push(item);
         }
