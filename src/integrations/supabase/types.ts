@@ -153,6 +153,9 @@ export type Database = {
           data_emissao: string | null
           data_entrada: string
           deposito_id: string | null
+          emitente_cnpj: string | null
+          emitente_endereco: string | null
+          emitente_nome: string | null
           fornecedor_id: string | null
           id: string
           natureza_operacao: string | null
@@ -171,6 +174,9 @@ export type Database = {
           data_emissao?: string | null
           data_entrada: string
           deposito_id?: string | null
+          emitente_cnpj?: string | null
+          emitente_endereco?: string | null
+          emitente_nome?: string | null
           fornecedor_id?: string | null
           id?: string
           natureza_operacao?: string | null
@@ -189,6 +195,9 @@ export type Database = {
           data_emissao?: string | null
           data_entrada?: string
           deposito_id?: string | null
+          emitente_cnpj?: string | null
+          emitente_endereco?: string | null
+          emitente_nome?: string | null
           fornecedor_id?: string | null
           id?: string
           natureza_operacao?: string | null

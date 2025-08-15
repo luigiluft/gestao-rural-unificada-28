@@ -128,6 +128,14 @@ export default function Entradas() {
         }
       }
 
+      console.log('Dados da entrada a serem salvos:', {
+        numeroNF: dados.numeroNF,
+        serie: dados.serie,
+        chaveNFe: dados.chaveNFe,
+        naturezaOperacao: dados.naturezaOperacao,
+        emitente: nfData?.emitente
+      });
+
       // Criar a entrada
       const { data: entrada, error: entradaError } = await supabase
         .from('entradas')
@@ -140,11 +148,14 @@ export default function Entradas() {
           data_entrada: dados.dataEntrada,
           data_emissao: dados.dataEmissao || dados.dataEntrada,
           valor_total: dados.valorTotal,
-          deposito_id: null, // Por enquanto deixar nulo, depois pode implementar select de depósitos
+          deposito_id: dados.depositoId || null,
           fornecedor_id: fornecedorId,
           observacoes: dados.observacoes,
           status: 'confirmado',
-          xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null
+          xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
+          emitente_nome: nfData?.emitente?.nome || null,
+          emitente_cnpj: nfData?.emitente?.cnpj || null,
+          emitente_endereco: nfData?.emitente?.endereco || null
         })
         .select()
         .single()
@@ -356,7 +367,7 @@ export default function Entradas() {
                       </TableCell>
                       <TableCell>
                         <span className="text-muted-foreground text-sm">
-                          {(entrada as any).serie || 'N/A'}
+                          {entrada.serie || 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -367,7 +378,7 @@ export default function Entradas() {
                       <TableCell>
                         <div className="max-w-[150px]">
                           <span className="text-sm font-medium truncate block">
-                            {entrada.fornecedores?.nome || 'N/A'}
+                            {(entrada as any).emitente_nome || entrada.fornecedores?.nome || 'N/A'}
                           </span>
                           {(entrada.fornecedores as any)?.nome_fantasia && (
                             <span className="text-xs text-muted-foreground truncate block">
@@ -378,7 +389,7 @@ export default function Entradas() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm font-mono">
-                          {(entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
+                          {(entrada as any).emitente_cnpj || (entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -397,7 +408,7 @@ export default function Entradas() {
                       <TableCell>
                         <div className="max-w-[120px]">
                           <span className="text-xs text-muted-foreground truncate block">
-                            {(entrada as any).natureza_operacao || 'N/A'}
+                            {entrada.natureza_operacao || 'N/A'}
                           </span>
                         </div>
                       </TableCell>
