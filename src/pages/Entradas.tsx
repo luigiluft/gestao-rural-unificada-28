@@ -10,7 +10,9 @@ import {
   Edit,
   MoreHorizontal,
   FileText,
-  Download
+  Download,
+  User,
+  AlertTriangle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Table,
   TableBody,
@@ -55,21 +58,68 @@ import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada"
 import { NFData } from "@/components/Entradas/NFParser"
 import { useToast } from "@/hooks/use-toast"
 import { useEntradas } from "@/hooks/useEntradas"
+import { findProdutorByCpfCnpj } from "@/hooks/useProdutorByCpfCnpj"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useProfile } from "@/hooks/useProfile"
 
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
   const [nfData, setNfData] = useState<NFData | null>(null)
   const [activeTab, setActiveTab] = useState("upload")
+  const [produtorIdentificado, setProdutorIdentificado] = useState<any>(null)
+  const [produtorError, setProdutorError] = useState<string | null>(null)
   const { toast } = useToast()
   const navigate = useNavigate()
   const { data: entradas, isLoading, refetch } = useEntradas()
   const { user } = useAuth()
+  const { data: currentUserProfile } = useProfile()
 
-  const handleNFDataParsed = (data: NFData) => {
+  const handleNFDataParsed = async (data: NFData) => {
     setNfData(data)
+    setProdutorError(null)
+    setProdutorIdentificado(null)
+
+    // Se admin/franqueado está fazendo upload, tentar identificar o produtor
+    if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'franqueado') {
+      if (data.destinatarioCpfCnpj) {
+        try {
+          const produtor = await findProdutorByCpfCnpj(data.destinatarioCpfCnpj)
+          
+          if (produtor) {
+            setProdutorIdentificado(produtor)
+            toast({
+              title: "Produtor identificado",
+              description: `A entrada será registrada para ${produtor.nome}`,
+            })
+          } else {
+            setProdutorError(`Nenhum produtor encontrado com CPF/CNPJ: ${data.destinatarioCpfCnpj}`)
+            toast({
+              title: "Produtor não encontrado",
+              description: `Nenhum produtor cadastrado com o CPF/CNPJ ${data.destinatarioCpfCnpj}`,
+              variant: "destructive",
+            })
+          }
+        } catch (error) {
+          console.error('Erro ao buscar produtor:', error)
+          setProdutorError('Erro ao buscar produtor no sistema')
+          toast({
+            title: "Erro",
+            description: "Erro ao buscar produtor no sistema",
+            variant: "destructive",
+          })
+        }
+      } else {
+        setProdutorError('NFe não contém CPF/CNPJ do destinatário')
+        toast({
+          title: "Dados incompletos",
+          description: "A NFe não contém CPF/CNPJ do destinatário",
+          variant: "destructive",
+        })
+      }
+    }
+
     setActiveTab("formulario")
     toast({
       title: "NFe processada com sucesso",
@@ -95,6 +145,12 @@ export default function Entradas() {
       return
     }
 
+    // Determinar o user_id correto para a entrada
+    let entradaUserId = user.id
+    if (produtorIdentificado && (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'franqueado')) {
+      entradaUserId = produtorIdentificado.user_id
+    }
+
     try {
       let fornecedorId = null;
       
@@ -109,11 +165,11 @@ export default function Entradas() {
         if (fornecedorExistente) {
           fornecedorId = fornecedorExistente.id;
         } else {
-          // Criar novo fornecedor
+          // Criar novo fornecedor - usar o user_id da entrada (produtor ou admin)
           const { data: novoFornecedor, error: fornecedorError } = await supabase
             .from('fornecedores')
             .insert({
-              user_id: user.id,
+              user_id: entradaUserId,
               nome: nfData.emitente.nome,
               nome_fantasia: nfData.emitente.nomeFantasia,
               cnpj_cpf: nfData.emitente.cnpj,
@@ -129,18 +185,19 @@ export default function Entradas() {
       }
 
       console.log('Dados da entrada a serem salvos:', {
+        user_id: entradaUserId,
+        produtor_identificado: produtorIdentificado?.nome,
         numeroNF: dados.numeroNF,
         serie: dados.serie,
         chaveNFe: dados.chaveNFe,
-        naturezaOperacao: dados.naturezaOperacao,
-        emitente: nfData?.emitente
+        destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj
       });
 
       // Criar a entrada
       const { data: entrada, error: entradaError } = await supabase
         .from('entradas')
         .insert({
-          user_id: user.id,
+          user_id: entradaUserId, // Usar o user_id do produtor identificado
           numero_nfe: dados.numeroNF || null,
           serie: dados.serie || null,
           chave_nfe: dados.chaveNFe || null,
@@ -155,7 +212,8 @@ export default function Entradas() {
           xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
           emitente_nome: nfData?.emitente?.nome || null,
           emitente_cnpj: nfData?.emitente?.cnpj || null,
-          emitente_endereco: nfData?.emitente?.endereco || null
+          emitente_endereco: nfData?.emitente?.endereco || null,
+          destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj || null
         })
         .select()
         .single()
@@ -165,7 +223,7 @@ export default function Entradas() {
       // Criar os itens da entrada
       if (dados.itens && dados.itens.length > 0) {
         const itensEntrada = dados.itens.map((item: any) => ({
-          user_id: user.id,
+          user_id: entradaUserId, // Usar o mesmo user_id da entrada
           entrada_id: entrada.id,
           produto_id: null, // Por enquanto nulo, depois pode implementar busca/criação de produtos
           quantidade: item.quantidade,
@@ -181,13 +239,19 @@ export default function Entradas() {
         if (itensError) throw itensError
       }
 
+      const successMessage = produtorIdentificado 
+        ? `Entrada registrada para o produtor ${produtorIdentificado.nome}`
+        : "A entrada foi registrada com sucesso no sistema."
+
       toast({
         title: "Entrada registrada",
-        description: "A entrada foi registrada com sucesso no sistema.",
+        description: successMessage,
       })
       
       setIsNewEntryOpen(false)
       setNfData(null)
+      setProdutorIdentificado(null)
+      setProdutorError(null)
       setActiveTab("upload")
       refetch() // Recarregar a lista de entradas
     } catch (error) {
@@ -203,11 +267,15 @@ export default function Entradas() {
   const handleFormCancel = () => {
     setIsNewEntryOpen(false)
     setNfData(null)
+    setProdutorIdentificado(null)
+    setProdutorError(null)
     setActiveTab("upload")
   }
 
   const handleNovaEntradaManual = () => {
     setNfData(null)
+    setProdutorIdentificado(null)
+    setProdutorError(null)
     setActiveTab("formulario")
   }
 
@@ -279,6 +347,44 @@ export default function Entradas() {
                 </TabsContent>
 
                 <TabsContent value="formulario" className="mt-6">
+                  {/* Status do Produtor Identificado */}
+                  {(produtorIdentificado || produtorError) && (
+                    <div className="mb-6">
+                      {produtorIdentificado && (
+                        <Alert className="border-green-200 bg-green-50">
+                          <User className="w-4 h-4 text-green-600" />
+                          <AlertDescription>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <strong>Produtor identificado:</strong> {produtorIdentificado.nome}
+                                <br />
+                                <span className="text-sm text-muted-foreground">
+                                  CPF/CNPJ: {produtorIdentificado.cpf_cnpj} | Email: {produtorIdentificado.email}
+                                </span>
+                              </div>
+                              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                Auto-identificado
+                              </Badge>
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {produtorError && (
+                        <Alert variant="destructive">
+                          <AlertTriangle className="w-4 h-4" />
+                          <AlertDescription>
+                            <strong>Atenção:</strong> {produtorError}
+                            <br />
+                            <span className="text-sm">
+                              Verifique se o produtor está cadastrado no sistema ou preencha manualmente.
+                            </span>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  )}
+                  
                   <FormularioEntrada
                     nfData={nfData}
                     onSubmit={handleFormSubmit}

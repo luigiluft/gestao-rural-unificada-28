@@ -26,6 +26,7 @@ export interface NFData {
     nome: string;
     endereco: string;
   };
+  destinatarioCpfCnpj: string;
   itens: NFItem[];
   valorTotal: number;
 }
@@ -64,8 +65,9 @@ export class NFParser {
 
       // Extrair dados do destinatário
       const dest = xmlDoc.querySelector('dest');
+      const destinatarioCpfCnpj = dest?.querySelector('CNPJ')?.textContent || dest?.querySelector('CPF')?.textContent || '';
       const destinatario = {
-        cpfCnpj: dest?.querySelector('CNPJ')?.textContent || dest?.querySelector('CPF')?.textContent || '',
+        cpfCnpj: destinatarioCpfCnpj,
         nome: dest?.querySelector('xNome')?.textContent || '',
         endereco: this.formatarEndereco(dest?.querySelector('enderDest'))
       };
@@ -115,6 +117,7 @@ export class NFParser {
         xmlContent,
         emitente,
         destinatario,
+        destinatarioCpfCnpj,
         itens,
         valorTotal
       };

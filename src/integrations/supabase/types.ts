@@ -153,6 +153,7 @@ export type Database = {
           data_emissao: string | null
           data_entrada: string
           deposito_id: string | null
+          destinatario_cpf_cnpj: string | null
           emitente_cnpj: string | null
           emitente_endereco: string | null
           emitente_nome: string | null
@@ -174,6 +175,7 @@ export type Database = {
           data_emissao?: string | null
           data_entrada: string
           deposito_id?: string | null
+          destinatario_cpf_cnpj?: string | null
           emitente_cnpj?: string | null
           emitente_endereco?: string | null
           emitente_nome?: string | null
@@ -195,6 +197,7 @@ export type Database = {
           data_emissao?: string | null
           data_entrada?: string
           deposito_id?: string | null
+          destinatario_cpf_cnpj?: string | null
           emitente_cnpj?: string | null
           emitente_endereco?: string | null
           emitente_nome?: string | null
