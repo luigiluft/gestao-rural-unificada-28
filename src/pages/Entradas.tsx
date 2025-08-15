@@ -550,7 +550,7 @@ export default function Entradas() {
             </div>
           ) : entradas && entradas.length > 0 ? (
             <div className="overflow-x-auto">
-              <Table className="min-w-[1200px]">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Número NFe</TableHead>
@@ -565,7 +565,7 @@ export default function Entradas() {
                     <TableHead>Depósito</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Valor Total</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[50px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
