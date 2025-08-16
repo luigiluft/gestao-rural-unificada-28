@@ -198,7 +198,7 @@ export default function Entradas() {
       }
     }
 
-    setActiveTab("formulario")
+    setActiveTab("manual")
     toast({
       title: "NFe processada com sucesso",
       description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens.length} itens.`,
@@ -398,7 +398,7 @@ export default function Entradas() {
     setNfData(null)
     setProdutorIdentificado(null)
     setProdutorError(null)
-    setActiveTab("formulario")
+    setActiveTab("manual")
   }
 
   return (
@@ -429,14 +429,10 @@ export default function Entradas() {
               </DialogHeader>
               
               <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="upload" className="flex items-center gap-2">
                     <Upload className="w-4 h-4" />
                     Upload NFe
-                  </TabsTrigger>
-                  <TabsTrigger value="formulario" className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Formulário
                   </TabsTrigger>
                   <TabsTrigger value="manual" onClick={handleNovaEntradaManual} className="flex items-center gap-2">
                     <Edit className="w-4 h-4" />
@@ -449,15 +445,9 @@ export default function Entradas() {
                     onNFDataParsed={handleNFDataParsed}
                     onError={handleUploadError}
                   />
-                  
-                  <div className="mt-6 text-center">
-                    <Button variant="outline" onClick={handleNovaEntradaManual}>
-                      Ou preencher manualmente
-                    </Button>
-                  </div>
                 </TabsContent>
 
-                <TabsContent value="formulario" className="mt-6">
+                <TabsContent value="manual" className="mt-6">
                   {/* Status do Produtor Identificado */}
                   {(produtorIdentificado || produtorError) && (
                     <div className="mb-6">
@@ -498,14 +488,6 @@ export default function Entradas() {
                   
                   <FormularioEntrada
                     nfData={nfData}
-                    onSubmit={handleFormSubmit}
-                    onCancel={handleFormCancel}
-                  />
-                </TabsContent>
-
-                <TabsContent value="manual" className="mt-6">
-                  <FormularioEntrada
-                    nfData={null}
                     onSubmit={handleFormSubmit}
                     onCancel={handleFormCancel}
                   />
