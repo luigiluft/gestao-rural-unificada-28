@@ -155,14 +155,55 @@ export type Database = {
           },
         ]
       }
+      entrada_status_historico: {
+        Row: {
+          created_at: string
+          entrada_id: string
+          id: string
+          observacoes: string | null
+          status_anterior: Database["public"]["Enums"]["entrada_status"] | null
+          status_novo: Database["public"]["Enums"]["entrada_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entrada_id: string
+          id?: string
+          observacoes?: string | null
+          status_anterior?: Database["public"]["Enums"]["entrada_status"] | null
+          status_novo: Database["public"]["Enums"]["entrada_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entrada_id?: string
+          id?: string
+          observacoes?: string | null
+          status_anterior?: Database["public"]["Enums"]["entrada_status"] | null
+          status_novo?: Database["public"]["Enums"]["entrada_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrada_status_historico_entrada_id_fkey"
+            columns: ["entrada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entradas: {
         Row: {
+          aprovado_por: string | null
           chave_nfe: string | null
           created_at: string
+          data_aprovacao: string | null
           data_emissao: string | null
           data_entrada: string
           deposito_id: string | null
           destinatario_cpf_cnpj: string | null
+          divergencias: Json | null
           emitente_cnpj: string | null
           emitente_endereco: string | null
           emitente_nome: string | null
@@ -171,20 +212,25 @@ export type Database = {
           natureza_operacao: string | null
           numero_nfe: string | null
           observacoes: string | null
+          observacoes_franqueado: string | null
           serie: string | null
           status: string | null
+          status_aprovacao: Database["public"]["Enums"]["entrada_status"] | null
           updated_at: string
           user_id: string
           valor_total: number | null
           xml_content: string | null
         }
         Insert: {
+          aprovado_por?: string | null
           chave_nfe?: string | null
           created_at?: string
+          data_aprovacao?: string | null
           data_emissao?: string | null
           data_entrada: string
           deposito_id?: string | null
           destinatario_cpf_cnpj?: string | null
+          divergencias?: Json | null
           emitente_cnpj?: string | null
           emitente_endereco?: string | null
           emitente_nome?: string | null
@@ -193,20 +239,27 @@ export type Database = {
           natureza_operacao?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
+          observacoes_franqueado?: string | null
           serie?: string | null
           status?: string | null
+          status_aprovacao?:
+            | Database["public"]["Enums"]["entrada_status"]
+            | null
           updated_at?: string
           user_id: string
           valor_total?: number | null
           xml_content?: string | null
         }
         Update: {
+          aprovado_por?: string | null
           chave_nfe?: string | null
           created_at?: string
+          data_aprovacao?: string | null
           data_emissao?: string | null
           data_entrada?: string
           deposito_id?: string | null
           destinatario_cpf_cnpj?: string | null
+          divergencias?: Json | null
           emitente_cnpj?: string | null
           emitente_endereco?: string | null
           emitente_nome?: string | null
@@ -215,8 +268,12 @@ export type Database = {
           natureza_operacao?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
+          observacoes_franqueado?: string | null
           serie?: string | null
           status?: string | null
+          status_aprovacao?:
+            | Database["public"]["Enums"]["entrada_status"]
+            | null
           updated_at?: string
           user_id?: string
           valor_total?: number | null
@@ -1034,6 +1091,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "franqueado" | "produtor"
+      entrada_status:
+        | "aguardando_transporte"
+        | "em_transferencia"
+        | "aguardando_conferencia"
+        | "conferencia_completa"
+        | "confirmado"
+        | "rejeitado"
       permission_code:
         | "estoque.view"
         | "estoque.manage"
@@ -1167,6 +1231,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "franqueado", "produtor"],
+      entrada_status: [
+        "aguardando_transporte",
+        "em_transferencia",
+        "aguardando_conferencia",
+        "conferencia_completa",
+        "confirmado",
+        "rejeitado",
+      ],
       permission_code: [
         "estoque.view",
         "estoque.manage",
