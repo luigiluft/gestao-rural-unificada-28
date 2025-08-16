@@ -12,12 +12,11 @@ export const useEntradasPendentes = () => {
       const { data: userData } = await supabase.auth.getUser()
       console.log('👤 Usuário atual:', userData?.user?.id, userData?.user?.email)
 
+      // Get basic entries data first
       const { data: entradas, error } = await supabase
         .from("entradas")
         .select(`
           *,
-          fornecedores(nome),
-          profiles(nome),
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
@@ -39,9 +38,34 @@ export const useEntradasPendentes = () => {
         return []
       }
 
-      // Buscar nome da franquia para cada entrada
-      const entradasComFranquias = await Promise.all(
-        (entradas || []).map(async (entrada) => {
+      // Enrich with additional data
+      const entradasEnriquecidas = await Promise.all(
+        entradas.map(async (entrada) => {
+          const enrichedEntry: any = { ...entrada }
+
+          // Get user profile
+          if (entrada.user_id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("nome")
+              .eq("user_id", entrada.user_id)
+              .single()
+            
+            enrichedEntry.profiles = profile
+          }
+
+          // Get supplier info
+          if (entrada.fornecedor_id) {
+            const { data: fornecedor } = await supabase
+              .from("fornecedores")
+              .select("nome")
+              .eq("id", entrada.fornecedor_id)
+              .single()
+            
+            enrichedEntry.fornecedores = fornecedor
+          }
+
+          // Get franchise info
           if (entrada.deposito_id) {
             const { data: franquia } = await supabase
               .from("franquias")
@@ -49,16 +73,15 @@ export const useEntradasPendentes = () => {
               .eq("id", entrada.deposito_id)
               .single()
             
-            return {
-              ...entrada,
-              franquias: franquia
-            }
+            enrichedEntry.franquias = franquia
           }
-          return entrada
+
+          return enrichedEntry
         })
       )
 
-      return entradasComFranquias || []
+      console.log('✅ Entradas enriquecidas:', entradasEnriquecidas)
+      return entradasEnriquecidas || []
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,

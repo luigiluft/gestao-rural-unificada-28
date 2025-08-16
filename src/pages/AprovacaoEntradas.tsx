@@ -128,7 +128,7 @@ export default function AprovacaoEntradas() {
   }
 
   // Agrupar entradas por status
-  const entradasPorStatus = entradas?.reduce((acc, entrada) => {
+  const entradasPorStatus = (entradas as any[])?.reduce((acc, entrada) => {
     const status = entrada.status_aprovacao
     if (!acc[status]) acc[status] = []
     acc[status].push(entrada)
@@ -190,14 +190,14 @@ export default function AprovacaoEntradas() {
 
         {Object.entries(entradasPorStatus).map(([status, statusEntradas]) => (
           <TabsContent key={status} value={status} className="space-y-4">
-            {statusEntradas.length === 0 ? (
+            {(statusEntradas as any[]).length === 0 ? (
               <EmptyState 
                 title="Nenhuma entrada encontrada"
                 description={`Não há entradas com status "${status.replace('_', ' ')}" no momento.`}
               />
             ) : (
               <div className="grid gap-4">
-                {statusEntradas.map((entrada) => (
+                {(statusEntradas as any[]).map((entrada) => (
                   <Card key={entrada.id}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
