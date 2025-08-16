@@ -326,7 +326,6 @@ export default function Entradas() {
           deposito_id: dados.depositoId || null,
           fornecedor_id: fornecedorId,
           observacoes: dados.observacoes,
-          status: 'aguardando_transporte',
           status_aprovacao: 'aguardando_transporte',
           xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
           emitente_nome: nfData?.emitente?.nome || null,
@@ -658,7 +657,7 @@ export default function Entradas() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={entrada.status_aprovacao || entrada.status} />
+                        <StatusBadge status={entrada.status_aprovacao} />
                       </TableCell>
                       <TableCell className="font-medium">
                         {entrada.valor_total 
