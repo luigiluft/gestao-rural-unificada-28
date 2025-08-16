@@ -220,7 +220,7 @@ export default function AprovacaoEntradas() {
                               Realizar Conferência
                             </Button>
                           )}
-                          {getNextStatusLabel(entrada.status_aprovacao) && (
+                          {entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (
                             <Button
                               onClick={() => handleAction(entrada, 'status')}
                               size="sm"
