@@ -104,6 +104,8 @@ export const useAtualizarStatusEntrada = () => {
       observacoes?: string,
       divergencias?: any[]
     }) => {
+      console.log('🔄 Iniciando atualização de status:', { entradaId, novoStatus, observacoes, divergencias })
+
       const updateData: any = {
         status_aprovacao: novoStatus,
       }
@@ -121,13 +123,27 @@ export const useAtualizarStatusEntrada = () => {
         updateData.aprovado_por = (await supabase.auth.getUser()).data.user?.id
       }
 
-      const { error } = await supabase
+      console.log('📝 Dados para atualização:', updateData)
+
+      const { data, error } = await supabase
         .from("entradas")
         .update(updateData)
         .eq("id", entradaId)
+        .select()
 
-      if (error) throw error
+      console.log('📊 Resultado da atualização:', { data, error })
 
+      if (error) {
+        console.error('❌ Erro na atualização:', error)
+        throw error
+      }
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ Nenhum registro foi atualizado')
+        throw new Error('Nenhum registro foi atualizado. Verifique se você tem permissão para editar esta entrada.')
+      }
+
+      console.log('✅ Status atualizado com sucesso:', data[0])
       return { entradaId, novoStatus }
     },
     onSuccess: (data) => {
