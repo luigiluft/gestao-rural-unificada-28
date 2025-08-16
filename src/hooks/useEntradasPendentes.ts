@@ -34,6 +34,11 @@ export const useEntradasPendentes = () => {
       console.log('📊 Entradas encontradas:', entradas?.length || 0)
       console.log('📝 Detalhes das entradas:', entradas)
 
+      if (!entradas || entradas.length === 0) {
+        console.log('⚠️ Nenhuma entrada encontrada - verificando RLS políticas...')
+        return []
+      }
+
       // Buscar nome da franquia para cada entrada
       const entradasComFranquias = await Promise.all(
         (entradas || []).map(async (entrada) => {
