@@ -197,7 +197,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           observacoes: dadosSaida.observacoes,
           deposito_id: dadosSaida.deposito_id,
           valor_total: calcularValorTotal(),
-          status: 'preparando'
+          status: 'separacao_pendente'
         })
         .select()
         .single()

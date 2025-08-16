@@ -946,6 +946,44 @@ export type Database = {
           },
         ]
       }
+      saida_status_historico: {
+        Row: {
+          created_at: string
+          id: string
+          observacoes: string | null
+          saida_id: string
+          status_anterior: Database["public"]["Enums"]["saida_status"] | null
+          status_novo: Database["public"]["Enums"]["saida_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          saida_id: string
+          status_anterior?: Database["public"]["Enums"]["saida_status"] | null
+          status_novo: Database["public"]["Enums"]["saida_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          saida_id?: string
+          status_anterior?: Database["public"]["Enums"]["saida_status"] | null
+          status_novo?: Database["public"]["Enums"]["saida_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saida_status_historico_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saidas: {
         Row: {
           created_at: string
@@ -954,7 +992,7 @@ export type Database = {
           destinatario: string | null
           id: string
           observacoes: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["saida_status"] | null
           tipo_saida: string
           updated_at: string
           user_id: string
@@ -967,7 +1005,7 @@ export type Database = {
           destinatario?: string | null
           id?: string
           observacoes?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["saida_status"] | null
           tipo_saida: string
           updated_at?: string
           user_id: string
@@ -980,7 +1018,7 @@ export type Database = {
           destinatario?: string | null
           id?: string
           observacoes?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["saida_status"] | null
           tipo_saida?: string
           updated_at?: string
           user_id?: string
@@ -1100,6 +1138,7 @@ export type Database = {
         | "estoque.manage"
         | "entradas.manage"
         | "saidas.manage"
+      saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1242,6 +1281,7 @@ export const Constants = {
         "entradas.manage",
         "saidas.manage",
       ],
+      saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
   },
 } as const

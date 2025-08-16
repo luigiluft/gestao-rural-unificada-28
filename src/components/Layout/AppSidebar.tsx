@@ -121,8 +121,10 @@ export function AppSidebar() {
     if (isAdmin) {
       // Add "Aprovar Entradas" right after "Entradas" (index 3)
       base.splice(3, 0, { title: "Aprovar Entradas", url: "/aprovacao-entradas", icon: CheckCircle })
+      // Add "Aprovar Saídas" after "Saídas" (index 5, accounting for the inserted item)
+      base.splice(6, 0, { title: "Aprovar Saídas", url: "/aprovacao-saidas", icon: CheckCircle })
       // Add other admin items later in the menu
-      base.splice(8, 0,
+      base.splice(9, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
         { title: "Franquias", url: "/franquias", icon: Building2 },
         { title: "Franqueados", url: "/franqueados", icon: Users },
@@ -131,8 +133,10 @@ export function AppSidebar() {
     } else if (isFranqueado) {
       // Add "Aprovar Entradas" right after "Entradas" (index 3)
       base.splice(3, 0, { title: "Aprovar Entradas", url: "/aprovacao-entradas", icon: CheckCircle })
+      // Add "Aprovar Saídas" after "Saídas" (index 5, accounting for the inserted item)
+      base.splice(6, 0, { title: "Aprovar Saídas", url: "/aprovacao-saidas", icon: CheckCircle })
       // Add other franqueado items later in the menu
-      base.splice(8, 0,
+      base.splice(9, 0,
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     } else if (isProdutor) {

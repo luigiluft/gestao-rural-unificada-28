@@ -75,13 +75,13 @@ export const useSaidaStats = () => {
         new Date(s.created_at).toDateString() === hoje
       ).length || 0
 
-      const preparando = data?.filter(s => s.status === 'preparando').length || 0
-      const expedidas = data?.filter(s => s.status === 'expedida').length || 0
+      const separacaoPendente = data?.filter(s => s.status === 'separacao_pendente').length || 0
+      const expedidas = data?.filter(s => s.status === 'expedido').length || 0
       const entregues = data?.filter(s => s.status === 'entregue').length || 0
 
       return {
         saidasHoje,
-        preparando,
+        preparando: separacaoPendente,
         expedidas,
         entregues
       }

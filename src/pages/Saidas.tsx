@@ -54,9 +54,10 @@ export default function Saidas() {
     switch (status) {
       case "entregue":
         return "default"
-      case "expedida":
+      case "expedido":
+      case "separado":
         return "secondary"
-      case "preparando":
+      case "separacao_pendente":
         return "outline"
       default:
         return "outline"
@@ -275,8 +276,12 @@ export default function Saidas() {
                           <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusColor(saida.status || "preparando") as "default" | "secondary" | "outline" | "destructive"}>
-                            {saida.status || "Preparando"}
+                          <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"}>
+                            {saida.status === 'separacao_pendente' ? 'Separação Pendente' : 
+                             saida.status === 'separado' ? 'Separado' :
+                             saida.status === 'expedido' ? 'Expedido' :
+                             saida.status === 'entregue' ? 'Entregue' : 
+                             saida.status || "Separação Pendente"}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
