@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Clock, Truck, Package, Eye, CheckCircle, User } from "lucide-react"
+import { Clock, Truck, Package, CheckCircle } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { format } from "date-fns"
 
@@ -62,7 +62,7 @@ export default function AprovacaoSaidas() {
   const getNextStatusLabel = (currentStatus: string) => {
     const statusLabels = {
       'separacao_pendente': 'Marcar como Separado',
-      'separado': 'Marcar como Expedido',
+      'separado': 'Marcar como Expedido',  
       'expedido': 'Marcar como Entregue'
     }
     return statusLabels[currentStatus as keyof typeof statusLabels] || null
