@@ -74,13 +74,12 @@ export default function AprovacaoEntradas() {
 
   const getNextStatusLabel = (currentStatus: string) => {
     const statusLabels = {
-      'em_transferencia': 'Marcar como Em Transferência',
-      'aguardando_conferencia': 'Marcar como Aguardando Conferência',
-      'conferencia_completa': 'Realizar Conferência',
-      'confirmado': 'Confirmar Entrada'
+      'aguardando_transporte': 'Marcar como Em Transferência',
+      'em_transferencia': 'Marcar como Aguardando Conferência',
+      'aguardando_conferencia': 'Realizar Conferência',
+      'conferencia_completa': 'Confirmar Entrada'
     }
-    const nextStatus = getNextStatus(currentStatus)
-    return nextStatus ? statusLabels[nextStatus as keyof typeof statusLabels] : null
+    return statusLabels[currentStatus as keyof typeof statusLabels] || null
   }
 
   const handleAction = (entrada: any, type: 'status' | 'conferencia') => {
