@@ -6,6 +6,7 @@ export const useEntradasPendentes = () => {
   return useQuery({
     queryKey: ["entradas-pendentes"],
     queryFn: async () => {
+      console.log('Fetching entradas pendentes...')
       const { data: entradas, error } = await supabase
         .from("entradas")
         .select(`
@@ -20,7 +21,12 @@ export const useEntradasPendentes = () => {
         .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa"])
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching entradas:', error)
+        throw error
+      }
+
+      console.log('Raw entradas fetched:', entradas?.length || 0, entradas)
 
       // Buscar nome da franquia para cada entrada
       const entradasComFranquias = await Promise.all(
