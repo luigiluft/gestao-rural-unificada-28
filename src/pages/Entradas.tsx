@@ -413,18 +413,6 @@ export default function Entradas() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setIsNewEntryOpen(true)
-              setActiveTab("upload")
-            }}
-            className="w-full sm:w-auto"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Importar XML
-          </Button>
           <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto">
