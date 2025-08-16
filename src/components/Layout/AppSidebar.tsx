@@ -41,9 +41,9 @@ const menuItems = [
   { title: "Saídas", url: "/saidas", icon: LogOut },
   { title: "Rastreio", url: "/rastreio", icon: MapPin },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
+  { title: "Perfil", url: "/perfil", icon: User },
   { title: "Subcontas", url: "/subcontas", icon: UserCheck },
   { title: "Suporte", url: "/suporte", icon: HelpCircle },
-  { title: "Perfil", url: "/perfil", icon: User },
 ]
 
 export function AppSidebar() {
