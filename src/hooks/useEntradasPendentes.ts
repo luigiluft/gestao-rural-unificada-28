@@ -6,6 +6,12 @@ export const useEntradasPendentes = () => {
   return useQuery({
     queryKey: ["entradas-pendentes"],
     queryFn: async () => {
+      console.log('🔍 Iniciando busca de entradas pendentes...')
+      
+      // Check current user first
+      const { data: userData } = await supabase.auth.getUser()
+      console.log('👤 Usuário atual:', userData?.user?.id, userData?.user?.email)
+
       const { data: entradas, error } = await supabase
         .from("entradas")
         .select(`
@@ -21,9 +27,12 @@ export const useEntradasPendentes = () => {
         .order("created_at", { ascending: false })
 
       if (error) {
-        console.error('Error fetching entradas:', error)
+        console.error('❌ Erro ao buscar entradas:', error)
         throw error
       }
+
+      console.log('📊 Entradas encontradas:', entradas?.length || 0)
+      console.log('📝 Detalhes das entradas:', entradas)
 
       // Buscar nome da franquia para cada entrada
       const entradasComFranquias = await Promise.all(
