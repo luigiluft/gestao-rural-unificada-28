@@ -5,11 +5,11 @@ export const useSaidas = () => {
   return useQuery({
     queryKey: ["saidas"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Primeiro buscar as saídas com itens
+      const { data: saidasData, error: saidasError } = await supabase
         .from("saidas")
         .select(`
           *,
-          depositos(nome),
           saida_itens(
             *,
             produtos(nome, unidade_medida)
@@ -17,8 +17,43 @@ export const useSaidas = () => {
         `)
         .order("created_at", { ascending: false })
 
-      if (error) throw error
-      return data || []
+      if (saidasError) throw saidasError
+
+      // Para cada saída, buscar o nome do depósito/franquia
+      const saidasComDeposito = await Promise.all(
+        (saidasData || []).map(async (saida) => {
+          let depositoNome = null
+
+          // Primeiro tentar buscar em depositos
+          const { data: deposito } = await supabase
+            .from("depositos")
+            .select("nome")
+            .eq("id", saida.deposito_id)
+            .single()
+
+          if (deposito) {
+            depositoNome = deposito.nome
+          } else {
+            // Se não encontrar em depositos, tentar em franquias
+            const { data: franquia } = await supabase
+              .from("franquias")
+              .select("nome")
+              .eq("id", saida.deposito_id)
+              .single()
+
+            if (franquia) {
+              depositoNome = franquia.nome
+            }
+          }
+
+          return {
+            ...saida,
+            depositos: depositoNome ? { nome: depositoNome } : null
+          }
+        })
+      )
+
+      return saidasComDeposito
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,
