@@ -17,7 +17,7 @@ export const useEntradasPendentes = () => {
         .select(`
           *,
           fornecedores(nome),
-          profiles!entradas_user_id_fkey(nome),
+          profiles(nome),
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
