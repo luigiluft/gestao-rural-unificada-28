@@ -16,6 +16,7 @@ import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import Franqueados from "./pages/Franqueados";
+import AprovacaoEntradas from "./pages/AprovacaoEntradas";
 import Usuarios from "./pages/Usuarios";
 import Produtores from "./pages/Produtores";
 import Subcontas from "./pages/Subcontas";
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
               <Route path="franquias" element={<RequireAdmin><Franquias /></RequireAdmin>} />
               <Route path="franqueados" element={<RequireAdmin><Franqueados /></RequireAdmin>} />
+              <Route path="aprovacao-entradas" element={<RequireAdminOrFranqueado><AprovacaoEntradas /></RequireAdminOrFranqueado>} />
               <Route path="produtores" element={<RequireAdminOrFranqueado><Produtores /></RequireAdminOrFranqueado>} />
               <Route path="fazendas" element={<Fazendas />} />
               <Route path="subcontas" element={<Subcontas />} />

@@ -13,7 +13,8 @@ import {
   Tractor,
   UserCheck,
   Building2,
-  TreePine
+  TreePine,
+  CheckCircle
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -121,11 +122,13 @@ export function AppSidebar() {
       base.splice(7, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
         { title: "Franquias", url: "/franquias", icon: Building2 },
+        { title: "Aprovar Entradas", url: "/aprovacao-entradas", icon: CheckCircle },
         { title: "Franqueados", url: "/franqueados", icon: Users },
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     } else if (isFranqueado) {
       base.splice(7, 0,
+        { title: "Aprovar Entradas", url: "/aprovacao-entradas", icon: CheckCircle },
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     } else if (isProdutor) {

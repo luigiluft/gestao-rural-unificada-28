@@ -19,6 +19,23 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const statusConfig = {
+    'aguardando_transporte': { label: 'Aguardando Transporte', variant: 'secondary' as const },
+    'em_transferencia': { label: 'Em Transferência', variant: 'default' as const },
+    'aguardando_conferencia': { label: 'Aguardando Conferência', variant: 'outline' as const },
+    'conferencia_completa': { label: 'Conferência Completa', variant: 'default' as const },
+    'confirmado': { label: 'Confirmado', variant: 'default' as const },
+    'rejeitado': { label: 'Rejeitado', variant: 'destructive' as const },
+    'processando': { label: 'Processando', variant: 'secondary' as const }
+  }
+
+  const config = statusConfig[status as keyof typeof statusConfig] || 
+    { label: status || 'Desconhecido', variant: 'secondary' as const }
+
+  return <Badge variant={config.variant}>{config.label}</Badge>
+}
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -309,7 +326,8 @@ export default function Entradas() {
           deposito_id: dados.depositoId || null,
           fornecedor_id: fornecedorId,
           observacoes: dados.observacoes,
-          status: 'confirmado',
+          status: 'aguardando_transporte',
+          status_aprovacao: 'aguardando_transporte',
           xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
           emitente_nome: nfData?.emitente?.nome || null,
           emitente_cnpj: nfData?.emitente?.cnpj || null,
@@ -640,9 +658,7 @@ export default function Entradas() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={entrada.status === 'confirmado' ? 'default' : 'secondary'}>
-                          {entrada.status === 'confirmado' ? 'Confirmada' : 'Processando'}
-                        </Badge>
+                        <StatusBadge status={entrada.status_aprovacao || entrada.status} />
                       </TableCell>
                       <TableCell className="font-medium">
                         {entrada.valor_total 
