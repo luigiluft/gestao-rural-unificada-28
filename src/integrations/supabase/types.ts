@@ -214,7 +214,6 @@ export type Database = {
           observacoes: string | null
           observacoes_franqueado: string | null
           serie: string | null
-          status: string | null
           status_aprovacao: Database["public"]["Enums"]["entrada_status"] | null
           updated_at: string
           user_id: string
@@ -241,7 +240,6 @@ export type Database = {
           observacoes?: string | null
           observacoes_franqueado?: string | null
           serie?: string | null
-          status?: string | null
           status_aprovacao?:
             | Database["public"]["Enums"]["entrada_status"]
             | null
@@ -270,7 +268,6 @@ export type Database = {
           observacoes?: string | null
           observacoes_franqueado?: string | null
           serie?: string | null
-          status?: string | null
           status_aprovacao?:
             | Database["public"]["Enums"]["entrada_status"]
             | null
