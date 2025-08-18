@@ -43,6 +43,7 @@ export default function AprovacaoEntradas() {
   
   // Estados para conferência por código de barras
   const [codigoBarras, setCodigoBarras] = useState('')
+  const [quantidadeBip, setQuantidadeBip] = useState(1)
   const [leituras, setLeituras] = useState<LeituraBarra[]>([])
   const [modoConferencia, setModoConferencia] = useState(false)
   const inputBarrasRef = useRef<HTMLInputElement>(null)
@@ -102,6 +103,7 @@ export default function AprovacaoEntradas() {
     setDivergencias([])
     setLeituras([])
     setCodigoBarras('')
+    setQuantidadeBip(1)
     setModoConferencia(type === 'conferencia_barras')
     setDialogOpen(true)
   }
@@ -157,7 +159,7 @@ export default function AprovacaoEntradas() {
       const novaLeitura: LeituraBarra = {
         codigo: codigoBarras.trim(),
         produto_nome: `Produto não encontrado (${codigoBarras.trim()})`,
-        quantidade: 1,
+        quantidade: quantidadeBip,
         timestamp: new Date()
       }
       setLeituras([...leituras, novaLeitura])
@@ -168,7 +170,7 @@ export default function AprovacaoEntradas() {
       if (leituraExistente) {
         const novasLeituras = leituras.map(l => 
           l.codigo === codigoBarras.trim() 
-            ? { ...l, quantidade: l.quantidade + 1, timestamp: new Date() }
+            ? { ...l, quantidade: l.quantidade + quantidadeBip, timestamp: new Date() }
             : l
         )
         setLeituras(novasLeituras)
@@ -176,21 +178,40 @@ export default function AprovacaoEntradas() {
         const novaLeitura: LeituraBarra = {
           codigo: codigoBarras.trim(),
           produto_nome: item.produtos?.nome || item.nome_produto || 'Produto sem nome',
-          quantidade: 1,
+          quantidade: quantidadeBip,
           timestamp: new Date()
         }
         setLeituras([...leituras, novaLeitura])
       }
     }
 
+    // Limpar código e focar automaticamente para próxima leitura
     setCodigoBarras('')
-    if (inputBarrasRef.current) {
-      inputBarrasRef.current.focus()
-    }
+    setTimeout(() => {
+      if (inputBarrasRef.current) {
+        inputBarrasRef.current.focus()
+      }
+    }, 50)
   }
 
   const removerLeitura = (codigo: string) => {
     setLeituras(leituras.filter(l => l.codigo !== codigo))
+  }
+
+  const diminuirQuantidade = (codigo: string) => {
+    setLeituras(leituras.map(l => 
+      l.codigo === codigo 
+        ? { ...l, quantidade: Math.max(0, l.quantidade - 1) }
+        : l
+    ).filter(l => l.quantidade > 0))
+  }
+
+  const aumentarQuantidade = (codigo: string) => {
+    setLeituras(leituras.map(l => 
+      l.codigo === codigo 
+        ? { ...l, quantidade: l.quantidade + 1, timestamp: new Date() }
+        : l
+    ))
   }
 
   const gerarDivergenciasAutomaticas = () => {
@@ -247,9 +268,21 @@ export default function AprovacaoEntradas() {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault()
       processarLeituraBarra()
     }
   }
+
+  // Auto-processar quando código for detectado (para coletores que não enviam Enter)
+  useEffect(() => {
+    if (codigoBarras.length >= 8 && modoConferencia) {
+      const timer = setTimeout(() => {
+        processarLeituraBarra()
+      }, 300) // Aguarda 300ms para garantir que o código completo foi lido
+      
+      return () => clearTimeout(timer)
+    }
+  }, [codigoBarras, modoConferencia])
 
   // Agrupar entradas por status
   const entradasPorStatus = (entradas as any[])?.reduce((acc, entrada) => {
@@ -465,27 +498,49 @@ export default function AprovacaoEntradas() {
                 {/* Interface do coletor de código de barras */}
                 <div className="space-y-3">
                   <Label className="text-base font-semibold">Leitura de Código de Barras</Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="col-span-2">
+                      <Label htmlFor="codigo-barras">Código de Barras</Label>
                       <Input
+                        id="codigo-barras"
                         ref={inputBarrasRef}
                         value={codigoBarras}
                         onChange={(e) => setCodigoBarras(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Posicione o cursor aqui e use o coletor de código de barras"
-                        className="font-mono"
+                        placeholder="Posicione o cursor aqui e use o coletor"
+                        className="font-mono text-lg"
                         autoFocus
                       />
                     </div>
-                    <Button onClick={processarLeituraBarra} disabled={!codigoBarras.trim()}>
-                      <Scan className="h-4 w-4 mr-2" />
-                      Adicionar
-                    </Button>
+                    <div>
+                      <Label htmlFor="quantidade">Quantidade</Label>
+                      <Input
+                        id="quantidade"
+                        type="number"
+                        min="1"
+                        value={quantidadeBip}
+                        onChange={(e) => setQuantidadeBip(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="text-center"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button 
+                        onClick={processarLeituraBarra} 
+                        disabled={!codigoBarras.trim()}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        <Scan className="h-4 w-4 mr-2" />
+                        Adicionar
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Cada leitura do código de barras adiciona 1 unidade do produto. 
-                    Para produtos com múltiplas unidades, realize múltiplas leituras.
-                  </p>
+                  <div className="bg-muted/30 p-3 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Instruções:</strong> O coletor processará automaticamente após cada leitura. 
+                      Use o campo "Quantidade" para bipar múltiplas unidades de uma só vez.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Lista de leituras realizadas */}
@@ -511,7 +566,7 @@ export default function AprovacaoEntradas() {
                             <TableHead>Produto</TableHead>
                             <TableHead>Quantidade</TableHead>
                             <TableHead>Hora</TableHead>
-                            <TableHead>Ação</TableHead>
+                            <TableHead>Ações</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -519,7 +574,27 @@ export default function AprovacaoEntradas() {
                             <TableRow key={index}>
                               <TableCell className="font-mono">{leitura.codigo}</TableCell>
                               <TableCell>{leitura.produto_nome}</TableCell>
-                              <TableCell>{leitura.quantidade}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    onClick={() => diminuirQuantidade(leitura.codigo)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="mx-2 font-medium">{leitura.quantidade}</span>
+                                  <Button
+                                    onClick={() => aumentarQuantidade(leitura.codigo)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                              </TableCell>
                               <TableCell>{format(leitura.timestamp, 'HH:mm:ss')}</TableCell>
                               <TableCell>
                                 <Button
