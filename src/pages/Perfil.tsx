@@ -37,12 +37,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useProfile } from "@/hooks/useProfile"
 
 export default function Perfil() {
   const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { data: userProfile, isLoading: profileLoading } = useProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -63,8 +65,9 @@ export default function Perfil() {
     confirmPassword: ""
   })
 
-  // Get default tab from URL params
-  const defaultTab = searchParams.get("tab") || "personal"
+  // Get default tab from URL params, avoiding business tab for admins
+  const isAdmin = userProfile?.role === 'admin'
+  const defaultTab = searchParams.get("tab") === "business" && isAdmin ? "personal" : (searchParams.get("tab") || "personal")
 
   useEffect(() => {
     if (!user) return
@@ -264,9 +267,9 @@ export default function Perfil() {
         {/* Main Content */}
         <div className="lg:col-span-3">
           <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3' : 'grid-cols-4'}`}>
               <TabsTrigger value="personal">Pessoal</TabsTrigger>
-              <TabsTrigger value="business">Empresa</TabsTrigger>
+              {!isAdmin && <TabsTrigger value="business">Empresa</TabsTrigger>}
               <TabsTrigger value="notifications">Notificações</TabsTrigger>
               <TabsTrigger value="security">Segurança</TabsTrigger>
             </TabsList>
@@ -353,9 +356,33 @@ export default function Perfil() {
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="SP">São Paulo</SelectItem>
-                          <SelectItem value="MG">Minas Gerais</SelectItem>
+                          <SelectItem value="AC">Acre</SelectItem>
+                          <SelectItem value="AL">Alagoas</SelectItem>
+                          <SelectItem value="AP">Amapá</SelectItem>
+                          <SelectItem value="AM">Amazonas</SelectItem>
+                          <SelectItem value="BA">Bahia</SelectItem>
+                          <SelectItem value="CE">Ceará</SelectItem>
+                          <SelectItem value="DF">Distrito Federal</SelectItem>
+                          <SelectItem value="ES">Espírito Santo</SelectItem>
                           <SelectItem value="GO">Goiás</SelectItem>
+                          <SelectItem value="MA">Maranhão</SelectItem>
+                          <SelectItem value="MT">Mato Grosso</SelectItem>
+                          <SelectItem value="MS">Mato Grosso do Sul</SelectItem>
+                          <SelectItem value="MG">Minas Gerais</SelectItem>
+                          <SelectItem value="PA">Pará</SelectItem>
+                          <SelectItem value="PB">Paraíba</SelectItem>
+                          <SelectItem value="PR">Paraná</SelectItem>
+                          <SelectItem value="PE">Pernambuco</SelectItem>
+                          <SelectItem value="PI">Piauí</SelectItem>
+                          <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+                          <SelectItem value="RN">Rio Grande do Norte</SelectItem>
+                          <SelectItem value="RS">Rio Grande do Sul</SelectItem>
+                          <SelectItem value="RO">Rondônia</SelectItem>
+                          <SelectItem value="RR">Roraima</SelectItem>
+                          <SelectItem value="SC">Santa Catarina</SelectItem>
+                          <SelectItem value="SP">São Paulo</SelectItem>
+                          <SelectItem value="SE">Sergipe</SelectItem>
+                          <SelectItem value="TO">Tocantins</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -373,78 +400,80 @@ export default function Perfil() {
               </Card>
             </TabsContent>
             
-            <TabsContent value="business" className="space-y-6">
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="w-5 h-5" />
-                    Informações da Empresa
-                  </CardTitle>
-                  <CardDescription>
-                    Dados da fazenda e informações fiscais
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nomeEmpresa">Nome da Fazenda</Label>
-                      <Input 
-                        id="nomeEmpresa" 
-                        disabled={!isEditing}
-                      />
+            {!isAdmin && (
+              <TabsContent value="business" className="space-y-6">
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building className="w-5 h-5" />
+                      Informações da Empresa
+                    </CardTitle>
+                    <CardDescription>
+                      Dados da fazenda e informações fiscais
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nomeEmpresa">Nome da Fazenda</Label>
+                        <Input 
+                          id="nomeEmpresa" 
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cnpj">CNPJ</Label>
+                        <Input 
+                          id="cnpj" 
+                          disabled={!isEditing}
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cnpj">CNPJ</Label>
-                      <Input 
-                        id="cnpj" 
-                        disabled={!isEditing}
-                      />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="inscricaoEstadual">Inscrição Estadual</Label>
+                        <Input 
+                          id="inscricaoEstadual" 
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="telefoneEmpresa">Telefone Comercial</Label>
+                        <Input 
+                          id="telefoneEmpresa" 
+                          disabled={!isEditing}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="inscricaoEstadual">Inscrição Estadual</Label>
-                      <Input 
-                        id="inscricaoEstadual" 
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="telefoneEmpresa">Telefone Comercial</Label>
-                      <Input 
-                        id="telefoneEmpresa" 
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="atividade">Atividade Principal</Label>
-                      <Select disabled={!isEditing}>
-                        <SelectTrigger id="atividade">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="agricultura">Agricultura</SelectItem>
-                          <SelectItem value="pecuaria">Pecuária</SelectItem>
-                          <SelectItem value="mista">Atividade Mista</SelectItem>
-                        </SelectContent>
-                      </Select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="atividade">Atividade Principal</Label>
+                        <Select disabled={!isEditing}>
+                          <SelectTrigger id="atividade">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="agricultura">Agricultura</SelectItem>
+                            <SelectItem value="pecuaria">Pecuária</SelectItem>
+                            <SelectItem value="mista">Atividade Mista</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="observacoes">Observações</Label>
-                    <Textarea 
-                      id="observacoes" 
-                      placeholder="Informações adicionais sobre a empresa..."
-                      disabled={!isEditing}
-                      rows={3}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="observacoes">Observações</Label>
+                      <Textarea 
+                        id="observacoes" 
+                        placeholder="Informações adicionais sobre a empresa..."
+                        disabled={!isEditing}
+                        rows={3}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
             
             <TabsContent value="notifications" className="space-y-6">
               <Card className="shadow-card">
