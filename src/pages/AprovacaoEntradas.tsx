@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2 } from "lucide-react"
+import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X } from "lucide-react"
 import { useEntradasPendentes, useAtualizarStatusEntrada } from "@/hooks/useEntradasPendentes"
 import { format } from "date-fns"
 
@@ -24,15 +24,28 @@ interface Divergencia {
   acao_tomada: string
 }
 
+interface LeituraBarra {
+  codigo: string
+  produto_nome: string
+  quantidade: number
+  timestamp: Date
+}
+
 export default function AprovacaoEntradas() {
   const { data: entradas, isLoading } = useEntradasPendentes()
   const atualizarStatus = useAtualizarStatusEntrada()
   
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [actionType, setActionType] = useState<'status' | 'conferencia'>('status')
+  const [actionType, setActionType] = useState<'status' | 'conferencia' | 'conferencia_barras'>('status')
   const [observacoes, setObservacoes] = useState('')
   const [divergencias, setDivergencias] = useState<Divergencia[]>([])
+  
+  // Estados para conferência por código de barras
+  const [codigoBarras, setCodigoBarras] = useState('')
+  const [leituras, setLeituras] = useState<LeituraBarra[]>([])
+  const [modoConferencia, setModoConferencia] = useState(false)
+  const inputBarrasRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     document.title = "Aprovação de Entradas - Sistema de Gestão"
@@ -82,11 +95,14 @@ export default function AprovacaoEntradas() {
     return statusLabels[currentStatus as keyof typeof statusLabels] || null
   }
 
-  const handleAction = (entrada: any, type: 'status' | 'conferencia') => {
+  const handleAction = (entrada: any, type: 'status' | 'conferencia' | 'conferencia_barras') => {
     setSelectedEntrada(entrada)
     setActionType(type)
     setObservacoes('')
     setDivergencias([])
+    setLeituras([])
+    setCodigoBarras('')
+    setModoConferencia(type === 'conferencia_barras')
     setDialogOpen(true)
   }
 
@@ -125,6 +141,114 @@ export default function AprovacaoEntradas() {
     const updated = [...divergencias]
     updated[index] = { ...updated[index], [field]: value }
     setDivergencias(updated)
+  }
+
+  // Funções para conferência por código de barras
+  const processarLeituraBarra = () => {
+    if (!codigoBarras.trim() || !selectedEntrada) return
+
+    const item = selectedEntrada.entrada_itens?.find((item: any) => 
+      item.produtos?.codigo === codigoBarras.trim() || 
+      item.nome_produto?.toLowerCase().includes(codigoBarras.trim().toLowerCase())
+    )
+
+    if (!item) {
+      // Produto não encontrado na entrada
+      const novaLeitura: LeituraBarra = {
+        codigo: codigoBarras.trim(),
+        produto_nome: `Produto não encontrado (${codigoBarras.trim()})`,
+        quantidade: 1,
+        timestamp: new Date()
+      }
+      setLeituras([...leituras, novaLeitura])
+    } else {
+      // Produto encontrado, adicionar ou incrementar
+      const leituraExistente = leituras.find(l => l.codigo === codigoBarras.trim())
+      
+      if (leituraExistente) {
+        const novasLeituras = leituras.map(l => 
+          l.codigo === codigoBarras.trim() 
+            ? { ...l, quantidade: l.quantidade + 1, timestamp: new Date() }
+            : l
+        )
+        setLeituras(novasLeituras)
+      } else {
+        const novaLeitura: LeituraBarra = {
+          codigo: codigoBarras.trim(),
+          produto_nome: item.produtos?.nome || item.nome_produto || 'Produto sem nome',
+          quantidade: 1,
+          timestamp: new Date()
+        }
+        setLeituras([...leituras, novaLeitura])
+      }
+    }
+
+    setCodigoBarras('')
+    if (inputBarrasRef.current) {
+      inputBarrasRef.current.focus()
+    }
+  }
+
+  const removerLeitura = (codigo: string) => {
+    setLeituras(leituras.filter(l => l.codigo !== codigo))
+  }
+
+  const gerarDivergenciasAutomaticas = () => {
+    if (!selectedEntrada || !selectedEntrada.entrada_itens) return
+
+    const divergenciasCalculadas: Divergencia[] = []
+
+    // Para cada item esperado, verificar se foi lido
+    selectedEntrada.entrada_itens.forEach((itemEsperado: any) => {
+      const produto_codigo = itemEsperado.produtos?.codigo
+      const produto_nome = itemEsperado.produtos?.nome || itemEsperado.nome_produto
+      const quantidade_esperada = itemEsperado.quantidade
+
+      const leituraCorrespondente = leituras.find(l => 
+        l.codigo === produto_codigo || 
+        l.produto_nome === produto_nome
+      )
+
+      const quantidade_recebida = leituraCorrespondente?.quantidade || 0
+
+      if (quantidade_esperada !== quantidade_recebida) {
+        divergenciasCalculadas.push({
+          produto: produto_nome,
+          quantidade_esperada,
+          quantidade_recebida,
+          motivo: quantidade_recebida < quantidade_esperada 
+            ? `Quantidade inferior ao esperado (falta: ${quantidade_esperada - quantidade_recebida})` 
+            : `Quantidade superior ao esperado (excesso: ${quantidade_recebida - quantidade_esperada})`,
+          acao_tomada: 'Registrado automaticamente via código de barras'
+        })
+      }
+    })
+
+    // Verificar itens lidos que não estavam na entrada
+    leituras.forEach((leitura) => {
+      const itemEsperado = selectedEntrada.entrada_itens?.find((item: any) => 
+        item.produtos?.codigo === leitura.codigo ||
+        (item.produtos?.nome || item.nome_produto) === leitura.produto_nome
+      )
+
+      if (!itemEsperado && !leitura.produto_nome.includes('não encontrado')) {
+        divergenciasCalculadas.push({
+          produto: leitura.produto_nome,
+          quantidade_esperada: 0,
+          quantidade_recebida: leitura.quantidade,
+          motivo: 'Produto recebido não estava previsto na entrada',
+          acao_tomada: 'Registrado automaticamente via código de barras'
+        })
+      }
+    })
+
+    setDivergencias(divergenciasCalculadas)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      processarLeituraBarra()
+    }
   }
 
   // Agrupar entradas por status
@@ -210,27 +334,38 @@ export default function AprovacaoEntradas() {
                             Produtor: {entrada.profiles?.nome} • Fornecedor: {entrada.fornecedores?.nome}
                           </CardDescription>
                         </div>
-                        <div className="flex gap-2">
-                          {entrada.status_aprovacao === 'aguardando_conferencia' && (
-                            <Button
-                              onClick={() => handleAction(entrada, 'conferencia')}
-                              size="sm"
-                              disabled={atualizarStatus.isPending}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Realizar Conferência
-                            </Button>
-                          )}
-                          {entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (
-                            <Button
-                              onClick={() => handleAction(entrada, 'status')}
-                              size="sm"
-                              disabled={atualizarStatus.isPending}
-                            >
-                              {getNextStatusLabel(entrada.status_aprovacao)}
-                            </Button>
-                          )}
-                        </div>
+                         <div className="flex gap-2">
+                           {entrada.status_aprovacao === 'aguardando_conferencia' && (
+                             <>
+                               <Button
+                                 onClick={() => handleAction(entrada, 'conferencia_barras')}
+                                 size="sm"
+                                 variant="outline"
+                                 disabled={atualizarStatus.isPending}
+                               >
+                                 <Scan className="h-4 w-4 mr-2" />
+                                 Conferência por Código de Barras
+                               </Button>
+                               <Button
+                                 onClick={() => handleAction(entrada, 'conferencia')}
+                                 size="sm"
+                                 disabled={atualizarStatus.isPending}
+                               >
+                                 <Eye className="h-4 w-4 mr-2" />
+                                 Conferência Manual
+                               </Button>
+                             </>
+                           )}
+                           {entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (
+                             <Button
+                               onClick={() => handleAction(entrada, 'status')}
+                               size="sm"
+                               disabled={atualizarStatus.isPending}
+                             >
+                               {getNextStatusLabel(entrada.status_aprovacao)}
+                             </Button>
+                           )}
+                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -307,17 +442,130 @@ export default function AprovacaoEntradas() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {actionType === 'conferencia' ? 'Realizar Conferência' : 'Atualizar Status'}
+              {actionType === 'conferencia_barras' 
+                ? 'Conferência por Código de Barras' 
+                : actionType === 'conferencia' 
+                  ? 'Conferência Manual' 
+                  : 'Atualizar Status'
+              }
             </DialogTitle>
             <DialogDescription>
-              {actionType === 'conferencia' 
-                ? 'Confira os itens recebidos e registre eventuais divergências'
-                : `Confirmar mudança de status para "${getNextStatusLabel(selectedEntrada?.status_aprovacao || '')}"`
+              {actionType === 'conferencia_barras' 
+                ? 'Use o coletor de código de barras para realizar a conferência automaticamente'
+                : actionType === 'conferencia' 
+                  ? 'Confira os itens recebidos e registre eventuais divergências manualmente'
+                  : `Confirmar mudança de status para "${getNextStatusLabel(selectedEntrada?.status_aprovacao || '')}"`
               }
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            {actionType === 'conferencia_barras' && (
+              <div className="space-y-4">
+                {/* Interface do coletor de código de barras */}
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Leitura de Código de Barras</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        ref={inputBarrasRef}
+                        value={codigoBarras}
+                        onChange={(e) => setCodigoBarras(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Posicione o cursor aqui e use o coletor de código de barras"
+                        className="font-mono"
+                        autoFocus
+                      />
+                    </div>
+                    <Button onClick={processarLeituraBarra} disabled={!codigoBarras.trim()}>
+                      <Scan className="h-4 w-4 mr-2" />
+                      Adicionar
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Cada leitura do código de barras adiciona 1 unidade do produto. 
+                    Para produtos com múltiplas unidades, realize múltiplas leituras.
+                  </p>
+                </div>
+
+                {/* Lista de leituras realizadas */}
+                {leituras.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Leituras Realizadas ({leituras.length})</Label>
+                      <Button 
+                        onClick={gerarDivergenciasAutomaticas} 
+                        size="sm" 
+                        variant="outline"
+                      >
+                        <Calculator className="h-4 w-4 mr-2" />
+                        Gerar Divergências
+                      </Button>
+                    </div>
+                    
+                    <div className="border rounded-lg max-h-60 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Código</TableHead>
+                            <TableHead>Produto</TableHead>
+                            <TableHead>Quantidade</TableHead>
+                            <TableHead>Hora</TableHead>
+                            <TableHead>Ação</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {leituras.map((leitura, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-mono">{leitura.codigo}</TableCell>
+                              <TableCell>{leitura.produto_nome}</TableCell>
+                              <TableCell>{leitura.quantidade}</TableCell>
+                              <TableCell>{format(leitura.timestamp, 'HH:mm:ss')}</TableCell>
+                              <TableCell>
+                                <Button
+                                  onClick={() => removerLeitura(leitura.codigo)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Divergências geradas automaticamente */}
+                {divergencias.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold text-destructive">
+                      Divergências Detectadas ({divergencias.length})
+                    </Label>
+                    <div className="space-y-2">
+                      {divergencias.map((div, index) => (
+                        <Card key={index} className="bg-destructive/5">
+                          <CardContent className="p-3">
+                            <div className="text-sm space-y-1">
+                              <div><strong>Produto:</strong> {div.produto}</div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div><strong>Esperado:</strong> {div.quantidade_esperada}</div>
+                                <div><strong>Recebido:</strong> {div.quantidade_recebida}</div>
+                              </div>
+                              <div><strong>Motivo:</strong> {div.motivo}</div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {actionType === 'conferencia' && (
               <div className="space-y-4">
                 {/* Lista de itens para seleção rápida */}
