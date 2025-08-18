@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { MailPlus, Settings2, Unlink, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useSubaccountPermissions } from "@/hooks/useSubaccountPermissions";
 
 interface ProfileRow {
   user_id: string;
@@ -20,14 +21,16 @@ interface ProfileRow {
   email: string | null;
 }
 
-type UserRole = 'admin' | 'franqueado' | 'produtor';
-type PermissionCode = 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage';
+export type UserRole = 'admin' | 'franqueado' | 'produtor';
+export type PermissionCode = 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' | 'relatorios.view' | 'usuarios.manage';
 
 const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'estoque.view', label: 'Ver estoque' },
   { code: 'estoque.manage', label: 'Gerenciar estoque' },
   { code: 'entradas.manage', label: 'Gerenciar entradas' },
   { code: 'saidas.manage', label: 'Gerenciar saídas' },
+  { code: 'relatorios.view', label: 'Ver relatórios' },
+  { code: 'usuarios.manage', label: 'Gerenciar usuários' },
 ];
 
 export default function Subcontas() {
@@ -39,12 +42,7 @@ export default function Subcontas() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>('produtor');
   const [selectedFranquia, setSelectedFranquia] = useState<string>("");
-  const [invitePermissions, setInvitePermissions] = useState<Record<PermissionCode, boolean>>({
-    'estoque.view': false,
-    'estoque.manage': false,
-    'entradas.manage': false,
-    'saidas.manage': false,
-  });
+  const [isEmployee, setIsEmployee] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
 
   const [permOpen, setPermOpen] = useState(false);
@@ -54,6 +52,8 @@ export default function Subcontas() {
     'estoque.manage': false,
     'entradas.manage': false,
     'saidas.manage': false,
+    'relatorios.view': false,
+    'usuarios.manage': false,
   });
   const [loadingPerms, setLoadingPerms] = useState(false);
   const [savingPerms, setSavingPerms] = useState(false);
@@ -63,37 +63,28 @@ export default function Subcontas() {
     queryKey: ["user-role", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [adminRes, franqRes] = await Promise.all([
-        supabase.rpc('has_role', { _user_id: user!.id, _role: 'admin' }),
-        supabase.rpc('has_role', { _user_id: user!.id, _role: 'franqueado' }),
-      ]);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user!.id)
+        .single();
       
-      if (adminRes.data === true) return 'admin';
-      if (franqRes.data === true) return 'franqueado';
-      return 'produtor';
+      return profile?.role as UserRole | null;
     },
   });
 
-  // Get available roles for creation based on user role
-  const availableRoles = () => {
-    switch (userRole) {
-      case 'admin':
-        return [
-          { value: 'admin', label: 'Admin' },
-          { value: 'franqueado', label: 'Franqueado' },
-          { value: 'produtor', label: 'Produtor' },
-        ];
-      case 'franqueado':
-        return [
-          { value: 'franqueado', label: 'Franqueado' },
-          { value: 'produtor', label: 'Produtor' },
-        ];
-      case 'produtor':
-        return [{ value: 'produtor', label: 'Produtor' }];
-      default:
-        return [];
-    }
-  };
+  // Initialize the permissions hook
+  const {
+    availableRoles,
+    getDefaultPermissions,
+    getAvailablePermissions,
+    getRoleLabel,
+    getRoleDescription
+  } = useSubaccountPermissions(userRole);
+
+  // Calculate default permissions when role changes
+  const defaultPermissions = getDefaultPermissions(inviteRole, isEmployee);
+  const availablePermissions = getAvailablePermissions(inviteRole);
 
   // Get user's subaccounts (children in hierarchy)
   const { data: subaccounts = [], refetch: refetchSubaccounts, isLoading: loadingSubaccounts } = useQuery({
@@ -228,10 +219,8 @@ export default function Subcontas() {
         }
       }
 
-      // Get selected permissions
-      const selectedPermissions: PermissionCode[] = (Object.entries(invitePermissions) as [PermissionCode, boolean][])
-        .filter(([, selected]) => selected)
-        .map(([permission]) => permission);
+      // Get selected permissions from default template
+      const selectedPermissions = defaultPermissions;
 
       const inviteData: any = {
         email: inviteEmail,
@@ -270,12 +259,7 @@ export default function Subcontas() {
       setInviteEmail("");
       setInviteRole('produtor');
       setSelectedFranquia("");
-      setInvitePermissions({
-        'estoque.view': false,
-        'estoque.manage': false,
-        'entradas.manage': false,
-        'saidas.manage': false,
-      });
+      setIsEmployee(false);
     } catch (err: any) {
       toast({ title: "Erro ao enviar convite", description: err.message, variant: "destructive" });
     } finally {
@@ -319,6 +303,8 @@ export default function Subcontas() {
         'estoque.manage': current.has('estoque.manage'),
         'entradas.manage': current.has('entradas.manage'),
         'saidas.manage': current.has('saidas.manage'),
+        'relatorios.view': current.has('relatorios.view'),
+        'usuarios.manage': current.has('usuarios.manage'),
       });
     } catch (err: any) {
       toast({ title: "Erro ao carregar permissões", description: err.message, variant: "destructive" });
@@ -418,13 +404,16 @@ export default function Subcontas() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableRoles().map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
+                      {availableRoles.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {getRoleLabel(role)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-sm text-muted-foreground">
+                    {getRoleDescription(inviteRole, userRole)}
+                  </p>
                 </div>
                 {userRole === 'admin' && inviteRole === 'produtor' && (
                   <div className="grid gap-2">
@@ -443,22 +432,35 @@ export default function Subcontas() {
                     </Select>
                   </div>
                 )}
+                {userRole !== 'produtor' && (
+                  <div className="grid gap-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={isEmployee}
+                        onCheckedChange={setIsEmployee}
+                      />
+                      <Label>É funcionário/subconta</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Funcionários têm permissões mais limitadas que contas principais
+                    </p>
+                  </div>
+                )}
                 <div className="grid gap-2">
-                  <Label>Permissões</Label>
-                  <div className="grid gap-3 p-3 border rounded-lg">
-                    {PERMISSIONS.map((perm) => (
-                      <div key={perm.code} className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-sm">{perm.label}</div>
+                  <Label>Permissões ({defaultPermissions.length} selecionadas)</Label>
+                  <div className="grid gap-2 p-3 border rounded-lg bg-muted/50">
+                    {defaultPermissions.map((perm) => {
+                      const permLabel = PERMISSIONS.find(p => p.code === perm)?.label || perm;
+                      return (
+                        <div key={perm} className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                          {permLabel}
                         </div>
-                        <Switch
-                          checked={invitePermissions[perm.code]}
-                          onCheckedChange={(checked) => 
-                            setInvitePermissions(prev => ({ ...prev, [perm.code]: checked }))
-                          }
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
+                    {defaultPermissions.length === 0 && (
+                      <p className="text-sm text-muted-foreground">Nenhuma permissão padrão</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -468,12 +470,7 @@ export default function Subcontas() {
                   setInviteEmail("");
                   setInviteRole('produtor');
                   setSelectedFranquia("");
-                  setInvitePermissions({
-                    'estoque.view': false,
-                    'estoque.manage': false,
-                    'entradas.manage': false,
-                    'saidas.manage': false,
-                  });
+                  setIsEmployee(false);
                 }}>
                   Cancelar
                 </Button>

@@ -13,12 +13,21 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json()
-    const { email, inviterUserId, parentUserId, role, permissions } = requestBody
+    const { email, inviter_user_id, parent_user_id, role, permissions, franquia_id } = requestBody
     
-    console.log('Received request:', { email, inviterUserId, parentUserId, role, permissions })
+    console.log('Received request:', { email, inviter_user_id, parent_user_id, role, permissions, franquia_id })
 
+    // Validações básicas
     if (!email) {
       throw new Error('Email é obrigatório')
+    }
+    
+    if (!inviter_user_id) {
+      throw new Error('ID do usuário convidador é obrigatório')
+    }
+    
+    if (!role) {
+      throw new Error('Role é obrigatório')
     }
 
     // Create Supabase client with service role key
@@ -35,15 +44,55 @@ serve(async (req) => {
 
     console.log('Supabase client created')
 
+    // Verificar se o usuário convidador pode criar esse tipo de conta
+    const { data: canCreate, error: validationError } = await supabaseAdmin
+      .rpc('can_create_role', { 
+        _creator_user_id: inviter_user_id, 
+        _target_role: role 
+      })
+
+    if (validationError) {
+      console.error('Validation error:', validationError)
+      throw new Error('Erro ao validar permissões: ' + validationError.message)
+    }
+
+    if (!canCreate) {
+      throw new Error('Você não tem permissão para criar esse tipo de conta')
+    }
+
+    // Determinar o parent_user_id correto baseado na hierarquia
+    let finalParentUserId = parent_user_id || inviter_user_id
+
+    // Para produtores, verificar/definir franquia_id
+    let finalFranquiaId = franquia_id
+    if (role === 'produtor') {
+      // Se não foi especificada franquia e o criador é franqueado, usar a franquia dele
+      if (!finalFranquiaId) {
+        const { data: userFranquia, error: franquiaError } = await supabaseAdmin
+          .rpc('get_user_franquia_id', { _user_id: inviter_user_id })
+        
+        if (franquiaError) {
+          console.error('Error getting user franquia:', franquiaError)
+        } else {
+          finalFranquiaId = userFranquia
+        }
+      }
+      
+      if (!finalFranquiaId) {
+        throw new Error('Franquia é obrigatória para criar produtor')
+      }
+    }
+
     // Save pending invite first (generates unique token automatically)
     const { data: inviteData, error: inviteError } = await supabaseAdmin
       .from('pending_invites')
       .insert({
         email: email,
-        inviter_user_id: inviterUserId,
-        parent_user_id: parentUserId,
+        inviter_user_id: inviter_user_id,
+        parent_user_id: finalParentUserId,
         role: role,
-        permissions: permissions
+        permissions: permissions || [],
+        franquia_id: finalFranquiaId
       })
       .select('invite_token')
       .single()

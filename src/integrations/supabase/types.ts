@@ -1094,6 +1094,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_role: {
+        Args: {
+          _creator_user_id: string
+          _target_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       can_view_user_data: {
         Args: { _owner: string; _viewer: string }
         Returns: boolean
@@ -1123,6 +1130,10 @@ export type Database = {
         }[]
       }
       get_user_franquia: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      get_user_franquia_id: {
         Args: { _user_id: string }
         Returns: string
       }
