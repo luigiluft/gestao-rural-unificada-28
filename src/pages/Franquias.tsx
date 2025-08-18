@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit, Building2, User, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { WarehouseLayoutDesigner, type WarehouseLayout } from "@/components/Franquias/WarehouseLayoutDesigner";
 
 interface Franquia {
   id: string;
@@ -72,6 +73,8 @@ const Franquias = () => {
     layout_armazem: "",
     master_franqueado_id: "",
   });
+
+  const [warehouseLayout, setWarehouseLayout] = useState<WarehouseLayout | null>(null);
 
   // Set page title and meta description
   useEffect(() => {
@@ -148,6 +151,7 @@ const Franquias = () => {
       const payload = {
         ...data,
         capacidade_total: data.capacidade_total ? parseFloat(data.capacidade_total) : null,
+        layout_armazem: warehouseLayout ? JSON.stringify(warehouseLayout) : null,
       };
 
       if (editingFranquia) {
@@ -228,7 +232,7 @@ const Franquias = () => {
       layout_armazem: "",
       master_franqueado_id: "",
     });
-    setEditingFranquia(null);
+    setWarehouseLayout(null);
   };
 
   const openDialog = (franquia?: Franquia) => {
@@ -253,6 +257,10 @@ const Franquias = () => {
         layout_armazem: franquia.layout_armazem || "",
         master_franqueado_id: franquia.master_franqueado_id,
       });
+      
+      // Parse warehouse layout if exists
+      const layoutData = franquia.layout_armazem ? JSON.parse(franquia.layout_armazem) : null;
+      setWarehouseLayout(layoutData);
     } else {
       resetForm();
     }
@@ -479,28 +487,13 @@ const Franquias = () => {
                   <Building2 className="w-4 h-4 text-primary" />
                   <h3 className="font-semibold text-sm text-foreground">Informações do Armazém</h3>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="capacidade_total">Capacidade de Armazenagem (toneladas)</Label>
-                  <Input
-                    id="capacidade_total"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.capacidade_total}
-                    onChange={(e) => setFormData(prev => ({ ...prev, capacidade_total: e.target.value }))}
-                    placeholder="Ex: 1000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="layout_armazem">Layout do Armazém</Label>
-                  <Textarea
-                    id="layout_armazem"
-                    value={formData.layout_armazem}
-                    onChange={(e) => setFormData(prev => ({ ...prev, layout_armazem: e.target.value }))}
-                    placeholder="Descreva as zonas, docas, endereçamento e organização do armazém..."
-                    rows={3}
-                  />
-                </div>
+                <WarehouseLayoutDesigner
+                  layout={warehouseLayout}
+                  onLayoutChange={setWarehouseLayout}
+                  onCapacityChange={(capacity) => {
+                    setFormData(prev => ({ ...prev, capacidade_total: capacity.toString() }));
+                  }}
+                />
               </div>
 
               {/* Seção 5: Informações de Contato */}
