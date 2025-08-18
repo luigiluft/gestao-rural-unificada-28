@@ -22,7 +22,7 @@ export function useSeparacaoItens() {
       // Atualizar a quantidade separada do item
       const { data, error } = await supabase
         .from('saida_itens')
-        .update({ quantidade_separada: quantidadeSeparada })
+        .update({ quantidade_separada: quantidadeSeparada } as any)
         .eq('id', itemId)
         .select()
 
@@ -49,7 +49,7 @@ export function useSeparacaoItens() {
 
       if (itensError) throw itensError
 
-      const todosSeparados = itens?.every(item => 
+      const todosSeparados = itens?.every((item: any) => 
         (item.quantidade_separada || 0) >= item.quantidade
       )
 

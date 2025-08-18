@@ -923,6 +923,7 @@ export type Database = {
           lote: string | null
           produto_id: string
           quantidade: number
+          quantidade_separada: number | null
           saida_id: string
           user_id: string
           valor_total: number | null
@@ -934,6 +935,7 @@ export type Database = {
           lote?: string | null
           produto_id: string
           quantidade: number
+          quantidade_separada?: number | null
           saida_id: string
           user_id: string
           valor_total?: number | null
@@ -945,6 +947,7 @@ export type Database = {
           lote?: string | null
           produto_id?: string
           quantidade?: number
+          quantidade_separada?: number | null
           saida_id?: string
           user_id?: string
           valor_total?: number | null

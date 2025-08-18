@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,7 +29,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
     inicializarSeparacao
   } = useSeparacaoItens()
 
-  useState(() => {
+  useEffect(() => {
     if (saida?.saida_itens && open) {
       inicializarSeparacao(saida.saida_itens)
     }
