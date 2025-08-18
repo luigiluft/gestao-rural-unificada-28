@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react"
+import { useIsMobile } from "@/hooks/use-mobile"
+import AprovacaoEntradasMobile from "@/components/Mobile/AprovacaoEntradasMobile"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +34,14 @@ interface LeituraBarra {
 }
 
 export default function AprovacaoEntradas() {
+  const isMobile = useIsMobile()
+
+  // Se for mobile, usar componente móvel
+  if (isMobile) {
+    return <AprovacaoEntradasMobile />
+  }
+
+  // Versão desktop
   const { data: entradas, isLoading } = useEntradasPendentes()
   const atualizarStatus = useAtualizarStatusEntrada()
   
