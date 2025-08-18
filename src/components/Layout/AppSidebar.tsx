@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useFazendas } from "@/hooks/useProfile"
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
@@ -57,6 +58,9 @@ export function AppSidebar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isFranqueado, setIsFranqueado] = useState(false)
   const [isProdutor, setIsProdutor] = useState(false)
+  
+  // Only fetch fazendas for producers
+  const { data: fazendas } = useFazendas(isProdutor ? user?.id : undefined)
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -200,7 +204,9 @@ export function AppSidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{displayName || "Usuário"}</p>
-                <p className="text-xs text-muted-foreground truncate">Fazenda São José</p>
+                {isProdutor && fazendas && fazendas.length > 0 && (
+                  <p className="text-xs text-muted-foreground truncate">{fazendas[0].nome}</p>
+                )}
               </div>
             </div>
           </div>
