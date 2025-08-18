@@ -25,10 +25,10 @@ export default function AprovacaoSaidas() {
   const [separacaoOpen, setSeparacaoOpen] = useState(false)
 
   useEffect(() => {
-    document.title = "Aprovação de Saídas - Sistema de Gestão"
+    document.title = "Expedição - Sistema de Gestão"
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie e aprove saídas de produtos no sistema de gestão de estoque')
+      metaDescription.setAttribute('content', 'Gerencie a expedição de produtos no sistema de gestão de estoque')
     }
   }, [])
 
@@ -145,9 +145,9 @@ export default function AprovacaoSaidas() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Aprovação de Saídas</h1>
+        <h1 className="text-3xl font-bold text-foreground">Expedição</h1>
         <p className="text-muted-foreground">
-          Gerencie o fluxo de saídas através dos status de separação, expedição e entrega
+          Gerencie o processo de expedição através dos status de separação e entrega
         </p>
       </div>
 

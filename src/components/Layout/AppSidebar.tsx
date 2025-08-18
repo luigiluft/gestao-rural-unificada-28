@@ -119,10 +119,10 @@ export function AppSidebar() {
   const items = (() => {
     const base = [...menuItems]
     if (isAdmin) {
-      // Add "Aprovar Entradas" right after "Entradas" (index 3)
-      base.splice(3, 0, { title: "Aprovar Entradas", url: "/aprovacao-entradas", icon: CheckCircle })
-      // Add "Aprovar Saídas" after "Saídas" (index 5, accounting for the inserted item)
-      base.splice(6, 0, { title: "Aprovar Saídas", url: "/aprovacao-saidas", icon: CheckCircle })
+      // Add "Recebimento" right after "Entradas" (index 3)
+      base.splice(3, 0, { title: "Recebimento", url: "/recebimento", icon: CheckCircle })
+      // Add "Expedição" after "Saídas" (index 5, accounting for the inserted item)
+      base.splice(6, 0, { title: "Expedição", url: "/expedicao", icon: CheckCircle })
       // Add other admin items later in the menu
       base.splice(9, 0,
         { title: "Usuários", url: "/usuarios", icon: User },
@@ -131,10 +131,10 @@ export function AppSidebar() {
         { title: "Produtores", url: "/produtores", icon: Tractor },
       )
     } else if (isFranqueado) {
-      // Add "Aprovar Entradas" right after "Entradas" (index 3)
-      base.splice(3, 0, { title: "Aprovar Entradas", url: "/aprovacao-entradas", icon: CheckCircle })
-      // Add "Aprovar Saídas" after "Saídas" (index 5, accounting for the inserted item)
-      base.splice(6, 0, { title: "Aprovar Saídas", url: "/aprovacao-saidas", icon: CheckCircle })
+      // Add "Recebimento" right after "Entradas" (index 3)
+      base.splice(3, 0, { title: "Recebimento", url: "/recebimento", icon: CheckCircle })
+      // Add "Expedição" after "Saídas" (index 5, accounting for the inserted item)
+      base.splice(6, 0, { title: "Expedição", url: "/expedicao", icon: CheckCircle })
       // Add other franqueado items later in the menu
       base.splice(9, 0,
         { title: "Produtores", url: "/produtores", icon: Tractor },

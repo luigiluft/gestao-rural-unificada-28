@@ -52,10 +52,10 @@ export default function AprovacaoEntradas() {
   const inputBarrasRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    document.title = "Aprovação de Entradas - Sistema de Gestão"
+    document.title = "Recebimento - Sistema de Gestão"
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie e aprove entradas de produtos no sistema de gestão de estoque')
+      metaDescription.setAttribute('content', 'Gerencie o recebimento de produtos no sistema de gestão de estoque')
     }
   }, [])
 
@@ -335,9 +335,9 @@ export default function AprovacaoEntradas() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Aprovação de Entradas</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Recebimento</h1>
         <p className="text-muted-foreground">
-          Gerencie o fluxo de aprovação das entradas de produtos dos produtores
+          Gerencie o recebimento de produtos dos produtores
         </p>
       </div>
 
