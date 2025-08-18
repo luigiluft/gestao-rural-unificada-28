@@ -269,6 +269,15 @@ const Franquias = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Debug log to see what values are being validated
+    console.log('Form validation - formData:', {
+      nome: formData.nome,
+      master_franqueado_id: formData.master_franqueado_id,
+      cidade: formData.cidade,
+      estado: formData.estado
+    });
+    
     if (!formData.nome || !formData.master_franqueado_id || !formData.cidade || !formData.estado) {
       toast({
         title: "Dados incompletos",
