@@ -6,9 +6,15 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue>({ user: null, session: null, loading: true });
+const AuthContext = createContext<AuthContextValue>({ 
+  user: null, 
+  session: null, 
+  loading: true, 
+  logout: async () => {} 
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -85,7 +91,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const value = useMemo(() => ({ user, session, loading }), [user, session, loading]);
+  const logout = async () => {
+    try {
+      // Clear state immediately
+      setUser(null);
+      setSession(null);
+      
+      // Clear localStorage/sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Redirect to auth page
+      window.location.href = "/auth";
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      // Even if signOut fails, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      window.location.href = "/auth";
+    }
+  };
+
+  const value = useMemo(() => ({ user, session, loading, logout }), [user, session, loading]);
 
   return (
     <AuthContext.Provider value={value}>

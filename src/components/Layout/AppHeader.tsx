@@ -64,10 +64,9 @@ export function AppHeader() {
     .join("")
     .toUpperCase()
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    window.location.href = "/auth"
-  }
+  const { logout } = useAuth()
+
+  const handleLogout = logout
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 shadow-card">
