@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Clock, Truck, Package, CheckCircle } from "lucide-react"
+import { Clock, Truck, Package, CheckCircle, Scan } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
+import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"
 
 export default function AprovacaoSaidas() {
@@ -21,6 +22,7 @@ export default function AprovacaoSaidas() {
   const [selectedSaida, setSelectedSaida] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [observacoes, setObservacoes] = useState('')
+  const [separacaoOpen, setSeparacaoOpen] = useState(false)
 
   useEffect(() => {
     document.title = "Aprovação de Saídas - Sistema de Gestão"
@@ -72,6 +74,11 @@ export default function AprovacaoSaidas() {
     setSelectedSaida(saida)
     setObservacoes('')
     setDialogOpen(true)
+  }
+
+  const handleSeparacaoIndividual = (saida: any) => {
+    setSelectedSaida(saida)
+    setSeparacaoOpen(true)
   }
 
   const handleConfirm = async () => {
@@ -302,14 +309,35 @@ export default function AprovacaoSaidas() {
                         </div>
                         
                         <div className="flex gap-2">
-                          {getNextStatusLabel(saida.status) && (
-                            <Button
-                              onClick={() => handleAction(saida)}
-                              size="sm"
-                              className="bg-primary hover:bg-primary/90"
-                            >
-                              {getNextStatusLabel(saida.status)}
-                            </Button>
+                          {saida.status === 'separacao_pendente' ? (
+                            <>
+                              <Button
+                                onClick={() => handleSeparacaoIndividual(saida)}
+                                size="sm"
+                                variant="outline"
+                                className="flex items-center gap-2"
+                              >
+                                <Scan className="h-4 w-4" />
+                                Separação Individual
+                              </Button>
+                              <Button
+                                onClick={() => handleAction(saida)}
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90"
+                              >
+                                Marcar Tudo como Separado
+                              </Button>
+                            </>
+                          ) : (
+                            getNextStatusLabel(saida.status) && (
+                              <Button
+                                onClick={() => handleAction(saida)}
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90"
+                              >
+                                {getNextStatusLabel(saida.status)}
+                              </Button>
+                            )
                           )}
                         </div>
                       </div>
@@ -358,6 +386,16 @@ export default function AprovacaoSaidas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Separação Individual */}
+      <SeparacaoIndividual
+        saida={selectedSaida}
+        open={separacaoOpen}
+        onClose={() => {
+          setSeparacaoOpen(false)
+          setSelectedSaida(null)
+        }}
+      />
     </div>
   )
 }
