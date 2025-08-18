@@ -30,8 +30,10 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useNotifications } from "@/hooks/useNotifications"
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
@@ -57,6 +59,8 @@ export function AppSidebar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isFranqueado, setIsFranqueado] = useState(false)
   const [isProdutor, setIsProdutor] = useState(false)
+  
+  const { data: notifications } = useNotifications()
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -116,6 +120,25 @@ export function AppSidebar() {
       ? "bg-primary text-primary-foreground font-medium shadow-sm" 
       : "hover:bg-secondary/50 transition-all duration-200"
   }
+
+  const getNotificationCount = (title: string, notifications: any) => {
+    if (!notifications) return 0
+    
+    switch (title) {
+      case "Recebimento":
+        return notifications.recebimento || 0
+      case "Estoque":
+        return notifications.estoque || 0
+      case "Expedição":
+        return notifications.expedicao || 0
+      case "Suporte":
+        return notifications.suporte || 0
+      case "Subcontas":
+        return notifications.subcontas || 0
+      default:
+        return 0
+    }
+  }
   const items = (() => {
     const base = [...menuItems]
     if (isAdmin) {
@@ -174,16 +197,26 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === "/"}
-                      className={({ isActive }) => 
-                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)}`
-                      }
-                    >
-                      <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && <span className="font-medium">{item.title}</span>}
-                    </NavLink>
+                     <NavLink 
+                       to={item.url} 
+                       end={item.url === "/"}
+                       className={({ isActive }) => 
+                         `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
+                       }
+                     >
+                       <div className="relative">
+                         <item.icon className="w-5 h-5 flex-shrink-0" />
+                         {notifications && getNotificationCount(item.title, notifications) > 0 && (
+                           <Badge 
+                             variant="destructive" 
+                             className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                           >
+                             {getNotificationCount(item.title, notifications)}
+                           </Badge>
+                         )}
+                       </div>
+                       {!collapsed && <span className="font-medium">{item.title}</span>}
+                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
