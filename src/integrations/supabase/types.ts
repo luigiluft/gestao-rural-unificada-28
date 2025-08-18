@@ -1013,7 +1013,6 @@ export type Database = {
           created_at: string
           data_saida: string
           deposito_id: string
-          destinatario: string | null
           id: string
           observacoes: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
@@ -1026,7 +1025,6 @@ export type Database = {
           created_at?: string
           data_saida: string
           deposito_id: string
-          destinatario?: string | null
           id?: string
           observacoes?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
@@ -1039,7 +1037,6 @@ export type Database = {
           created_at?: string
           data_saida?: string
           deposito_id?: string
-          destinatario?: string | null
           id?: string
           observacoes?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null

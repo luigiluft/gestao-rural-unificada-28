@@ -37,7 +37,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const [dadosSaida, setDadosSaida] = useState({
     data_saida: new Date().toISOString().split('T')[0],
     tipo_saida: "",
-    destinatario: "",
     observacoes: "",
     deposito_id: "",
     produtor_destinatario: "",
@@ -193,7 +192,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           user_id: user?.id,
           data_saida: dadosSaida.data_saida,
           tipo_saida: dadosSaida.tipo_saida,
-          destinatario: dadosSaida.destinatario,
+          
           observacoes: dadosSaida.observacoes,
           deposito_id: dadosSaida.deposito_id,
           valor_total: calcularValorTotal(),
@@ -400,18 +399,16 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="destinatario">
-                  {isFranqueado ? "Produtor Destinatário" : "Destinatário"}
+                <Label htmlFor="produtor_destinatario">
+                  Produtor Destinatário
                 </Label>
                 {isFranqueado ? (
                   <Select 
                     value={dadosSaida.produtor_destinatario} 
                     onValueChange={(value) => {
-                      const produtor = produtores?.find(p => p.user_id === value)
                       setDadosSaida(prev => ({ 
                         ...prev, 
-                        produtor_destinatario: value,
-                        destinatario: produtor?.nome || ""
+                        produtor_destinatario: value
                       }))
                     }}
                   >
@@ -428,11 +425,11 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   </Select>
                 ) : (
                   <Input
-                    id="destinatario"
-                    value={isProdutor ? profile?.nome || "" : dadosSaida.destinatario}
-                    onChange={(e) => setDadosSaida(prev => ({ ...prev, destinatario: e.target.value }))}
-                    placeholder={isProdutor ? "Seu nome" : "Nome do destinatário"}
-                    disabled={isProdutor}
+                    id="produtor_destinatario"
+                    value={profile?.nome || ""}
+                    placeholder="Seu nome"
+                    disabled={true}
+                    className="bg-muted"
                   />
                 )}
               </div>

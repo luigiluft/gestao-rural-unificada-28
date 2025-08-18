@@ -243,7 +243,7 @@ export default function AprovacaoSaidas() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <Label className="text-xs font-medium text-muted-foreground">DESTINATÁRIO</Label>
-                          <p className="font-medium">{saida.destinatario || "Não informado"}</p>
+                          <p className="font-medium">Saída de Produtos</p>
                         </div>
                         <div>
                           <Label className="text-xs font-medium text-muted-foreground">TIPO DE SAÍDA</Label>

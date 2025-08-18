@@ -16,7 +16,6 @@ interface Saida {
   id: string
   data_saida: string
   status: string
-  destinatario?: string
   valor_total?: number
   franquia_nome?: string
   saida_itens: Array<{
@@ -94,7 +93,7 @@ export const SaidasEmAndamento = ({ saidas, isLoading }: SaidasEmAndamentoProps)
                       Saída {saida.id.slice(0, 8)}
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      {saida.destinatario || "Destino não informado"}
+                      Saída de Produtos
                     </p>
                   </div>
                   <StatusIndicator status={saida.status} type="saida" />

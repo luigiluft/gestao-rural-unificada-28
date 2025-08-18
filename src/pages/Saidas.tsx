@@ -73,7 +73,7 @@ export default function Saidas() {
 
   // Filtrar saídas baseado no termo de busca
   const saidasFiltradas = saidas?.filter(saida => 
-    saida.destinatario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    
     saida.tipo_saida?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     saida.saida_itens?.some(item => 
       item.produtos?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -238,7 +238,7 @@ export default function Saidas() {
                       <TableHead>ID</TableHead>
                       <TableHead>Produtos</TableHead>
                       <TableHead>Data</TableHead>
-                      <TableHead>Destinatário</TableHead>
+                      
                       <TableHead>Tipo</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Valor Total</TableHead>
@@ -271,7 +271,7 @@ export default function Saidas() {
                           </div>
                         </TableCell>
                         <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
-                        <TableCell>{saida.destinatario || "-"}</TableCell>
+                        
                         <TableCell>
                           <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
                         </TableCell>
