@@ -504,9 +504,13 @@ export type Database = {
       franquias: {
         Row: {
           ativo: boolean | null
+          bairro: string | null
           capacidade_total: number | null
           cep: string | null
           cidade: string | null
+          cnpj: string | null
+          codigo_interno: string | null
+          complemento: string | null
           created_at: string | null
           descricao: string | null
           descricao_deposito: string | null
@@ -514,16 +518,23 @@ export type Database = {
           endereco: string | null
           estado: string | null
           id: string
+          inscricao_estadual: string | null
+          layout_armazem: string | null
           master_franqueado_id: string
           nome: string
+          numero: string | null
           telefone: string | null
           updated_at: string | null
         }
         Insert: {
           ativo?: boolean | null
+          bairro?: string | null
           capacidade_total?: number | null
           cep?: string | null
           cidade?: string | null
+          cnpj?: string | null
+          codigo_interno?: string | null
+          complemento?: string | null
           created_at?: string | null
           descricao?: string | null
           descricao_deposito?: string | null
@@ -531,16 +542,23 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          layout_armazem?: string | null
           master_franqueado_id: string
           nome: string
+          numero?: string | null
           telefone?: string | null
           updated_at?: string | null
         }
         Update: {
           ativo?: boolean | null
+          bairro?: string | null
           capacidade_total?: number | null
           cep?: string | null
           cidade?: string | null
+          cnpj?: string | null
+          codigo_interno?: string | null
+          complemento?: string | null
           created_at?: string | null
           descricao?: string | null
           descricao_deposito?: string | null
@@ -548,8 +566,11 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          layout_armazem?: string | null
           master_franqueado_id?: string
           nome?: string
+          numero?: string | null
           telefone?: string | null
           updated_at?: string | null
         }

@@ -17,13 +17,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 interface Franquia {
   id: string;
   nome: string;
+  codigo_interno: string;
   descricao: string;
   endereco: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
   cidade: string;
   estado: string;
   cep: string;
+  cnpj: string;
+  inscricao_estadual: string;
   telefone: string;
   email: string;
+  capacidade_total: number;
+  layout_armazem: string;
   master_franqueado_id: string;
   ativo: boolean;
   created_at: string;
@@ -47,13 +55,21 @@ const Franquias = () => {
   
   const [formData, setFormData] = useState({
     nome: "",
+    codigo_interno: "",
     descricao: "",
     endereco: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
     cidade: "",
     estado: "",
     cep: "",
+    cnpj: "",
+    inscricao_estadual: "",
     telefone: "",
     email: "",
+    capacidade_total: "",
+    layout_armazem: "",
     master_franqueado_id: "",
   });
 
@@ -129,16 +145,21 @@ const Franquias = () => {
   // Create or update franquia
   const saveFranquia = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const payload = {
+        ...data,
+        capacidade_total: data.capacidade_total ? parseFloat(data.capacidade_total) : null,
+      };
+
       if (editingFranquia) {
         const { error } = await supabase
           .from("franquias")
-          .update(data)
+          .update(payload)
           .eq("id", editingFranquia.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("franquias")
-          .insert(data);
+          .insert(payload);
         if (error) throw error;
       }
     },
@@ -190,13 +211,21 @@ const Franquias = () => {
   const resetForm = () => {
     setFormData({
       nome: "",
+      codigo_interno: "",
       descricao: "",
       endereco: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
       cidade: "",
       estado: "",
       cep: "",
+      cnpj: "",
+      inscricao_estadual: "",
       telefone: "",
       email: "",
+      capacidade_total: "",
+      layout_armazem: "",
       master_franqueado_id: "",
     });
     setEditingFranquia(null);
@@ -207,13 +236,21 @@ const Franquias = () => {
       setEditingFranquia(franquia);
       setFormData({
         nome: franquia.nome,
+        codigo_interno: franquia.codigo_interno || "",
         descricao: franquia.descricao || "",
         endereco: franquia.endereco || "",
+        numero: franquia.numero || "",
+        complemento: franquia.complemento || "",
+        bairro: franquia.bairro || "",
         cidade: franquia.cidade || "",
         estado: franquia.estado || "",
         cep: franquia.cep || "",
+        cnpj: franquia.cnpj || "",
+        inscricao_estadual: franquia.inscricao_estadual || "",
         telefone: franquia.telefone || "",
         email: franquia.email || "",
+        capacidade_total: franquia.capacidade_total?.toString() || "",
+        layout_armazem: franquia.layout_armazem || "",
         master_franqueado_id: franquia.master_franqueado_id,
       });
     } else {
@@ -224,10 +261,10 @@ const Franquias = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nome || !formData.master_franqueado_id) {
+    if (!formData.nome || !formData.master_franqueado_id || !formData.cidade || !formData.estado) {
       toast({
         title: "Dados incompletos",
-        description: "Preencha ao menos o nome da franquia e selecione um franqueado master.",
+        description: "Preencha ao menos o nome da franquia, franqueado master, cidade e estado.",
         variant: "destructive",
       });
       return;
@@ -259,7 +296,7 @@ const Franquias = () => {
               Nova Franquia
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
+          <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingFranquia ? "Editar Franquia" : "Nova Franquia"}
@@ -271,16 +308,32 @@ const Franquias = () => {
                 }
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Nome da Franquia *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                    placeholder="Nome da franquia"
-                  />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Seção 1: Informações Básicas */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm text-foreground">Informações Básicas</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome da Franquia *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                      placeholder="Ex: São Paulo, Rio de Janeiro 2"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="codigo_interno">Código Interno</Label>
+                    <Input
+                      id="codigo_interno"
+                      value={formData.codigo_interno}
+                      onChange={(e) => setFormData(prev => ({ ...prev, codigo_interno: e.target.value.toUpperCase() }))}
+                      placeholder="Ex: FRQ-002, SP-001"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="master">Franqueado Master *</Label>
@@ -301,80 +354,210 @@ const Franquias = () => {
                   </Select>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                  placeholder="Descrição da franquia"
-                />
+
+              {/* Seção 2: Endereço Completo */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm text-foreground">Endereço Completo</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="endereco">Logradouro</Label>
+                    <Input
+                      id="endereco"
+                      value={formData.endereco}
+                      onChange={(e) => setFormData(prev => ({ ...prev, endereco: e.target.value }))}
+                      placeholder="Ex: Rua das Flores, Avenida Brasil"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="numero">Número</Label>
+                    <Input
+                      id="numero"
+                      value={formData.numero}
+                      onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="complemento">Complemento</Label>
+                    <Input
+                      id="complemento"
+                      value={formData.complemento}
+                      onChange={(e) => setFormData(prev => ({ ...prev, complemento: e.target.value }))}
+                      placeholder="Ex: Sala 101, Galpão A"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bairro">Bairro</Label>
+                    <Input
+                      id="bairro"
+                      value={formData.bairro}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
+                      placeholder="Ex: Centro, Jardim Paulista"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cidade">Cidade *</Label>
+                    <Input
+                      id="cidade"
+                      value={formData.cidade}
+                      onChange={(e) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
+                      placeholder="São Paulo"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="estado">Estado *</Label>
+                    <Input
+                      id="estado"
+                      value={formData.estado}
+                      onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value.toUpperCase() }))}
+                      placeholder="SP"
+                      maxLength={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cep">CEP</Label>
+                    <Input
+                      id="cep"
+                      value={formData.cep}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2');
+                        setFormData(prev => ({ ...prev, cep: value }));
+                      }}
+                      placeholder="00000-000"
+                      maxLength={9}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Seção 3: Informações Legais */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm text-foreground">Informações Legais</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cnpj">CNPJ</Label>
+                    <Input
+                      id="cnpj"
+                      value={formData.cnpj}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '')
+                          .replace(/(\d{2})(\d)/, '$1.$2')
+                          .replace(/(\d{3})(\d)/, '$1.$2')
+                          .replace(/(\d{3})(\d)/, '$1/$2')
+                          .replace(/(\d{4})(\d{1,2})/, '$1-$2');
+                        setFormData(prev => ({ ...prev, cnpj: value }));
+                      }}
+                      placeholder="00.000.000/0001-00"
+                      maxLength={18}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                    <Input
+                      id="inscricao_estadual"
+                      value={formData.inscricao_estadual}
+                      onChange={(e) => setFormData(prev => ({ ...prev, inscricao_estadual: e.target.value }))}
+                      placeholder="000.000.000.000"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 4: Informações do Armazém */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm text-foreground">Informações do Armazém</h3>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="capacidade_total">Capacidade de Armazenagem (toneladas)</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="contato@franquia.com"
+                    id="capacidade_total"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formData.capacidade_total}
+                    onChange={(e) => setFormData(prev => ({ ...prev, capacidade_total: e.target.value }))}
+                    placeholder="Ex: 1000"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
-                    placeholder="(11) 99999-9999"
+                  <Label htmlFor="layout_armazem">Layout do Armazém</Label>
+                  <Textarea
+                    id="layout_armazem"
+                    value={formData.layout_armazem}
+                    onChange={(e) => setFormData(prev => ({ ...prev, layout_armazem: e.target.value }))}
+                    placeholder="Descreva as zonas, docas, endereçamento e organização do armazém..."
+                    rows={3}
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="endereco">Endereço</Label>
-                <Input
-                  id="endereco"
-                  value={formData.endereco}
-                  onChange={(e) => setFormData(prev => ({ ...prev, endereco: e.target.value }))}
-                  placeholder="Rua, número, bairro"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cidade">Cidade</Label>
-                  <Input
-                    id="cidade"
-                    value={formData.cidade}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
-                    placeholder="Cidade"
-                  />
+              {/* Seção 5: Informações de Contato */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm text-foreground">Informações de Contato</h3>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="estado">Estado</Label>
-                  <Input
-                    id="estado"
-                    value={formData.estado}
-                    onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value }))}
-                    placeholder="SP"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cep">CEP</Label>
-                  <Input
-                    id="cep"
-                    value={formData.cep}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cep: e.target.value }))}
-                    placeholder="00000-000"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="contato@franquia.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      value={formData.telefone}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '')
+                          .replace(/(\d{2})(\d)/, '($1) $2')
+                          .replace(/(\d{4})(\d)/, '$1-$2')
+                          .replace(/(\d{4})-(\d)(\d{4})/, '$1$2-$3');
+                        setFormData(prev => ({ ...prev, telefone: value }));
+                      }}
+                      placeholder="(11) 99999-9999"
+                      maxLength={15}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
+              {/* Seção 6: Descrição */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm text-foreground">Descrição</h3>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="descricao">Descrição da Franquia</Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                    placeholder="Descreva as características gerais da franquia..."
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button 
                   type="button" 
                   variant="outline" 
