@@ -246,18 +246,20 @@ export default function Subcontas() {
         inviteData.franquia_id = franquiaId;
       }
 
-      const { error: inviteError } = await supabase.from("pending_invites").insert(inviteData);
-
-      if (inviteError) throw inviteError;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email: inviteEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
+      // Call the edge function to send the invite
+      const { data, error } = await supabase.functions.invoke('send-invite', {
+        body: inviteData
       });
-      
-      if (error) throw error;
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Erro ao processar convite');
+      }
+
+      if (!data?.success) {
+        console.error('Invite function failed:', data);
+        throw new Error(data?.error || 'Erro ao enviar convite');
+      }
 
       toast({ 
         title: "Convite enviado", 
