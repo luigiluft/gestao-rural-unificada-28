@@ -35,13 +35,6 @@ interface LeituraBarra {
 
 export default function AprovacaoEntradas() {
   const isMobile = useIsMobile()
-
-  // Se for mobile, usar componente móvel
-  if (isMobile) {
-    return <AprovacaoEntradasMobile />
-  }
-
-  // Versão desktop
   const { data: entradas, isLoading } = useEntradasPendentes()
   const atualizarStatus = useAtualizarStatusEntrada()
   
@@ -309,6 +302,11 @@ export default function AprovacaoEntradas() {
     acc[status].push(entrada)
     return acc
   }, {} as Record<string, any[]>) || {}
+
+  // Renderizar versão mobile ou desktop
+  if (isMobile) {
+    return <AprovacaoEntradasMobile />
+  }
 
   if (isLoading) {
     return (
