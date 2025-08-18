@@ -444,7 +444,7 @@ export function WarehouseLayoutDesigner({
       
       <CardContent className="space-y-6">
         <Tabs defaultValue="dimensoes" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="dimensoes" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Dimensões
@@ -452,10 +452,6 @@ export function WarehouseLayoutDesigner({
             <TabsTrigger value="posicoes" className="flex items-center gap-2">
               <Grid3X3 className="w-4 h-4" />
               Posições
-            </TabsTrigger>
-            <TabsTrigger value="visualizar" className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              Visualizar
             </TabsTrigger>
           </TabsList>
           
@@ -660,39 +656,6 @@ export function WarehouseLayoutDesigner({
                 </div>
               </div>
             )}
-          </TabsContent>
-          
-          <TabsContent value="visualizar" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-lg font-medium">Visualização do Armazém</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={viewMode === '2d' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('2d')}
-                >
-                  <Grid3X3 className="w-4 h-4 mr-1" />
-                  Vista 2D
-                </Button>
-                <Button
-                  variant={viewMode === '3d' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('3d')}
-                >
-                  <Box className="w-4 h-4 mr-1" />
-                  Vista 3D
-                </Button>
-              </div>
-            </div>
-            
-            {viewMode === '2d' ? render2DView() : renderWarehouseView()}
-            
-            <p className="text-xs text-center text-muted-foreground">
-              {viewMode === '3d' 
-                ? "Vista 3D: Clique nas posições para ativar/desativar • Use as setas para rotacionar"
-                : "Vista 2D: Clique nas posições para selecioná-las • Vá na aba 'Posições' para controlar andares"
-              }
-            </p>
           </TabsContent>
         </Tabs>
       </CardContent>
