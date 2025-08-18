@@ -254,10 +254,12 @@ export default function Perfil() {
                     <Phone className="w-4 h-4 text-muted-foreground" />
                     <span>{profile.telefone || '—'}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>{profile.cidade ? `${profile.cidade}${profile.estado ? `, ${profile.estado}` : ''}` : '—'}</span>
-                  </div>
+                  {userProfile?.role === 'produtor' && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span>{profile.cidade ? `${profile.cidade}${profile.estado ? `, ${profile.estado}` : ''}` : '—'}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -329,7 +331,7 @@ export default function Perfil() {
                     </div>
                   </div>
 
-                  {!isAdmin && (
+                  {userProfile?.role === 'produtor' && (
                     <>
                       <div className="space-y-2">
                           <Label htmlFor="endereco">Endereço</Label>
