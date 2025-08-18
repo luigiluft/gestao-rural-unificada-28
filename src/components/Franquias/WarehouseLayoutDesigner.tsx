@@ -115,19 +115,19 @@ export function WarehouseLayoutDesigner({
     const baseHeight = currentLayout.ruas * scale;
     
     return (
-      <div className="relative bg-gradient-to-br from-muted/20 to-muted/40 rounded-lg overflow-hidden" 
-           style={{ width: '100%', height: '400px' }}>
+      <div className="relative bg-gradient-to-br from-slate-900 to-slate-700 rounded-lg overflow-hidden" 
+           style={{ width: '100%', height: '450px' }}>
         <div className="absolute inset-4 flex items-center justify-center">
           <div 
             className="relative transition-transform duration-500 ease-in-out"
             style={{ 
-              transform: `perspective(1000px) rotateX(45deg) rotateY(${viewAngle}deg) scale(0.8)`,
+              transform: `perspective(1200px) rotateX(60deg) rotateY(${viewAngle}deg) scale(0.7)`,
               transformOrigin: 'center center'
             }}
           >
             {/* Base do armazém */}
             <div 
-              className="relative border-2 border-primary/30 bg-background/50 shadow-2xl"
+              className="relative border-2 border-primary/30 bg-background/10 shadow-2xl"
               style={{ 
                 width: `${baseWidth}px`, 
                 height: `${baseHeight}px`,
@@ -138,7 +138,7 @@ export function WarehouseLayoutDesigner({
                 Array.from({ length: currentLayout.modulos }).map((_, moduloIndex) => (
                   <div
                     key={`${ruaIndex}-${moduloIndex}`}
-                    className="absolute border border-border/30"
+                    className="absolute"
                     style={{
                       left: `${(moduloIndex * scale)}px`,
                       top: `${(ruaIndex * scale)}px`,
@@ -149,25 +149,43 @@ export function WarehouseLayoutDesigner({
                     {/* Stack de andares */}
                     {Array.from({ length: currentLayout.andares }).map((_, andarIndex) => {
                       const isInactive = isPositionInactive(ruaIndex + 1, moduloIndex + 1, andarIndex + 1);
+                      const floorHeight = 8;
+                      const floorOffset = andarIndex * floorHeight;
+                      const shadowIntensity = (currentLayout.andares - andarIndex) * 0.1;
+                      
                       return (
                         <div
                           key={andarIndex}
                           className={cn(
-                            "absolute border border-border/20 cursor-pointer transition-all duration-200 hover:scale-105",
+                            "absolute cursor-pointer transition-all duration-300 hover:brightness-110 border-2",
                             isInactive 
-                              ? "bg-destructive/40 border-destructive/60" 
-                              : "bg-primary/60 border-primary/80 hover:bg-primary/80"
+                              ? "bg-red-500/70 border-red-400 shadow-red-500/30" 
+                              : "bg-emerald-500/80 border-emerald-400 shadow-emerald-500/40"
                           )}
                           style={{
-                            left: `${andarIndex * 2}px`,
-                            bottom: `${andarIndex * 3}px`,
-                            width: `${scale - 4 - andarIndex * 2}px`,
-                            height: `${scale - 4 - andarIndex * 2}px`,
+                            left: `${andarIndex * 1}px`,
+                            bottom: `${floorOffset}px`,
+                            width: `${scale - 6 - andarIndex * 1}px`,
+                            height: `${scale - 6 - andarIndex * 1}px`,
                             zIndex: andarIndex + 1,
+                            boxShadow: `
+                              0 ${floorHeight}px ${floorHeight * 2}px rgba(0,0,0,${shadowIntensity}),
+                              0 0 0 1px rgba(255,255,255,0.1),
+                              inset 0 1px 0 rgba(255,255,255,0.2)
+                            `,
+                            transform: `translateZ(${andarIndex * 2}px)`,
                           }}
                           onClick={() => togglePosition(ruaIndex + 1, moduloIndex + 1, andarIndex + 1)}
                           title={`Rua ${ruaIndex + 1}, Módulo ${moduloIndex + 1}, Andar ${andarIndex + 1}`}
-                        />
+                        >
+                          {/* Indicador do número do andar */}
+                          <div 
+                            className="absolute inset-0 flex items-center justify-center text-white text-[8px] font-bold opacity-70 pointer-events-none"
+                            style={{ fontSize: `${Math.max(6, scale/6)}px` }}
+                          >
+                            {andarIndex + 1}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
