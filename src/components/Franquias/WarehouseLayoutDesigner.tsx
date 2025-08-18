@@ -38,11 +38,11 @@ const DEFAULT_LAYOUT: WarehouseLayout = {
 };
 
 export function WarehouseLayoutDesigner({ 
-  layout = DEFAULT_LAYOUT, 
+  layout, 
   onLayoutChange, 
   onCapacityChange 
 }: WarehouseLayoutDesignerProps) {
-  const [currentLayout, setCurrentLayout] = useState<WarehouseLayout>(layout);
+  const [currentLayout, setCurrentLayout] = useState<WarehouseLayout>(layout || DEFAULT_LAYOUT);
   const [selectedPosition, setSelectedPosition] = useState<{rua: number; modulo: number; andar: number} | null>(null);
   const [viewAngle, setViewAngle] = useState(0);
 
@@ -91,6 +91,13 @@ export function WarehouseLayoutDesigner({
     onLayoutChange(newLayout);
     onCapacityChange(newLayout.capacidade_total_calculada);
   };
+
+  // Atualizar layout quando prop layout mudar
+  useEffect(() => {
+    if (layout && layout !== currentLayout) {
+      setCurrentLayout(layout);
+    }
+  }, [layout]);
 
   // Reset para configuração padrão
   const resetLayout = () => {
