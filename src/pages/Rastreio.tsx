@@ -1,17 +1,15 @@
 import React from 'react';
-import { useProducerEntradas } from '@/hooks/useProducerEntradas';
-import { useProducerEstoque } from '@/hooks/useProducerEstoque';
-import { useProducerSaidas } from '@/hooks/useProducerSaidas';
+import { useRastreamentoEntradas, useRastreamentoEstoque, useRastreamentoSaidas } from '@/hooks/useRastreamentoData';
 import { ProducerDashboard } from '@/components/Rastreio/ProducerDashboard';
 import { EntradasEmAndamento } from '@/components/Rastreio/EntradasEmAndamento';
 import { EstoqueAtual } from '@/components/Rastreio/EstoqueAtual';
 import { SaidasEmAndamento } from '@/components/Rastreio/SaidasEmAndamento';
 
 export const Rastreio = () => {
-  // Fetch producer data
-  const { data: entradas = [], isLoading: isLoadingEntradas } = useProducerEntradas();
-  const { data: estoque = [], isLoading: isLoadingEstoque } = useProducerEstoque();
-  const { data: saidas = [], isLoading: isLoadingSaidas } = useProducerSaidas();
+  // Fetch tracking data (for current user or all users if admin)
+  const { data: entradas = [], isLoading: isLoadingEntradas } = useRastreamentoEntradas();
+  const { data: estoque = [], isLoading: isLoadingEstoque } = useRastreamentoEstoque();
+  const { data: saidas = [], isLoading: isLoadingSaidas } = useRastreamentoSaidas();
 
   // Calculate dashboard stats
   const stats = {
@@ -27,9 +25,9 @@ export const Rastreio = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Rastreamento - Visão do Produtor</h1>
-        <meta name="description" content="Acompanhe em tempo real suas entradas, estoque e saídas com nossa plataforma de rastreamento integrada." />
-        <p className="text-muted-foreground">Acompanhe todo o fluxo dos seus produtos: desde a entrada até a expedição</p>
+        <h1 className="text-3xl font-bold mb-2">Rastreamento</h1>
+        <meta name="description" content="Acompanhe em tempo real entradas, estoque e saídas com nossa plataforma de rastreamento integrada." />
+        <p className="text-muted-foreground">Acompanhe todo o fluxo dos produtos: desde a entrada até a expedição</p>
       </header>
 
       {/* Dashboard Stats */}
