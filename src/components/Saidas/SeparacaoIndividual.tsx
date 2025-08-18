@@ -19,7 +19,7 @@ interface SeparacaoIndividualProps {
 
 export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividualProps) {
   const [showScanner, setShowScanner] = useState(false)
-  const [itemSelecionado, setItemSelecionado] = useState<string | null>(null)
+  const [itemAtualIndex, setItemAtualIndex] = useState(0)
   
   const {
     itensSeparacao,
@@ -32,22 +32,54 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
   useEffect(() => {
     if (saida?.saida_itens && open) {
       inicializarSeparacao(saida.saida_itens)
+      setItemAtualIndex(0)
     }
   }, [saida, open, inicializarSeparacao])
+
+  useEffect(() => {
+    // Auto abrir scanner quando abrir o modal e houver itens
+    if (open && itensSeparacao.length > 0) {
+      setShowScanner(true)
+    }
+  }, [open, itensSeparacao.length])
+
+  const itemAtual = itensSeparacao[itemAtualIndex]
 
   const handleQuantidadeChange = (itemId: string, novaQuantidade: number) => {
     atualizarQuantidadeSeparada(itemId, novaQuantidade)
     separarItem.mutate({ itemId, quantidadeSeparada: novaQuantidade })
+    
+    // Se completou o item atual, ir para o próximo
+    const item = itensSeparacao.find(i => i.id === itemId)
+    if (item && novaQuantidade >= item.quantidade_total) {
+      const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
+        index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
+      )
+      if (proximoIncompleto !== -1) {
+        setItemAtualIndex(proximoIncompleto)
+      }
+    }
   }
 
-  const handleScanSuccess = (itemId: string) => {
-    const item = itensSeparacao.find(i => i.id === itemId)
-    if (item && item.quantidade_separada < item.quantidade_total) {
-      const novaQuantidade = item.quantidade_separada + 1
-      handleQuantidadeChange(itemId, novaQuantidade)
+  const handleScanSuccess = () => {
+    if (itemAtual && itemAtual.quantidade_separada < itemAtual.quantidade_total) {
+      const novaQuantidade = itemAtual.quantidade_separada + 1
+      handleQuantidadeChange(itemAtual.id, novaQuantidade)
     }
-    setShowScanner(false)
-    setItemSelecionado(null)
+  }
+
+  const handleProximoItem = () => {
+    const proximoIndex = itemAtualIndex + 1
+    if (proximoIndex < itensSeparacao.length) {
+      setItemAtualIndex(proximoIndex)
+    }
+  }
+
+  const handleItemAnterior = () => {
+    const anteriorIndex = itemAtualIndex - 1
+    if (anteriorIndex >= 0) {
+      setItemAtualIndex(anteriorIndex)
+    }
   }
 
   const getTotalProgress = () => {
@@ -94,109 +126,141 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
               </CardContent>
             </Card>
 
-            {/* Lista de Itens */}
-            <div className="space-y-4">
-              {itensSeparacao.map((item) => {
-                const progress = (item.quantidade_separada / item.quantidade_total) * 100
-                const isCompleto = item.quantidade_separada >= item.quantidade_total
-
-                return (
-                  <Card key={item.id} className={`transition-colors ${isCompleto ? 'border-green-200 bg-green-50/30' : ''}`}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <h3 className="font-semibold">{item.produto_nome}</h3>
-                          {item.lote && (
-                            <p className="text-sm text-muted-foreground">Lote: {item.lote}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {isCompleto && (
-                            <Badge variant="default" className="bg-green-100 text-green-700 border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Completo
-                            </Badge>
-                          )}
-                        </div>
+            {/* Item Atual para Separação */}
+            {itemAtual && (
+              <Card className="border-2 border-primary">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">
+                          Item {itemAtualIndex + 1} de {itensSeparacao.length}
+                        </Badge>
+                        <h3 className="font-semibold text-lg">{itemAtual.produto_nome}</h3>
                       </div>
-                    </CardHeader>
+                      {itemAtual.lote && (
+                        <p className="text-sm text-muted-foreground">Lote: {itemAtual.lote}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleItemAnterior}
+                        disabled={itemAtualIndex === 0}
+                      >
+                        Anterior
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleProximoItem}
+                        disabled={itemAtualIndex === itensSeparacao.length - 1}
+                      >
+                        Próximo
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
 
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Progresso</span>
-                          <span>{item.quantidade_separada} de {item.quantidade_total} {item.unidade_medida}</span>
-                        </div>
-                        <Progress value={progress} className="h-2" />
-                      </div>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary">
+                      {itemAtual.quantidade_separada} / {itemAtual.quantidade_total}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {itemAtual.unidade_medida} separadas
+                    </div>
+                  </div>
 
-                      <Separator />
+                  <Progress 
+                    value={(itemAtual.quantidade_separada / itemAtual.quantidade_total) * 100} 
+                    className="h-3" 
+                  />
 
-                      <div className="flex items-center gap-4">
-                        {/* Controles de Quantidade */}
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleQuantidadeChange(item.id, Math.max(0, item.quantidade_separada - 1))}
-                            disabled={item.quantidade_separada <= 0}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              max={item.quantidade_total}
-                              value={item.quantidade_separada}
-                              onChange={(e) => handleQuantidadeChange(item.id, parseInt(e.target.value) || 0)}
-                              className="w-20 text-center"
-                            />
-                            <span className="text-sm text-muted-foreground">/ {item.quantidade_total}</span>
+                  <div className="flex items-center justify-center gap-4">
+                    {/* Separação Manual */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleQuantidadeChange(itemAtual.id, Math.max(0, itemAtual.quantidade_separada - 1))}
+                        disabled={itemAtual.quantidade_separada <= 0}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleQuantidadeChange(itemAtual.id, Math.min(itemAtual.quantidade_total, itemAtual.quantidade_separada + 1))}
+                        disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowScanner(!showScanner)}
+                      className="flex items-center gap-2"
+                    >
+                      <Scan className="h-4 w-4" />
+                      {showScanner ? 'Parar Scanner' : 'Ativar Scanner'}
+                    </Button>
+                  </div>
+
+                  {itemAtual.quantidade_separada >= itemAtual.quantidade_total && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                      <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                      <p className="text-green-700 font-medium">Item Completo!</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Lista de Todos os Itens - Resumo */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Resumo dos Itens</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {itensSeparacao.map((item, index) => {
+                    const isCompleto = item.quantidade_separada >= item.quantidade_total
+                    const isCurrent = index === itemAtualIndex
+
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`flex items-center justify-between p-2 rounded-lg border transition-colors cursor-pointer ${
+                          isCurrent ? 'border-primary bg-primary/5' : 'border-border'
+                        } ${isCompleto ? 'bg-green-50/50' : ''}`}
+                        onClick={() => setItemAtualIndex(index)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {isCompleto ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">{item.produto_nome}</p>
+                            {item.lote && (
+                              <p className="text-xs text-muted-foreground">{item.lote}</p>
+                            )}
                           </div>
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleQuantidadeChange(item.id, Math.min(item.quantidade_total, item.quantidade_separada + 1))}
-                            disabled={item.quantidade_separada >= item.quantidade_total}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
                         </div>
-
-                        {/* Botão Scanner */}
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            setItemSelecionado(item.id)
-                            setShowScanner(true)
-                          }}
-                          disabled={isCompleto}
-                          className="flex items-center gap-2"
-                        >
-                          <Scan className="h-4 w-4" />
-                          Scanner
-                        </Button>
-
-                        {/* Botão Separar Tudo */}
-                        <Button
-                          size="sm"
-                          onClick={() => handleQuantidadeChange(item.id, item.quantidade_total)}
-                          disabled={isCompleto}
-                          className="flex items-center gap-2"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Separar Tudo
-                        </Button>
+                        <div className="text-sm text-muted-foreground">
+                          {item.quantidade_separada}/{item.quantidade_total}
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Botão Finalizar */}
             <div className="flex items-center justify-between pt-4 border-t">
@@ -217,15 +281,14 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
       </Dialog>
 
       {/* Scanner de Código de Barras */}
-      {showScanner && itemSelecionado && (
+      {showScanner && itemAtual && (
         <ScannerCodigoBarras
           open={showScanner}
-          onClose={() => {
-            setShowScanner(false)
-            setItemSelecionado(null)
-          }}
-          onSuccess={() => handleScanSuccess(itemSelecionado)}
-          itemId={itemSelecionado}
+          onClose={() => setShowScanner(false)}
+          onSuccess={handleScanSuccess}
+          itemId={itemAtual.id}
+          produtoNome={itemAtual.produto_nome}
+          quantidadeRestante={itemAtual.quantidade_total - itemAtual.quantidade_separada}
         />
       )}
     </>

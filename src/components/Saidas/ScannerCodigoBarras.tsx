@@ -10,11 +10,20 @@ import { toast } from 'sonner'
 interface ScannerCodigoBarrasProps {
   open: boolean
   onClose: () => void
-  onSuccess: (codigo: string) => void
+  onSuccess: () => void
   itemId: string
+  produtoNome?: string
+  quantidadeRestante?: number
 }
 
-export function ScannerCodigoBarras({ open, onClose, onSuccess, itemId }: ScannerCodigoBarrasProps) {
+export function ScannerCodigoBarras({ 
+  open, 
+  onClose, 
+  onSuccess, 
+  itemId, 
+  produtoNome, 
+  quantidadeRestante 
+}: ScannerCodigoBarrasProps) {
   const [codigo, setCodigo] = useState('')
   const [isScanning, setIsScanning] = useState(false)
   const [lastScanned, setLastScanned] = useState<string | null>(null)
@@ -54,9 +63,8 @@ export function ScannerCodigoBarras({ open, onClose, onSuccess, itemId }: Scanne
     // Aqui você pode adicionar validação do código de barras
     // Por exemplo, verificar se o código corresponde ao produto esperado
     
-    onSuccess(codigoConfirmado)
+    onSuccess()
     toast.success('Produto separado via código de barras!')
-    onClose()
   }
 
   const startScanning = () => {
@@ -66,120 +74,63 @@ export function ScannerCodigoBarras({ open, onClose, onSuccess, itemId }: Scanne
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Scan className="h-5 w-5" />
-            Scanner de Código de Barras
-          </DialogTitle>
-        </DialogHeader>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scan className="h-5 w-5" />
+              Scanner Ativo
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Scanner Visual */}
-          <Card className="border-2 border-dashed border-muted-foreground/25">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                {isScanning ? (
-                  <div className="space-y-3">
-                    <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
-                      <Scan className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Escaneando código de barras...</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
-                      <Scan className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Clique para iniciar o scanner ou digite o código manualmente
-                    </p>
-                    <Button
-                      onClick={startScanning}
-                      className="w-full"
-                      disabled={isScanning}
-                    >
-                      <Scan className="h-4 w-4 mr-2" />
-                      Iniciar Scanner
-                    </Button>
-                  </div>
+          <div className="space-y-4">
+            {produtoNome && (
+              <div className="text-center p-4 bg-primary/5 rounded-lg">
+                <h3 className="font-semibold text-lg">{produtoNome}</h3>
+                {quantidadeRestante !== undefined && (
+                  <p className="text-muted-foreground">
+                    Faltam {quantidadeRestante} unidades
+                  </p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Entrada Manual */}
-          <div className="space-y-3">
-            <Label htmlFor="codigo-manual">Ou digite o código manualmente:</Label>
-            <div className="flex gap-2">
-              <Input
-                id="codigo-manual"
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
-                placeholder="Digite ou escaneie o código de barras"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleManualSubmit()
-                  }
-                }}
-                disabled={isScanning}
-              />
-              <Button 
-                onClick={handleManualSubmit}
-                disabled={!codigo.trim() || isScanning}
-                size="sm"
-              >
-                <CheckCircle className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Último código escaneado */}
-          {lastScanned && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700">
-                  Último código: <code className="font-mono">{lastScanned}</code>
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Info sobre scanner */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
-              <div className="text-sm text-blue-700">
-                <p className="font-medium">Como usar:</p>
-                <ul className="mt-1 space-y-1 text-xs">
-                  <li>• Use o scanner automático para códigos de barras</li>
-                  <li>• Digite manualmente se preferir</li>
-                  <li>• Cada escaneamento adiciona 1 unidade ao item</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Botões */}
-          <div className="flex gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancelar
-            </Button>
-            {codigo && (
-              <Button 
-                onClick={() => handleConfirm(codigo)}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                Confirmar Código
-              </Button>
             )}
+
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-3">
+                <Scan className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+              <p className="text-muted-foreground">
+                Escaneie o código de barras ou digite manualmente
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="codigo">Código de barras:</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="codigo"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value)}
+                  placeholder="Digite ou escaneie o código"
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleManualSubmit()
+                    }
+                  }}
+                />
+                <Button onClick={handleManualSubmit} disabled={!codigo.trim()}>
+                  OK
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <Button variant="outline" onClick={onClose}>
+                Parar Scanner
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
+        </DialogContent>
     </Dialog>
   )
 }
