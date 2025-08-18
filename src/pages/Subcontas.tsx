@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { MailPlus, Settings2, Unlink, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { EmptyState } from "@/components/ui/empty-state";
 import { useSubaccountPermissions } from "@/hooks/useSubaccountPermissions";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface ProfileRow {
   user_id: string;
