@@ -11,10 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Menu } from "lucide-react"
+import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Menu, MoreVertical } from "lucide-react"
 import { useEntradasPendentes, useAtualizarStatusEntrada } from "@/hooks/useEntradasPendentes"
 import { format } from "date-fns"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Divergencia {
   produto: string
@@ -317,27 +318,23 @@ export default function AprovacaoEntradasMobile() {
       </div>
 
       <Tabs defaultValue="aguardando_transporte" className="space-y-4">
-        <ScrollArea className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="aguardando_transporte" className="text-xs px-2">
-              <Clock className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Transporte</span>
-              <span className="sm:hidden">({entradasPorStatus.aguardando_transporte?.length || 0})</span>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <TabsList className="inline-flex h-9 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-max">
+            <TabsTrigger value="aguardando_transporte" className="text-xs px-3 flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Transporte ({entradasPorStatus.aguardando_transporte?.length || 0})</span>
             </TabsTrigger>
-            <TabsTrigger value="em_transferencia" className="text-xs px-2">
-              <Truck className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Transferência</span>
-              <span className="sm:hidden">({entradasPorStatus.em_transferencia?.length || 0})</span>
+            <TabsTrigger value="em_transferencia" className="text-xs px-3 flex items-center gap-1">
+              <Truck className="h-3 w-3" />
+              <span>Transferência ({entradasPorStatus.em_transferencia?.length || 0})</span>
             </TabsTrigger>
-            <TabsTrigger value="aguardando_conferencia" className="text-xs px-2">
-              <Eye className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Conferência</span>
-              <span className="sm:hidden">({entradasPorStatus.aguardando_conferencia?.length || 0})</span>
+            <TabsTrigger value="aguardando_conferencia" className="text-xs px-3 flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>Conferência ({entradasPorStatus.aguardando_conferencia?.length || 0})</span>
             </TabsTrigger>
-            <TabsTrigger value="conferencia_completa" className="text-xs px-2">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Completa</span>
-              <span className="sm:hidden">({entradasPorStatus.conferencia_completa?.length || 0})</span>
+            <TabsTrigger value="conferencia_completa" className="text-xs px-3 flex items-center gap-1">
+              <CheckCircle className="h-3 w-3" />
+              <span>Completa ({entradasPorStatus.conferencia_completa?.length || 0})</span>
             </TabsTrigger>
           </TabsList>
         </ScrollArea>
@@ -353,33 +350,31 @@ export default function AprovacaoEntradasMobile() {
               <div className="space-y-3">
                 {(statusEntradas as any[]).map((entrada) => (
                   <Card key={entrada.id} className="border">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0 flex-1">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            NFe {entrada.numero_nfe || 'S/N'}
+                          <CardTitle className="text-base flex items-center gap-2 flex-wrap">
+                            <span>NFe {entrada.numero_nfe || 'S/N'}</span>
                             {getStatusBadge(entrada.status_aprovacao)}
                           </CardTitle>
-                          <CardDescription className="text-xs">
-                            {entrada.profiles?.nome}
-                          </CardDescription>
-                          <CardDescription className="text-xs">
-                            {entrada.fornecedores?.nome}
+                          <CardDescription className="text-xs space-y-1">
+                            <div><strong>Produtor:</strong> {entrada.profiles?.nome}</div>
+                            <div><strong>Fornecedor:</strong> {entrada.fornecedores?.nome}</div>
                           </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
                     
                     <CardContent className="pt-0">
-                      <div className="space-y-2 text-xs">
-                        <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3 text-xs">
                           <div>
                             <strong>Data:</strong> {format(new Date(entrada.data_entrada), 'dd/MM/yy')}
                           </div>
                           <div>
                             <strong>Valor:</strong> R$ {entrada.valor_total?.toFixed(2) || '0,00'}
                           </div>
-                          <div>
+                          <div className="col-span-2">
                             <strong>Franquia:</strong> {entrada.franquias?.nome || 'N/A'}
                           </div>
                           <div>
@@ -387,51 +382,67 @@ export default function AprovacaoEntradasMobile() {
                           </div>
                         </div>
                         
-                        {/* Ações */}
-                        <div className="pt-2 space-y-2">
-                          {entrada.status_aprovacao === 'aguardando_conferencia' && (
-                            <>
+                        {/* Ações com menu dropdown */}
+                        <div className="pt-3 border-t">
+                          {entrada.status_aprovacao === 'aguardando_conferencia' ? (
+                            <div className="flex gap-2">
                               <Button
                                 onClick={() => handleAction(entrada, 'conferencia_barras')}
                                 size="sm"
-                                className="w-full"
+                                className="flex-1"
                                 disabled={atualizarStatus.isPending}
                               >
                                 <Scan className="h-4 w-4 mr-2" />
-                                Código de Barras
+                                Código Barras
                               </Button>
+                              
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="px-3"
+                                    disabled={atualizarStatus.isPending}
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem
+                                    onClick={() => handleAction(entrada, 'conferencia')}
+                                    disabled={atualizarStatus.isPending}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    Conferência Manual
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ) : (
+                            getNextStatusLabel(entrada.status_aprovacao) && (
                               <Button
-                                onClick={() => handleAction(entrada, 'conferencia')}
+                                onClick={() => handleAction(entrada, 'status')}
                                 size="sm"
-                                variant="outline"
                                 className="w-full"
                                 disabled={atualizarStatus.isPending}
                               >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Conferência Manual
+                                {getNextStatusLabel(entrada.status_aprovacao)}
                               </Button>
-                            </>
-                          )}
-                          {entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (
-                            <Button
-                              onClick={() => handleAction(entrada, 'status')}
-                              size="sm"
-                              className="w-full"
-                              disabled={atualizarStatus.isPending}
-                            >
-                              {getNextStatusLabel(entrada.status_aprovacao)}
-                            </Button>
+                            )
                           )}
                         </div>
 
                         {/* Divergências registradas */}
                         {entrada.divergencias && entrada.divergencias.length > 0 && (
-                          <div className="mt-3 p-2 bg-destructive/5 rounded border border-destructive/20">
-                            <div className="flex items-center gap-1 mb-1">
-                              <AlertTriangle className="h-3 w-3 text-destructive" />
-                              <strong className="text-xs text-destructive">
-                                {entrada.divergencias.length} Divergência(s)
+                          <div className="p-3 bg-destructive/5 rounded-lg border border-destructive/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+                              <strong className="text-sm text-destructive">
+                                {entrada.divergencias.length} Divergência(s) Registrada(s)
                               </strong>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Clique para ver detalhes das divergências encontradas.
                             </div>
                           </div>
                         )}
