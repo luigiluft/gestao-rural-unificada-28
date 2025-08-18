@@ -97,6 +97,8 @@ export default function AprovacaoEntradas() {
   }
 
   const handleAction = (entrada: any, type: 'status' | 'conferencia' | 'conferencia_barras') => {
+    console.log('handleAction called with type:', type)
+    console.log('entrada:', entrada)
     setSelectedEntrada(entrada)
     setActionType(type)
     setObservacoes('')
@@ -105,8 +107,14 @@ export default function AprovacaoEntradas() {
     setCodigoBarras('')
     setQuantidadeBip(1)
     setModoConferencia(type === 'conferencia_barras')
+    console.log('Setting dialogOpen to true, actionType to:', type)
     setDialogOpen(true)
   }
+
+  // Log para debug do dialog
+  useEffect(() => {
+    console.log('Dialog state changed - open:', dialogOpen, 'actionType:', actionType)
+  }, [dialogOpen, actionType])
 
   const handleConfirm = async () => {
     if (!selectedEntrada) return
@@ -471,8 +479,8 @@ export default function AprovacaoEntradas() {
         ))}
       </Tabs>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {actionType === 'conferencia_barras' 
