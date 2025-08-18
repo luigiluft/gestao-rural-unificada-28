@@ -106,14 +106,15 @@ export default function AprovacaoEntradas() {
     setDialogOpen(false)
   }
 
-  const addDivergencia = () => {
-    setDivergencias([...divergencias, {
-      produto: '',
-      quantidade_esperada: 0,
-      quantidade_recebida: 0,
+  const addDivergencia = (item?: any) => {
+    const novaDivergencia = {
+      produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
+      quantidade_esperada: item ? item.quantidade || 0 : 0,
+      quantidade_recebida: item ? item.quantidade || 0 : 0,
       motivo: '',
       acao_tomada: ''
-    }])
+    }
+    setDivergencias([...divergencias, novaDivergencia])
   }
 
   const removeDivergencia = (index: number) => {
@@ -319,11 +320,50 @@ export default function AprovacaoEntradas() {
           <div className="space-y-4">
             {actionType === 'conferencia' && (
               <div className="space-y-4">
+                {/* Lista de itens para seleção rápida */}
+                {selectedEntrada?.entrada_itens?.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold">Itens da Entrada</Label>
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Produto</TableHead>
+                            <TableHead>Quantidade</TableHead>
+                            <TableHead>Lote</TableHead>
+                            <TableHead>Ação</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedEntrada.entrada_itens.map((item: any) => (
+                            <TableRow key={item.id}>
+                              <TableCell>{item.produtos?.nome || item.nome_produto}</TableCell>
+                              <TableCell>{item.quantidade} {item.produtos?.unidade_medida}</TableCell>
+                              <TableCell>{item.lote || '-'}</TableCell>
+                              <TableCell>
+                                <Button
+                                  onClick={() => addDivergencia(item)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Registrar Divergência
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">Divergências</Label>
-                  <Button onClick={addDivergencia} size="sm" variant="outline">
+                  <Button onClick={() => addDivergencia()} size="sm" variant="outline">
                     <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Divergência
+                    Adicionar Divergência Manual
                   </Button>
                 </div>
 
