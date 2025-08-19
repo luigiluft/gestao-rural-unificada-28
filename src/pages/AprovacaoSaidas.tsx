@@ -34,10 +34,10 @@ export default function AprovacaoSaidas() {
   const [separacaoOpen, setSeparacaoOpen] = useState(false)
 
   useEffect(() => {
-    document.title = "Expedição - Sistema de Gestão"
+    document.title = "Expedição - AgroHub"
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie a expedição de produtos no sistema de gestão de estoque')
+      metaDescription.setAttribute('content', 'Gerencie a expedição de produtos no AgroHub')
     }
   }, [])
 

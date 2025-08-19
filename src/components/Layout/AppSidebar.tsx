@@ -17,6 +17,7 @@ import {
   CheckCircle
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
+import logoSvg from "@/assets/agrohub-logo.svg"
 
 import {
   Sidebar,
@@ -176,13 +177,13 @@ export function AppSidebar() {
         {/* Logo/Brand */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Package className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src={logoSvg} alt="AgroHub" className="w-8 h-8" />
             </div>
             {!collapsed && (
               <div>
-                <h2 className="font-bold text-foreground">AgroStock</h2>
-                <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
+                <h2 className="font-bold text-foreground">AgroHub</h2>
+                <p className="text-xs text-muted-foreground">Gestão Rural Inteligente</p>
               </div>
             )}
           </div>

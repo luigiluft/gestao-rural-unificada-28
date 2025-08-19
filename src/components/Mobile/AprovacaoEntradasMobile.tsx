@@ -50,10 +50,10 @@ export default function AprovacaoEntradasMobile() {
   const inputBarrasRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    document.title = "Aprovação de Entradas - Sistema de Gestão"
+    document.title = "Aprovação de Entradas - AgroHub"
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie e aprove entradas de produtos no sistema de gestão de estoque')
+      metaDescription.setAttribute('content', 'Gerencie e aprove entradas de produtos no AgroHub')
     }
   }, [])
 

@@ -1,0 +1,22 @@
+<svg viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Container/bottle -->
+  <g stroke="#2D3748" stroke-width="3" fill="none">
+    <!-- Main container body -->
+    <rect x="20" y="35" width="45" height="60" rx="8" ry="8"/>
+    <!-- Container cap -->
+    <rect x="25" y="25" width="15" height="12" rx="2"/>
+    <!-- Handle -->
+    <path d="M65 45 L80 45 L80 75 L65 75" />
+    <!-- Spout -->
+    <rect x="40" y="30" width="8" height="8" rx="2"/>
+  </g>
+  
+  <!-- Lightning bolt inside container -->
+  <path d="M35 50 L45 50 L40 65 L50 65 L45 80 L35 80 L40 65 L30 65 Z" fill="#4ADE80" stroke="none"/>
+  
+  <!-- AGRO text -->
+  <text x="110" y="70" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#4ADE80">AGRO</text>
+  
+  <!-- HUB text -->
+  <text x="110" y="110" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#2D3748">HUB</text>
+</svg>

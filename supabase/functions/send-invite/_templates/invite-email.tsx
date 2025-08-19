@@ -48,7 +48,7 @@ export const InviteEmail = ({
           Se você não esperava este convite, pode ignorar este email com segurança.
         </Text>
         <Text style={footer}>
-          <strong>AgroStock</strong> - Sistema de Gestão Rural
+          <strong>AgroHub</strong> - Gestão Rural Inteligente
         </Text>
       </Container>
     </Body>

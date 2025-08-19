@@ -62,10 +62,10 @@ export default function AprovacaoEntradas() {
   const inputBarrasRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    document.title = "Recebimento - Sistema de Gestão"
+    document.title = "Recebimento - AgroHub"
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie o recebimento de produtos no sistema de gestão de estoque')
+      metaDescription.setAttribute('content', 'Gerencie o recebimento de produtos no AgroHub')
     }
   }, [])
 

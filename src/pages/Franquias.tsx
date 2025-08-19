@@ -78,7 +78,7 @@ const Franquias = () => {
 
   // Set page title and meta description
   useEffect(() => {
-    document.title = "Franquias - Sistema de Gestão";
+    document.title = "Franquias - AgroHub";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Gerencie franquias e seus franqueados masters no sistema de gestão.');
