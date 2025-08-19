@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useAllocationWaves, useStartAllocationWave } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,15 +9,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Package, Play, Clock, CheckCircle, User, Eye } from "lucide-react"
+import { Package, Play, Clock, CheckCircle, User, Eye, MapPin } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 export default function OndasAlocacao() {
-  const { data: waves, isLoading } = useAllocationWaves()
+  const navigate = useNavigate()
+  const { data: waves, isLoading, error } = useAllocationWaves()
   const startWave = useStartAllocationWave()
   const [selectedWave, setSelectedWave] = useState<any>(null)
   const [funcionarioId, setFuncionarioId] = useState<string>("")
+
+  // Debug logs
+  console.log('🔍 OndasAlocacao - Estado atual:', { waves, isLoading, error, wavesLength: waves?.length })
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -75,6 +80,7 @@ export default function OndasAlocacao() {
   }
 
   if (!waves || waves.length === 0) {
+    console.log('⚠️ Nenhuma onda encontrada - waves:', waves)
     return (
       <div className="container mx-auto p-6">
         <div className="mb-8">
@@ -93,6 +99,7 @@ export default function OndasAlocacao() {
     )
   }
 
+  console.log('✅ Renderizando ondas:', waves)
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="mb-8">
@@ -164,56 +171,78 @@ export default function OndasAlocacao() {
 
                 <div className="flex gap-2">
                   {wave.status === 'pendente' && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          size="sm" 
-                          onClick={() => setSelectedWave(wave)}
-                        >
-                          <Play className="w-4 h-4 mr-1" />
-                          Iniciar Alocação
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Iniciar Onda de Alocação</DialogTitle>
-                          <DialogDescription>
-                            Confirme o início da onda {selectedWave?.numero_onda}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium">Funcionário (opcional)</label>
-                            <Select value={funcionarioId} onValueChange={setFuncionarioId}>
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Selecionar funcionário..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="auto">Atribuição automática</SelectItem>
-                              </SelectContent>
-                            </Select>
+                    <>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            size="sm" 
+                            onClick={() => setSelectedWave(wave)}
+                          >
+                            <Play className="w-4 h-4 mr-1" />
+                            Iniciar Alocação
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Iniciar Onda de Alocação</DialogTitle>
+                            <DialogDescription>
+                              Confirme o início da onda {selectedWave?.numero_onda}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-sm font-medium">Funcionário (opcional)</label>
+                              <Select value={funcionarioId} onValueChange={setFuncionarioId}>
+                                <SelectTrigger className="mt-1">
+                                  <SelectValue placeholder="Selecionar funcionário..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="auto">Atribuição automática</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => {
+                                  setSelectedWave(null)
+                                  setFuncionarioId("")
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                              <Button 
+                                onClick={handleStartWave}
+                                disabled={startWave.isPending}
+                              >
+                                {startWave.isPending ? "Iniciando..." : "Iniciar"}
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
-                              onClick={() => {
-                                setSelectedWave(null)
-                                setFuncionarioId("")
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button 
-                              onClick={handleStartWave}
-                              disabled={startWave.isPending}
-                            >
-                              {startWave.isPending ? "Iniciando..." : "Iniciar"}
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                      >
+                        <MapPin className="w-4 h-4 mr-1" />
+                        Alocar Posições
+                      </Button>
+                    </>
                   )}
+                  
+                  {wave.status === 'em_andamento' && (
+                    <Button
+                      size="sm"
+                      onClick={() => navigate(`/alocar/${wave.id}`)}
+                    >
+                      <MapPin className="w-4 h-4 mr-1" />
+                      Continuar Alocação
+                    </Button>
+                  )}
+                  
                   
                   <Dialog>
                     <DialogTrigger asChild>

@@ -6,6 +6,8 @@ export const useAllocationWaves = () => {
   return useQuery({
     queryKey: ["allocation-waves"],
     queryFn: async () => {
+      console.log('🔍 Buscando ondas de alocação...')
+      
       const { data: waves, error } = await supabase
         .from("allocation_waves")
         .select(`
@@ -18,7 +20,11 @@ export const useAllocationWaves = () => {
         `)
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      console.log('📊 Resultado da busca:', { waves, error })
+      if (error) {
+        console.error('❌ Erro ao buscar ondas:', error)
+        throw error
+      }
 
       // Get franquia names for each wave
       const wavesWithFranquias = await Promise.all(
