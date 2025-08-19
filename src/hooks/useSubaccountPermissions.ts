@@ -37,78 +37,43 @@ export const EMPLOYEE_PERMISSIONS: Record<UserRole, PermissionCode[]> = {
 }
 
 export const useSubaccountPermissions = (userRole: UserRole | null) => {
-  const availableRoles = useMemo(() => {
+  // Para subcontas, sempre usamos permissões de funcionário do mesmo role do usuário
+  const getSubaccountPermissions = (): PermissionCode[] => {
     if (!userRole) return []
-    
-    switch (userRole) {
-      case 'admin':
-        return ['admin', 'franqueado', 'produtor'] as UserRole[]
-      case 'franqueado':
-        return ['franqueado', 'produtor'] as UserRole[]
-      case 'produtor':
-        return ['produtor'] as UserRole[]
-      default:
-        return []
-    }
-  }, [userRole])
-
-  const getDefaultPermissions = (targetRole: UserRole, isEmployee = false): PermissionCode[] => {
-    if (isEmployee && userRole) {
-      return EMPLOYEE_PERMISSIONS[userRole] || []
-    }
-    return PERMISSION_TEMPLATES[targetRole] || []
-  }
-
-  const getAvailablePermissions = (targetRole: UserRole): PermissionCode[] => {
-    if (!userRole) return []
-    
-    // Admin pode dar qualquer permissão
-    if (userRole === 'admin') {
-      return PERMISSION_TEMPLATES.admin
-    }
-    
-    // Outros usuários só podem dar permissões que eles próprios têm
     return EMPLOYEE_PERMISSIONS[userRole] || []
   }
 
-  const getRoleLabel = (role: UserRole): string => {
-    const labels = {
-      admin: 'Administrador',
-      franqueado: 'Franqueado',
-      produtor: 'Produtor'
-    }
-    return labels[role]
+  const getSubaccountRole = (): UserRole | null => {
+    return userRole // Subconta sempre tem o mesmo role do usuário
   }
 
-  const getRoleDescription = (role: UserRole, userRole: UserRole | null): string => {
+  const getSubaccountRoleLabel = (): string => {
+    if (!userRole) return ''
+    
+    const labels = {
+      admin: 'Funcionário Administrativo',
+      franqueado: 'Funcionário da Franquia', 
+      produtor: 'Funcionário do Produtor'
+    }
+    return labels[userRole]
+  }
+
+  const getSubaccountDescription = (): string => {
     if (!userRole) return ''
     
     const descriptions = {
-      admin: {
-        admin: 'Outro administrador com acesso total ao sistema',
-        franqueado: 'Administrador com acesso total ao sistema', 
-        produtor: 'Administrador com acesso total ao sistema'
-      },
-      franqueado: {
-        admin: '',
-        franqueado: 'Funcionário da franquia com permissões limitadas',
-        produtor: 'Produtor associado à sua franquia'
-      },
-      produtor: {
-        admin: '',
-        franqueado: '',
-        produtor: 'Funcionário para ajudar na operação'
-      }
+      admin: 'Funcionário administrativo com permissões limitadas para ajudar na operação',
+      franqueado: 'Funcionário da franquia com permissões limitadas para operações básicas',
+      produtor: 'Funcionário do produtor para ajudar na visualização do estoque'
     }
     
-    return descriptions[userRole]?.[role] || ''
+    return descriptions[userRole] || ''
   }
 
   return {
-    availableRoles,
-    getDefaultPermissions,
-    getAvailablePermissions,
-    getRoleLabel,
-    getRoleDescription
+    getSubaccountPermissions,
+    getSubaccountRole,
+    getSubaccountRoleLabel,
+    getSubaccountDescription
   }
 }

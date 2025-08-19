@@ -40,9 +40,7 @@ export default function Subcontas() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<UserRole>('produtor');
   const [selectedFranquia, setSelectedFranquia] = useState<string>("");
-  const [isEmployee, setIsEmployee] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
 
   const [permOpen, setPermOpen] = useState(false);
@@ -75,16 +73,17 @@ export default function Subcontas() {
 
   // Initialize the permissions hook
   const {
-    availableRoles,
-    getDefaultPermissions,
-    getAvailablePermissions,
-    getRoleLabel,
-    getRoleDescription
+    getSubaccountPermissions,
+    getSubaccountRole,
+    getSubaccountRoleLabel,
+    getSubaccountDescription
   } = useSubaccountPermissions(userRole);
 
-  // Calculate default permissions when role changes
-  const defaultPermissions = getDefaultPermissions(inviteRole, isEmployee);
-  const availablePermissions = getAvailablePermissions(inviteRole);
+  // Get permissions and role for subaccount (always employee of same role)
+  const subaccountRole = getSubaccountRole();
+  const subaccountPermissions = getSubaccountPermissions();
+  const subaccountRoleLabel = getSubaccountRoleLabel();
+  const subaccountDescription = getSubaccountDescription();
 
   // Get user's subaccounts (children in hierarchy)
   const { data: subaccounts = [], refetch: refetchSubaccounts, isLoading: loadingSubaccounts } = useQuery({
@@ -132,10 +131,10 @@ export default function Subcontas() {
     },
   });
 
-  // Get list of franquias for admin selection
+  // Get list of franquias for admin creating produtor subaccount
   const { data: franquias = [] } = useQuery({
     queryKey: ["franquias-list"],
-    enabled: userRole === 'admin' && inviteRole === 'produtor',
+    enabled: userRole === 'admin' && subaccountRole === 'produtor',
     queryFn: async () => {
       const { data, error } = await supabase
         .from("franquias")
@@ -159,16 +158,16 @@ export default function Subcontas() {
   });
 
   const sendInvite = async () => {
-    if (!inviteEmail || !user) {
-      toast({ title: "Dados incompletos", description: "Informe email e função.", variant: "destructive" });
+    if (!inviteEmail || !user || !subaccountRole) {
+      toast({ title: "Dados incompletos", description: "Informe o email.", variant: "destructive" });
       return;
     }
 
-    // Validate franquia selection for admin creating produtor
-    if (userRole === 'admin' && inviteRole === 'produtor' && !selectedFranquia) {
+    // Validate franquia selection for admin creating produtor subaccount
+    if (userRole === 'admin' && subaccountRole === 'produtor' && !selectedFranquia) {
       toast({ 
         title: "Franquia obrigatória", 
-        description: "Selecione uma franquia para associar ao produtor.", 
+        description: "Selecione uma franquia para associar ao funcionário.", 
         variant: "destructive" 
       });
       return;
@@ -181,8 +180,8 @@ export default function Subcontas() {
       let parentUserId = user.id;
       let franquiaId = null;
       
-      if (userRole === 'admin' && inviteRole === 'produtor') {
-        // Admin creating produtor: use selected franquia's master
+      if (userRole === 'admin' && subaccountRole === 'produtor') {
+        // Admin creating produtor subaccount: use selected franquia's master
         const selectedFranquiaData = franquias.find(f => f.id === selectedFranquia);
         if (selectedFranquiaData) {
           parentUserId = selectedFranquiaData.master_franqueado_id;
@@ -206,7 +205,7 @@ export default function Subcontas() {
         }
         
         // Get the franquia for this user/master
-        if (inviteRole === 'produtor') {
+        if (subaccountRole === 'produtor') {
           const { data: franquiaData } = await supabase
             .from("franquias")
             .select("id")
@@ -219,19 +218,16 @@ export default function Subcontas() {
         }
       }
 
-      // Get selected permissions from default template
-      const selectedPermissions = defaultPermissions;
-
       const inviteData: any = {
         email: inviteEmail,
         inviter_user_id: user.id,
         parent_user_id: parentUserId,
-        role: inviteRole,
-        permissions: selectedPermissions,
+        role: subaccountRole,
+        permissions: subaccountPermissions,
       };
 
       // Add franquia_id for produtor invites
-      if (inviteRole === 'produtor' && franquiaId) {
+      if (subaccountRole === 'produtor' && franquiaId) {
         inviteData.franquia_id = franquiaId;
       }
 
@@ -252,14 +248,12 @@ export default function Subcontas() {
 
       toast({ 
         title: "Convite enviado", 
-        description: `Subconta ${inviteRole} será criada automaticamente quando o usuário fizer login.` 
+        description: `${subaccountRoleLabel} será criado automaticamente quando o usuário fizer login.` 
       });
       
       setInviteOpen(false);
       setInviteEmail("");
-      setInviteRole('produtor');
       setSelectedFranquia("");
-      setIsEmployee(false);
     } catch (err: any) {
       toast({ title: "Erro ao enviar convite", description: err.message, variant: "destructive" });
     } finally {
@@ -369,21 +363,21 @@ export default function Subcontas() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Subcontas</h1>
             <p className="text-muted-foreground">
-              Crie e gerencie subcontas {userRole === 'admin' ? 'de todos os tipos' : `do tipo ${userRole}`} com permissões limitadas.
+              Crie e gerencie funcionários {userRole ? `do tipo ${subaccountRoleLabel?.toLowerCase()}` : ''} com permissões limitadas.
             </p>
           </div>
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
-                Criar subconta
+                Criar {subaccountRoleLabel}
               </Button>
             </DialogTrigger>
             <DialogContent className="w-[95vw] sm:w-full">
               <DialogHeader>
-                <DialogTitle>Criar nova subconta</DialogTitle>
+                <DialogTitle>Criar {subaccountRoleLabel}</DialogTitle>
                 <DialogDescription>
-                  A subconta será automaticamente vinculada a você com permissões limitadas.
+                  {subaccountDescription}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -397,25 +391,7 @@ export default function Subcontas() {
                     onChange={(e) => setInviteEmail(e.target.value)}
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="invite-role">Função</Label>
-                  <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as UserRole)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {getRoleLabel(role)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground">
-                    {getRoleDescription(inviteRole, userRole)}
-                  </p>
-                </div>
-                {userRole === 'admin' && inviteRole === 'produtor' && (
+                {userRole === 'admin' && subaccountRole === 'produtor' && (
                   <div className="grid gap-2">
                     <Label htmlFor="franquia-select">Franquia *</Label>
                     <Select value={selectedFranquia} onValueChange={setSelectedFranquia}>
@@ -432,24 +408,10 @@ export default function Subcontas() {
                     </Select>
                   </div>
                 )}
-                {userRole !== 'produtor' && (
-                  <div className="grid gap-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={isEmployee}
-                        onCheckedChange={setIsEmployee}
-                      />
-                      <Label>É funcionário/subconta</Label>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Funcionários têm permissões mais limitadas que contas principais
-                    </p>
-                  </div>
-                )}
                 <div className="grid gap-2">
-                  <Label>Permissões ({defaultPermissions.length} selecionadas)</Label>
+                  <Label>Permissões ({subaccountPermissions.length} incluídas)</Label>
                   <div className="grid gap-2 p-3 border rounded-lg bg-muted/50">
-                    {defaultPermissions.map((perm) => {
+                    {subaccountPermissions.map((perm) => {
                       const permLabel = PERMISSIONS.find(p => p.code === perm)?.label || perm;
                       return (
                         <div key={perm} className="flex items-center gap-2 text-sm">
@@ -458,7 +420,7 @@ export default function Subcontas() {
                         </div>
                       );
                     })}
-                    {defaultPermissions.length === 0 && (
+                    {subaccountPermissions.length === 0 && (
                       <p className="text-sm text-muted-foreground">Nenhuma permissão padrão</p>
                     )}
                   </div>
@@ -468,14 +430,12 @@ export default function Subcontas() {
                 <Button variant="secondary" onClick={() => {
                   setInviteOpen(false);
                   setInviteEmail("");
-                  setInviteRole('produtor');
                   setSelectedFranquia("");
-                  setIsEmployee(false);
                 }}>
                   Cancelar
                 </Button>
                 <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                  {sendingInvite ? "Criando..." : "Criar subconta"}
+                  {sendingInvite ? "Criando..." : `Criar ${subaccountRoleLabel}`}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -490,9 +450,9 @@ export default function Subcontas() {
           <EmptyState
             icon={<Users className="w-8 h-8 text-muted-foreground" />}
             title="Nenhuma subconta criada"
-            description="Crie subcontas para delegar acesso limitado ao sistema"
+            description="Crie funcionários para delegar acesso limitado ao sistema"
             action={{
-              label: "Criar primeira subconta",
+              label: `Criar primeiro ${subaccountRoleLabel?.toLowerCase()}`,
               onClick: () => setInviteOpen(true)
             }}
           />
