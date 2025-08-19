@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      allocation_wave_items: {
+        Row: {
+          alocado_por: string | null
+          barcode_posicao: string | null
+          barcode_produto: string | null
+          created_at: string
+          data_alocacao: string | null
+          entrada_item_id: string
+          id: string
+          lote: string | null
+          posicao_id: string | null
+          produto_id: string
+          quantidade: number
+          quantidade_alocada: number | null
+          status: string
+          updated_at: string
+          wave_id: string
+        }
+        Insert: {
+          alocado_por?: string | null
+          barcode_posicao?: string | null
+          barcode_produto?: string | null
+          created_at?: string
+          data_alocacao?: string | null
+          entrada_item_id: string
+          id?: string
+          lote?: string | null
+          posicao_id?: string | null
+          produto_id: string
+          quantidade: number
+          quantidade_alocada?: number | null
+          status?: string
+          updated_at?: string
+          wave_id: string
+        }
+        Update: {
+          alocado_por?: string | null
+          barcode_posicao?: string | null
+          barcode_produto?: string | null
+          created_at?: string
+          data_alocacao?: string | null
+          entrada_item_id?: string
+          id?: string
+          lote?: string | null
+          posicao_id?: string | null
+          produto_id?: string
+          quantidade?: number
+          quantidade_alocada?: number | null
+          status?: string
+          updated_at?: string
+          wave_id?: string
+        }
+        Relationships: []
+      }
+      allocation_waves: {
+        Row: {
+          created_at: string
+          created_by: string
+          data_conclusao: string | null
+          data_criacao: string
+          data_inicio: string | null
+          deposito_id: string
+          funcionario_id: string | null
+          id: string
+          numero_onda: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data_conclusao?: string | null
+          data_criacao?: string
+          data_inicio?: string | null
+          deposito_id: string
+          funcionario_id?: string | null
+          id?: string
+          numero_onda: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data_conclusao?: string | null
+          data_criacao?: string
+          data_inicio?: string | null
+          deposito_id?: string
+          funcionario_id?: string | null
+          id?: string
+          numero_onda?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chamados_suporte: {
         Row: {
           categoria: string | null
@@ -1077,6 +1176,45 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_positions: {
+        Row: {
+          ativo: boolean | null
+          capacidade_maxima: number | null
+          codigo: string
+          created_at: string
+          deposito_id: string
+          descricao: string | null
+          id: string
+          ocupado: boolean | null
+          tipo_posicao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          capacidade_maxima?: number | null
+          codigo: string
+          created_at?: string
+          deposito_id: string
+          descricao?: string | null
+          id?: string
+          ocupado?: boolean | null
+          tipo_posicao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          capacidade_maxima?: number | null
+          codigo?: string
+          created_at?: string
+          deposito_id?: string
+          descricao?: string | null
+          id?: string
+          ocupado?: boolean | null
+          tipo_posicao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_hierarchy: {
         Row: {
           child_user_id: string
@@ -1139,6 +1277,15 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      complete_allocation_and_create_stock: {
+        Args: {
+          p_barcode_posicao: string
+          p_barcode_produto: string
+          p_posicao_id: string
+          p_wave_item_id: string
         }
         Returns: boolean
       }
