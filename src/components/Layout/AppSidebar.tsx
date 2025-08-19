@@ -213,7 +213,6 @@ export function AppSidebar() {
             {!collapsed && (
               <div>
                 <h2 className="font-bold text-foreground">AgroHub</h2>
-                <p className="text-xs text-muted-foreground">Gestão Rural Inteligente</p>
               </div>
             )}
           </div>
