@@ -19,7 +19,9 @@ import {
   HelpCircle, 
   User, 
   Settings,
-  Shield
+  Shield,
+  Waves,
+  Grid3X3
 } from "lucide-react"
 
 export interface MenuItem {
@@ -49,7 +51,9 @@ const iconMap = {
   suporte: HelpCircle,
   perfil: User,
   configuracoes: Settings,
-  "controle-acesso": Shield
+  "controle-acesso": Shield,
+  "ondas-alocacao": Waves,
+  "gerenciar-posicoes": Grid3X3
 }
 
 const menuLabels = {
@@ -71,7 +75,9 @@ const menuLabels = {
   suporte: "Suporte",
   perfil: "Perfil",
   configuracoes: "Configurações",
-  "controle-acesso": "Controle de Acesso"
+  "controle-acesso": "Controle de Acesso",
+  "ondas-alocacao": "Alocações",
+  "gerenciar-posicoes": "Posições"
 }
 
 export const useDynamicMenuItems = () => {
@@ -113,7 +119,7 @@ export const useDynamicMenuItems = () => {
     }
 
     // Operações
-    const operationItems = ['recebimento', 'expedicao', 'produtores']
+    const operationItems = ['recebimento', 'expedicao', 'ondas-alocacao', 'gerenciar-posicoes', 'produtores']
       .filter(page => visiblePages.includes(page))
       .map(page => ({
         path: `/${page}`,
