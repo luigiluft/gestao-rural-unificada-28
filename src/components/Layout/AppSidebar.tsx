@@ -1,20 +1,7 @@
 import { useEffect, useState } from "react"
 import {
-  BarChart3,
-  Package,
-  PackageOpen,
   LogOut,
-  MapPin,
-  FileText,
   HelpCircle,
-  User,
-  Users,
-  Boxes,
-  Tractor,
-  UserCheck,
-  Building2,
-  TreePine,
-  CheckCircle,
   Settings,
   ChevronDown
 } from "lucide-react"
@@ -30,7 +17,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
@@ -45,36 +31,21 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems"
 import { useNotifications } from "@/hooks/useNotifications"
-
-const menuItems = [
-  { title: "Dashboard", url: "/", icon: BarChart3 },
-  { title: "Catálogo", url: "/catalogo", icon: Boxes },
-  { title: "Entradas", url: "/entradas", icon: Package },
-  { title: "Estoque", url: "/estoque", icon: PackageOpen },
-  { title: "Saídas", url: "/saidas", icon: LogOut },
-  { title: "Rastreio", url: "/rastreio", icon: MapPin },
-  { title: "Relatórios", url: "/relatorios", icon: FileText },
-  { title: "Perfil", url: "/perfil", icon: User },
-  { title: "Subcontas", url: "/subcontas", icon: UserCheck },
-  { title: "Suporte", url: "/suporte", icon: HelpCircle },
-]
 
 export function AppSidebar() {
   const { state } = useSidebar()
   const location = useLocation()
-  const currentPath = location.pathname
   const collapsed = state === "collapsed"
   const navigate = useNavigate()
 
   const { user, logout } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isFranqueado, setIsFranqueado] = useState(false)
-  const [isProdutor, setIsProdutor] = useState(false)
   const [customLogo, setCustomLogo] = useState<string | null>(null)
   
   const { data: notifications } = useNotifications()
+  const { menuItems, isLoading: menuLoading } = useDynamicMenuItems()
 
   const initials = (displayName || user?.email || "U")
     .split(" ")
@@ -89,13 +60,6 @@ export function AppSidebar() {
     const savedLogo = localStorage.getItem("agro-logo-url")
     setCustomLogo(savedLogo)
     
-    // Listener para mudanças no localStorage
-    const handleStorageChange = () => {
-      const updatedLogo = localStorage.getItem("agro-logo-url")
-      setCustomLogo(updatedLogo)
-    }
-    
-    // Listener para mudanças nas configurações da mesma aba
     const handleSettingsChange = () => {
       const updatedLogo = localStorage.getItem("agro-logo-url")
       setCustomLogo(updatedLogo)
@@ -104,10 +68,10 @@ export function AppSidebar() {
     window.addEventListener("agro-settings-changed", handleSettingsChange)
     
     return () => {
-      window.removeEventListener("storage", handleStorageChange)
       window.removeEventListener("agro-settings-changed", handleSettingsChange)
     }
   }, [])
+  
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -124,43 +88,6 @@ export function AppSidebar() {
     }
     load()
   }, [user])
-  useEffect(() => {
-    const checkRoles = async () => {
-      if (!user) {
-        setIsAdmin(false)
-        setIsFranqueado(false)
-        setIsProdutor(false)
-        return
-      }
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single()
-        
-        if (profile?.role) {
-          setIsAdmin(profile.role === 'admin')
-          setIsFranqueado(profile.role === 'franqueado')
-          setIsProdutor(profile.role === 'produtor')
-        } else {
-          setIsAdmin(false)
-          setIsFranqueado(false)
-          setIsProdutor(false)
-        }
-      } catch {
-        setIsAdmin(false)
-        setIsFranqueado(false)
-        setIsProdutor(false)
-      }
-    }
-    checkRoles()
-  }, [user])
-
-  const isActive = (path: string) => {
-    if (path === "/") return currentPath === "/"
-    return currentPath.startsWith(path)
-  }
 
   const getNavClasses = (active: boolean) => {
     return active 
@@ -186,36 +113,6 @@ export function AppSidebar() {
         return 0
     }
   }
-  const items = (() => {
-    const base = [...menuItems]
-    if (isAdmin) {
-      // Add "Recebimento" right after "Entradas" (index 3)
-      base.splice(3, 0, { title: "Recebimento", url: "/recebimento", icon: CheckCircle })
-      // Add "Expedição" after "Saídas" (index 5, accounting for the inserted item)
-      base.splice(6, 0, { title: "Expedição", url: "/expedicao", icon: CheckCircle })
-      // Add other admin items later in the menu
-      base.splice(9, 0,
-        { title: "Usuários", url: "/usuarios", icon: User },
-        { title: "Franquias", url: "/franquias", icon: Building2 },
-        { title: "Franqueados", url: "/franqueados", icon: Users },
-        { title: "Produtores", url: "/produtores", icon: Tractor },
-      )
-    } else if (isFranqueado) {
-      // Add "Recebimento" right after "Entradas" (index 3)
-      base.splice(3, 0, { title: "Recebimento", url: "/recebimento", icon: CheckCircle })
-      // Add "Expedição" after "Saídas" (index 5, accounting for the inserted item)
-      base.splice(6, 0, { title: "Expedição", url: "/expedicao", icon: CheckCircle })
-      // Add other franqueado items later in the menu
-      base.splice(9, 0,
-        { title: "Produtores", url: "/produtores", icon: Tractor },
-      )
-    } else if (isProdutor) {
-      base.splice(7, 0,
-        { title: "Fazendas", url: "/fazendas", icon: TreePine },
-      )
-    }
-    return base
-  })()
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
@@ -244,28 +141,28 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton asChild>
                      <NavLink 
-                       to={item.url} 
-                       end={item.url === "/"}
+                       to={item.path} 
+                       end={item.path === "/"}
                        className={({ isActive }) => 
                          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
                        }
                      >
                        <div className="relative">
                          <item.icon className="w-5 h-5 flex-shrink-0" />
-                         {notifications && getNotificationCount(item.title, notifications) > 0 && (
+                         {notifications && getNotificationCount(item.label, notifications) > 0 && (
                            <Badge 
                              variant="destructive" 
                              className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
                            >
-                             {getNotificationCount(item.title, notifications)}
+                             {getNotificationCount(item.label, notifications)}
                            </Badge>
                          )}
                        </div>
-                       {!collapsed && <span className="font-medium">{item.title}</span>}
+                       {!collapsed && <span className="font-medium">{item.label}</span>}
                      </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

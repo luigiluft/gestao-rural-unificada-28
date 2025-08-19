@@ -632,6 +632,36 @@ export type Database = {
           },
         ]
       }
+      page_permissions: {
+        Row: {
+          can_access: boolean
+          created_at: string
+          id: string
+          page_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          visible_in_menu: boolean
+        }
+        Insert: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          page_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          visible_in_menu?: boolean
+        }
+        Update: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          page_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          visible_in_menu?: boolean
+        }
+        Relationships: []
+      }
       pending_invites: {
         Row: {
           created_at: string

@@ -24,9 +24,11 @@ import Subcontas from "./pages/Subcontas";
 import Franquias from "./pages/Franquias";
 import Fazendas from "./pages/Fazendas";
 import Configuracoes from "./pages/Configuracoes";
+import ControleAcesso from "./pages/ControleAcesso";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
+import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -41,24 +43,25 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-              <Route index element={<Dashboard />} />
-              <Route path="catalogo" element={<Catalogo />} />
-              <Route path="entradas" element={<Entradas />} />
-              <Route path="estoque" element={<Estoque />} />
-              <Route path="saidas" element={<Saidas />} />
-              <Route path="rastreio" element={<Rastreio />} />
-              <Route path="relatorios" element={<Relatorios />} />
-              <Route path="usuarios" element={<RequireAdmin><Usuarios /></RequireAdmin>} />
-              <Route path="franquias" element={<RequireAdmin><Franquias /></RequireAdmin>} />
-              <Route path="franqueados" element={<RequireAdmin><Franqueados /></RequireAdmin>} />
-              <Route path="recebimento" element={<RequireAdminOrFranqueado><AprovacaoEntradas /></RequireAdminOrFranqueado>} />
-              <Route path="expedicao" element={<RequireAdminOrFranqueado><AprovacaoSaidas /></RequireAdminOrFranqueado>} />
-              <Route path="produtores" element={<RequireAdminOrFranqueado><Produtores /></RequireAdminOrFranqueado>} />
-              <Route path="fazendas" element={<Fazendas />} />
-              <Route path="subcontas" element={<Subcontas />} />
-              <Route path="suporte" element={<Suporte />} />
-              <Route path="perfil" element={<Perfil />} />
-              <Route path="configuracoes" element={<RequireAdmin><Configuracoes /></RequireAdmin>} />
+              <Route index element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
+              <Route path="catalogo" element={<RequirePageAccess pageKey="catalogo"><Catalogo /></RequirePageAccess>} />
+              <Route path="entradas" element={<RequirePageAccess pageKey="entradas"><Entradas /></RequirePageAccess>} />
+              <Route path="estoque" element={<RequirePageAccess pageKey="estoque"><Estoque /></RequirePageAccess>} />
+              <Route path="saidas" element={<RequirePageAccess pageKey="saidas"><Saidas /></RequirePageAccess>} />
+              <Route path="rastreio" element={<RequirePageAccess pageKey="rastreio"><Rastreio /></RequirePageAccess>} />
+              <Route path="relatorios" element={<RequirePageAccess pageKey="relatorios"><Relatorios /></RequirePageAccess>} />
+              <Route path="usuarios" element={<RequirePageAccess pageKey="usuarios"><Usuarios /></RequirePageAccess>} />
+              <Route path="franquias" element={<RequirePageAccess pageKey="franquias"><Franquias /></RequirePageAccess>} />
+              <Route path="franqueados" element={<RequirePageAccess pageKey="franqueados"><Franqueados /></RequirePageAccess>} />
+              <Route path="recebimento" element={<RequirePageAccess pageKey="recebimento"><AprovacaoEntradas /></RequirePageAccess>} />
+              <Route path="expedicao" element={<RequirePageAccess pageKey="expedicao"><AprovacaoSaidas /></RequirePageAccess>} />
+              <Route path="produtores" element={<RequirePageAccess pageKey="produtores"><Produtores /></RequirePageAccess>} />
+              <Route path="fazendas" element={<RequirePageAccess pageKey="fazendas"><Fazendas /></RequirePageAccess>} />
+              <Route path="subcontas" element={<RequirePageAccess pageKey="subcontas"><Subcontas /></RequirePageAccess>} />
+              <Route path="suporte" element={<RequirePageAccess pageKey="suporte"><Suporte /></RequirePageAccess>} />
+              <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />
+              <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
+              <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
