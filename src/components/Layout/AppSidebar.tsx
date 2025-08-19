@@ -14,9 +14,11 @@ import {
   UserCheck,
   Building2,
   TreePine,
-  CheckCircle
+  CheckCircle,
+  Settings,
+  ChevronDown
 } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import logoImg from "@/assets/agrohub-logo.svg"
 
 import {
@@ -32,6 +34,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useNotifications } from "@/hooks/useNotifications"
@@ -54,8 +65,9 @@ export function AppSidebar() {
   const location = useLocation()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
+  const navigate = useNavigate()
 
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
   const [isAdmin, setIsAdmin] = useState(false)
   const [isFranqueado, setIsFranqueado] = useState(false)
@@ -63,6 +75,14 @@ export function AppSidebar() {
   const [customLogo, setCustomLogo] = useState<string | null>(null)
   
   const { data: notifications } = useNotifications()
+
+  const initials = (displayName || user?.email || "U")
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
 
   // Carregando logo personalizado do localStorage
   useEffect(() => {
@@ -254,19 +274,69 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* User info at bottom */}
-        {!collapsed && (
-          <div className="mt-auto p-4 border-t border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{displayName || "Usuário"}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* User menu at bottom */}
+        <div className="mt-auto p-4 border-t border-border">
+          {!collapsed ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full flex items-center gap-3 h-auto p-2 justify-start">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-medium text-white">{initials}</span>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-foreground truncate">{displayName || "Usuário"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/suporte")}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Suporte
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full flex items-center justify-center p-2">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-xs font-medium text-white">{initials}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/suporte")}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Suporte
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </SidebarContent>
     </Sidebar>
   )

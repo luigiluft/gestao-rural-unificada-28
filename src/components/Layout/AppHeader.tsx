@@ -89,41 +89,6 @@ export function AppHeader() {
         </div>
       </div>
 
-      {/* Right side - Profile */}
-      <div className="flex items-center gap-3">
-
-        {/* Profile dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 h-9 px-3">
-              <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-xs font-medium text-white">{initials}</span>
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium">{displayName || "Usuário"}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
-              </div>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/suporte")}>
-              <HelpCircle className="mr-2 h-4 w-4" />
-              Suporte
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
-              Sair
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
     </header>
   )
 }
