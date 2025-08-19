@@ -1,22 +1,26 @@
-<svg viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
-  <!-- Container/bottle -->
-  <g stroke="#2D3748" stroke-width="3" fill="none">
-    <!-- Main container body -->
-    <rect x="20" y="35" width="45" height="60" rx="8" ry="8"/>
-    <!-- Container cap -->
-    <rect x="25" y="25" width="15" height="12" rx="2"/>
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Container/Jerry Can -->
+  <g stroke="#2F4F2F" stroke-width="2" fill="none">
+    <!-- Main body -->
+    <rect x="12" y="20" width="40" height="36" rx="4" ry="4" fill="#F8F9FA"/>
+    <!-- Top section -->
+    <rect x="20" y="12" width="24" height="12" rx="2" ry="2" fill="#F8F9FA"/>
     <!-- Handle -->
-    <path d="M65 45 L80 45 L80 75 L65 75" />
-    <!-- Spout -->
-    <rect x="40" y="30" width="8" height="8" rx="2"/>
+    <rect x="44" y="28" width="8" height="16" rx="4" ry="4" fill="#F8F9FA"/>
+    <!-- Cap -->
+    <rect x="28" y="8" width="8" height="8" rx="1" ry="1" fill="#F8F9FA"/>
   </g>
   
   <!-- Lightning bolt inside container -->
-  <path d="M35 50 L45 50 L40 65 L50 65 L45 80 L35 80 L40 65 L30 65 Z" fill="#4ADE80" stroke="none"/>
+  <path d="M28 32 L36 32 L32 40 L38 40 L34 48 L26 48 L30 40 L24 40 Z" 
+        fill="#4ADE80" 
+        stroke="none"/>
   
-  <!-- AGRO text -->
-  <text x="110" y="70" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#4ADE80">AGRO</text>
-  
-  <!-- HUB text -->
-  <text x="110" y="110" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#2D3748">HUB</text>
+  <!-- Container outline -->
+  <g stroke="#2F4F2F" stroke-width="2" fill="none">
+    <rect x="12" y="20" width="40" height="36" rx="4" ry="4"/>
+    <rect x="20" y="12" width="24" height="12" rx="2" ry="2"/>
+    <rect x="44" y="28" width="8" height="16" rx="4" ry="4"/>
+    <rect x="28" y="8" width="8" height="8" rx="1" ry="1"/>
+  </g>
 </svg>
