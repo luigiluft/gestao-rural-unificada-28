@@ -675,6 +675,186 @@ export type Database = {
         }
         Relationships: []
       }
+      inventario_divergencias: {
+        Row: {
+          created_at: string
+          diferenca: number
+          id: string
+          inventario_id: string
+          justificativa: string | null
+          lote: string | null
+          posicao_id: string
+          produto_id: string | null
+          quantidade_encontrada: number
+          quantidade_sistema: number
+          status: string
+          tipo_divergencia: string
+          valor_impacto: number | null
+        }
+        Insert: {
+          created_at?: string
+          diferenca: number
+          id?: string
+          inventario_id: string
+          justificativa?: string | null
+          lote?: string | null
+          posicao_id: string
+          produto_id?: string | null
+          quantidade_encontrada: number
+          quantidade_sistema: number
+          status?: string
+          tipo_divergencia: string
+          valor_impacto?: number | null
+        }
+        Update: {
+          created_at?: string
+          diferenca?: number
+          id?: string
+          inventario_id?: string
+          justificativa?: string | null
+          lote?: string | null
+          posicao_id?: string
+          produto_id?: string | null
+          quantidade_encontrada?: number
+          quantidade_sistema?: number
+          status?: string
+          tipo_divergencia?: string
+          valor_impacto?: number | null
+        }
+        Relationships: []
+      }
+      inventario_itens: {
+        Row: {
+          codigo_barras: string | null
+          created_at: string
+          data_escaneamento: string | null
+          diferenca: number | null
+          id: string
+          inventario_id: string
+          lote: string | null
+          observacoes: string | null
+          posicao_id: string
+          produto_id: string | null
+          quantidade_encontrada: number
+          quantidade_sistema: number
+          scaneado_por: string | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          codigo_barras?: string | null
+          created_at?: string
+          data_escaneamento?: string | null
+          diferenca?: number | null
+          id?: string
+          inventario_id: string
+          lote?: string | null
+          observacoes?: string | null
+          posicao_id: string
+          produto_id?: string | null
+          quantidade_encontrada?: number
+          quantidade_sistema?: number
+          scaneado_por?: string | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          codigo_barras?: string | null
+          created_at?: string
+          data_escaneamento?: string | null
+          diferenca?: number | null
+          id?: string
+          inventario_id?: string
+          lote?: string | null
+          observacoes?: string | null
+          posicao_id?: string
+          produto_id?: string | null
+          quantidade_encontrada?: number
+          quantidade_sistema?: number
+          scaneado_por?: string | null
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
+      inventario_posicoes: {
+        Row: {
+          conferido_por: string | null
+          created_at: string
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          inventario_id: string
+          posicao_id: string
+          status: string
+        }
+        Insert: {
+          conferido_por?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          inventario_id: string
+          posicao_id: string
+          status?: string
+        }
+        Update: {
+          conferido_por?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          inventario_id?: string
+          posicao_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      inventarios: {
+        Row: {
+          created_at: string
+          created_by: string
+          data_conclusao: string | null
+          data_inicio: string
+          deposito_id: string
+          id: string
+          numero_inventario: string
+          observacoes: string | null
+          posicoes_conferidas: number | null
+          status: Database["public"]["Enums"]["inventory_status"]
+          total_posicoes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data_conclusao?: string | null
+          data_inicio?: string
+          deposito_id: string
+          id?: string
+          numero_inventario: string
+          observacoes?: string | null
+          posicoes_conferidas?: number | null
+          status?: Database["public"]["Enums"]["inventory_status"]
+          total_posicoes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data_conclusao?: string | null
+          data_inicio?: string
+          deposito_id?: string
+          id?: string
+          numero_inventario?: string
+          observacoes?: string | null
+          posicoes_conferidas?: number | null
+          status?: Database["public"]["Enums"]["inventory_status"]
+          total_posicoes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           created_at: string
@@ -1293,6 +1473,10 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: boolean
       }
+      generate_inventory_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1342,6 +1526,7 @@ export type Database = {
         | "conferencia_completa"
         | "confirmado"
         | "rejeitado"
+      inventory_status: "iniciado" | "em_andamento" | "concluido" | "cancelado"
       permission_code:
         | "estoque.view"
         | "estoque.manage"
@@ -1484,6 +1669,7 @@ export const Constants = {
         "confirmado",
         "rejeitado",
       ],
+      inventory_status: ["iniciado", "em_andamento", "concluido", "cancelado"],
       permission_code: [
         "estoque.view",
         "estoque.manage",
