@@ -98,83 +98,39 @@ export const useDynamicMenuItems = () => {
 
     const items: MenuItem[] = []
 
-    // Grupo Principal
-    const mainItems = ['dashboard', 'catalogo', 'entradas', 'estoque', 'saidas', 'rastreio', 'relatorios']
-      .filter(page => visiblePages.includes(page))
-      .map(page => ({
-        path: page === 'dashboard' ? '/' : `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      }))
+    // Ordem específica definida pelo usuário
+    const orderedPages = [
+      'dashboard',
+      'catalogo', 
+      'entradas',
+      'recebimento',
+      'ondas-alocacao',
+      'estoque',
+      'inventario',
+      'separacao',
+      'saidas',
+      'expedicao',
+      'rastreio',
+      'relatorios',
+      'usuarios',
+      'franquias',
+      'franqueados',
+      'produtores',
+      'perfil',
+      'subcontas',
+      'suporte'
+    ]
 
-    if (mainItems.length > 0) {
-      items.push(...mainItems)
-    }
-
-    // Administração
-    const adminItems = ['usuarios', 'franquias', 'franqueados']
-      .filter(page => visiblePages.includes(page))
-      .map(page => ({
-        path: `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      }))
-
-    if (adminItems.length > 0) {
-      items.push(...adminItems)
-    }
-
-    // Operações
-    const operationItems = ['recebimento', 'separacao', 'expedicao', 'inventario', 'ondas-alocacao', 'gerenciar-posicoes', 'produtores']
-      .filter(page => visiblePages.includes(page))
-      .map(page => ({
-        path: `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      }))
-
-    if (operationItems.length > 0) {
-      items.push(...operationItems)
-    }
-
-    // Fazendas e Contas
-    const farmAccountItems = ['fazendas', 'subcontas']
-      .filter(page => visiblePages.includes(page))
-      .map(page => ({
-        path: `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      }))
-
-    if (farmAccountItems.length > 0) {
-      items.push(...farmAccountItems)
-    }
-
-    // Sistema e Configurações
-    const systemItems = ['controle-acesso', 'configuracoes']
-      .filter(page => visiblePages.includes(page))
-      .map(page => ({
-        path: `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      }))
-
-    if (systemItems.length > 0) {
-      items.push(...systemItems)
-    }
-
-    // Suporte e Perfil sempre visíveis se permitidos
-    const supportProfileItems = ['suporte', 'perfil']
-      .filter(page => visiblePages.includes(page))
-      .map(page => ({
-        path: `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      }))
-
-    if (supportProfileItems.length > 0) {
-      items.push(...supportProfileItems)
-    }
+    // Adicionar itens na ordem especificada
+    orderedPages.forEach(page => {
+      if (visiblePages.includes(page)) {
+        items.push({
+          path: page === 'dashboard' ? '/' : `/${page}`,
+          label: menuLabels[page as keyof typeof menuLabels],
+          icon: iconMap[page as keyof typeof iconMap]
+        })
+      }
+    })
 
     return items
   }, [permissions, isLoading])
