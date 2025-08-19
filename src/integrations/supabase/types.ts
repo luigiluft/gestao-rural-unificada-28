@@ -66,7 +66,36 @@ export type Database = {
           updated_at?: string
           wave_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_allocation_wave_items_entrada_item_id"
+            columns: ["entrada_item_id"]
+            isOneToOne: false
+            referencedRelation: "entrada_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_allocation_wave_items_posicao_id"
+            columns: ["posicao_id"]
+            isOneToOne: false
+            referencedRelation: "storage_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_allocation_wave_items_produto_id"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_allocation_wave_items_wave_id"
+            columns: ["wave_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_waves"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       allocation_waves: {
         Row: {
@@ -111,7 +140,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_allocation_waves_deposito_id"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chamados_suporte: {
         Row: {

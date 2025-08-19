@@ -26,9 +26,15 @@ export const useAllocationWaves = () => {
         throw error
       }
 
+      if (!waves || waves.length === 0) {
+        console.log('⚠️ Nenhuma onda encontrada no resultado do Supabase')
+        return []
+      }
+
       // Get franquia names for each wave
       const wavesWithFranquias = await Promise.all(
         (waves || []).map(async (wave) => {
+          console.log('🏢 Processando onda:', wave.numero_onda, 'deposito_id:', wave.deposito_id)
           if (wave.deposito_id) {
             const { data: franquia } = await supabase
               .from("franquias")
@@ -36,6 +42,7 @@ export const useAllocationWaves = () => {
               .eq("id", wave.deposito_id)
               .single()
             
+            console.log('🏢 Franquia encontrada:', franquia)
             return {
               ...wave,
               franquias: franquia
@@ -45,6 +52,7 @@ export const useAllocationWaves = () => {
         })
       )
 
+      console.log('✅ Ondas finais com franquias:', wavesWithFranquias)
       return wavesWithFranquias || []
     },
   })
