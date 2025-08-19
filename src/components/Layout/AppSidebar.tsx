@@ -60,8 +60,34 @@ export function AppSidebar() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isFranqueado, setIsFranqueado] = useState(false)
   const [isProdutor, setIsProdutor] = useState(false)
+  const [customLogo, setCustomLogo] = useState<string | null>(null)
   
   const { data: notifications } = useNotifications()
+
+  // Carregando logo personalizado do localStorage
+  useEffect(() => {
+    const savedLogo = localStorage.getItem("agro-logo-url")
+    setCustomLogo(savedLogo)
+    
+    // Listener para mudanças no localStorage
+    const handleStorageChange = () => {
+      const updatedLogo = localStorage.getItem("agro-logo-url")
+      setCustomLogo(updatedLogo)
+    }
+    
+    // Listener para mudanças nas configurações da mesma aba
+    const handleSettingsChange = () => {
+      const updatedLogo = localStorage.getItem("agro-logo-url")
+      setCustomLogo(updatedLogo)
+    }
+    
+    window.addEventListener("agro-settings-changed", handleSettingsChange)
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener("agro-settings-changed", handleSettingsChange)
+    }
+  }, [])
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -178,7 +204,11 @@ export function AppSidebar() {
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 flex items-center justify-center">
-              <img src={logoImg} alt="AgroHub" className="w-8 h-8" />
+              <img 
+                src={customLogo || logoImg} 
+                alt="AgroHub" 
+                className="w-8 h-8 object-contain" 
+              />
             </div>
             {!collapsed && (
               <div>

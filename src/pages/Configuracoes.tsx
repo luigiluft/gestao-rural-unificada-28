@@ -102,6 +102,9 @@ export default function Configuracoes() {
       // Aplicar mudanças imediatamente
       updateCSSVariable("--primary", primaryColor)
       
+      // Disparar evento personalizado para atualizar outros componentes
+      window.dispatchEvent(new Event("agro-settings-changed"))
+      
       toast.success("Configurações salvas com sucesso!")
     } catch (error) {
       toast.error("Erro ao salvar configurações")
