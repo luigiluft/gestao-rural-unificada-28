@@ -398,14 +398,16 @@ export default function AprovacaoEntradas() {
           </TabsTrigger>
         </TabsList>
 
-        {Object.entries(entradasPorStatus).map(([status, statusEntradas]) => (
-          <TabsContent key={status} value={status} className="space-y-4">
-            {(statusEntradas as any[]).length === 0 ? (
-              <EmptyState 
-                title="Nenhum pedido de recebimento"
-                description={getEmptyStateDescription(status)}
-              />
-            ) : (
+        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'conferencia_completa'].map((status) => {
+          const statusEntradas = entradasPorStatus[status] || []
+          return (
+            <TabsContent key={status} value={status} className="space-y-4">
+              {statusEntradas.length === 0 ? (
+                <EmptyState 
+                  title="Nenhum pedido de recebimento"
+                  description={getEmptyStateDescription(status)}
+                />
+              ) : (
               <div className="grid gap-4">
                 {(statusEntradas as any[]).map((entrada) => (
                   <Card key={entrada.id}>
@@ -521,7 +523,8 @@ export default function AprovacaoEntradas() {
               </div>
             )}
           </TabsContent>
-        ))}
+          )
+        })}
       </Tabs>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
