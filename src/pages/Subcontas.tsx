@@ -85,6 +85,15 @@ export default function Subcontas() {
   const subaccountRoleLabel = getSubaccountRoleLabel();
   const subaccountDescription = getSubaccountDescription();
 
+  // Prevent rendering until userRole is loaded
+  if (!userRole || !subaccountRole) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-muted-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
   // Get user's subaccounts (children in hierarchy)
   const { data: subaccounts = [], refetch: refetchSubaccounts, isLoading: loadingSubaccounts } = useQuery({
     queryKey: ["subaccounts", user?.id],
