@@ -250,15 +250,13 @@ export default function GerenciarPosicoes() {
               </div>
             ) : !positions || positions.length === 0 ? (
               <EmptyState
-                icon={Package}
+                icon={<Package className="w-16 h-16" />}
                 title="Nenhuma posição configurada"
                 description="Comece criando sua primeira posição de estoque"
-                action={
-                  <Button onClick={() => setDialogOpen(true)}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Nova Posição
-                  </Button>
-                }
+                action={{
+                  label: "Nova Posição",
+                  onClick: () => setDialogOpen(true)
+                }}
               />
             ) : (
               <Table>

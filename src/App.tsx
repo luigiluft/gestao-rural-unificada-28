@@ -25,6 +25,9 @@ import Franquias from "./pages/Franquias";
 import Fazendas from "./pages/Fazendas";
 import Configuracoes from "./pages/Configuracoes";
 import ControleAcesso from "./pages/ControleAcesso";
+import OndasAlocacao from "./pages/OndasAlocacao";
+import AlocacaoFuncionario from "./pages/AlocacaoFuncionario";
+import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -62,6 +65,9 @@ const App = () => (
               <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
+              <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="ondas-alocacao"><OndasAlocacao /></RequirePageAccess>} />
+              <Route path="alocar/:waveId" element={<RequirePageAccess pageKey="alocacao-funcionario"><AlocacaoFuncionario /></RequirePageAccess>} />
+              <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

@@ -28,7 +28,9 @@ export default function AlocacaoFuncionario() {
   const [selectedPositionId, setSelectedPositionId] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const pendingItems = wave?.allocation_wave_items?.filter((item: any) => item.status === 'pendente') || []
+  const pendingItems = Array.isArray(wave?.allocation_wave_items) 
+    ? wave.allocation_wave_items.filter((item: any) => item.status === 'pendente') 
+    : []
   const currentItem = pendingItems[currentItemIndex]
 
   useEffect(() => {

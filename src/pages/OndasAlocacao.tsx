@@ -85,7 +85,7 @@ export default function OndasAlocacao() {
         </div>
         
         <EmptyState
-          icon={Package}
+          icon={<Package className="w-16 h-16" />}
           title="Nenhuma onda de alocação encontrada"
           description="As ondas de alocação são criadas automaticamente quando entradas são confirmadas."
         />

@@ -65,14 +65,15 @@ export const useAllocationWaveById = (waveId: string) => {
       if (error) throw error
 
       // Get franquia name
-      if (wave.deposito_id) {
+      if (wave?.deposito_id) {
         const { data: franquia } = await supabase
           .from("franquias")
           .select("nome")
           .eq("id", wave.deposito_id)
           .single()
         
-        wave.franquias = franquia
+        // Type assertion to add franquias property
+        ;(wave as any).franquias = franquia
       }
 
       return wave
