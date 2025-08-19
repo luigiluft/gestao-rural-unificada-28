@@ -58,7 +58,7 @@ const App = () => (
               <Route path="subcontas" element={<Subcontas />} />
               <Route path="suporte" element={<Suporte />} />
               <Route path="perfil" element={<Perfil />} />
-              <Route path="configuracoes" element={<Configuracoes />} />
+              <Route path="configuracoes" element={<RequireAdmin><Configuracoes /></RequireAdmin>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
