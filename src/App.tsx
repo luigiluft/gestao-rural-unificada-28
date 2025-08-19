@@ -29,6 +29,7 @@ import ControleAcesso from "./pages/ControleAcesso";
 import OndasAlocacao from "./pages/OndasAlocacao";
 import AlocacaoFuncionario from "./pages/AlocacaoFuncionario";
 import GerenciarPosicoes from "./pages/GerenciarPosicoes";
+import Inventario from "./pages/Inventario";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="ondas-alocacao"><OndasAlocacao /></RequirePageAccess>} />
               <Route path="alocar/:waveId" element={<RequirePageAccess pageKey="alocacao-funcionario"><AlocacaoFuncionario /></RequirePageAccess>} />
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
+              <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
