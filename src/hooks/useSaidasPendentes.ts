@@ -2,11 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
-export const useSaidasPendentes = () => {
+interface DateRange {
+  from?: Date
+  to?: Date
+}
+
+export const useSaidasPendentes = (dateRange?: DateRange) => {
   return useQuery({
-    queryKey: ["saidas-pendentes"],
+    queryKey: ["saidas-pendentes", dateRange],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("saidas")
         .select(`
           *,
@@ -19,7 +24,16 @@ export const useSaidasPendentes = () => {
           )
         `)
         .in("status", ["separacao_pendente", "separado", "expedido"])
-        .order("created_at", { ascending: false })
+        
+      // Apply date filters if provided
+      if (dateRange?.from) {
+        query = query.gte("data_saida", dateRange.from.toISOString().split('T')[0])
+      }
+      if (dateRange?.to) {
+        query = query.lte("data_saida", dateRange.to.toISOString().split('T')[0])
+      }
+      
+      const { data, error } = await query.order("created_at", { ascending: false })
 
       if (error) {
         console.error("Erro ao buscar saídas pendentes:", error)

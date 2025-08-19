@@ -2,9 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
-export const useEntradasPendentes = () => {
+interface DateRange {
+  from?: Date
+  to?: Date
+}
+
+export const useEntradasPendentes = (dateRange?: DateRange) => {
   return useQuery({
-    queryKey: ["entradas-pendentes"],
+    queryKey: ["entradas-pendentes", dateRange],
     queryFn: async () => {
       console.log('🔍 Iniciando busca de entradas pendentes...')
       
@@ -13,7 +18,7 @@ export const useEntradasPendentes = () => {
       console.log('👤 Usuário atual:', userData?.user?.id, userData?.user?.email)
 
       // Get basic entries data first
-      const { data: entradas, error } = await supabase
+      let query = supabase
         .from("entradas")
         .select(`
           *,
@@ -23,7 +28,16 @@ export const useEntradasPendentes = () => {
           )
         `)
         .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa"])
-        .order("created_at", { ascending: false })
+        
+      // Apply date filters if provided
+      if (dateRange?.from) {
+        query = query.gte("data_entrada", dateRange.from.toISOString().split('T')[0])
+      }
+      if (dateRange?.to) {
+        query = query.lte("data_entrada", dateRange.to.toISOString().split('T')[0])
+      }
+      
+      const { data: entradas, error } = await query.order("created_at", { ascending: false })
 
       if (error) {
         console.error('❌ Erro ao buscar entradas:', error)

@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X } from "lucide-react"
 import { useEntradasPendentes, useAtualizarStatusEntrada } from "@/hooks/useEntradasPendentes"
 import { format } from "date-fns"
+import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 
 interface Divergencia {
   produto: string
@@ -35,7 +36,16 @@ interface LeituraBarra {
 
 export default function AprovacaoEntradas() {
   const isMobile = useIsMobile()
-  const { data: entradas, isLoading } = useEntradasPendentes()
+  
+  // Set up default date range (last 30 days)
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const hoje = new Date()
+    const trintaDiasAtras = new Date()
+    trintaDiasAtras.setDate(hoje.getDate() - 30)
+    return { from: trintaDiasAtras, to: hoje }
+  })
+  
+  const { data: entradas, isLoading } = useEntradasPendentes(dateRange)
   const atualizarStatus = useAtualizarStatusEntrada()
   
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
@@ -340,6 +350,12 @@ export default function AprovacaoEntradas() {
           Gerencie o recebimento de produtos dos produtores
         </p>
       </div>
+
+      {/* Date Filter */}
+      <DateRangeFilter 
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
 
       <Tabs defaultValue="aguardando_transporte" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
