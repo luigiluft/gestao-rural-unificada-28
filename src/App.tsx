@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import Franqueados from "./pages/Franqueados";
 import AprovacaoEntradas from "./pages/AprovacaoEntradas";
+import Separacao from "./pages/Separacao";
 import AprovacaoSaidas from "./pages/AprovacaoSaidas";
 import Usuarios from "./pages/Usuarios";
 import Produtores from "./pages/Produtores";
