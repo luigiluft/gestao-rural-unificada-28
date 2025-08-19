@@ -107,6 +107,25 @@ export default function AprovacaoSaidas() {
     setObservacoes('')
   }
 
+  // Helper functions for empty states
+  const getEmptyStateIconSaidas = (status: string) => {
+    const icons = {
+      'separacao_pendente': Clock,
+      'separado': Package,
+      'expedido': Truck
+    }
+    return icons[status as keyof typeof icons] || Clock
+  }
+
+  const getEmptyStateDescriptionSaidas = (status: string) => {
+    const descriptions = {
+      'separacao_pendente': 'Não há produtos aguardando separação no momento. Novos pedidos de saída aparecerão aqui quando criados.',
+      'separado': 'Nenhum produto está separado e pronto para expedição. Produtos aparecerão aqui após serem separados.',
+      'expedido': 'Não há produtos expedidos recentemente. Produtos expedidos aparecerão aqui após saírem do depósito.'
+    }
+    return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
+  }
+
   // Filtrar saídas por status
   const saidasPorStatus = {
     separacao_pendente: saidas?.filter(s => s.status === 'separacao_pendente') || [],
@@ -232,8 +251,8 @@ export default function AprovacaoSaidas() {
           <TabsContent key={status} value={status} className="space-y-4">
             {saidasStatus.length === 0 ? (
               <EmptyState
-                title={`Nenhuma saída com status ${status === 'separacao_pendente' ? 'Separação Pendente' : status === 'separado' ? 'Separado' : 'Expedido'}`}
-                description="Não há saídas pendentes neste status."
+                title="Nenhum pedido de expedição"
+                description={getEmptyStateDescriptionSaidas(status)}
               />
             ) : (
               <div className="grid gap-4">

@@ -305,6 +305,27 @@ export default function AprovacaoEntradas() {
     }
   }, [codigoBarras, modoConferencia])
 
+  // Helper functions for empty states
+  const getEmptyStateIcon = (status: string) => {
+    const icons = {
+      'aguardando_transporte': Clock,
+      'em_transferencia': Truck,
+      'aguardando_conferencia': Eye,
+      'conferencia_completa': CheckCircle
+    }
+    return icons[status as keyof typeof icons] || Clock
+  }
+
+  const getEmptyStateDescription = (status: string) => {
+    const descriptions = {
+      'aguardando_transporte': 'Não há produtos aguardando transporte no momento. Novos pedidos aparecerão aqui quando criados.',
+      'em_transferencia': 'Nenhum produto está em transferência. Os pedidos aparecerão aqui quando estiverem a caminho do depósito.',
+      'aguardando_conferencia': 'Não há produtos aguardando conferência. Produtos em transferência aparecerão aqui quando chegarem.',
+      'conferencia_completa': 'Nenhuma conferência está completa. Produtos conferidos aparecerão aqui aguardando confirmação final.'
+    }
+    return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
+  }
+
   // Agrupar entradas por status
   const entradasPorStatus = (entradas as any[])?.reduce((acc, entrada) => {
     const status = entrada.status_aprovacao
@@ -381,8 +402,8 @@ export default function AprovacaoEntradas() {
           <TabsContent key={status} value={status} className="space-y-4">
             {(statusEntradas as any[]).length === 0 ? (
               <EmptyState 
-                title="Nenhuma entrada encontrada"
-                description={`Não há entradas com status "${status.replace('_', ' ')}" no momento.`}
+                title="Nenhum pedido de recebimento"
+                description={getEmptyStateDescription(status)}
               />
             ) : (
               <div className="grid gap-4">
