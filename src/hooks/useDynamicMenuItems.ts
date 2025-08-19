@@ -21,7 +21,8 @@ import {
   Settings,
   Shield,
   Waves,
-  Grid3X3
+  Grid3X3,
+  Clipboard
 } from "lucide-react"
 
 export interface MenuItem {
@@ -53,7 +54,8 @@ const iconMap = {
   configuracoes: Settings,
   "controle-acesso": Shield,
   "ondas-alocacao": Waves,
-  "gerenciar-posicoes": Grid3X3
+  "gerenciar-posicoes": Grid3X3,
+  separacao: Clipboard
 }
 
 const menuLabels = {
@@ -77,7 +79,8 @@ const menuLabels = {
   configuracoes: "Configurações",
   "controle-acesso": "Controle de Acesso",
   "ondas-alocacao": "Alocações",
-  "gerenciar-posicoes": "Posições"
+  "gerenciar-posicoes": "Posições",
+  separacao: "Separação"
 }
 
 export const useDynamicMenuItems = () => {
@@ -119,7 +122,7 @@ export const useDynamicMenuItems = () => {
     }
 
     // Operações
-    const operationItems = ['recebimento', 'expedicao', 'ondas-alocacao', 'gerenciar-posicoes', 'produtores']
+    const operationItems = ['recebimento', 'separacao', 'expedicao', 'ondas-alocacao', 'gerenciar-posicoes', 'produtores']
       .filter(page => visiblePages.includes(page))
       .map(page => ({
         path: `/${page}`,

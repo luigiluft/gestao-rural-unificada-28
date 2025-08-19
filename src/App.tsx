@@ -57,6 +57,7 @@ const App = () => (
               <Route path="franquias" element={<RequirePageAccess pageKey="franquias"><Franquias /></RequirePageAccess>} />
               <Route path="franqueados" element={<RequirePageAccess pageKey="franqueados"><Franqueados /></RequirePageAccess>} />
               <Route path="recebimento" element={<RequirePageAccess pageKey="recebimento"><AprovacaoEntradas /></RequirePageAccess>} />
+              <Route path="separacao" element={<RequirePageAccess pageKey="separacao"><Separacao /></RequirePageAccess>} />
               <Route path="expedicao" element={<RequirePageAccess pageKey="expedicao"><AprovacaoSaidas /></RequirePageAccess>} />
               <Route path="produtores" element={<RequirePageAccess pageKey="produtores"><Produtores /></RequirePageAccess>} />
               <Route path="fazendas" element={<RequirePageAccess pageKey="fazendas"><Fazendas /></RequirePageAccess>} />

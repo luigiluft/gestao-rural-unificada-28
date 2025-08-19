@@ -10,12 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Truck, Package, CheckCircle } from "lucide-react"
+import { Clock, Package, Scan } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
+import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 
-export default function AprovacaoSaidas() {
+export default function Separacao() {
   // Set up default date range (last 30 days)
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const hoje = new Date()
@@ -30,20 +31,20 @@ export default function AprovacaoSaidas() {
   const [selectedSaida, setSelectedSaida] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [observacoes, setObservacoes] = useState('')
+  const [separacaoOpen, setSeparacaoOpen] = useState(false)
 
   useEffect(() => {
-    document.title = "Expedição - AgroHub"
+    document.title = "Separação - AgroHub"
     const metaDescription = document.querySelector('meta[name="description"]')
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie a expedição de produtos no AgroHub')
+      metaDescription.setAttribute('content', 'Gerencie a separação de produtos no AgroHub')
     }
   }, [])
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
+      'separacao_pendente': { label: 'Separação Pendente', variant: 'secondary' as const, icon: Clock },
       'separado': { label: 'Separado', variant: 'default' as const, icon: Package },
-      'expedido': { label: 'Expedido', variant: 'outline' as const, icon: Truck },
-      'entregue': { label: 'Entregue', variant: 'default' as const, icon: CheckCircle },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -58,38 +59,23 @@ export default function AprovacaoSaidas() {
     )
   }
 
-  const getNextStatus = (currentStatus: string) => {
-    const statusFlow = {
-      'separado': 'expedido',
-      'expedido': 'entregue'
-    }
-    return statusFlow[currentStatus as keyof typeof statusFlow]
-  }
-
-  const getNextStatusLabel = (currentStatus: string) => {
-    const statusLabels = {
-      'separado': 'Marcar como Expedido',  
-      'expedido': 'Marcar como Entregue'
-    }
-    return statusLabels[currentStatus as keyof typeof statusLabels] || null
-  }
-
   const handleAction = (saida: any) => {
     setSelectedSaida(saida)
     setObservacoes('')
     setDialogOpen(true)
   }
 
+  const handleSeparacaoIndividual = (saida: any) => {
+    setSelectedSaida(saida)
+    setSeparacaoOpen(true)
+  }
 
   const handleConfirm = async () => {
     if (!selectedSaida) return
 
-    const nextStatus = getNextStatus(selectedSaida.status)
-    if (!nextStatus) return
-
     await atualizarStatus.mutateAsync({
       saidaId: selectedSaida.id,
-      status: nextStatus,
+      status: 'separado',
       observacoes
     })
     
@@ -101,18 +87,16 @@ export default function AprovacaoSaidas() {
   // Helper functions for empty states
   const getEmptyStateDescription = (status: string) => {
     const descriptions = {
-      'separado': 'Nenhum produto está separado e pronto para expedição. Produtos aparecerão aqui após serem separados.',
-      'expedido': 'Não há produtos expedidos recentemente. Produtos expedidos aparecerão aqui após saírem do depósito.',
-      'entregue': 'Não há produtos entregues recentemente. Produtos aparecerão aqui após serem entregues.'
+      'separacao_pendente': 'Não há produtos aguardando separação no momento. Novos pedidos de saída aparecerão aqui quando criados.',
+      'separado': 'Nenhum produto está separado no momento. Produtos aparecerão aqui após serem separados.',
     }
     return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
   }
 
-  // Filtrar saídas por status (apenas expedição: separado, expedido, entregue)
+  // Filtrar saídas por status (apenas separação pendente e separado)
   const saidasPorStatus = {
-    separado: saidas?.filter(s => s.status === 'separado') || [],
-    expedido: saidas?.filter(s => s.status === 'expedido') || [],
-    entregue: saidas?.filter(s => s.status === 'entregue') || []
+    separacao_pendente: saidas?.filter(s => s.status === 'separacao_pendente') || [],
+    separado: saidas?.filter(s => s.status === 'separado') || []
   }
 
   const formatCurrency = (value: number | null) => {
@@ -130,8 +114,8 @@ export default function AprovacaoSaidas() {
           <Skeleton className="h-4 w-96" />
         </div>
         
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
             <Card key={i} className="shadow-card">
               <CardHeader>
                 <Skeleton className="h-5 w-32" />
@@ -155,9 +139,9 @@ export default function AprovacaoSaidas() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Expedição</h1>
+        <h1 className="text-3xl font-bold text-foreground">Separação</h1>
         <p className="text-muted-foreground">
-          Gerencie o processo de expedição e entrega dos produtos separados
+          Gerencie o processo de separação de produtos para expedição
         </p>
       </div>
 
@@ -168,7 +152,21 @@ export default function AprovacaoSaidas() {
       />
 
       {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+        <Card className="shadow-card border-amber-200 bg-amber-50/50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-amber-600">Separação Pendente</p>
+                <p className="text-2xl font-bold text-amber-700">{saidasPorStatus.separacao_pendente.length}</p>
+              </div>
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-card border-blue-200 bg-blue-50/50">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -182,50 +180,18 @@ export default function AprovacaoSaidas() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="shadow-card border-green-200 bg-green-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">Expedido</p>
-                <p className="text-2xl font-bold text-green-700">{saidasPorStatus.expedido.length}</p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Truck className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card border-emerald-200 bg-emerald-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600">Entregue</p>
-                <p className="text-2xl font-bold text-emerald-700">{saidasPorStatus.entregue.length}</p>
-              </div>
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tabs por Status */}
-      <Tabs defaultValue="separado" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="separacao_pendente" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="separacao_pendente" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Separação Pendente ({saidasPorStatus.separacao_pendente.length})
+          </TabsTrigger>
           <TabsTrigger value="separado" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
             Separado ({saidasPorStatus.separado.length})
-          </TabsTrigger>
-          <TabsTrigger value="expedido" className="flex items-center gap-2">
-            <Truck className="w-4 h-4" />
-            Expedido ({saidasPorStatus.expedido.length})
-          </TabsTrigger>
-          <TabsTrigger value="entregue" className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4" />
-            Entregue ({saidasPorStatus.entregue.length})
           </TabsTrigger>
         </TabsList>
 
@@ -233,7 +199,7 @@ export default function AprovacaoSaidas() {
           <TabsContent key={status} value={status} className="space-y-4">
             {saidasStatus.length === 0 ? (
               <EmptyState
-                title="Nenhum pedido de expedição"
+                title="Nenhum pedido para separação"
                 description={getEmptyStateDescription(status)}
               />
             ) : (
@@ -325,14 +291,25 @@ export default function AprovacaoSaidas() {
                         </div>
                         
                         <div className="flex gap-2">
-                          {getNextStatusLabel(saida.status) && (
-                            <Button
-                              onClick={() => handleAction(saida)}
-                              size="sm"
-                              className="bg-primary hover:bg-primary/90"
-                            >
-                              {getNextStatusLabel(saida.status)}
-                            </Button>
+                          {saida.status === 'separacao_pendente' && (
+                            <>
+                              <Button
+                                onClick={() => handleSeparacaoIndividual(saida)}
+                                size="sm"
+                                variant="outline"
+                                className="flex items-center gap-2"
+                              >
+                                <Scan className="h-4 w-4" />
+                                Separação Individual
+                              </Button>
+                              <Button
+                                onClick={() => handleAction(saida)}
+                                size="sm"
+                                className="bg-primary hover:bg-primary/90"
+                              >
+                                Marcar Tudo como Separado
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -349,9 +326,9 @@ export default function AprovacaoSaidas() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Atualização de Status</DialogTitle>
+            <DialogTitle>Confirmar Separação</DialogTitle>
             <DialogDescription>
-              {selectedSaida && `Deseja atualizar o status da saída SAI${selectedSaida.id.slice(-6).toUpperCase()} para "${getNextStatusLabel(selectedSaida.status)?.replace('Marcar como ', '')}"?`}
+              {selectedSaida && `Deseja marcar todos os itens da saída SAI${selectedSaida.id.slice(-6).toUpperCase()} como separados?`}
             </DialogDescription>
           </DialogHeader>
 
@@ -362,7 +339,7 @@ export default function AprovacaoSaidas() {
                 id="observacoes"
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Adicione observações sobre esta atualização..."
+                placeholder="Adicione observações sobre a separação..."
                 rows={3}
               />
             </div>
@@ -376,12 +353,21 @@ export default function AprovacaoSaidas() {
               onClick={handleConfirm}
               disabled={atualizarStatus.isPending}
             >
-              {atualizarStatus.isPending ? "Atualizando..." : "Confirmar"}
+              {atualizarStatus.isPending ? "Atualizando..." : "Confirmar Separação"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Separação Individual */}
+      <SeparacaoIndividual
+        saida={selectedSaida}
+        open={separacaoOpen}
+        onClose={() => {
+          setSeparacaoOpen(false)
+          setSelectedSaida(null)
+        }}
+      />
     </div>
   )
 }
