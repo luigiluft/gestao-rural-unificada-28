@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Search, Bell, ChevronDown, Settings } from "lucide-react"
+import { Search, Bell, ChevronDown, Settings, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -14,9 +14,11 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
+import { useNavigate } from "react-router-dom"
 
 export function AppHeader() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [displayName, setDisplayName] = useState<string>("")
   const [roleLabel, setRoleLabel] = useState<string>("Produtor")
   useEffect(() => {
@@ -107,11 +109,12 @@ export function AppHeader() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
               <Settings className="mr-2 h-4 w-4" />
               Configurações
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/suporte")}>
+              <HelpCircle className="mr-2 h-4 w-4" />
               Suporte
             </DropdownMenuItem>
             <DropdownMenuSeparator />

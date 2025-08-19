@@ -23,6 +23,7 @@ import Produtores from "./pages/Produtores";
 import Subcontas from "./pages/Subcontas";
 import Franquias from "./pages/Franquias";
 import Fazendas from "./pages/Fazendas";
+import Configuracoes from "./pages/Configuracoes";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="subcontas" element={<Subcontas />} />
               <Route path="suporte" element={<Suporte />} />
               <Route path="perfil" element={<Perfil />} />
+              <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
