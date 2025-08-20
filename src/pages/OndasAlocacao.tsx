@@ -178,7 +178,7 @@ export default function OndasAlocacao() {
                   {wave.status === 'pendente' && (
                     <Button
                       size="sm"
-                      onClick={() => navigate(`/alocacao-funcionario/${wave.id}`)}
+                      onClick={() => navigate(`/alocar/${wave.id}`)}
                     >
                       <MapPin className="w-4 h-4 mr-1" />
                       Executar Alocação
@@ -225,7 +225,7 @@ export default function OndasAlocacao() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigate(`/alocacao-funcionario/${wave.id}`)}
+                      onClick={() => navigate(`/alocar/${wave.id}`)}
                     >
                       <MapPin className="w-4 h-4 mr-1" />
                       Executar Alocação
@@ -235,7 +235,7 @@ export default function OndasAlocacao() {
                   {wave.status === 'em_andamento' && (
                     <Button
                       size="sm"
-                      onClick={() => navigate(`/alocacao-funcionario/${wave.id}`)}
+                      onClick={() => navigate(`/alocar/${wave.id}`)}
                     >
                       <MapPin className="w-4 h-4 mr-1" />
                       Continuar Alocação
