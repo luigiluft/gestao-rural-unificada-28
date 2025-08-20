@@ -70,7 +70,7 @@ export const useAllocationWaveById = (waveId: string) => {
             *,
             produtos(nome, unidade_medida),
             storage_positions(codigo, descricao),
-            entrada_itens(lote, data_validade, valor_unitario)
+            entrada_itens(lote, data_validade, valor_unitario, codigo_produto)
           )
         `)
         .eq("id", waveId)
