@@ -10,6 +10,7 @@ export interface NFItem {
   dataValidade?: string;
   quantidadeLote?: number;
   dataFabricacao?: string;
+  codigoEAN?: string; // Código de barras EAN
 }
 
 export interface NFData {
@@ -133,7 +134,8 @@ export class NFParser {
             lote,
             dataValidade,
             quantidadeLote,
-            dataFabricacao
+            dataFabricacao,
+            codigoEAN: prod.querySelector('cEAN')?.textContent || '' // Capturar código EAN
           };
           itens.push(item);
         }

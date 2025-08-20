@@ -230,6 +230,7 @@ export type Database = {
       }
       entrada_itens: {
         Row: {
+          codigo_produto: string | null
           created_at: string
           data_fabricacao: string | null
           data_validade: string | null
@@ -245,6 +246,7 @@ export type Database = {
           valor_unitario: number | null
         }
         Insert: {
+          codigo_produto?: string | null
           created_at?: string
           data_fabricacao?: string | null
           data_validade?: string | null
@@ -260,6 +262,7 @@ export type Database = {
           valor_unitario?: number | null
         }
         Update: {
+          codigo_produto?: string | null
           created_at?: string
           data_fabricacao?: string | null
           data_validade?: string | null
