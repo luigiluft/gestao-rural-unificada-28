@@ -309,9 +309,34 @@ const Franquias = () => {
       });
       return;
     }
+    
+    // Generate positions from warehouse layout if it exists
+    let positions: any[] = [];
+    if (warehouseLayout) {
+      for (let rua = 1; rua <= warehouseLayout.ruas; rua++) {
+        for (let modulo = 1; modulo <= warehouseLayout.modulos; modulo++) {
+          for (let andar = 1; andar <= warehouseLayout.andares; andar++) {
+            // Check if position is not inactive
+            const isInactive = warehouseLayout.posicoes_inativas.some(
+              pos => pos.rua === rua && pos.modulo === modulo && pos.andar === andar
+            );
+            
+            if (!isInactive) {
+              const codigo = `R${String(rua).padStart(2, '0')}-M${String(modulo).padStart(2, '0')}-A${String(andar).padStart(2, '0')}`;
+              positions.push({
+                codigo,
+                descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`,
+                tipo_posicao: "prateleira"
+              });
+            }
+          }
+        }
+      }
+    }
+    
     saveFranquia.mutate({ 
       formData, 
-      positions: [], 
+      positions, 
       layout: warehouseLayout 
     });
   };
@@ -333,14 +358,10 @@ const Franquias = () => {
             Gerencie as franquias e seus franqueados masters
           </p>
         </div>
-        <FranquiaWizard
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          onSubmit={(data) => saveFranquia.mutate(data)}
-          editingFranquia={editingFranquia}
-          franqueadosMasters={franqueadosMasters}
-          isLoading={saveFranquia.isPending}
-        />
+        <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
+          <Building2 className="mr-2 h-4 w-4" />
+          Nova Franquia
+        </Button>
       </div>
 
       <div className="grid gap-6">
@@ -352,7 +373,7 @@ const Franquias = () => {
               <p className="text-muted-foreground text-center mb-4">
                 Comece criando sua primeira franquia para organizar seus franqueados.
               </p>
-              <Button onClick={() => openDialog()}>
+              <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
                 <Building2 className="mr-2 h-4 w-4" />
                 Criar primeira franquia
               </Button>
@@ -444,7 +465,7 @@ const Franquias = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openDialog(franquia)}
+                              onClick={() => { setEditingFranquia(franquia); setDialogOpen(true); }}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -467,6 +488,15 @@ const Franquias = () => {
           </Card>
         )}
       </div>
+      
+      <FranquiaWizard
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={(data) => saveFranquia.mutate(data)}
+        editingFranquia={editingFranquia}
+        franqueadosMasters={franqueadosMasters}
+        isLoading={saveFranquia.isPending}
+      />
     </div>
   );
 };
