@@ -254,16 +254,12 @@ export function FranquiaWizard({
               return (
                 <Card 
                   key={step.id} 
-                  className={`flex-1 min-w-0 cursor-pointer transition-colors ${
+                  className={`flex-1 min-w-0 cursor-pointer transition-colors hover:bg-accent/50 ${
                     isCurrent ? 'border-primary bg-primary/5' : 
                     isCompleted ? 'border-green-500 bg-green-50' : 
                     'border-muted'
                   }`}
-                  onClick={() => {
-                    if (step.id < currentStep || (step.id === currentStep && isValid)) {
-                      setCurrentStep(step.id);
-                    }
-                  }}
+                  onClick={() => setCurrentStep(step.id)}
                 >
                   <CardHeader className="p-3">
                     <CardTitle className="text-xs flex items-center gap-1">

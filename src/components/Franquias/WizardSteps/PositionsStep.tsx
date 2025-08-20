@@ -56,8 +56,7 @@ export function PositionsStep({
             newPositions.push({
               codigo,
               descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`,
-              tipo_posicao: "prateleira",
-              capacidade_maxima: layout.capacidade_por_posicao
+              tipo_posicao: "prateleira"
             });
           }
         }
@@ -68,13 +67,11 @@ export function PositionsStep({
   };
 
   const calculateTotalCapacity = (currentPositions: StoragePosition[]) => {
-    const totalCapacity = currentPositions.reduce((sum, pos) => {
-      return sum + (pos.capacidade_maxima || 0);
-    }, 0);
+    const totalPositions = currentPositions.length;
     
     setFormData(prev => ({ 
       ...prev, 
-      capacidade_total: totalCapacity.toString() 
+      capacidade_total: totalPositions.toString() 
     }));
   };
 
@@ -169,7 +166,7 @@ export function PositionsStep({
           <h4 className="font-medium">Capacidade Total Calculada</h4>
         </div>
         <p className="text-2xl font-bold text-primary mt-1">
-          {formData.capacidade_total || '0'} kg
+          {formData.capacidade_total || '0'} posições
         </p>
         <p className="text-sm text-muted-foreground mt-1">
           Baseado em {positions.length} posição(ões) configurada(s)
@@ -258,16 +255,6 @@ export function PositionsStep({
                 </Select>
               </div>
               
-              <div>
-                <Label htmlFor="capacidade_maxima">Capacidade Máxima (kg)</Label>
-                <Input
-                  id="capacidade_maxima"
-                  type="number"
-                  value={positionFormData.capacidade_maxima}
-                  onChange={(e) => setPositionFormData({ ...positionFormData, capacidade_maxima: e.target.value })}
-                  placeholder="Capacidade em kg..."
-                />
-              </div>
               
               <div className="flex justify-end gap-2 pt-4">
                 <Button 
@@ -312,7 +299,7 @@ export function PositionsStep({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {position.capacidade_maxima ? `${position.capacidade_maxima} kg` : '-'}
+                    -
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
