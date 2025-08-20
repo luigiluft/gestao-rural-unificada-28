@@ -230,7 +230,7 @@ export default function AlocacaoFuncionario() {
                   <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Escolher produto..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50 bg-background">
                     <SelectItem value={currentItem.barcode_produto || currentItem.lote || currentItem.produtos?.nome || ''}>
                       <div className="flex flex-col">
                         <span className="font-medium">{currentItem.produtos?.nome}</span>
