@@ -25,13 +25,13 @@ export default function AlocacaoFuncionario() {
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedProductCode, setScannedProductCode] = useState("")
   const [scannedPositionCode, setScannedPositionCode] = useState("")
-  const [selectedPositionId, setSelectedPositionId] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
 
   const pendingItems = Array.isArray(wave?.allocation_wave_items) 
     ? wave.allocation_wave_items.filter((item: any) => item.status === 'pendente') 
     : []
   const currentItem = pendingItems[currentItemIndex]
+  const currentPosition = currentItem?.storage_positions
 
   useEffect(() => {
     // Simulate barcode scanner integration
@@ -46,12 +46,11 @@ export default function AlocacaoFuncionario() {
       }
       if (event.key === 'F2') { // F2 to simulate position scan
         event.preventDefault()
-        const selectedPosition = positions?.find(p => p.id === selectedPositionId)
-        if (selectedPosition) {
-          setScannedPositionCode(selectedPosition.codigo)
+        if (currentPosition) {
+          setScannedPositionCode(currentPosition.codigo)
           toast({
             title: "Posição escaneada",
-            description: `Posição: ${selectedPosition.codigo}`,
+            description: `Posição: ${currentPosition.codigo}`,
           })
         }
       }
@@ -59,13 +58,35 @@ export default function AlocacaoFuncionario() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentItem, selectedPositionId, positions, toast])
+  }, [currentItem, currentPosition, toast])
 
   const handleAllocate = async () => {
-    if (!currentItem || !selectedPositionId || !scannedProductCode || !scannedPositionCode) {
+    if (!currentItem || !currentPosition || !scannedProductCode || !scannedPositionCode) {
       toast({
         title: "Dados incompletos",
         description: "É necessário escanear tanto o produto quanto a posição",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validar se os códigos escaneados conferem com o esperado
+    const expectedProductCode = currentItem.barcode_produto || currentItem.lote
+    const expectedPositionCode = currentPosition.codigo
+
+    if (scannedProductCode !== expectedProductCode) {
+      toast({
+        title: "Produto incorreto",
+        description: `Produto escaneado não confere. Esperado: ${expectedProductCode}`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (scannedPositionCode !== expectedPositionCode) {
+      toast({
+        title: "Posição incorreta",
+        description: `Posição escaneada não confere. Esperado: ${expectedPositionCode}`,
         variant: "destructive",
       })
       return
@@ -76,7 +97,7 @@ export default function AlocacaoFuncionario() {
     try {
       await allocateItem.mutateAsync({
         waveItemId: currentItem.id,
-        posicaoId: selectedPositionId,
+        posicaoId: currentItem.posicao_id,
         barcodeProduto: scannedProductCode,
         barcodePosicao: scannedPositionCode
       })
@@ -84,7 +105,6 @@ export default function AlocacaoFuncionario() {
       // Reset form and move to next item
       setScannedProductCode("")
       setScannedPositionCode("")
-      setSelectedPositionId("")
 
       if (currentItemIndex < pendingItems.length - 1) {
         setCurrentItemIndex(currentItemIndex + 1)
@@ -108,7 +128,6 @@ export default function AlocacaoFuncionario() {
       // Reset form
       setScannedProductCode("")
       setScannedPositionCode("")
-      setSelectedPositionId("")
     }
   }
 
@@ -279,89 +298,99 @@ export default function AlocacaoFuncionario() {
           </CardContent>
         </Card>
 
-        {/* Position Selection */}
+        {/* Position Confirmation */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="w-5 h-5" />
-              Posição de Armazenamento
+              Posição Definida pelo Sistema
             </CardTitle>
             <CardDescription>
-              Selecione e escaneie a posição de destino
+              Confirme a alocação escaneando a posição indicada
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label className="font-medium">Selecionar Posição</Label>
-              <Select value={selectedPositionId} onValueChange={setSelectedPositionId}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Escolher posição..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {positions?.map((position) => (
-                    <SelectItem key={position.id} value={position.id}>
-                      <div className="flex flex-col">
-                        <span>{position.codigo}</span>
-                        {position.descricao && (
-                          <span className="text-xs text-muted-foreground">
-                            {position.descricao}
-                          </span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {currentPosition ? (
+              <>
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    <Label className="font-medium text-primary">Posição Designada</Label>
+                  </div>
+                  <p className="text-2xl font-bold text-primary">{currentPosition.codigo}</p>
+                  {currentPosition.descricao && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {currentPosition.descricao}
+                    </p>
+                  )}
+                </div>
 
-            <div>
-              <Label className="font-medium">Código da Posição</Label>
-              <div className="flex gap-2 mt-2">
-                <Input 
-                  value={scannedPositionCode}
-                  onChange={(e) => setScannedPositionCode(e.target.value)}
-                  placeholder="Escanear código da posição..."
-                />
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setScannerOpen(true)}
-                >
-                  <Scan className="w-4 h-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Dica: Pressione F2 para simular scan da posição
-              </p>
-            </div>
+                <div>
+                  <Label className="font-medium">Escanear Posição para Confirmar</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input 
+                      value={scannedPositionCode}
+                      onChange={(e) => setScannedPositionCode(e.target.value)}
+                      placeholder={`Escaneie: ${currentPosition.codigo}`}
+                      className={scannedPositionCode && scannedPositionCode !== currentPosition.codigo ? 'border-destructive' : ''}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setScannerOpen(true)}
+                    >
+                      <Scan className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Dica: Pressione F2 para simular scan da posição
+                  </p>
+                  {scannedPositionCode && scannedPositionCode !== currentPosition.codigo && (
+                    <p className="text-xs text-destructive mt-1">
+                      Posição incorreta! Escaneie: {currentPosition.codigo}
+                    </p>
+                  )}
+                </div>
 
-            <div className="pt-6 space-y-2">
-              <Button 
-                onClick={handleAllocate}
-                disabled={!scannedProductCode || !scannedPositionCode || !selectedPositionId || isProcessing}
-                className="w-full"
-                size="lg"
-              >
-                {isProcessing ? "Processando..." : "Alocar Item"}
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={handleSkipItem}
-                disabled={isProcessing}
-                className="w-full"
-              >
-                Pular Item
-              </Button>
-            </div>
+                <div className="pt-6 space-y-2">
+                  <Button 
+                    onClick={handleAllocate}
+                    disabled={!scannedProductCode || !scannedPositionCode || isProcessing}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isProcessing ? "Processando..." : "Confirmar Alocação"}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={handleSkipItem}
+                    disabled={isProcessing}
+                    className="w-full"
+                  >
+                    Pular Item
+                  </Button>
+                </div>
 
-            {(!scannedProductCode || !scannedPositionCode) && (
-              <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                {(!scannedProductCode || !scannedPositionCode) && (
+                  <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-yellow-800">Atenção</p>
+                      <p className="text-yellow-700">
+                        É necessário escanear tanto o produto quanto a posição antes de confirmar.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-yellow-800">Atenção</p>
-                  <p className="text-yellow-700">
-                    É necessário escanear tanto o produto quanto a posição antes de alocar.
+                  <p className="font-medium text-red-800">Posição não definida</p>
+                  <p className="text-red-700">
+                    Este item ainda não tem uma posição automaticamente designada pelo sistema.
                   </p>
                 </div>
               </div>

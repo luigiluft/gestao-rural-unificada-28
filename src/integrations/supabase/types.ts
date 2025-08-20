@@ -1479,6 +1479,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_allocate_positions: {
+        Args: { p_wave_id: string }
+        Returns: boolean
+      }
       can_create_role: {
         Args: {
           _creator_user_id: string
