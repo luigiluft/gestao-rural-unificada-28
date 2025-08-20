@@ -20,8 +20,13 @@ export default function OndasAlocacao() {
   const [selectedWave, setSelectedWave] = useState<any>(null)
   
 
-  // Debug logs
+  const [funcionarioId, setFuncionarioId] = useState<string>("")
+
+  // Debug logs para verificar status das ondas
   console.log('🔍 OndasAlocacao - Estado atual:', { waves, isLoading, error, wavesLength: waves?.length })
+  waves?.forEach((wave: any) => {
+    console.log('📊 Onda:', wave.numero_onda, 'Status:', wave.status, 'Tipo do status:', typeof wave.status)
+  })
 
   const getStatusBadge = (status: string) => {
     switch (status) {
