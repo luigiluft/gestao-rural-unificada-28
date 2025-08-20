@@ -192,42 +192,6 @@ export type Database = {
         }
         Relationships: []
       }
-      depositos: {
-        Row: {
-          ativo: boolean | null
-          capacidade_total: number | null
-          created_at: string
-          descricao: string | null
-          endereco: string | null
-          id: string
-          nome: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          ativo?: boolean | null
-          capacidade_total?: number | null
-          created_at?: string
-          descricao?: string | null
-          endereco?: string | null
-          id?: string
-          nome: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          ativo?: boolean | null
-          capacidade_total?: number | null
-          created_at?: string
-          descricao?: string | null
-          endereco?: string | null
-          id?: string
-          nome?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       entrada_itens: {
         Row: {
           cest: string | null
@@ -1399,39 +1363,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      produtor_franqueado_depositos: {
-        Row: {
-          ativo: boolean
-          created_at: string
-          data_autorizacao: string
-          deposito_id: string
-          franqueado_id: string
-          id: string
-          produtor_id: string
-          updated_at: string
-        }
-        Insert: {
-          ativo?: boolean
-          created_at?: string
-          data_autorizacao?: string
-          deposito_id: string
-          franqueado_id: string
-          id?: string
-          produtor_id: string
-          updated_at?: string
-        }
-        Update: {
-          ativo?: boolean
-          created_at?: string
-          data_autorizacao?: string
-          deposito_id?: string
-          franqueado_id?: string
-          id?: string
-          produtor_id?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       produtores: {
         Row: {

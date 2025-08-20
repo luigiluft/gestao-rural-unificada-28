@@ -19,22 +19,13 @@ export const useSaidas = () => {
 
       if (saidasError) throw saidasError
 
-      // Para cada saída, buscar o nome do depósito/franquia
+      // Para cada saída, buscar o nome da franquia
       const saidasComDeposito = await Promise.all(
         (saidasData || []).map(async (saida) => {
           let depositoNome = null
 
-          // Primeiro tentar buscar em depositos
-          const { data: deposito } = await supabase
-            .from("depositos")
-            .select("nome")
-            .eq("id", saida.deposito_id)
-            .single()
-
-          if (deposito) {
-            depositoNome = deposito.nome
-          } else {
-            // Se não encontrar em depositos, tentar em franquias
+          if (saida.deposito_id) {
+            // Buscar nome da franquia
             const { data: franquia } = await supabase
               .from("franquias")
               .select("nome")

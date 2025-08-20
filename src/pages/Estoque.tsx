@@ -324,8 +324,8 @@ export default function Estoque() {
 
                                       <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                          <h4 className="font-medium">Depósito</h4>
-                                          <p className="text-muted-foreground">{selectedItem.depositos?.nome}</p>
+                                          <h4 className="font-medium">Franquia</h4>
+                                          <p className="text-muted-foreground">{selectedItem.franquias?.nome}</p>
                                         </div>
                                         <div>
                                           <h4 className="font-medium">Valor Médio</h4>
