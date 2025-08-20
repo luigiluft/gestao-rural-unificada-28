@@ -1100,12 +1100,28 @@ export type Database = {
         Row: {
           ativo: boolean | null
           categoria: string | null
+          category: string | null
+          cest: string | null
           codigo: string | null
+          composition: string | null
+          containers_per_package: number | null
+          country_of_manufacturing: string | null
           created_at: string
           descricao: string | null
+          description: string | null
           id: string
+          informacoes_complementares: string | null
+          manufacturer: string | null
+          mapa_registration: string | null
           ncm: string | null
           nome: string
+          package_capacity: number | null
+          package_capacity_units: string | null
+          package_string: string | null
+          package_type: string | null
+          pests: string | null
+          physical_state: string | null
+          short_description: string | null
           unidade_medida: string
           updated_at: string
           user_id: string
@@ -1113,12 +1129,28 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           categoria?: string | null
+          category?: string | null
+          cest?: string | null
           codigo?: string | null
+          composition?: string | null
+          containers_per_package?: number | null
+          country_of_manufacturing?: string | null
           created_at?: string
           descricao?: string | null
+          description?: string | null
           id?: string
+          informacoes_complementares?: string | null
+          manufacturer?: string | null
+          mapa_registration?: string | null
           ncm?: string | null
           nome: string
+          package_capacity?: number | null
+          package_capacity_units?: string | null
+          package_string?: string | null
+          package_type?: string | null
+          pests?: string | null
+          physical_state?: string | null
+          short_description?: string | null
           unidade_medida: string
           updated_at?: string
           user_id: string
@@ -1126,12 +1158,28 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           categoria?: string | null
+          category?: string | null
+          cest?: string | null
           codigo?: string | null
+          composition?: string | null
+          containers_per_package?: number | null
+          country_of_manufacturing?: string | null
           created_at?: string
           descricao?: string | null
+          description?: string | null
           id?: string
+          informacoes_complementares?: string | null
+          manufacturer?: string | null
+          mapa_registration?: string | null
           ncm?: string | null
           nome?: string
+          package_capacity?: number | null
+          package_capacity_units?: string | null
+          package_string?: string | null
+          package_type?: string | null
+          pests?: string | null
+          physical_state?: string | null
+          short_description?: string | null
           unidade_medida?: string
           updated_at?: string
           user_id?: string
