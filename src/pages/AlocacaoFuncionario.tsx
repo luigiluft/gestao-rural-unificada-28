@@ -38,10 +38,10 @@ export default function AlocacaoFuncionario() {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === 'F1') { // F1 to simulate product scan
         event.preventDefault()
-        setScannedProductCode(currentItem?.entrada_itens?.codigo_produto || currentItem?.barcode_produto || currentItem?.lote || '')
+        setScannedProductCode(currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}` || '')
         toast({
           title: "Produto escaneado",
-          description: `Código: ${currentItem?.entrada_itens?.codigo_produto || currentItem?.barcode_produto || currentItem?.lote}`,
+          description: `Código: ${currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`}`,
         })
       }
       if (event.key === 'F2') { // F2 to simulate position scan
@@ -71,7 +71,7 @@ export default function AlocacaoFuncionario() {
     }
 
     // Validar se os códigos escaneados conferem com o esperado
-    const expectedProductCode = currentItem.entrada_itens?.codigo_produto || currentItem.barcode_produto || currentItem.lote
+    const expectedProductCode = currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
     const expectedPositionCode = currentPosition.codigo
 
     if (scannedProductCode !== expectedProductCode) {
@@ -242,7 +242,7 @@ export default function AlocacaoFuncionario() {
                     setScannedProductCode(value)
                     toast({
                       title: "Produto selecionado",
-                      description: `Código: ${currentItem?.entrada_itens?.codigo_produto || value}`,
+                      description: `Código: ${currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`}`,
                     })
                   }}
                 >
@@ -250,7 +250,7 @@ export default function AlocacaoFuncionario() {
                     <SelectValue placeholder="Escolher produto..." />
                   </SelectTrigger>
                   <SelectContent className="z-50 bg-background">
-                    <SelectItem value={currentItem.entrada_itens?.codigo_produto || currentItem.barcode_produto || currentItem.lote || currentItem.produtos?.nome || ''}>
+                    <SelectItem value={currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`}>
                       <div className="flex flex-col">
                         <span className="font-medium">{currentItem.produtos?.nome}</span>
                         <span className="text-xs text-muted-foreground">

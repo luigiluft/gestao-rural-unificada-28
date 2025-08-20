@@ -15,7 +15,8 @@ export const useAllocationWaves = () => {
           allocation_wave_items(
             *,
             produtos(nome, unidade_medida),
-            storage_positions(codigo, descricao)
+            storage_positions(codigo, descricao),
+            entrada_itens(lote, data_validade, valor_unitario, codigo_produto)
           )
         `)
         .order("created_at", { ascending: false })
