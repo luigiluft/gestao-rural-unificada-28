@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +7,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, Edit, Trash2, Zap } from "lucide-react";
-import { StoragePosition } from "../FranquiaWizard";
+import { Package, Plus, Edit, Trash2, Zap, Calculator } from "lucide-react";
+import { StoragePosition, FranquiaFormData } from "../FranquiaWizard";
+import { WarehouseLayoutDesigner, WarehouseLayout } from "../WarehouseLayoutDesigner";
 import { toast } from "@/hooks/use-toast";
 
 interface PositionsStepProps {
   positions: StoragePosition[];
   setPositions: React.Dispatch<React.SetStateAction<StoragePosition[]>>;
+  warehouseLayout: WarehouseLayout | null;
+  setWarehouseLayout: React.Dispatch<React.SetStateAction<WarehouseLayout | null>>;
+  formData: FranquiaFormData;
+  setFormData: React.Dispatch<React.SetStateAction<FranquiaFormData>>;
 }
 
 const POSITION_TEMPLATES = [
@@ -65,10 +70,17 @@ const POSITION_TEMPLATES = [
   }
 ];
 
-export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
+export function PositionsStep({ 
+  positions, 
+  setPositions, 
+  warehouseLayout, 
+  setWarehouseLayout, 
+  formData, 
+  setFormData 
+}: PositionsStepProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
+  const [positionFormData, setPositionFormData] = useState({
     codigo: "",
     descricao: "",
     tipo_posicao: "prateleira",
@@ -76,7 +88,7 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
   });
 
   const resetForm = () => {
-    setFormData({
+    setPositionFormData({
       codigo: "",
       descricao: "",
       tipo_posicao: "prateleira",
@@ -90,7 +102,7 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
     
     // Check if code already exists (except when editing)
     const codeExists = positions.some((pos, index) => 
-      pos.codigo === formData.codigo && index !== editingIndex
+      pos.codigo === positionFormData.codigo && index !== editingIndex
     );
     
     if (codeExists) {
@@ -103,8 +115,8 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
     }
 
     const newPosition: StoragePosition = {
-      ...formData,
-      capacidade_maxima: formData.capacidade_maxima ? Number(formData.capacidade_maxima) : undefined
+      ...positionFormData,
+      capacidade_maxima: positionFormData.capacidade_maxima ? Number(positionFormData.capacidade_maxima) : undefined
     };
 
     if (editingIndex !== null) {
@@ -121,7 +133,7 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
 
   const handleEdit = (index: number) => {
     const position = positions[index];
-    setFormData({
+    setPositionFormData({
       codigo: position.codigo,
       descricao: position.descricao,
       tipo_posicao: position.tipo_posicao,
@@ -137,17 +149,64 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
 
   const applyTemplate = (template: typeof POSITION_TEMPLATES[0]) => {
     setPositions(template.positions);
+    calculateTotalCapacity(template.positions);
     toast({
       title: "Template aplicado",
       description: `${template.positions.length} posições foram criadas com base no template "${template.name}".`,
     });
   };
 
+  const calculateTotalCapacity = (currentPositions: StoragePosition[]) => {
+    const totalCapacity = currentPositions.reduce((sum, pos) => {
+      return sum + (pos.capacidade_maxima || 0);
+    }, 0);
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      capacidade_total: totalCapacity.toString() 
+    }));
+  };
+
+  useEffect(() => {
+    calculateTotalCapacity(positions);
+  }, [positions, setFormData]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 border-b pb-2">
         <Package className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold">Configuração de Posições de Estoque</h3>
+        <h3 className="text-lg font-semibold">Layout do Armazém e Posições de Estoque</h3>
+      </div>
+
+      {/* Capacidade Total Display */}
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Calculator className="w-5 h-5" />
+          <h4 className="font-medium">Capacidade Total Calculada</h4>
+        </div>
+        <p className="text-2xl font-bold text-primary mt-1">
+          {formData.capacidade_total || '0'} kg
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Baseado em {positions.length} posição(ões) configurada(s)
+        </p>
+      </div>
+
+      {/* Layout Designer */}
+      <div className="space-y-4">
+        <h4 className="font-medium">Designer de Layout (Opcional)</h4>
+        <p className="text-sm text-muted-foreground">
+          Configure o layout visual do armazém. As posições criadas automaticamente serão sincronizadas com a lista abaixo.
+        </p>
+        <div className="border rounded-lg p-4">
+          <WarehouseLayoutDesigner
+            layout={warehouseLayout}
+            onLayoutChange={setWarehouseLayout}
+            onCapacityChange={(capacity) => 
+              setFormData(prev => ({ ...prev, capacidade_total: capacity.toString() }))
+            }
+          />
+        </div>
       </div>
 
       {/* Templates */}
@@ -210,8 +269,8 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
                 <Label htmlFor="codigo">Código da Posição *</Label>
                 <Input
                   id="codigo"
-                  value={formData.codigo}
-                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  value={positionFormData.codigo}
+                  onChange={(e) => setPositionFormData({ ...positionFormData, codigo: e.target.value })}
                   placeholder="Ex: A01-01-01, P001"
                   required
                 />
@@ -221,8 +280,8 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
                 <Label htmlFor="descricao">Descrição</Label>
                 <Input
                   id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                  value={positionFormData.descricao}
+                  onChange={(e) => setPositionFormData({ ...positionFormData, descricao: e.target.value })}
                   placeholder="Descrição da posição..."
                 />
               </div>
@@ -230,8 +289,8 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
               <div>
                 <Label htmlFor="tipo_posicao">Tipo de Posição</Label>
                 <Select 
-                  value={formData.tipo_posicao} 
-                  onValueChange={(value) => setFormData({ ...formData, tipo_posicao: value })}
+                  value={positionFormData.tipo_posicao} 
+                  onValueChange={(value) => setPositionFormData({ ...positionFormData, tipo_posicao: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -250,8 +309,8 @@ export function PositionsStep({ positions, setPositions }: PositionsStepProps) {
                 <Input
                   id="capacidade_maxima"
                   type="number"
-                  value={formData.capacidade_maxima}
-                  onChange={(e) => setFormData({ ...formData, capacidade_maxima: e.target.value })}
+                  value={positionFormData.capacidade_maxima}
+                  onChange={(e) => setPositionFormData({ ...positionFormData, capacidade_maxima: e.target.value })}
                   placeholder="Capacidade em kg..."
                 />
               </div>

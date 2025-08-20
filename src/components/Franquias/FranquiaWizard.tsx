@@ -9,7 +9,7 @@ import { BasicInfoStep } from "./WizardSteps/BasicInfoStep";
 import { AddressStep } from "./WizardSteps/AddressStep";
 import { LegalInfoStep } from "./WizardSteps/LegalInfoStep";
 import { PositionsStep } from "./WizardSteps/PositionsStep";
-import { LayoutStep } from "./WizardSteps/LayoutStep";
+
 import { WarehouseLayout } from "./WarehouseLayoutDesigner";
 
 export interface FranquiaFormData {
@@ -56,8 +56,7 @@ const STEPS = [
   { id: 1, title: "Informações Básicas", icon: Building2 },
   { id: 2, title: "Endereço", icon: MapPin },
   { id: 3, title: "Informações Legais", icon: User },
-  { id: 4, title: "Posições de Estoque", icon: Package },
-  { id: 5, title: "Layout do Armazém", icon: CheckCircle },
+  { id: 4, title: "Layout e Posições", icon: Package },
 ];
 
 export function FranquiaWizard({
@@ -158,8 +157,6 @@ export function FranquiaWizard({
         return true; // Legal info is optional
       case 4:
         return positions.length > 0; // Require at least one position
-      case 5:
-        return true; // Layout is optional
       default:
         return false;
     }
@@ -216,11 +213,6 @@ export function FranquiaWizard({
           <PositionsStep
             positions={positions}
             setPositions={setPositions}
-          />
-        );
-      case 5:
-        return (
-          <LayoutStep
             warehouseLayout={warehouseLayout}
             setWarehouseLayout={setWarehouseLayout}
             formData={formData}
