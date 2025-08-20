@@ -18,7 +18,7 @@ export default function OndasAlocacao() {
   const { data: waves, isLoading, error } = useAllocationWaves()
   const startWave = useStartAllocationWave()
   const [selectedWave, setSelectedWave] = useState<any>(null)
-  const [funcionarioId, setFuncionarioId] = useState<string>("")
+  
 
   // Debug logs
   console.log('🔍 OndasAlocacao - Estado atual:', { waves, isLoading, error, wavesLength: waves?.length })
@@ -41,11 +41,9 @@ export default function OndasAlocacao() {
   const handleStartWave = async () => {
     if (selectedWave) {
       await startWave.mutateAsync({ 
-        waveId: selectedWave.id,
-        funcionarioId: funcionarioId || undefined
+        waveId: selectedWave.id
       })
       setSelectedWave(null)
-      setFuncionarioId("")
     }
   }
 
@@ -190,35 +188,19 @@ export default function OndasAlocacao() {
                             Confirme o início da execução da onda {selectedWave?.numero_onda}
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium">Funcionário (opcional)</label>
-                            <Select value={funcionarioId} onValueChange={setFuncionarioId}>
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Selecionar funcionário..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="auto">Atribuição automática</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
-                              onClick={() => {
-                                setSelectedWave(null)
-                                setFuncionarioId("")
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button 
-                              onClick={handleStartWave}
-                              disabled={startWave.isPending}
-                            >
-                              {startWave.isPending ? "Iniciando..." : "Iniciar Execução"}
-                            </Button>
-                          </div>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setSelectedWave(null)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            onClick={handleStartWave}
+                            disabled={startWave.isPending}
+                          >
+                            {startWave.isPending ? "Iniciando..." : "Iniciar Execução"}
+                          </Button>
                         </div>
                       </DialogContent>
                     </Dialog>
