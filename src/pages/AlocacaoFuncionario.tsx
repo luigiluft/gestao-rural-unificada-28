@@ -214,25 +214,67 @@ export default function AlocacaoFuncionario() {
               </div>
             )}
 
-            <div className="pt-4 border-t">
-              <Label className="font-medium">Código do Produto</Label>
-              <div className="flex gap-2 mt-2">
-                <Input 
-                  value={scannedProductCode}
-                  onChange={(e) => setScannedProductCode(e.target.value)}
-                  placeholder="Escanear ou digitar código..."
-                />
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setScannerOpen(true)}
+            <div className="pt-4 border-t space-y-4">
+              <div>
+                <Label className="font-medium">Selecionar Produto Manualmente</Label>
+                <Select 
+                  value={scannedProductCode} 
+                  onValueChange={(value) => {
+                    setScannedProductCode(value)
+                    toast({
+                      title: "Produto selecionado",
+                      description: `Código: ${value}`,
+                    })
+                  }}
                 >
-                  <Scan className="w-4 h-4" />
-                </Button>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Escolher produto..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={currentItem.barcode_produto || currentItem.lote || currentItem.produtos?.nome || ''}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{currentItem.produtos?.nome}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {currentItem.lote ? `Lote: ${currentItem.lote}` : 'Sem lote'}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Selecione o produto da lista para facilitar os testes
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Dica: Pressione F1 para simular scan do produto
-              </p>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">ou</span>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="font-medium">Código do Produto</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input 
+                    value={scannedProductCode}
+                    onChange={(e) => setScannedProductCode(e.target.value)}
+                    placeholder="Escanear ou digitar código..."
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setScannerOpen(true)}
+                  >
+                    <Scan className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Dica: Pressione F1 para simular scan do produto
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
