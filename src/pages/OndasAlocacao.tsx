@@ -175,7 +175,7 @@ export default function OndasAlocacao() {
                 )}
 
                 <div className="flex gap-2">
-                  {wave.status === 'pendente' && (
+                  {wave.status === 'posicoes_definidas' && (
                     <Button
                       size="sm"
                       onClick={() => navigate(`/alocar/${wave.id}`)}
@@ -221,16 +221,6 @@ export default function OndasAlocacao() {
                     </Dialog>
                   )}
 
-                  {wave.status === 'posicoes_definidas' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`/alocar/${wave.id}`)}
-                    >
-                      <MapPin className="w-4 h-4 mr-1" />
-                      Executar Alocação
-                    </Button>
-                  )}
                   
                   {wave.status === 'em_andamento' && (
                     <Button
