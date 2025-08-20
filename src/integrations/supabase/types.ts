@@ -230,52 +230,106 @@ export type Database = {
       }
       entrada_itens: {
         Row: {
+          cest: string | null
+          cfop: string | null
+          codigo_ean: string | null
+          codigo_ean_tributavel: string | null
           codigo_produto: string | null
           created_at: string
           data_fabricacao: string | null
           data_validade: string | null
+          descricao_produto: string | null
           entrada_id: string
           id: string
+          impostos_cofins: Json | null
+          impostos_icms: Json | null
+          impostos_ipi: Json | null
+          impostos_pis: Json | null
+          indicador_total: string | null
           lote: string | null
+          ncm: string | null
           nome_produto: string | null
           produto_id: string | null
           quantidade: number
+          quantidade_comercial: number | null
           quantidade_lote: number | null
+          quantidade_tributavel: number | null
+          unidade_comercial: string | null
+          unidade_tributavel: string | null
           user_id: string
           valor_total: number | null
+          valor_total_tributos_item: number | null
           valor_unitario: number | null
+          valor_unitario_comercial: number | null
+          valor_unitario_tributavel: number | null
         }
         Insert: {
+          cest?: string | null
+          cfop?: string | null
+          codigo_ean?: string | null
+          codigo_ean_tributavel?: string | null
           codigo_produto?: string | null
           created_at?: string
           data_fabricacao?: string | null
           data_validade?: string | null
+          descricao_produto?: string | null
           entrada_id: string
           id?: string
+          impostos_cofins?: Json | null
+          impostos_icms?: Json | null
+          impostos_ipi?: Json | null
+          impostos_pis?: Json | null
+          indicador_total?: string | null
           lote?: string | null
+          ncm?: string | null
           nome_produto?: string | null
           produto_id?: string | null
           quantidade: number
+          quantidade_comercial?: number | null
           quantidade_lote?: number | null
+          quantidade_tributavel?: number | null
+          unidade_comercial?: string | null
+          unidade_tributavel?: string | null
           user_id: string
           valor_total?: number | null
+          valor_total_tributos_item?: number | null
           valor_unitario?: number | null
+          valor_unitario_comercial?: number | null
+          valor_unitario_tributavel?: number | null
         }
         Update: {
+          cest?: string | null
+          cfop?: string | null
+          codigo_ean?: string | null
+          codigo_ean_tributavel?: string | null
           codigo_produto?: string | null
           created_at?: string
           data_fabricacao?: string | null
           data_validade?: string | null
+          descricao_produto?: string | null
           entrada_id?: string
           id?: string
+          impostos_cofins?: Json | null
+          impostos_icms?: Json | null
+          impostos_ipi?: Json | null
+          impostos_pis?: Json | null
+          indicador_total?: string | null
           lote?: string | null
+          ncm?: string | null
           nome_produto?: string | null
           produto_id?: string | null
           quantidade?: number
+          quantidade_comercial?: number | null
           quantidade_lote?: number | null
+          quantidade_tributavel?: number | null
+          unidade_comercial?: string | null
+          unidade_tributavel?: string | null
           user_id?: string
           valor_total?: number | null
+          valor_total_tributos_item?: number | null
           valor_unitario?: number | null
+          valor_unitario_comercial?: number | null
+          valor_unitario_tributavel?: number | null
         }
         Relationships: [
           {
@@ -336,83 +390,401 @@ export type Database = {
         Row: {
           aprovado_por: string | null
           chave_nfe: string | null
+          cmun_fg: string | null
+          cnf: string | null
+          codigo_status: string | null
           created_at: string
+          cuf: string | null
           data_aprovacao: string | null
           data_emissao: string | null
           data_entrada: string
+          data_recebimento: string | null
+          data_vencimento_duplicata: string | null
           deposito_id: string | null
+          descricao_pagamento: string | null
+          destinatario_bairro: string | null
+          destinatario_cep: string | null
+          destinatario_codigo_municipio: string | null
+          destinatario_codigo_pais: string | null
+          destinatario_complemento: string | null
           destinatario_cpf_cnpj: string | null
+          destinatario_email: string | null
+          destinatario_ie: string | null
+          destinatario_ind_ie: string | null
+          destinatario_logradouro: string | null
+          destinatario_municipio: string | null
+          destinatario_nome: string | null
+          destinatario_numero: string | null
+          destinatario_pais: string | null
+          destinatario_telefone: string | null
+          destinatario_uf: string | null
+          dh_emissao: string | null
+          dh_saida_entrada: string | null
+          digest_value: string | null
+          digito_verificador: string | null
           divergencias: Json | null
+          emitente_bairro: string | null
+          emitente_cep: string | null
           emitente_cnpj: string | null
+          emitente_codigo_municipio: string | null
+          emitente_codigo_pais: string | null
+          emitente_complemento: string | null
+          emitente_crt: string | null
           emitente_endereco: string | null
+          emitente_ie: string | null
+          emitente_logradouro: string | null
+          emitente_municipio: string | null
           emitente_nome: string | null
+          emitente_nome_fantasia: string | null
+          emitente_numero: string | null
+          emitente_telefone: string | null
+          emitente_uf: string | null
+          entrega_bairro: string | null
+          entrega_cep: string | null
+          entrega_cnpj: string | null
+          entrega_logradouro: string | null
+          entrega_municipio: string | null
+          entrega_nome: string | null
+          entrega_numero: string | null
+          entrega_telefone: string | null
+          entrega_uf: string | null
+          finalidade_nfe: string | null
           fornecedor_id: string | null
           id: string
+          id_dest: string | null
+          ind_final: string | null
+          ind_intermediador: string | null
+          ind_pres: string | null
+          indicador_pagamento: string | null
+          informacoes_complementares: string | null
+          modalidade_frete: string | null
+          modelo: string | null
+          motivo_status: string | null
           natureza_operacao: string | null
+          numero_duplicata: string | null
+          numero_fatura: string | null
           numero_nfe: string | null
+          numero_pedido_compra: string | null
+          numero_protocolo: string | null
           observacoes: string | null
           observacoes_franqueado: string | null
+          peso_bruto: number | null
+          peso_liquido: number | null
+          processo_emissao: string | null
+          quantidade_volumes: number | null
           serie: string | null
           status_aprovacao: Database["public"]["Enums"]["entrada_status"] | null
+          tipo_ambiente: string | null
+          tipo_ambiente_protocolo: string | null
+          tipo_emissao: string | null
+          tipo_impressao: string | null
+          tipo_nf: string | null
+          tipo_pagamento: string | null
+          transportadora_cnpj: string | null
+          transportadora_endereco: string | null
+          transportadora_municipio: string | null
+          transportadora_nome: string | null
+          transportadora_uf: string | null
           updated_at: string
           user_id: string
+          valor_bc_icms: number | null
+          valor_bc_st: number | null
+          valor_cofins: number | null
+          valor_desconto: number | null
+          valor_desconto_fatura: number | null
+          valor_duplicata: number | null
+          valor_fcp: number | null
+          valor_fcp_st: number | null
+          valor_fcp_st_ret: number | null
+          valor_frete: number | null
+          valor_icms: number | null
+          valor_icms_desonerado: number | null
+          valor_ii: number | null
+          valor_ipi: number | null
+          valor_ipi_devolvido: number | null
+          valor_liquido_fatura: number | null
+          valor_original_fatura: number | null
+          valor_outros: number | null
+          valor_pagamento: number | null
+          valor_pis: number | null
+          valor_produtos: number | null
+          valor_seguro: number | null
+          valor_st: number | null
           valor_total: number | null
+          valor_total_tributos: number | null
+          veiculo_placa: string | null
+          veiculo_uf: string | null
+          versao_aplicativo: string | null
+          versao_nfe: string | null
+          versao_processo: string | null
           xml_content: string | null
         }
         Insert: {
           aprovado_por?: string | null
           chave_nfe?: string | null
+          cmun_fg?: string | null
+          cnf?: string | null
+          codigo_status?: string | null
           created_at?: string
+          cuf?: string | null
           data_aprovacao?: string | null
           data_emissao?: string | null
           data_entrada: string
+          data_recebimento?: string | null
+          data_vencimento_duplicata?: string | null
           deposito_id?: string | null
+          descricao_pagamento?: string | null
+          destinatario_bairro?: string | null
+          destinatario_cep?: string | null
+          destinatario_codigo_municipio?: string | null
+          destinatario_codigo_pais?: string | null
+          destinatario_complemento?: string | null
           destinatario_cpf_cnpj?: string | null
+          destinatario_email?: string | null
+          destinatario_ie?: string | null
+          destinatario_ind_ie?: string | null
+          destinatario_logradouro?: string | null
+          destinatario_municipio?: string | null
+          destinatario_nome?: string | null
+          destinatario_numero?: string | null
+          destinatario_pais?: string | null
+          destinatario_telefone?: string | null
+          destinatario_uf?: string | null
+          dh_emissao?: string | null
+          dh_saida_entrada?: string | null
+          digest_value?: string | null
+          digito_verificador?: string | null
           divergencias?: Json | null
+          emitente_bairro?: string | null
+          emitente_cep?: string | null
           emitente_cnpj?: string | null
+          emitente_codigo_municipio?: string | null
+          emitente_codigo_pais?: string | null
+          emitente_complemento?: string | null
+          emitente_crt?: string | null
           emitente_endereco?: string | null
+          emitente_ie?: string | null
+          emitente_logradouro?: string | null
+          emitente_municipio?: string | null
           emitente_nome?: string | null
+          emitente_nome_fantasia?: string | null
+          emitente_numero?: string | null
+          emitente_telefone?: string | null
+          emitente_uf?: string | null
+          entrega_bairro?: string | null
+          entrega_cep?: string | null
+          entrega_cnpj?: string | null
+          entrega_logradouro?: string | null
+          entrega_municipio?: string | null
+          entrega_nome?: string | null
+          entrega_numero?: string | null
+          entrega_telefone?: string | null
+          entrega_uf?: string | null
+          finalidade_nfe?: string | null
           fornecedor_id?: string | null
           id?: string
+          id_dest?: string | null
+          ind_final?: string | null
+          ind_intermediador?: string | null
+          ind_pres?: string | null
+          indicador_pagamento?: string | null
+          informacoes_complementares?: string | null
+          modalidade_frete?: string | null
+          modelo?: string | null
+          motivo_status?: string | null
           natureza_operacao?: string | null
+          numero_duplicata?: string | null
+          numero_fatura?: string | null
           numero_nfe?: string | null
+          numero_pedido_compra?: string | null
+          numero_protocolo?: string | null
           observacoes?: string | null
           observacoes_franqueado?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
+          processo_emissao?: string | null
+          quantidade_volumes?: number | null
           serie?: string | null
           status_aprovacao?:
             | Database["public"]["Enums"]["entrada_status"]
             | null
+          tipo_ambiente?: string | null
+          tipo_ambiente_protocolo?: string | null
+          tipo_emissao?: string | null
+          tipo_impressao?: string | null
+          tipo_nf?: string | null
+          tipo_pagamento?: string | null
+          transportadora_cnpj?: string | null
+          transportadora_endereco?: string | null
+          transportadora_municipio?: string | null
+          transportadora_nome?: string | null
+          transportadora_uf?: string | null
           updated_at?: string
           user_id: string
+          valor_bc_icms?: number | null
+          valor_bc_st?: number | null
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_desconto_fatura?: number | null
+          valor_duplicata?: number | null
+          valor_fcp?: number | null
+          valor_fcp_st?: number | null
+          valor_fcp_st_ret?: number | null
+          valor_frete?: number | null
+          valor_icms?: number | null
+          valor_icms_desonerado?: number | null
+          valor_ii?: number | null
+          valor_ipi?: number | null
+          valor_ipi_devolvido?: number | null
+          valor_liquido_fatura?: number | null
+          valor_original_fatura?: number | null
+          valor_outros?: number | null
+          valor_pagamento?: number | null
+          valor_pis?: number | null
+          valor_produtos?: number | null
+          valor_seguro?: number | null
+          valor_st?: number | null
           valor_total?: number | null
+          valor_total_tributos?: number | null
+          veiculo_placa?: string | null
+          veiculo_uf?: string | null
+          versao_aplicativo?: string | null
+          versao_nfe?: string | null
+          versao_processo?: string | null
           xml_content?: string | null
         }
         Update: {
           aprovado_por?: string | null
           chave_nfe?: string | null
+          cmun_fg?: string | null
+          cnf?: string | null
+          codigo_status?: string | null
           created_at?: string
+          cuf?: string | null
           data_aprovacao?: string | null
           data_emissao?: string | null
           data_entrada?: string
+          data_recebimento?: string | null
+          data_vencimento_duplicata?: string | null
           deposito_id?: string | null
+          descricao_pagamento?: string | null
+          destinatario_bairro?: string | null
+          destinatario_cep?: string | null
+          destinatario_codigo_municipio?: string | null
+          destinatario_codigo_pais?: string | null
+          destinatario_complemento?: string | null
           destinatario_cpf_cnpj?: string | null
+          destinatario_email?: string | null
+          destinatario_ie?: string | null
+          destinatario_ind_ie?: string | null
+          destinatario_logradouro?: string | null
+          destinatario_municipio?: string | null
+          destinatario_nome?: string | null
+          destinatario_numero?: string | null
+          destinatario_pais?: string | null
+          destinatario_telefone?: string | null
+          destinatario_uf?: string | null
+          dh_emissao?: string | null
+          dh_saida_entrada?: string | null
+          digest_value?: string | null
+          digito_verificador?: string | null
           divergencias?: Json | null
+          emitente_bairro?: string | null
+          emitente_cep?: string | null
           emitente_cnpj?: string | null
+          emitente_codigo_municipio?: string | null
+          emitente_codigo_pais?: string | null
+          emitente_complemento?: string | null
+          emitente_crt?: string | null
           emitente_endereco?: string | null
+          emitente_ie?: string | null
+          emitente_logradouro?: string | null
+          emitente_municipio?: string | null
           emitente_nome?: string | null
+          emitente_nome_fantasia?: string | null
+          emitente_numero?: string | null
+          emitente_telefone?: string | null
+          emitente_uf?: string | null
+          entrega_bairro?: string | null
+          entrega_cep?: string | null
+          entrega_cnpj?: string | null
+          entrega_logradouro?: string | null
+          entrega_municipio?: string | null
+          entrega_nome?: string | null
+          entrega_numero?: string | null
+          entrega_telefone?: string | null
+          entrega_uf?: string | null
+          finalidade_nfe?: string | null
           fornecedor_id?: string | null
           id?: string
+          id_dest?: string | null
+          ind_final?: string | null
+          ind_intermediador?: string | null
+          ind_pres?: string | null
+          indicador_pagamento?: string | null
+          informacoes_complementares?: string | null
+          modalidade_frete?: string | null
+          modelo?: string | null
+          motivo_status?: string | null
           natureza_operacao?: string | null
+          numero_duplicata?: string | null
+          numero_fatura?: string | null
           numero_nfe?: string | null
+          numero_pedido_compra?: string | null
+          numero_protocolo?: string | null
           observacoes?: string | null
           observacoes_franqueado?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
+          processo_emissao?: string | null
+          quantidade_volumes?: number | null
           serie?: string | null
           status_aprovacao?:
             | Database["public"]["Enums"]["entrada_status"]
             | null
+          tipo_ambiente?: string | null
+          tipo_ambiente_protocolo?: string | null
+          tipo_emissao?: string | null
+          tipo_impressao?: string | null
+          tipo_nf?: string | null
+          tipo_pagamento?: string | null
+          transportadora_cnpj?: string | null
+          transportadora_endereco?: string | null
+          transportadora_municipio?: string | null
+          transportadora_nome?: string | null
+          transportadora_uf?: string | null
           updated_at?: string
           user_id?: string
+          valor_bc_icms?: number | null
+          valor_bc_st?: number | null
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_desconto_fatura?: number | null
+          valor_duplicata?: number | null
+          valor_fcp?: number | null
+          valor_fcp_st?: number | null
+          valor_fcp_st_ret?: number | null
+          valor_frete?: number | null
+          valor_icms?: number | null
+          valor_icms_desonerado?: number | null
+          valor_ii?: number | null
+          valor_ipi?: number | null
+          valor_ipi_devolvido?: number | null
+          valor_liquido_fatura?: number | null
+          valor_original_fatura?: number | null
+          valor_outros?: number | null
+          valor_pagamento?: number | null
+          valor_pis?: number | null
+          valor_produtos?: number | null
+          valor_seguro?: number | null
+          valor_st?: number | null
           valor_total?: number | null
+          valor_total_tributos?: number | null
+          veiculo_placa?: string | null
+          veiculo_uf?: string | null
+          versao_aplicativo?: string | null
+          versao_nfe?: string | null
+          versao_processo?: string | null
           xml_content?: string | null
         }
         Relationships: [
@@ -1105,7 +1477,6 @@ export type Database = {
           codigo: string | null
           composition: string | null
           containers_per_package: number | null
-          country_of_manufacturing: string | null
           created_at: string
           descricao: string | null
           description: string | null
@@ -1119,7 +1490,6 @@ export type Database = {
           package_capacity_units: string | null
           package_string: string | null
           package_type: string | null
-          pests: string | null
           physical_state: string | null
           short_description: string | null
           unidade_medida: string
@@ -1134,7 +1504,6 @@ export type Database = {
           codigo?: string | null
           composition?: string | null
           containers_per_package?: number | null
-          country_of_manufacturing?: string | null
           created_at?: string
           descricao?: string | null
           description?: string | null
@@ -1148,7 +1517,6 @@ export type Database = {
           package_capacity_units?: string | null
           package_string?: string | null
           package_type?: string | null
-          pests?: string | null
           physical_state?: string | null
           short_description?: string | null
           unidade_medida: string
@@ -1163,7 +1531,6 @@ export type Database = {
           codigo?: string | null
           composition?: string | null
           containers_per_package?: number | null
-          country_of_manufacturing?: string | null
           created_at?: string
           descricao?: string | null
           description?: string | null
@@ -1177,7 +1544,6 @@ export type Database = {
           package_capacity_units?: string | null
           package_string?: string | null
           package_type?: string | null
-          pests?: string | null
           physical_state?: string | null
           short_description?: string | null
           unidade_medida?: string
