@@ -282,7 +282,6 @@ export function PositionsStep({
                 <TableHead>Código</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Capacidade</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -297,9 +296,6 @@ export function PositionsStep({
                     <Badge variant="secondary" className="capitalize">
                       {position.tipo_posicao}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    -
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
