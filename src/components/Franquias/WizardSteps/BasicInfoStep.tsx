@@ -73,16 +73,6 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="capacidade_total">Capacidade Total (m³)</Label>
-        <Input
-          id="capacidade_total"
-          type="number"
-          value={formData.capacidade_total}
-          onChange={(e) => setFormData(prev => ({ ...prev, capacidade_total: e.target.value }))}
-          placeholder="Ex: 1000"
-        />
-      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Plus, Edit, Trash2, Zap, Calculator } from "lucide-react";
+import { Package, Plus, Edit, Trash2, Calculator } from "lucide-react";
 import { StoragePosition, FranquiaFormData } from "../FranquiaWizard";
 import { WarehouseLayoutDesigner, WarehouseLayout } from "../WarehouseLayoutDesigner";
 import { toast } from "@/hooks/use-toast";
@@ -21,54 +21,6 @@ interface PositionsStepProps {
   setFormData: React.Dispatch<React.SetStateAction<FranquiaFormData>>;
 }
 
-const POSITION_TEMPLATES = [
-  {
-    name: "Pequeno Depósito",
-    description: "20 posições básicas para pequenos volumes",
-    positions: Array.from({ length: 20 }, (_, i) => ({
-      codigo: `P${String(i + 1).padStart(2, '0')}`,
-      descricao: `Posição ${i + 1}`,
-      tipo_posicao: "prateleira",
-      capacidade_maxima: 100
-    }))
-  },
-  {
-    name: "Médio Depósito",
-    description: "50 posições mistas para volumes médios",
-    positions: [
-      ...Array.from({ length: 30 }, (_, i) => ({
-        codigo: `A${String(Math.floor(i / 10) + 1)}-${String((i % 10) + 1).padStart(2, '0')}`,
-        descricao: `Prateleira ${Math.floor(i / 10) + 1} - Posição ${(i % 10) + 1}`,
-        tipo_posicao: "prateleira",
-        capacidade_maxima: 150
-      })),
-      ...Array.from({ length: 20 }, (_, i) => ({
-        codigo: `P${String(i + 1).padStart(2, '0')}`,
-        descricao: `Pallet ${i + 1}`,
-        tipo_posicao: "pallet",
-        capacidade_maxima: 500
-      }))
-    ]
-  },
-  {
-    name: "Grande Depósito",
-    description: "100 posições organizadas por setores",
-    positions: [
-      ...Array.from({ length: 60 }, (_, i) => ({
-        codigo: `A${String(Math.floor(i / 12) + 1)}-${String((i % 12) + 1).padStart(2, '0')}`,
-        descricao: `Setor A - Corredor ${Math.floor(i / 12) + 1} - Posição ${(i % 12) + 1}`,
-        tipo_posicao: "prateleira",
-        capacidade_maxima: 200
-      })),
-      ...Array.from({ length: 40 }, (_, i) => ({
-        codigo: `P${String(Math.floor(i / 10) + 1)}-${String((i % 10) + 1).padStart(2, '0')}`,
-        descricao: `Setor Pallets - Linha ${Math.floor(i / 10) + 1} - Posição ${(i % 10) + 1}`,
-        tipo_posicao: "pallet",
-        capacidade_maxima: 800
-      }))
-    ]
-  }
-];
 
 export function PositionsStep({ 
   positions, 
@@ -86,6 +38,58 @@ export function PositionsStep({
     tipo_posicao: "prateleira",
     capacidade_maxima: ""
   });
+
+  // Gerar posições automaticamente baseado no layout do armazém
+  const generatePositionsFromLayout = (layout: WarehouseLayout) => {
+    const newPositions: StoragePosition[] = [];
+    
+    for (let rua = 1; rua <= layout.ruas; rua++) {
+      for (let modulo = 1; modulo <= layout.modulos; modulo++) {
+        for (let andar = 1; andar <= layout.andares; andar++) {
+          // Verificar se a posição não está inativa
+          const isInactive = layout.posicoes_inativas.some(
+            pos => pos.rua === rua && pos.modulo === modulo && pos.andar === andar
+          );
+          
+          if (!isInactive) {
+            const codigo = `R${String(rua).padStart(2, '0')}-M${String(modulo).padStart(2, '0')}-A${String(andar).padStart(2, '0')}`;
+            newPositions.push({
+              codigo,
+              descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`,
+              tipo_posicao: "prateleira",
+              capacidade_maxima: layout.capacidade_por_posicao
+            });
+          }
+        }
+      }
+    }
+    
+    return newPositions;
+  };
+
+  const calculateTotalCapacity = (currentPositions: StoragePosition[]) => {
+    const totalCapacity = currentPositions.reduce((sum, pos) => {
+      return sum + (pos.capacidade_maxima || 0);
+    }, 0);
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      capacidade_total: totalCapacity.toString() 
+    }));
+  };
+
+  // Atualizar posições quando o layout do armazém mudar
+  useEffect(() => {
+    if (warehouseLayout) {
+      const generatedPositions = generatePositionsFromLayout(warehouseLayout);
+      setPositions(generatedPositions);
+      calculateTotalCapacity(generatedPositions);
+    }
+  }, [warehouseLayout]);
+
+  useEffect(() => {
+    calculateTotalCapacity(positions);
+  }, [positions, setFormData]);
 
   const resetForm = () => {
     setPositionFormData({
@@ -147,29 +151,9 @@ export function PositionsStep({
     setPositions(positions.filter((_, i) => i !== index));
   };
 
-  const applyTemplate = (template: typeof POSITION_TEMPLATES[0]) => {
-    setPositions(template.positions);
-    calculateTotalCapacity(template.positions);
-    toast({
-      title: "Template aplicado",
-      description: `${template.positions.length} posições foram criadas com base no template "${template.name}".`,
-    });
+  const applyTemplate = () => {
+    // Função removida - posições são geradas automaticamente pelo layout
   };
-
-  const calculateTotalCapacity = (currentPositions: StoragePosition[]) => {
-    const totalCapacity = currentPositions.reduce((sum, pos) => {
-      return sum + (pos.capacidade_maxima || 0);
-    }, 0);
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      capacidade_total: totalCapacity.toString() 
-    }));
-  };
-
-  useEffect(() => {
-    calculateTotalCapacity(positions);
-  }, [positions, setFormData]);
 
   return (
     <div className="space-y-6">
@@ -194,9 +178,9 @@ export function PositionsStep({
 
       {/* Layout Designer */}
       <div className="space-y-4">
-        <h4 className="font-medium">Designer de Layout (Opcional)</h4>
+        <h4 className="font-medium">Designer de Layout</h4>
         <p className="text-sm text-muted-foreground">
-          Configure o layout visual do armazém. As posições criadas automaticamente serão sincronizadas com a lista abaixo.
+          Configure o layout do armazém. As posições serão geradas automaticamente baseadas nas dimensões definidas.
         </p>
         <div className="border rounded-lg p-4">
           <WarehouseLayoutDesigner
@@ -209,42 +193,12 @@ export function PositionsStep({
         </div>
       </div>
 
-      {/* Templates */}
-      <div className="space-y-4">
-        <h4 className="font-medium">Templates Predefinidos</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {POSITION_TEMPLATES.map((template, index) => (
-            <Card key={index} className="cursor-pointer hover:border-primary transition-colors">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-1">
-                  <Zap className="w-4 h-4 text-yellow-500" />
-                  {template.name}
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  {template.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => applyTemplate(template)}
-                >
-                  Aplicar ({template.positions.length} posições)
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Manual Creation */}
+      {/* Manual Position Management */}
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="font-medium">Posições Configuradas</h4>
+          <h4 className="font-medium">Posições Geradas Automaticamente</h4>
           <p className="text-sm text-muted-foreground">
-            {positions.length} posição(ões) configurada(s)
+            {positions.length} posição(ões) gerada(s) baseado no layout do armazém
           </p>
         </div>
         
@@ -252,16 +206,16 @@ export function PositionsStep({
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="w-4 h-4 mr-1" />
-              Nova Posição
+              Adicionar Posição Manual
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingIndex !== null ? "Editar Posição" : "Nova Posição"}
+                {editingIndex !== null ? "Editar Posição" : "Adicionar Posição Manual"}
               </DialogTitle>
               <DialogDescription>
-                {editingIndex !== null ? "Edite os dados da posição" : "Adicione uma nova posição de estoque"}
+                {editingIndex !== null ? "Edite os dados da posição gerada automaticamente" : "Adicione uma posição personalizada além das geradas pelo layout"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -389,7 +343,7 @@ export function PositionsStep({
         <div className="text-center py-8 text-muted-foreground">
           <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p>Nenhuma posição configurada</p>
-          <p className="text-sm">Use um template ou crie posições manualmente</p>
+          <p className="text-sm">Configure o layout do armazém acima para gerar posições automaticamente</p>
         </div>
       )}
     </div>
