@@ -176,6 +176,12 @@ export function FranquiaWizard({
 
   const handleFinish = () => {
     if (validateStep(currentStep)) {
+      console.log('FranquiaWizard handleFinish:', {
+        formData: formData.nome,
+        positions: positions.length,
+        layout: warehouseLayout
+      });
+      
       onSubmit({
         formData,
         positions,

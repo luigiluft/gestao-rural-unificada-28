@@ -155,6 +155,12 @@ const Franquias = () => {
       positions: any[];
       layout: WarehouseLayout | null;
     }) => {
+      console.log('saveFranquia received:', {
+        positions: data.positions.length,
+        layout: data.layout,
+        isEditing: !!editingFranquia
+      });
+
       const payload = {
         ...data.formData,
         capacidade_total: data.formData.capacidade_total ? parseFloat(data.formData.capacidade_total) : null,
@@ -170,6 +176,32 @@ const Franquias = () => {
           .eq("id", editingFranquia.id);
         if (error) throw error;
         franquiaId = editingFranquia.id;
+
+        // For edits, also handle position updates
+        if (data.positions.length > 0) {
+          // Delete existing positions for this franchise
+          const { error: deleteError } = await supabase
+            .from("storage_positions")
+            .delete()
+            .eq("deposito_id", franquiaId);
+          
+          if (deleteError) {
+            console.error("Error deleting existing positions:", deleteError);
+          }
+
+          // Create new positions
+          for (const position of data.positions) {
+            try {
+              await createPosition.mutateAsync({
+                ...position,
+                deposito_id: franquiaId
+              });
+              console.log("Position created successfully:", position.codigo);
+            } catch (positionError) {
+              console.error("Error creating position:", position.codigo, positionError);
+            }
+          }
+        }
       } else {
         const { data: result, error } = await supabase
           .from("franquias")
@@ -178,15 +210,21 @@ const Franquias = () => {
           .single();
         if (error) throw error;
         franquiaId = result.id;
-      }
 
-      // Create storage positions for new franquias
-      if (!editingFranquia && data.positions.length > 0) {
-        for (const position of data.positions) {
-          await createPosition.mutateAsync({
-            ...position,
-            deposito_id: franquiaId
-          });
+        // Create storage positions for new franquias
+        if (data.positions.length > 0) {
+          console.log(`Creating ${data.positions.length} positions for new franchise`);
+          for (const position of data.positions) {
+            try {
+              await createPosition.mutateAsync({
+                ...position,
+                deposito_id: franquiaId
+              });
+              console.log("Position created successfully:", position.codigo);
+            } catch (positionError) {
+              console.error("Error creating position:", position.codigo, positionError);
+            }
+          }
         }
       }
     },
@@ -290,56 +328,7 @@ const Franquias = () => {
     setDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Debug log to see what values are being validated
-    console.log('Form validation - formData:', {
-      nome: formData.nome,
-      master_franqueado_id: formData.master_franqueado_id,
-      cidade: formData.cidade,
-      estado: formData.estado
-    });
-    
-    if (!formData.nome || !formData.master_franqueado_id || !formData.cidade || !formData.estado) {
-      toast({
-        title: "Dados incompletos",
-        description: "Preencha ao menos o nome da franquia, franqueado master, cidade e estado.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Generate positions from warehouse layout if it exists
-    let positions: any[] = [];
-    if (warehouseLayout) {
-      for (let rua = 1; rua <= warehouseLayout.ruas; rua++) {
-        for (let modulo = 1; modulo <= warehouseLayout.modulos; modulo++) {
-          for (let andar = 1; andar <= warehouseLayout.andares; andar++) {
-            // Check if position is not inactive
-            const isInactive = warehouseLayout.posicoes_inativas.some(
-              pos => pos.rua === rua && pos.modulo === modulo && pos.andar === andar
-            );
-            
-            if (!isInactive) {
-              const codigo = `R${String(rua).padStart(2, '0')}-M${String(modulo).padStart(2, '0')}-A${String(andar).padStart(2, '0')}`;
-              positions.push({
-                codigo,
-                descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`,
-                tipo_posicao: "prateleira"
-              });
-            }
-          }
-        }
-      }
-    }
-    
-    saveFranquia.mutate({ 
-      formData, 
-      positions, 
-      layout: warehouseLayout 
-    });
-  };
+  // This function is no longer used - wizard handles all data now
 
   if (isLoading) {
     return (
@@ -492,7 +481,14 @@ const Franquias = () => {
       <FranquiaWizard
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSubmit={(data) => saveFranquia.mutate(data)}
+        onSubmit={(data) => {
+          console.log('Wizard onSubmit called with:', {
+            formData: data.formData.nome,
+            positions: data.positions.length,
+            layout: data.layout
+          });
+          saveFranquia.mutate(data);
+        }}
         editingFranquia={editingFranquia}
         franqueadosMasters={franqueadosMasters}
         isLoading={saveFranquia.isPending}
