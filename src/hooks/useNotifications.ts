@@ -11,6 +11,7 @@ export const useNotifications = () => {
       if (!user?.id) return {
         recebimento: 0,
         estoque: 0,
+        alocacoes: 0,
         expedicao: 0,
         suporte: 0,
         subcontas: 0,
@@ -29,6 +30,7 @@ export const useNotifications = () => {
 
       let recebimento = 0
       let estoque = 0
+      let alocacoes = 0
       let expedicao = 0
       let suporte = 0
       let subcontas = 0
@@ -71,6 +73,30 @@ export const useNotifications = () => {
 
           const { count: estoqueCount } = await estoqueQuery
           estoque = estoqueCount || 0
+        }
+
+        // ALOCAÇÕES: For franqueados - entradas ready for allocation
+        if (isFranqueado || isAdmin) {
+          let alocacoesQuery = supabase
+            .from("entradas")
+            .select("id", { count: "exact" })
+            .eq("status_aprovacao", "confirmado")
+
+          if (!isAdmin) {
+            // Filter by franquias owned by this franqueado
+            const { data: franquias } = await supabase
+              .from("franquias")
+              .select("id")
+              .eq("master_franqueado_id", user.id)
+            
+            const franquiaIds = franquias?.map(f => f.id) || []
+            if (franquiaIds.length > 0) {
+              alocacoesQuery = alocacoesQuery.in("deposito_id", franquiaIds)
+            }
+          }
+
+          const { count: alocacoesCount } = await alocacoesQuery
+          alocacoes = alocacoesCount || 0
         }
 
         // EXPEDIÇÃO: For franqueados - saídas pending expedition
@@ -128,6 +154,7 @@ export const useNotifications = () => {
       return {
         recebimento,
         estoque,
+        alocacoes,
         expedicao,
         suporte,
         subcontas,
