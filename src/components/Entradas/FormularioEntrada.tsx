@@ -23,6 +23,8 @@ import {
 import { NFData, NFItem } from "./NFParser";
 import { Plus, Trash2 } from "lucide-react";
 import { SeletorDeposito } from "./SeletorDeposito";
+import { useFranquiaByCnpj } from "@/hooks/useFranquiaByCnpj";
+import { useToast } from "@/hooks/use-toast";
 
 interface FormularioEntradaProps {
   nfData?: NFData | null;
@@ -45,6 +47,10 @@ interface ItemEntrada {
 }
 
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
+  const { toast } = useToast();
+  
+  // Buscar franquia automaticamente pelo CNPJ do destinatário
+  const { data: franquiaEncontrada } = useFranquiaByCnpj(nfData?.destinatarioCpfCnpj);
   const [dadosEntrada, setDadosEntrada] = useState({
     numeroNF: '',
     serie: '',
@@ -80,7 +86,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         dataEmissao: nfData.dataEmissao,
         origem: nfData.emitente.nome,
         observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
-        depositoId: ''
+        depositoId: franquiaEncontrada?.id || ''
       });
 
       // Converter itens da NFe para itens de entrada
@@ -98,8 +104,22 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       }));
 
       setItens(itensConvertidos);
+      
+      // Mostrar toast informando se a franquia foi encontrada ou não
+      if (franquiaEncontrada) {
+        toast({
+          title: "Franquia identificada automaticamente",
+          description: `Franquia "${franquiaEncontrada.nome}" selecionada baseada no CNPJ do destinatário.`,
+        });
+      } else if (nfData.destinatarioCpfCnpj) {
+        toast({
+          title: "Franquia não encontrada",
+          description: `Não foi possível encontrar uma franquia com o CNPJ ${nfData.destinatarioCpfCnpj}. Selecione manualmente.`,
+          variant: "destructive"
+        });
+      }
     }
-  }, [nfData]);
+  }, [nfData, franquiaEncontrada, toast]);
 
   const adicionarItem = () => {
     if (novoItem.produto && novoItem.quantidade > 0) {
