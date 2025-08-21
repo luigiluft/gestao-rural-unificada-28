@@ -35,6 +35,8 @@ interface FormularioEntradaProps {
 interface ItemEntrada {
   produto: string;
   lote: string;
+  codigo?: string; // Código do produto (cProd)
+  codigoEAN?: string; // Código EAN (cEAN)
   quantidade: number;
   unidade: string;
   deposito: string;
@@ -95,6 +97,8 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       const itensConvertidos: ItemEntrada[] = nfData.itens.map((item) => ({
         produto: item.descricao,
         lote: item.lote || '', // Usar o lote real do XML
+        codigo: item.codigo, // Código do produto (cProd)
+        codigoEAN: item.codigoEAN || '', // Código EAN (cEAN) 
         quantidade: item.quantidade,
         unidade: item.unidade,
         deposito: 'Armazém A', // Padrão

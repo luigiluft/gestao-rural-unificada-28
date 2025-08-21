@@ -352,7 +352,8 @@ export default function Entradas() {
           data_validade: item.dataValidade || null, // Adicionar data de validade se disponível
           quantidade_lote: item.quantidadeLote || null, // Adicionar quantidade do lote
           data_fabricacao: item.dataFabricacao || null, // Adicionar data de fabricação
-          codigo_produto: item.codigoEAN || item.codigo || null // Usar código EAN ou código interno
+          codigo_produto: item.codigo || null, // Usar código do produto (cProd do XML)
+          codigo_ean: item.codigoEAN || null // Usar código EAN separadamente (cEAN do XML)
         }))
 
         const { error: itensError } = await supabase
