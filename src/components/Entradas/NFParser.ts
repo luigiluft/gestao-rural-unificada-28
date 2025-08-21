@@ -31,6 +31,11 @@ export interface NFData {
     nome: string;
     endereco: string;
   };
+  retirada?: {
+    cnpj: string;
+    ie?: string;
+    endereco: string;
+  };
   destinatarioCpfCnpj: string;
   itens: NFItem[];
   valorTotal: number;
@@ -76,6 +81,22 @@ export class NFParser {
         nome: dest?.querySelector('xNome')?.textContent || '',
         endereco: this.formatarEndereco(dest?.querySelector('enderDest'))
       };
+
+      // Extrair dados da retirada (local onde será retirada a mercadoria)
+      const retirada = xmlDoc.querySelector('retirada');
+      let retiradaData = undefined;
+      if (retirada) {
+        const retiradaCnpj = retirada.querySelector('CNPJ')?.textContent || '';
+        const retiradaIe = retirada.querySelector('IE')?.textContent || undefined;
+        
+        if (retiradaCnpj) {
+          retiradaData = {
+            cnpj: retiradaCnpj,
+            ie: retiradaIe,
+            endereco: this.formatarEnderecoRetirada(retirada)
+          };
+        }
+      }
 
       // Extrair itens
       const detElements = xmlDoc.querySelectorAll('det');
@@ -154,6 +175,7 @@ export class NFParser {
         xmlContent,
         emitente,
         destinatario,
+        retirada: retiradaData,
         destinatarioCpfCnpj,
         itens,
         valorTotal
@@ -175,6 +197,24 @@ export class NFParser {
     const cep = endereco.querySelector('CEP')?.textContent || '';
     
     return `${logradouro}, ${numero} - ${bairro}, ${cidade}/${uf} - CEP: ${cep}`.trim();
+  }
+
+  private static formatarEnderecoRetirada(retirada: Element | null): string {
+    if (!retirada) return '';
+    
+    const logradouro = retirada.querySelector('xLgr')?.textContent || '';
+    const numero = retirada.querySelector('nro')?.textContent || '';
+    const complemento = retirada.querySelector('xCpl')?.textContent || '';
+    const bairro = retirada.querySelector('xBairro')?.textContent || '';
+    const cidade = retirada.querySelector('xMun')?.textContent || '';
+    const uf = retirada.querySelector('UF')?.textContent || '';
+    const cep = retirada.querySelector('CEP')?.textContent || '';
+    
+    let endereco = `${logradouro}, ${numero}`;
+    if (complemento) endereco += ` - ${complemento}`;
+    endereco += ` - ${bairro}, ${cidade}/${uf} - CEP: ${cep}`;
+    
+    return endereco.trim();
   }
 
   static validateXML(xmlContent: string): boolean {

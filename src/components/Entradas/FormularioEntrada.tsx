@@ -49,8 +49,10 @@ interface ItemEntrada {
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
   const { toast } = useToast();
   
-  // Buscar franquia automaticamente pelo CNPJ do destinatário
-  const { data: franquiaEncontrada } = useFranquiaByCnpj(nfData?.destinatarioCpfCnpj);
+  // Buscar franquia automaticamente pelo CNPJ da retirada (prioridade) ou destinatário
+  const cnpjBusca = nfData?.retirada?.cnpj || nfData?.destinatarioCpfCnpj;
+  const ieBusca = nfData?.retirada?.ie;
+  const { data: franquiaEncontrada } = useFranquiaByCnpj(cnpjBusca, ieBusca);
   const [dadosEntrada, setDadosEntrada] = useState({
     numeroNF: '',
     serie: '',
@@ -107,14 +109,16 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       
       // Mostrar toast informando se a franquia foi encontrada ou não
       if (franquiaEncontrada) {
+        const origem = nfData.retirada?.cnpj ? "retirada" : "destinatário";
         toast({
           title: "Franquia identificada automaticamente",
-          description: `Franquia "${franquiaEncontrada.nome}" selecionada baseada no CNPJ do destinatário.`,
+          description: `Franquia "${franquiaEncontrada.nome}" selecionada baseada no CNPJ da ${origem}.`,
         });
-      } else if (nfData.destinatarioCpfCnpj) {
+      } else if (cnpjBusca) {
+        const origem = nfData.retirada?.cnpj ? "retirada" : "destinatário";
         toast({
           title: "Franquia não encontrada",
-          description: `Não foi possível encontrar uma franquia com o CNPJ ${nfData.destinatarioCpfCnpj}. Selecione manualmente.`,
+          description: `Não foi possível encontrar uma franquia com o CNPJ ${cnpjBusca} da ${origem}. Selecione manualmente.`,
           variant: "destructive"
         });
       }
