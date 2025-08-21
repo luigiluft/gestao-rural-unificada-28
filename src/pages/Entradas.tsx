@@ -76,6 +76,7 @@ import { NFData } from "@/components/Entradas/NFParser"
 import { useToast } from "@/hooks/use-toast"
 import { useEntradas } from "@/hooks/useEntradas"
 import { findProdutorByCpfCnpj } from "@/hooks/useProdutorByCpfCnpj"
+import { findFornecedorByCnpj } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -233,24 +234,22 @@ export default function Entradas() {
       let fornecedorId = null;
       
       // Se temos dados do emitente da NFe, criar/encontrar o fornecedor
-      if (nfData?.emitente) {
-        const { data: fornecedorExistente } = await supabase
-          .from('fornecedores')
-          .select('id')
-          .eq('cnpj_cpf', nfData.emitente.cnpj)
-          .single();
+      if (nfData?.emitente?.cnpj) {
+        const fornecedorExistente = await findFornecedorByCnpj(supabase, nfData.emitente.cnpj, entradaUserId);
 
         if (fornecedorExistente) {
           fornecedorId = fornecedorExistente.id;
         } else {
           // Criar novo fornecedor - usar o user_id da entrada (produtor ou admin)
+          // Salvar CNPJ sempre sem máscara para consistência
+          const cnpjLimpo = nfData.emitente.cnpj.replace(/[^\d]/g, '');
           const { data: novoFornecedor, error: fornecedorError } = await supabase
             .from('fornecedores')
             .insert({
               user_id: entradaUserId,
               nome: nfData.emitente.nome,
               nome_fantasia: nfData.emitente.nomeFantasia,
-              cnpj_cpf: nfData.emitente.cnpj,
+              cnpj_cpf: cnpjLimpo,
               endereco: nfData.emitente.endereco,
               ativo: true
             })
