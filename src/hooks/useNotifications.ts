@@ -60,12 +60,12 @@ export const useNotifications = () => {
           recebimento = entradasCount || 0
         }
 
-        // ESTOQUE: For produtores - confirmed entradas ready for tracking
+        // ESTOQUE: For produtores - items actually allocated in stock
         if (isProdutor || isAdmin) {
           let estoqueQuery = supabase
-            .from("entradas")
+            .from("estoque")
             .select("id", { count: "exact" })
-            .eq("status_aprovacao", "confirmado")
+            .gt("quantidade_atual", 0)
 
           if (!isAdmin) {
             estoqueQuery = estoqueQuery.eq("user_id", user.id)
