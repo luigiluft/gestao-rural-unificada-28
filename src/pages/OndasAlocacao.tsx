@@ -20,7 +20,7 @@ export default function OndasAlocacao() {
   const [selectedWave, setSelectedWave] = useState<any>(null)
   
 
-  const [funcionarioId, setFuncionarioId] = useState<string>("")
+  const [isExecutingAllocation, setIsExecutingAllocation] = useState<string | null>(null)
 
   // Debug logs para verificar status das ondas
   console.log('🔍 OndasAlocacao - Estado atual:', { waves, isLoading, error, wavesLength: waves?.length })
@@ -43,12 +43,15 @@ export default function OndasAlocacao() {
     }
   }
 
-  const handleStartWave = async () => {
-    if (selectedWave) {
-      await startWave.mutateAsync({ 
-        waveId: selectedWave.id
-      })
-      setSelectedWave(null)
+  const handleExecuteAllocation = async (wave: any) => {
+    try {
+      setIsExecutingAllocation(wave.id)
+      await startWave.mutateAsync({ waveId: wave.id })
+      navigate(`/alocar/${wave.id}`)
+    } catch (error) {
+      console.error('Erro ao executar alocação:', error)
+    } finally {
+      setIsExecutingAllocation(null)
     }
   }
 
@@ -178,50 +181,14 @@ export default function OndasAlocacao() {
                   {wave.status === 'posicoes_definidas' && (
                     <Button
                       size="sm"
-                      onClick={() => navigate(`/alocar/${wave.id}`)}
+                      onClick={() => handleExecuteAllocation(wave)}
+                      disabled={isExecutingAllocation === wave.id}
                     >
                       <MapPin className="w-4 h-4 mr-1" />
-                      Executar Alocação
+                      {isExecutingAllocation === wave.id ? "Iniciando..." : "Executar Alocação"}
                     </Button>
                   )}
 
-                  {wave.status === 'posicoes_definidas' && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          size="sm" 
-                          onClick={() => setSelectedWave(wave)}
-                        >
-                          <Play className="w-4 h-4 mr-1" />
-                          Iniciar Execução
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Iniciar Execução da Alocação</DialogTitle>
-                          <DialogDescription>
-                            Confirme o início da execução da onda {selectedWave?.numero_onda}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setSelectedWave(null)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button 
-                            onClick={handleStartWave}
-                            disabled={startWave.isPending}
-                          >
-                            {startWave.isPending ? "Iniciando..." : "Iniciar Execução"}
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-
-                  
                   {wave.status === 'em_andamento' && (
                     <Button
                       size="sm"
