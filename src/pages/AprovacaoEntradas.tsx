@@ -104,7 +104,7 @@ export default function AprovacaoEntradas() {
       'aguardando_transporte': 'Marcar como Em Transferência',
       'em_transferencia': 'Marcar como Aguardando Conferência',
       'aguardando_conferencia': 'Realizar Conferência',
-      'conferencia_completa': 'Confirmar Entrada'
+      'conferencia_completa': 'Enviar Para Alocação'
     }
     return statusLabels[currentStatus as keyof typeof statusLabels] || null
   }
