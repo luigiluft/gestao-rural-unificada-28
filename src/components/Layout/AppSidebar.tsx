@@ -103,6 +103,8 @@ export function AppSidebar() {
         return notifications.recebimento || 0
       case "Estoque":
         return notifications.estoque || 0
+      case "Alocações":
+        return notifications.alocacoes || 0
       case "Expedição":
         return notifications.expedicao || 0
       case "Suporte":

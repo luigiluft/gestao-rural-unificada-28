@@ -75,12 +75,12 @@ export const useNotifications = () => {
           estoque = estoqueCount || 0
         }
 
-        // ALOCAÇÕES: For franqueados - entradas ready for allocation
+        // ALOCAÇÕES: For franqueados - allocation waves pending allocation
         if (isFranqueado || isAdmin) {
           let alocacoesQuery = supabase
-            .from("entradas")
+            .from("allocation_waves")
             .select("id", { count: "exact" })
-            .eq("status_aprovacao", "confirmado")
+            .in("status", ["pendente", "posicoes_definidas"])
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
