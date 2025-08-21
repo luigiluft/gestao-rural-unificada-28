@@ -31,7 +31,7 @@ export interface NFData {
     nome: string;
     endereco: string;
   };
-  retirada?: {
+  entrega?: {
     cnpj: string;
     ie?: string;
     endereco: string;
@@ -82,18 +82,18 @@ export class NFParser {
         endereco: this.formatarEndereco(dest?.querySelector('enderDest'))
       };
 
-      // Extrair dados da retirada (local onde será retirada a mercadoria)
-      const retirada = xmlDoc.querySelector('retirada');
-      let retiradaData = undefined;
-      if (retirada) {
-        const retiradaCnpj = retirada.querySelector('CNPJ')?.textContent || '';
-        const retiradaIe = retirada.querySelector('IE')?.textContent || undefined;
+      // Extrair dados da entrega (local onde será entregue a mercadoria)
+      const entrega = xmlDoc.querySelector('entrega');
+      let entregaData = undefined;
+      if (entrega) {
+        const entregaCnpj = entrega.querySelector('CNPJ')?.textContent || '';
+        const entregaIe = entrega.querySelector('IE')?.textContent || undefined;
         
-        if (retiradaCnpj) {
-          retiradaData = {
-            cnpj: retiradaCnpj,
-            ie: retiradaIe,
-            endereco: this.formatarEnderecoRetirada(retirada)
+        if (entregaCnpj) {
+          entregaData = {
+            cnpj: entregaCnpj,
+            ie: entregaIe,
+            endereco: this.formatarEnderecoEntrega(entrega)
           };
         }
       }
@@ -175,7 +175,7 @@ export class NFParser {
         xmlContent,
         emitente,
         destinatario,
-        retirada: retiradaData,
+        entrega: entregaData,
         destinatarioCpfCnpj,
         itens,
         valorTotal
@@ -199,16 +199,16 @@ export class NFParser {
     return `${logradouro}, ${numero} - ${bairro}, ${cidade}/${uf} - CEP: ${cep}`.trim();
   }
 
-  private static formatarEnderecoRetirada(retirada: Element | null): string {
-    if (!retirada) return '';
+  private static formatarEnderecoEntrega(entrega: Element | null): string {
+    if (!entrega) return '';
     
-    const logradouro = retirada.querySelector('xLgr')?.textContent || '';
-    const numero = retirada.querySelector('nro')?.textContent || '';
-    const complemento = retirada.querySelector('xCpl')?.textContent || '';
-    const bairro = retirada.querySelector('xBairro')?.textContent || '';
-    const cidade = retirada.querySelector('xMun')?.textContent || '';
-    const uf = retirada.querySelector('UF')?.textContent || '';
-    const cep = retirada.querySelector('CEP')?.textContent || '';
+    const logradouro = entrega.querySelector('xLgr')?.textContent || '';
+    const numero = entrega.querySelector('nro')?.textContent || '';
+    const complemento = entrega.querySelector('xCpl')?.textContent || '';
+    const bairro = entrega.querySelector('xBairro')?.textContent || '';
+    const cidade = entrega.querySelector('xMun')?.textContent || '';
+    const uf = entrega.querySelector('UF')?.textContent || '';
+    const cep = entrega.querySelector('CEP')?.textContent || '';
     
     let endereco = `${logradouro}, ${numero}`;
     if (complemento) endereco += ` - ${complemento}`;
