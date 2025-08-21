@@ -34,12 +34,12 @@ export const useNotifications = () => {
       let subcontas = 0
 
       try {
-        // RECEBIMENTO: For franqueados - entradas pending approval
+        // RECEBIMENTO: For franqueados - entradas nos 4 status da página recebimento
         if (isFranqueado || isAdmin) {
           let entradasQuery = supabase
             .from("entradas")
             .select("id", { count: "exact" })
-            .in("status_aprovacao", ["aguardando_conferencia"])
+            .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa"])
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
