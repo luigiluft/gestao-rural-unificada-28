@@ -239,52 +239,61 @@ export default function AlocacaoComColetor() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Posição Definida pelo Sistema
+              <Scan className="w-5 h-5" />
+              Scanner de Posição
             </CardTitle>
             <CardDescription>
-              Confirme a alocação escaneando a posição indicada
+              Use o scanner para confirmar a posição designada
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {currentPosition ? (
               <>
-                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-5 h-5 text-primary" />
-                    <Label className="font-medium text-primary">Posição Designada</Label>
+                    <Scan className="w-5 h-5 text-blue-600" />
+                    <Label className="font-medium text-blue-800">Posição para Scanner</Label>
                   </div>
-                  <p className="text-2xl font-bold text-primary">{currentPosition.codigo}</p>
+                  <p className="text-2xl font-bold text-blue-800">{currentPosition.codigo}</p>
                   {currentPosition.descricao && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-blue-600 mt-1">
                       {currentPosition.descricao}
                     </p>
                   )}
+                  <p className="text-xs text-blue-600 mt-2">
+                    📱 Escaneie ou pressione F2 para confirmar
+                  </p>
                 </div>
 
                 <div>
-                  <Label className="font-medium">Escanear Posição para Confirmar</Label>
+                  <Label className="font-medium">Scanner de Posição (F2)</Label>
                   <div className="flex gap-2 mt-2">
                     <Input 
                       value={scannedPositionCode}
                       onChange={(e) => setScannedPositionCode(e.target.value)}
-                      placeholder={`Escaneie: ${currentPosition.codigo}`}
-                      className={scannedPositionCode && scannedPositionCode !== currentPosition.codigo ? 'border-destructive' : ''}
+                      placeholder={`Pressione F2 ou escaneie: ${currentPosition.codigo}`}
+                      className={scannedPositionCode && scannedPositionCode !== currentPosition.codigo ? 'border-destructive' : 'border-blue-300'}
                     />
                     <Button 
                       variant="outline" 
                       size="icon"
                       onClick={() => setScannerOpen(true)}
+                      className="border-blue-300 text-blue-600 hover:bg-blue-50"
                     >
                       <Scan className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Dica: Pressione F2 para simular scan da posição
+                  <p className="text-xs text-blue-600 mt-1">
+                    📱 Pressione F2 para simular scanner ou escaneie o código de barras
                   </p>
                   {scannedPositionCode && scannedPositionCode !== currentPosition.codigo && (
                     <p className="text-xs text-destructive mt-1">
-                      Posição incorreta! Escaneie: {currentPosition.codigo}
+                      ❌ Posição incorreta! Escaneie: {currentPosition.codigo}
+                    </p>
+                  )}
+                  {scannedPositionCode && scannedPositionCode === currentPosition.codigo && (
+                    <p className="text-xs text-green-600 mt-1">
+                      ✅ Posição confirmada pelo scanner!
                     </p>
                   )}
                 </div>
@@ -293,11 +302,11 @@ export default function AlocacaoComColetor() {
                   <Button 
                     onClick={handleScannerAllocate}
                     disabled={!scannedProductCode || !scannedPositionCode || isProcessing}
-                    className="w-full"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                     size="lg"
                   >
                     <Scan className="w-4 h-4 mr-2" />
-                    {isProcessing ? "Processando..." : "Alocar com Scanner"}
+                    {isProcessing ? "Processando..." : "📱 Confirmar Scanner - Produto + Posição"}
                   </Button>
                   
                   <Button 
