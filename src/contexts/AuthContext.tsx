@@ -43,7 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // Check and process pending invites after creating/finding profile
+        // TODO: Reativar no futuro - Check and process pending invites after creating/finding profile
+        /*
         try {
           console.log('Checking for pending invites for user:', u.email);
           const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (inviteError) {
           console.error('Error processing invite:', inviteError);
         }
+        */
       } catch (e) {
         console.error('Falha ao garantir perfil', e);
       }
