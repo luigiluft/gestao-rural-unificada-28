@@ -359,7 +359,19 @@ export default function AlocacaoFuncionario() {
                     className="w-full"
                     size="lg"
                   >
-                    {isProcessing ? "Processando..." : "Confirmar Alocação"}
+                    <Scan className="w-4 h-4 mr-2" />
+                    {isProcessing ? "Processando..." : "Alocar com Scanner"}
+                  </Button>
+                  
+                  <Button 
+                    variant="secondary"
+                    onClick={handleAllocate}
+                    disabled={!scannedProductCode || !scannedPositionCode || isProcessing}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    {isProcessing ? "Processando..." : "Alocar Manualmente"}
                   </Button>
                   
                   <Button 
