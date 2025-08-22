@@ -111,8 +111,7 @@ export default function Catalogo() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("produtos")
-        .select("id, nome, codigo, categoria, unidade_medida, descricao, ativo, user_id")
-        .eq("ativo", true)
+        .select("id, nome, codigo, categoria, unidade_medida, descricao, ativo")
         .order("nome", { ascending: true })
 
       if (error) {
