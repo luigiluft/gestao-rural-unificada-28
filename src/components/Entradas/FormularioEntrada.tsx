@@ -53,7 +53,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
   
   // Buscar franquia através do CPF/CNPJ do produtor destinatário
   const cpfCnpjBusca = nfData?.destinatarioCpfCnpj;
-  const { data: franquiaData } = useFranquiaByProdutorCpf(cpfCnpjBusca);
+  const { data: franquiaData, isLoading: franquiaLoading } = useFranquiaByProdutorCpf(cpfCnpjBusca);
   const [dadosEntrada, setDadosEntrada] = useState({
     numeroNF: '',
     serie: '',
@@ -116,7 +116,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
           title: "Franquia identificada",
           description: `Franquia ${franquiaData.franquia.nome} selecionada automaticamente (produtor: ${franquiaData.produtor.nome})`,
         });
-      } else if (cpfCnpjBusca) {
+      } else if (cpfCnpjBusca && !franquiaLoading) {
         toast({
           title: "Produtor não encontrado",
           description: `Não foi possível encontrar um produtor com o CPF/CNPJ ${cpfCnpjBusca}. Selecione a franquia manualmente.`,
@@ -124,7 +124,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         });
       }
     }
-  }, [nfData, franquiaData, toast]);
+  }, [nfData, franquiaData, franquiaLoading, toast]);
 
   const adicionarItem = () => {
     if (novoItem.produto && novoItem.quantidade > 0) {
