@@ -29,7 +29,9 @@ import {
   ArrowLeft,
   ClipboardList,
   Calculator,
-  Eye
+  Eye,
+  Minus,
+  Trash2
 } from "lucide-react"
 import { 
   useInventarios, 
@@ -44,6 +46,7 @@ import {
 } from "@/hooks/useInventarios"
 import { useStoragePositions } from "@/hooks/useStoragePositions"
 import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
+import { useEstoquePosicao } from "@/hooks/useEstoquePosicao"
 import { useAuth } from "@/contexts/AuthContext"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -85,12 +88,14 @@ export default function Inventario() {
   })
   const [divergencias, setDivergencias] = useState<any[]>([])
   const [showDivergencias, setShowDivergencias] = useState(false)
+  const [itemsToDelete, setItemsToDelete] = useState<string[]>([])
 
   const { data: inventarios, isLoading: loadingInventarios } = useInventarios()
   const { data: inventarioAtual } = useInventario(currentInventoryId || undefined)
   const { data: posicoes } = useInventarioPosicoes(currentInventoryId || undefined)
   const { data: itens } = useInventarioItens(currentInventoryId || undefined)
   const { data: todasPosicoes } = useStoragePositions(inventoryConfig.franquiaId)
+  const { data: estoquePosicao } = useEstoquePosicao(currentPosition?.id)
   const { user } = useAuth()
   const { data: depositos, isLoading: loadingDepositos } = useDepositosDisponiveis(user?.id)
   
@@ -181,6 +186,92 @@ export default function Inventario() {
         variant: "destructive"
       })
     }
+  }
+
+  const handleSwitchToManual = () => {
+    setInventoryConfig(prev => ({ ...prev, method: 'manual' }))
+    setScannerData({ codigo_barras: '', quantidade: 1, lote: '', observacoes: '' })
+  }
+
+  const handlePositionEmpty = async () => {
+    if (!currentInventoryId || !currentPosition) return
+
+    try {
+      await concluirPosicao.mutateAsync({
+        inventarioId: currentInventoryId,
+        posicaoId: currentPosition.id
+      })
+
+      if (currentPositionIndex < inventoryConfig.posicoesSelecionadas.length - 1) {
+        setCurrentPositionIndex(prev => prev + 1)
+        resetFormData()
+      } else {
+        calcularDivergencias()
+        setCurrentStep('complete')
+      }
+
+      toast({
+        title: "Posição marcada como vazia",
+        description: "Posição conferida e marcada como vazia.",
+      })
+    } catch (error) {
+      console.error('Erro ao marcar posição como vazia:', error)
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao marcar posição como vazia.",
+      })
+    }
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    setItemsToDelete(prev => [...prev, itemId])
+    toast({
+      title: "Item removido",
+      description: "Item foi removido da lista.",
+    })
+  }
+
+  const handleSimulateScan = () => {
+    if (!currentPosition || !estoquePosicao || estoquePosicao.length === 0) {
+      toast({
+        title: "Posição vazia",
+        description: "Esta posição não possui produtos no sistema.",
+      })
+      return
+    }
+
+    const produto = estoquePosicao[0]
+    setScannerData({
+      codigo_barras: produto.produtos?.codigo || produto.id,
+      quantidade: Number(produto.quantidade_atual),
+      lote: produto.lote || '',
+      observacoes: 'Simulado via F1'
+    })
+
+    toast({
+      title: "Bipagem simulada",
+      description: `Produto ${produto.produtos?.nome} carregado automaticamente.`,
+    })
+  }
+
+  const adjustQuantity = (delta: number) => {
+    if (inventoryConfig.method === 'manual') {
+      setManualData(prev => ({ 
+        ...prev, 
+        quantidade: Math.max(0, prev.quantidade + delta) 
+      }))
+    } else {
+      setScannerData(prev => ({ 
+        ...prev, 
+        quantidade: Math.max(0, prev.quantidade + delta) 
+      }))
+    }
+  }
+
+  const resetFormData = () => {
+    setManualData({ produto: '', quantidade: 1, lote: '', observacoes: '' })
+    setScannerData({ codigo_barras: '', quantidade: 1, lote: '', observacoes: '' })
   }
 
   const handleAdicionarItem = async () => {
@@ -292,6 +383,31 @@ export default function Inventario() {
       setCurrentPosition(inventoryConfig.posicoesSelecionadas[currentPositionIndex])
     }
   }, [currentPositionIndex, inventoryConfig.posicoesSelecionadas])
+
+  // F1 key listener for scanner simulation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'F1' && currentStep === 'execution' && inventoryConfig.method === 'scanner') {
+        event.preventDefault()
+        handleSimulateScan()
+      }
+    }
+
+    if (currentStep === 'execution' && inventoryConfig.method === 'scanner') {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [currentStep, inventoryConfig.method, currentPosition, estoquePosicao])
+
+  // Auto focus on barcode input for scanner
+  useEffect(() => {
+    if (currentStep === 'execution' && inventoryConfig.method === 'scanner') {
+      const input = document.getElementById('codigo_barras') as HTMLInputElement
+      if (input) {
+        input.focus()
+      }
+    }
+  }, [currentStep, inventoryConfig.method, currentPositionIndex])
 
   if (loadingInventarios) {
     return (
@@ -554,13 +670,23 @@ export default function Inventario() {
 
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Posição: {currentPosition?.codigo}
-            </CardTitle>
-            <CardDescription>
-              {currentPosition?.descricao || currentPosition?.tipo_posicao}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Posição: {currentPosition?.codigo}
+                </CardTitle>
+                <CardDescription>
+                  {currentPosition?.descricao || currentPosition?.tipo_posicao}
+                </CardDescription>
+              </div>
+              {inventoryConfig.method === 'scanner' && (
+                <Button variant="outline" size="sm" onClick={handleSwitchToManual}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar para Manual
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {inventoryConfig.method === 'manual' ? (
@@ -577,13 +703,31 @@ export default function Inventario() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="quantidade">Quantidade</Label>
-                    <Input
-                      id="quantidade"
-                      type="number"
-                      value={manualData.quantidade}
-                      onChange={(e) => setManualData(prev => ({ ...prev, quantidade: Number(e.target.value) }))}
-                      min="0"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => adjustQuantity(-1)}
+                        disabled={manualData.quantidade <= 0}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        id="quantidade"
+                        type="number"
+                        value={manualData.quantidade}
+                        onChange={(e) => setManualData(prev => ({ ...prev, quantidade: Number(e.target.value) }))}
+                        min="0"
+                        className="text-center"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => adjustQuantity(1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="lote">Lote</Label>
@@ -610,23 +754,55 @@ export default function Inventario() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="codigo_barras">Código de Barras</Label>
-                  <Input
-                    id="codigo_barras"
-                    value={scannerData.codigo_barras}
-                    onChange={(e) => setScannerData(prev => ({ ...prev, codigo_barras: e.target.value }))}
-                    placeholder="Escaneie ou digite o código"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="codigo_barras"
+                      value={scannerData.codigo_barras}
+                      onChange={(e) => setScannerData(prev => ({ ...prev, codigo_barras: e.target.value }))}
+                      placeholder="Escaneie ou digite o código"
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={handleSimulateScan}
+                      title="Pressione F1 para simular bipagem"
+                    >
+                      F1
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Pressione F1 para simular bipagem do produto na posição
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="quantidade">Quantidade</Label>
-                    <Input
-                      id="quantidade"
-                      type="number"
-                      value={scannerData.quantidade}
-                      onChange={(e) => setScannerData(prev => ({ ...prev, quantidade: Number(e.target.value) }))}
-                      min="0"
-                    />
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => adjustQuantity(-1)}
+                        disabled={scannerData.quantidade <= 0}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        id="quantidade"
+                        type="number"
+                        value={scannerData.quantidade}
+                        onChange={(e) => setScannerData(prev => ({ ...prev, quantidade: Number(e.target.value) }))}
+                        min="0"
+                        className="text-center"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => adjustQuantity(1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="lote">Lote</Label>
@@ -651,11 +827,17 @@ export default function Inventario() {
               </div>
             )}
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={handleAdicionarItem}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Item
-              </Button>
+            <div className="flex justify-between gap-2">
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleAdicionarItem}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Item
+                </Button>
+                <Button variant="destructive" onClick={handlePositionEmpty}>
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Posição Vazia
+                </Button>
+              </div>
               <Button onClick={handleConcluirPosicao}>
                 {currentPositionIndex < inventoryConfig.posicoesSelecionadas.length - 1 ? 
                   "Próxima Posição" : "Finalizar Inventário"
@@ -679,15 +861,28 @@ export default function Inventario() {
                     <TableHead>Quantidade</TableHead>
                     <TableHead>Lote</TableHead>
                     <TableHead>Observações</TableHead>
+                    <TableHead className="text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {itens.map((item) => (
+                  {itens
+                    .filter(item => !itemsToDelete.includes(item.id))
+                    .map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.codigo_barras}</TableCell>
                       <TableCell>{item.quantidade_encontrada}</TableCell>
                       <TableCell>{item.lote || '-'}</TableCell>
                       <TableCell>{item.observacoes || '-'}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
