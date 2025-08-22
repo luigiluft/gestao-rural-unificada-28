@@ -19,6 +19,7 @@ export const useAllocationWaves = () => {
             entrada_itens(lote, data_validade, valor_unitario, codigo_produto)
           )
         `)
+        .neq('status', 'concluido')
         .order("created_at", { ascending: false })
 
       console.log('📊 Resultado da busca:', { waves, error })
