@@ -364,7 +364,9 @@ export default function Entradas() {
           quantidade_lote: item.quantidadeLote || null, // Adicionar quantidade do lote
           data_fabricacao: item.dataFabricacao || null, // Adicionar data de fabricação
           codigo_produto: item.codigo || null, // Usar código do produto (cProd do XML)
-          codigo_ean: item.codigoEAN || null // Usar código EAN separadamente (cEAN do XML)
+          codigo_ean: item.codigoEAN || null, // Usar código EAN separadamente (cEAN do XML)
+          unidade_comercial: item.unidade || 'UN', // Adicionar unidade de medida do XML
+          descricao_produto: item.descricao || item.produto // Adicionar descrição do produto
         }))
 
         const { error: itensError } = await supabase
