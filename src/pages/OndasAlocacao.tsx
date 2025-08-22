@@ -179,24 +179,45 @@ export default function OndasAlocacao() {
 
                 <div className="flex gap-2">
                   {wave.status === 'posicoes_definidas' && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleExecuteAllocation(wave)}
-                      disabled={isExecutingAllocation === wave.id}
-                    >
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {isExecutingAllocation === wave.id ? "Iniciando..." : "Executar Alocação"}
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => handleExecuteAllocation(wave)}
+                        disabled={isExecutingAllocation === wave.id}
+                      >
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {isExecutingAllocation === wave.id ? "Iniciando..." : "Executar Alocação"}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                        disabled={isExecutingAllocation === wave.id}
+                      >
+                        <Package className="w-4 h-4 mr-1" />
+                        Alocar Manualmente
+                      </Button>
+                    </>
                   )}
 
                   {wave.status === 'em_andamento' && (
-                    <Button
-                      size="sm"
-                      onClick={() => navigate(`/alocar/${wave.id}`)}
-                    >
-                      <MapPin className="w-4 h-4 mr-1" />
-                      Continuar Alocação
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                      >
+                        <MapPin className="w-4 h-4 mr-1" />
+                        Continuar Alocação
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                      >
+                        <Package className="w-4 h-4 mr-1" />
+                        Alocar Manualmente
+                      </Button>
+                    </>
                   )}
                   
                   
