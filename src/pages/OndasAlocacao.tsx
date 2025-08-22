@@ -47,7 +47,7 @@ export default function OndasAlocacao() {
     try {
       setIsExecutingAllocation(wave.id)
       await startWave.mutateAsync({ waveId: wave.id })
-      navigate(`/alocar/${wave.id}`)
+      navigate(`/alocar-scanner/${wave.id}`)
     } catch (error) {
       console.error('Erro ao executar alocação:', error)
     } finally {
@@ -191,7 +191,7 @@ export default function OndasAlocacao() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
                         disabled={isExecutingAllocation === wave.id}
                       >
                         <Package className="w-4 h-4 mr-1" />
@@ -204,7 +204,7 @@ export default function OndasAlocacao() {
                     <>
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                        onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
                       >
                         <MapPin className="w-4 h-4 mr-1" />
                         Continuar Alocação
@@ -212,7 +212,7 @@ export default function OndasAlocacao() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => navigate(`/alocar/${wave.id}`)}
+                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
                       >
                         <Package className="w-4 h-4 mr-1" />
                         Alocar Manualmente

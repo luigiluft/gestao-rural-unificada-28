@@ -1,47 +1,48 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { useAllocationWaveById, useAllocateItem } from "@/hooks/useAllocationWaves"
-import { useAvailablePositions } from "@/hooks/useStoragePositions"
+import { useParams } from "react-router-dom"
+import { useAlocacao } from "@/hooks/useAlocacao"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Package, Scan, MapPin, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
+import { ProductInfo } from "@/components/Alocacao/ProductInfo"
+import { ProgressIndicator } from "@/components/Alocacao/ProgressIndicator"
+import { Scan, MapPin, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-export default function AlocacaoFuncionario() {
+export default function AlocacaoComColetor() {
   const { waveId } = useParams()
-  const navigate = useNavigate()
   const { toast } = useToast()
-  const { data: wave, isLoading } = useAllocationWaveById(waveId!)
-  const { data: positions } = useAvailablePositions(wave?.deposito_id)
-  const allocateItem = useAllocateItem()
+  const {
+    wave,
+    isLoading,
+    currentItem,
+    currentPosition,
+    pendingItems,
+    currentItemIndex,
+    isProcessing,
+    handleAllocate,
+    handleSkipItem,
+    navigate
+  } = useAlocacao(waveId!)
 
-  const [currentItemIndex, setCurrentItemIndex] = useState(0)
   const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedProductCode, setScannedProductCode] = useState("")
   const [scannedPositionCode, setScannedPositionCode] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
-
-  const pendingItems = Array.isArray(wave?.allocation_wave_items) 
-    ? wave.allocation_wave_items.filter((item: any) => item.status === 'pendente') 
-    : []
-  const currentItem = pendingItems[currentItemIndex]
-  const currentPosition = currentItem?.storage_positions
 
   useEffect(() => {
     // Simulate barcode scanner integration
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === 'F1') { // F1 to simulate product scan
         event.preventDefault()
-        setScannedProductCode(currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}` || '')
+        const productCode = currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
+        setScannedProductCode(productCode)
         toast({
           title: "Produto escaneado",
-          description: `Código: ${currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`}`,
+          description: `Código: ${productCode}`,
         })
       }
       if (event.key === 'F2') { // F2 to simulate position scan
@@ -60,8 +61,8 @@ export default function AlocacaoFuncionario() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [currentItem, currentPosition, toast])
 
-  const handleAllocate = async () => {
-    if (!currentItem || !currentPosition || !scannedProductCode || !scannedPositionCode) {
+  const handleScannerAllocate = async () => {
+    if (!scannedProductCode || !scannedPositionCode) {
       toast({
         title: "Dados incompletos",
         description: "É necessário escanear tanto o produto quanto a posição",
@@ -71,8 +72,8 @@ export default function AlocacaoFuncionario() {
     }
 
     // Validar se os códigos escaneados conferem com o esperado
-    const expectedProductCode = currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
-    const expectedPositionCode = currentPosition.codigo
+    const expectedProductCode = currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
+    const expectedPositionCode = currentPosition?.codigo
 
     if (scannedProductCode !== expectedProductCode) {
       toast({
@@ -92,39 +93,8 @@ export default function AlocacaoFuncionario() {
       return
     }
 
-    setIsProcessing(true)
-
-    try {
-      await allocateItem.mutateAsync({
-        waveItemId: currentItem.id,
-        posicaoId: currentItem.posicao_id,
-        barcodeProduto: scannedProductCode,
-        barcodePosicao: scannedPositionCode
-      })
-
-      // Reset form and move to next item
-      setScannedProductCode("")
-      setScannedPositionCode("")
-
-      if (currentItemIndex < pendingItems.length - 1) {
-        setCurrentItemIndex(currentItemIndex + 1)
-      } else {
-        toast({
-          title: "Alocação concluída",
-          description: "Todos os itens foram alocados com sucesso!",
-        })
-        navigate("/ondas-alocacao")
-      }
-    } catch (error) {
-      console.error("Error allocating item:", error)
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const handleSkipItem = () => {
-    if (currentItemIndex < pendingItems.length - 1) {
-      setCurrentItemIndex(currentItemIndex + 1)
+    const success = await handleAllocate(scannedProductCode, scannedPositionCode)
+    if (success) {
       // Reset form
       setScannedProductCode("")
       setScannedPositionCode("")
@@ -156,7 +126,7 @@ export default function AlocacaoFuncionario() {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Voltar
           </Button>
-          <h1 className="text-3xl font-bold">Alocação de Produtos</h1>
+          <h1 className="text-3xl font-bold">Alocação com Coletor</h1>
         </div>
         
         <Card>
@@ -183,57 +153,27 @@ export default function AlocacaoFuncionario() {
           Voltar
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Alocação - {wave.numero_onda}</h1>
+          <h1 className="text-3xl font-bold">Alocação com Coletor - {wave.numero_onda}</h1>
           <p className="text-muted-foreground">
-            Item {currentItemIndex + 1} de {pendingItems.length}
+            Item {currentItemIndex + 1} de {pendingItems.length} • Modo Scanner/Coletor
           </p>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Current Item Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Produto Atual
-            </CardTitle>
-            <CardDescription>
-              Informações do produto para alocação
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="font-medium">Nome do Produto</Label>
-              <p className="text-lg">{currentItem.produtos?.nome}</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="font-medium">Lote</Label>
-                <p>{currentItem.lote || '-'}</p>
-              </div>
-              <div>
-                <Label className="font-medium">Quantidade</Label>
-                <p>{currentItem.quantidade} {currentItem.produtos?.unidade_medida}</p>
-              </div>
-            </div>
-
-            {currentItem.entrada_itens && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="font-medium">Validade</Label>
-                  <p>{currentItem.entrada_itens.data_validade ? 
-                    new Date(currentItem.entrada_itens.data_validade).toLocaleDateString() : '-'}</p>
-                </div>
-                <div>
-                  <Label className="font-medium">Valor Unitário</Label>
-                  <p>R$ {currentItem.entrada_itens.valor_unitario?.toFixed(2) || '0,00'}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-4 border-t space-y-4">
+        {/* Product Info */}
+        <div className="space-y-4">
+          <ProductInfo currentItem={currentItem} />
+          
+          {/* Scanner Controls */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Controles do Scanner</CardTitle>
+              <CardDescription>
+                Escaneie ou selecione o produto para confirmação
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div>
                 <Label className="font-medium">Selecionar Produto Manualmente</Label>
                 <Select 
@@ -242,7 +182,7 @@ export default function AlocacaoFuncionario() {
                     setScannedProductCode(value)
                     toast({
                       title: "Produto selecionado",
-                      description: `Código: ${currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`}`,
+                      description: `Código: ${value}`,
                     })
                   }}
                 >
@@ -260,9 +200,6 @@ export default function AlocacaoFuncionario() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Selecione o produto da lista para facilitar os testes
-                </p>
               </div>
 
               <div className="relative">
@@ -294,9 +231,9 @@ export default function AlocacaoFuncionario() {
                   Dica: Pressione F1 para simular scan do produto
                 </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Position Confirmation */}
         <Card>
@@ -325,31 +262,42 @@ export default function AlocacaoFuncionario() {
                   )}
                 </div>
 
+                <div>
+                  <Label className="font-medium">Escanear Posição para Confirmar</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input 
+                      value={scannedPositionCode}
+                      onChange={(e) => setScannedPositionCode(e.target.value)}
+                      placeholder={`Escaneie: ${currentPosition.codigo}`}
+                      className={scannedPositionCode && scannedPositionCode !== currentPosition.codigo ? 'border-destructive' : ''}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => setScannerOpen(true)}
+                    >
+                      <Scan className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Dica: Pressione F2 para simular scan da posição
+                  </p>
+                  {scannedPositionCode && scannedPositionCode !== currentPosition.codigo && (
+                    <p className="text-xs text-destructive mt-1">
+                      Posição incorreta! Escaneie: {currentPosition.codigo}
+                    </p>
+                  )}
+                </div>
+
                 <div className="pt-6 space-y-2">
                   <Button 
-                    onClick={handleAllocate}
+                    onClick={handleScannerAllocate}
                     disabled={!scannedProductCode || !scannedPositionCode || isProcessing}
                     className="w-full"
                     size="lg"
                   >
                     <Scan className="w-4 h-4 mr-2" />
                     {isProcessing ? "Processando..." : "Alocar com Scanner"}
-                  </Button>
-                  
-                  <Button 
-                    variant="secondary"
-                    onClick={() => {
-                      // Para alocação manual, confirma automaticamente produto, lote e posição
-                      setScannedProductCode(currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`)
-                      setScannedPositionCode(currentPosition.codigo)
-                      handleAllocate()
-                    }}
-                    disabled={isProcessing}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Package className="w-4 h-4 mr-2" />
-                    {isProcessing ? "Processando..." : "Confirmar Produto, Lote e Posição"}
                   </Button>
                   
                   <Button 
@@ -389,27 +337,9 @@ export default function AlocacaoFuncionario() {
         </Card>
       </div>
 
-      {/* Progress */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">
-              Progresso da Alocação
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {currentItemIndex + 1} de {pendingItems.length}
-            </span>
-          </div>
-          <div className="w-full bg-secondary rounded-full h-2 mt-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300" 
-              style={{ width: `${((currentItemIndex + 1) / pendingItems.length) * 100}%` }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <ProgressIndicator currentIndex={currentItemIndex} totalItems={pendingItems.length} />
 
-      {/* Scanner Modal (placeholder for future scanner integration) */}
+      {/* Scanner Modal */}
       <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
         <DialogContent>
           <DialogHeader>

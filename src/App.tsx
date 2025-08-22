@@ -27,7 +27,8 @@ import Fazendas from "./pages/Fazendas";
 import Configuracoes from "./pages/Configuracoes";
 import ControleAcesso from "./pages/ControleAcesso";
 import OndasAlocacao from "./pages/OndasAlocacao";
-import AlocacaoFuncionario from "./pages/AlocacaoFuncionario";
+import AlocacaoComColetor from "./pages/AlocacaoComColetor";
+import AlocacaoManual from "./pages/AlocacaoManual";
 import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
@@ -69,7 +70,8 @@ const App = () => (
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
               <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="ondas-alocacao"><OndasAlocacao /></RequirePageAccess>} />
-              <Route path="alocar/:waveId" element={<RequirePageAccess pageKey="alocacao-funcionario"><AlocacaoFuncionario /></RequirePageAccess>} />
+              <Route path="alocar-scanner/:waveId" element={<RequirePageAccess pageKey="alocacao-funcionario"><AlocacaoComColetor /></RequirePageAccess>} />
+              <Route path="alocar-manual/:waveId" element={<RequirePageAccess pageKey="alocacao-funcionario"><AlocacaoManual /></RequirePageAccess>} />
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               <Route path="*" element={<NotFound />} />
