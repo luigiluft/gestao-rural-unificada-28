@@ -51,10 +51,9 @@ interface ItemEntrada {
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
   const { toast } = useToast();
   
-  // Buscar franquia automaticamente pelo CNPJ da entrega (prioridade) ou destinatário
-  const cnpjBusca = nfData?.entrega?.cnpj || nfData?.destinatarioCpfCnpj;
-  const ieBusca = nfData?.entrega?.ie;
-  const { data: franquiaEncontrada } = useFranquiaByCnpj(cnpjBusca, ieBusca);
+  // Buscar franquia apenas pelo CNPJ/CPF do destinatário (não usar retirada)
+  const cnpjBusca = nfData?.destinatarioCpfCnpj;
+  const { data: franquiaEncontrada } = useFranquiaByCnpj(cnpjBusca);
   const [dadosEntrada, setDadosEntrada] = useState({
     numeroNF: '',
     serie: '',
