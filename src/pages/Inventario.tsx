@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -24,7 +24,12 @@ import {
   FileText,
   Search,
   Play,
-  Square
+  Square,
+  Settings,
+  ArrowLeft,
+  ClipboardList,
+  Calculator,
+  Eye
 } from "lucide-react"
 import { 
   useInventarios, 
@@ -40,27 +45,51 @@ import {
 import { useStoragePositions } from "@/hooks/useStoragePositions"
 import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
 import { format } from "date-fns"
+import { useToast } from "@/hooks/use-toast"
+
+type InventoryStep = 'select-positions' | 'select-method' | 'execution' | 'complete'
+
+interface InventoryConfig {
+  franquiaId: string
+  franquiaNome: string
+  posicoesSelecionadas: any[]
+  observacoes: string
+  method: 'manual' | 'scanner' | null
+}
 
 export default function Inventario() {
+  const [currentStep, setCurrentStep] = useState<InventoryStep>('select-positions')
+  const [inventoryConfig, setInventoryConfig] = useState<InventoryConfig>({
+    franquiaId: '',
+    franquiaNome: '',
+    posicoesSelecionadas: [],
+    observacoes: '',
+    method: null
+  })
   const [selectedInventario, setSelectedInventario] = useState<string | null>(null)
-  const [selectedPosicao, setSelectedPosicao] = useState<string | null>(null)
-  const [novoInventarioOpen, setNovoInventarioOpen] = useState(false)
-  const [scannerOpen, setScannerOpen] = useState(false)
-  const [selectedDeposito, setSelectedDeposito] = useState<string>("")
-  const [selectedPosicoes, setSelectedPosicoes] = useState<string[]>([])
-  const [observacoes, setObservacoes] = useState("")
+  const [currentInventoryId, setCurrentInventoryId] = useState<string | null>(null)
+  const [currentPosition, setCurrentPosition] = useState<any>(null)
+  const [currentPositionIndex, setCurrentPositionIndex] = useState(0)
   const [scannerData, setScannerData] = useState({
     codigo_barras: "",
     quantidade: 1,
     lote: "",
     observacoes: ""
   })
+  const [manualData, setManualData] = useState({
+    produto: "",
+    quantidade: 1,
+    lote: "",
+    observacoes: ""
+  })
+  const [divergencias, setDivergencias] = useState<any[]>([])
+  const [showDivergencias, setShowDivergencias] = useState(false)
 
   const { data: inventarios, isLoading: loadingInventarios } = useInventarios()
-  const { data: inventarioAtual } = useInventario(selectedInventario || undefined)
-  const { data: posicoes } = useInventarioPosicoes(selectedInventario || undefined)
-  const { data: itens } = useInventarioItens(selectedInventario || undefined, selectedPosicao || undefined)
-  const { data: todasPosicoes } = useStoragePositions(selectedDeposito)
+  const { data: inventarioAtual } = useInventario(currentInventoryId || undefined)
+  const { data: posicoes } = useInventarioPosicoes(currentInventoryId || undefined)
+  const { data: itens } = useInventarioItens(currentInventoryId || undefined)
+  const { data: todasPosicoes } = useStoragePositions(inventoryConfig.franquiaId)
   const { data: depositos } = useDepositosDisponiveis()
   
   const criarInventario = useCriarInventario()
@@ -68,6 +97,8 @@ export default function Inventario() {
   const iniciarPosicao = useIniciarPosicao()
   const adicionarItem = useAdicionarItem()
   const concluirPosicao = useConcluirPosicao()
+  
+  const { toast } = useToast()
 
   useEffect(() => {
     document.title = "Inventário - AgroHub"
@@ -97,71 +128,168 @@ export default function Inventario() {
     )
   }
 
-  const handleCriarInventario = async () => {
-    if (!selectedDeposito || selectedPosicoes.length === 0) return
-
-    await criarInventario.mutateAsync({
-      deposito_id: selectedDeposito,
-      observacoes,
-      posicoes_ids: selectedPosicoes
+  const handleStartNewInventory = () => {
+    setCurrentStep('select-positions')
+    setInventoryConfig({
+      franquiaId: '',
+      franquiaNome: '',
+      posicoesSelecionadas: [],
+      observacoes: '',
+      method: null
     })
-
-    setNovoInventarioOpen(false)
-    setSelectedDeposito("")
-    setSelectedPosicoes([])
-    setObservacoes("")
+    setSelectedInventario(null)
+    setCurrentInventoryId(null)
   }
 
-  const handleIniciarPosicao = async (posicaoId: string) => {
-    if (!selectedInventario) return
-
-    await iniciarPosicao.mutateAsync({
-      inventarioId: selectedInventario,
-      posicaoId
-    })
-
-    setSelectedPosicao(posicaoId)
-    setScannerOpen(true)
+  const handleSelectPositions = () => {
+    if (inventoryConfig.franquiaId && inventoryConfig.posicoesSelecionadas.length > 0) {
+      setCurrentStep('select-method')
+    } else {
+      toast({
+        title: "Seleção incompleta",
+        description: "Selecione uma franquia e pelo menos uma posição",
+        variant: "destructive"
+      })
+    }
   }
 
-  const handleScanSuccess = async (codigo: string) => {
-    if (!selectedInventario || !selectedPosicao) return
-
-    await adicionarItem.mutateAsync({
-      inventario_id: selectedInventario,
-      posicao_id: selectedPosicao,
-      codigo_barras: codigo,
-      quantidade_encontrada: scannerData.quantidade,
-      lote: scannerData.lote,
-      observacoes: scannerData.observacoes
-    })
-
-    // Reset scanner data
-    setScannerData({
-      codigo_barras: "",
-      quantidade: 1,
-      lote: "",
-      observacoes: ""
-    })
+  const handleSelectMethod = async (method: 'manual' | 'scanner') => {
+    setInventoryConfig(prev => ({ ...prev, method }))
+    
+    // Criar o inventário
+    try {
+      const result = await criarInventario.mutateAsync({
+        deposito_id: inventoryConfig.franquiaId,
+        observacoes: inventoryConfig.observacoes,
+        posicoes_ids: inventoryConfig.posicoesSelecionadas.map(p => p.id)
+      })
+      
+      setCurrentInventoryId(result.id)
+      setCurrentStep('execution')
+      setCurrentPositionIndex(0)
+      
+      toast({
+        title: "Inventário iniciado",
+        description: `Método ${method === 'manual' ? 'manual' : 'scanner'} selecionado`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erro ao criar inventário",
+        description: "Tente novamente",
+        variant: "destructive"
+      })
+    }
   }
 
-  const handleConcluirPosicao = async (posicaoId: string) => {
-    if (!selectedInventario) return
+  const handleAdicionarItem = async () => {
+    if (!currentInventoryId || !currentPosition) return
 
-    await concluirPosicao.mutateAsync({
-      inventarioId: selectedInventario,
-      posicaoId
-    })
+    try {
+      const codigo_barras = inventoryConfig.method === 'manual' ? manualData.produto : scannerData.codigo_barras
+      const quantidade = inventoryConfig.method === 'manual' ? manualData.quantidade : scannerData.quantidade
+      const lote = inventoryConfig.method === 'manual' ? manualData.lote : scannerData.lote
+      const observacoes = inventoryConfig.method === 'manual' ? manualData.observacoes : scannerData.observacoes
 
-    setSelectedPosicao(null)
-    setScannerOpen(false)
+      await adicionarItem.mutateAsync({
+        inventario_id: currentInventoryId,
+        posicao_id: currentPosition.posicao_id,
+        codigo_barras,
+        quantidade_encontrada: quantidade,
+        lote,
+        observacoes
+      })
+
+      // Reset form
+      if (inventoryConfig.method === 'manual') {
+        setManualData({ produto: "", quantidade: 1, lote: "", observacoes: "" })
+      } else {
+        setScannerData({ codigo_barras: "", quantidade: 1, lote: "", observacoes: "" })
+      }
+
+      toast({
+        title: "Item adicionado",
+        description: "Item registrado com sucesso",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro ao adicionar item",
+        description: "Tente novamente",
+        variant: "destructive"
+      })
+    }
   }
 
-  const calcularProgresso = () => {
-    if (!inventarioAtual) return 0
-    if (inventarioAtual.total_posicoes === 0) return 0
-    return Math.round((inventarioAtual.posicoes_conferidas / inventarioAtual.total_posicoes) * 100)
+  const handleConcluirPosicao = async () => {
+    if (!currentInventoryId || !currentPosition) return
+
+    try {
+      await concluirPosicao.mutateAsync({
+        inventarioId: currentInventoryId,
+        posicaoId: currentPosition.posicao_id
+      })
+
+      // Ir para próxima posição ou finalizar
+      if (currentPositionIndex < inventoryConfig.posicoesSelecionadas.length - 1) {
+        setCurrentPositionIndex(currentPositionIndex + 1)
+      } else {
+        // Finalizar inventário e calcular divergências
+        await calcularDivergencias()
+        setCurrentStep('complete')
+      }
+
+      toast({
+        title: "Posição concluída",
+        description: "Passando para próxima posição",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro ao concluir posição",
+        description: "Tente novamente",
+        variant: "destructive"
+      })
+    }
   }
+
+  const calcularDivergencias = async () => {
+    // Simular cálculo de divergências
+    // Na implementação real, isso seria uma consulta ao banco comparando:
+    // quantidade_sistema vs quantidade_encontrada
+    const mockDivergencias = [
+      {
+        produto: "Produto A",
+        lote: "LOTE001",
+        quantidade_sistema: 100,
+        quantidade_encontrada: 98,
+        diferenca: -2,
+        tipo: "FALTA",
+        valor_impacto: 20.50
+      },
+      {
+        produto: "Produto B",
+        lote: "LOTE002",
+        quantidade_sistema: 50,
+        quantidade_encontrada: 52,
+        diferenca: 2,
+        tipo: "SOBRA",
+        valor_impacto: 15.30
+      }
+    ]
+    
+    setDivergencias(mockDivergencias)
+  }
+
+  const handleViewInventory = (inventarioId: string) => {
+    setSelectedInventario(inventarioId)
+    setCurrentInventoryId(inventarioId)
+    setCurrentStep('complete')
+  }
+
+  // Update current position based on index
+  useEffect(() => {
+    if (inventoryConfig.posicoesSelecionadas.length > 0 && currentPositionIndex < inventoryConfig.posicoesSelecionadas.length) {
+      setCurrentPosition(inventoryConfig.posicoesSelecionadas[currentPositionIndex])
+    }
+  }, [currentPositionIndex, inventoryConfig.posicoesSelecionadas])
 
   if (loadingInventarios) {
     return (
@@ -188,6 +316,491 @@ export default function Inventario() {
     )
   }
 
+  // Step 1: Seleção de Posições
+  if (currentStep === 'select-positions') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Novo Inventário</h1>
+            <p className="text-muted-foreground">
+              Selecione a franquia e as posições que deseja inventariar
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
+
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Configuração do Inventário
+            </CardTitle>
+            <CardDescription>
+              Configure os parâmetros do inventário
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label htmlFor="franquia">Franquia</Label>
+              <Select 
+                value={inventoryConfig.franquiaId} 
+                onValueChange={(value) => {
+                  const franquia = depositos?.find(d => d.deposito_id === value)
+                  setInventoryConfig(prev => ({ 
+                    ...prev, 
+                    franquiaId: value,
+                    franquiaNome: franquia?.deposito_nome || '',
+                    posicoesSelecionadas: []
+                  }))
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma franquia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {depositos?.map((deposito) => (
+                    <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
+                      {deposito.deposito_nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {inventoryConfig.franquiaId && (
+              <div>
+                <Label>Posições ({inventoryConfig.posicoesSelecionadas.length} selecionadas)</Label>
+                <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
+                  <div className="mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (inventoryConfig.posicoesSelecionadas.length === todasPosicoes?.length) {
+                          setInventoryConfig(prev => ({ ...prev, posicoesSelecionadas: [] }))
+                        } else {
+                          setInventoryConfig(prev => ({ ...prev, posicoesSelecionadas: todasPosicoes || [] }))
+                        }
+                      }}
+                    >
+                      {inventoryConfig.posicoesSelecionadas.length === todasPosicoes?.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {todasPosicoes?.map((posicao) => (
+                      <div key={posicao.id} className="flex items-center space-x-2 py-1">
+                        <Checkbox
+                          id={posicao.id}
+                          checked={inventoryConfig.posicoesSelecionadas.some(p => p.id === posicao.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setInventoryConfig(prev => ({
+                                ...prev,
+                                posicoesSelecionadas: [...prev.posicoesSelecionadas, posicao]
+                              }))
+                            } else {
+                              setInventoryConfig(prev => ({
+                                ...prev,
+                                posicoesSelecionadas: prev.posicoesSelecionadas.filter(p => p.id !== posicao.id)
+                              }))
+                            }
+                          }}
+                        />
+                        <Label htmlFor={posicao.id} className="text-sm">
+                          {posicao.codigo} - {posicao.descricao || posicao.tipo_posicao}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={inventoryConfig.observacoes}
+                onChange={(e) => setInventoryConfig(prev => ({ ...prev, observacoes: e.target.value }))}
+                placeholder="Adicione observações sobre este inventário..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSelectPositions}>
+                Próximo: Selecionar Método
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Step 2: Seleção do Método
+  if (currentStep === 'select-method') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Método de Inventário</h1>
+            <p className="text-muted-foreground">
+              Escolha como deseja realizar o inventário
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => setCurrentStep('select-positions')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="shadow-card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleSelectMethod('manual')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="h-6 w-6 text-blue-600" />
+                Inventário Manual
+              </CardTitle>
+              <CardDescription>
+                Digite manualmente os produtos e quantidades encontrados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  Mais controle sobre os dados
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  Funciona sem equipamentos especiais
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  Ideal para produtos sem código de barras
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleSelectMethod('scanner')}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Scan className="h-6 w-6 text-green-600" />
+                Inventário com Scanner
+              </CardTitle>
+              <CardDescription>
+                Use códigos de barras para agilizar o processo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  Processo mais rápido
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  Menos erros de digitação
+                </div>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  Ideal para produtos com código de barras
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 3: Execução do Inventário
+  if (currentStep === 'execution' && currentPosition) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Inventário {inventoryConfig.method === 'manual' ? 'Manual' : 'com Scanner'}
+            </h1>
+            <p className="text-muted-foreground">
+              Posição {currentPositionIndex + 1} de {inventoryConfig.posicoesSelecionadas.length}: {currentPosition?.codigo}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Progress 
+              value={(currentPositionIndex / inventoryConfig.posicoesSelecionadas.length) * 100} 
+              className="w-32"
+            />
+            <span className="text-sm font-medium">
+              {Math.round((currentPositionIndex / inventoryConfig.posicoesSelecionadas.length) * 100)}%
+            </span>
+          </div>
+        </div>
+
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Posição: {currentPosition?.codigo}
+            </CardTitle>
+            <CardDescription>
+              {currentPosition?.descricao || currentPosition?.tipo_posicao}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {inventoryConfig.method === 'manual' ? (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="produto">Produto</Label>
+                  <Input
+                    id="produto"
+                    value={manualData.produto}
+                    onChange={(e) => setManualData(prev => ({ ...prev, produto: e.target.value }))}
+                    placeholder="Nome ou código do produto"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="quantidade">Quantidade</Label>
+                    <Input
+                      id="quantidade"
+                      type="number"
+                      value={manualData.quantidade}
+                      onChange={(e) => setManualData(prev => ({ ...prev, quantidade: Number(e.target.value) }))}
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lote">Lote</Label>
+                    <Input
+                      id="lote"
+                      value={manualData.lote}
+                      onChange={(e) => setManualData(prev => ({ ...prev, lote: e.target.value }))}
+                      placeholder="Número do lote"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <Textarea
+                    id="observacoes"
+                    value={manualData.observacoes}
+                    onChange={(e) => setManualData(prev => ({ ...prev, observacoes: e.target.value }))}
+                    placeholder="Observações sobre o item"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="codigo_barras">Código de Barras</Label>
+                  <Input
+                    id="codigo_barras"
+                    value={scannerData.codigo_barras}
+                    onChange={(e) => setScannerData(prev => ({ ...prev, codigo_barras: e.target.value }))}
+                    placeholder="Escaneie ou digite o código"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="quantidade">Quantidade</Label>
+                    <Input
+                      id="quantidade"
+                      type="number"
+                      value={scannerData.quantidade}
+                      onChange={(e) => setScannerData(prev => ({ ...prev, quantidade: Number(e.target.value) }))}
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lote">Lote</Label>
+                    <Input
+                      id="lote"
+                      value={scannerData.lote}
+                      onChange={(e) => setScannerData(prev => ({ ...prev, lote: e.target.value }))}
+                      placeholder="Número do lote"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <Textarea
+                    id="observacoes"
+                    value={scannerData.observacoes}
+                    onChange={(e) => setScannerData(prev => ({ ...prev, observacoes: e.target.value }))}
+                    placeholder="Observações sobre o item"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleAdicionarItem}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Item
+              </Button>
+              <Button onClick={handleConcluirPosicao}>
+                {currentPositionIndex < inventoryConfig.posicoesSelecionadas.length - 1 ? 
+                  "Próxima Posição" : "Finalizar Inventário"
+                }
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lista de itens já adicionados na posição atual */}
+        {itens && itens.length > 0 && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Itens Registrados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto/Código</TableHead>
+                    <TableHead>Quantidade</TableHead>
+                    <TableHead>Lote</TableHead>
+                    <TableHead>Observações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itens.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.codigo_barras}</TableCell>
+                      <TableCell>{item.quantidade_encontrada}</TableCell>
+                      <TableCell>{item.lote || '-'}</TableCell>
+                      <TableCell>{item.observacoes || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    )
+  }
+
+  // Step 4: Inventário Completo / Visualização
+  if (currentStep === 'complete') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {selectedInventario ? 'Visualizar Inventário' : 'Inventário Concluído'}
+            </h1>
+            <p className="text-muted-foreground">
+              {selectedInventario ? 'Detalhes do inventário selecionado' : 'Relatório de divergências e resultados'}
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleStartNewInventory}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Inventário
+          </Button>
+        </div>
+
+        {divergencias.length > 0 && (
+          <Card className="shadow-card border-amber-200 bg-amber-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-amber-700">
+                <AlertTriangle className="h-5 w-5" />
+                Divergências Encontradas
+              </CardTitle>
+              <CardDescription>
+                {divergencias.length} divergências identificadas durante o inventário
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Lote</TableHead>
+                    <TableHead>Sistema</TableHead>
+                    <TableHead>Encontrado</TableHead>
+                    <TableHead>Diferença</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Impacto (R$)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {divergencias.map((div, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{div.produto}</TableCell>
+                      <TableCell>{div.lote}</TableCell>
+                      <TableCell>{div.quantidade_sistema}</TableCell>
+                      <TableCell>{div.quantidade_encontrada}</TableCell>
+                      <TableCell className={div.diferenca > 0 ? 'text-green-600' : 'text-red-600'}>
+                        {div.diferenca > 0 ? '+' : ''}{div.diferenca}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={div.tipo === 'FALTA' ? 'destructive' : 'secondary'}>
+                          {div.tipo}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>R$ {div.valor_impacto.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Resumo do inventário */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="shadow-card border-blue-200 bg-blue-50/50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Posições Conferidas</p>
+                  <p className="text-2xl font-bold text-blue-700">{inventarioAtual?.posicoes_conferidas || inventoryConfig.posicoesSelecionadas.length}</p>
+                </div>
+                <Package className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-green-200 bg-green-50/50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600">Itens Registrados</p>
+                  <p className="text-2xl font-bold text-green-700">{itens?.length || 0}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-amber-200 bg-amber-50/50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-amber-600">Divergências</p>
+                  <p className="text-2xl font-bold text-amber-700">{divergencias.length}</p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-amber-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Página principal - Lista de inventários existentes
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -199,89 +812,10 @@ export default function Inventario() {
           </p>
         </div>
 
-        <Dialog open={novoInventarioOpen} onOpenChange={setNovoInventarioOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Inventário
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Criar Novo Inventário</DialogTitle>
-              <DialogDescription>
-                Selecione o depósito e as posições que serão inventariadas
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="deposito">Depósito</Label>
-                <Select value={selectedDeposito} onValueChange={setSelectedDeposito}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um depósito" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {depositos?.map((deposito) => (
-                      <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
-                        {deposito.deposito_nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedDeposito && (
-                <div>
-                  <Label>Posições ({selectedPosicoes.length} selecionadas)</Label>
-                  <div className="border rounded-md p-4 max-h-40 overflow-y-auto">
-                    {todasPosicoes?.map((posicao) => (
-                      <div key={posicao.id} className="flex items-center space-x-2 py-1">
-                        <Checkbox
-                          id={posicao.id}
-                          checked={selectedPosicoes.includes(posicao.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPosicoes([...selectedPosicoes, posicao.id])
-                            } else {
-                              setSelectedPosicoes(selectedPosicoes.filter(id => id !== posicao.id))
-                            }
-                          }}
-                        />
-                        <Label htmlFor={posicao.id} className="text-sm">
-                          {posicao.codigo} - {posicao.descricao || posicao.tipo_posicao}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder="Adicione observações sobre este inventário..."
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setNovoInventarioOpen(false)}>
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleCriarInventario}
-                disabled={!selectedDeposito || selectedPosicoes.length === 0 || criarInventario.isPending}
-              >
-                {criarInventario.isPending ? "Criando..." : "Criar Inventário"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleStartNewInventory} className="bg-primary hover:bg-primary/90">
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Inventário
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -349,308 +883,76 @@ export default function Inventario() {
         </Card>
       </div>
 
-      {/* Main Content */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Lista de Inventários */}
-        <div className="lg:col-span-1">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Inventários
-              </CardTitle>
-              <CardDescription>
-                Selecione um inventário para gerenciar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {inventarios?.length === 0 ? (
-                <EmptyState
-                  title="Nenhum inventário"
-                  description="Crie seu primeiro inventário para começar a conferir o estoque"
-                />
-              ) : (
-                <div className="space-y-3">
-                  {inventarios?.map((inventario) => (
-                    <Card 
-                      key={inventario.id} 
-                      className={`cursor-pointer transition-colors ${
-                        selectedInventario === inventario.id 
-                          ? 'bg-primary/5 border-primary' 
-                          : 'hover:bg-muted/50'
-                      }`}
-                      onClick={() => setSelectedInventario(inventario.id)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-sm">
-                            {inventario.numero_inventario}
-                          </span>
-                          {getStatusBadge(inventario.status)}
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          {inventario.franquias?.nome}
-                        </p>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{format(new Date(inventario.created_at), 'dd/MM/yyyy')}</span>
-                          <span>{inventario.posicoes_conferidas}/{inventario.total_posicoes}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Detalhes do Inventário */}
-        <div className="lg:col-span-2">
-          {selectedInventario && inventarioAtual ? (
-            <Tabs defaultValue="posicoes" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <TabsList className="grid w-full max-w-md grid-cols-3">
-                  <TabsTrigger value="posicoes">Posições</TabsTrigger>
-                  <TabsTrigger value="itens">Itens</TabsTrigger>
-                  <TabsTrigger value="relatorio">Relatório</TabsTrigger>
-                </TabsList>
-                
-                <div className="flex items-center gap-2">
-                  <Progress value={calcularProgresso()} className="w-32" />
-                  <span className="text-sm font-medium">{calcularProgresso()}%</span>
-                </div>
-              </div>
-
-              <TabsContent value="posicoes">
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>Posições para Conferir</CardTitle>
-                    <CardDescription>
-                      {inventarioAtual.posicoes_conferidas} de {inventarioAtual.total_posicoes} posições conferidas
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {posicoes?.map((posicao) => (
-                        <div 
-                          key={posicao.id} 
-                          className="flex items-center justify-between p-4 border rounded-lg"
-                        >
-                          <div>
-                            <div className="font-medium">
-                              {posicao.storage_positions?.codigo}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {posicao.storage_positions?.descricao || posicao.storage_positions?.tipo_posicao}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            {getStatusBadge(posicao.status)}
-                            {posicao.status === 'pendente' && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleIniciarPosicao(posicao.posicao_id)}
-                                disabled={iniciarPosicao.isPending}
-                              >
-                                <Scan className="h-4 w-4 mr-1" />
-                                Iniciar
-                              </Button>
-                            )}
-                            {posicao.status === 'em_andamento' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleConcluirPosicao(posicao.posicao_id)}
-                                disabled={concluirPosicao.isPending}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Concluir
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="itens">
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>Itens Inventariados</CardTitle>
-                    <CardDescription>
-                      Produtos encontrados durante a conferência
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Código de Barras</TableHead>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Lote</TableHead>
-                          <TableHead className="text-right">Qtd. Encontrada</TableHead>
-                          <TableHead className="text-right">Qtd. Sistema</TableHead>
-                          <TableHead className="text-right">Diferença</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {itens?.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-mono text-sm">
-                              {item.codigo_barras || "-"}
-                            </TableCell>
-                            <TableCell>
-                              {item.produtos?.nome || "Produto não identificado"}
-                            </TableCell>
-                            <TableCell>{item.lote || "-"}</TableCell>
-                            <TableCell className="text-right">
-                              {item.quantidade_encontrada} {item.produtos?.unidade_medida || "un"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.quantidade_sistema} {item.produtos?.unidade_medida || "un"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className={
-                                item.diferenca > 0 ? 'text-green-600' : 
-                                item.diferenca < 0 ? 'text-red-600' : 
-                                'text-muted-foreground'
-                              }>
-                                {item.diferenca > 0 ? '+' : ''}{item.diferenca}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="relatorio">
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Relatório de Divergências
-                    </CardTitle>
-                    <CardDescription>
-                      Análise das diferenças encontradas no inventário
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        Relatório será gerado após a conclusão do inventário
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+      {/* Lista de Inventários */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Inventários Realizados
+          </CardTitle>
+          <CardDescription>
+            Histórico de inventários e conferências
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {inventarios?.length === 0 ? (
+            <EmptyState
+              title="Nenhum inventário realizado"
+              description="Crie seu primeiro inventário para começar a conferir o estoque"
+              action={{
+                label: "Criar Primeiro Inventário",
+                onClick: handleStartNewInventory
+              }}
+            />
           ) : (
-            <Card className="shadow-card">
-              <CardContent className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    Selecione um inventário para ver os detalhes
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Franquia</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Progresso</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inventarios?.map((inventario) => (
+                  <TableRow key={inventario.id}>
+                    <TableCell className="font-medium">
+                      {inventario.numero_inventario}
+                    </TableCell>
+                    <TableCell>{inventario.franquias?.nome}</TableCell>
+                    <TableCell>{format(new Date(inventario.created_at), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{getStatusBadge(inventario.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={(inventario.posicoes_conferidas / inventario.total_posicoes) * 100} 
+                          className="w-16" 
+                        />
+                        <span className="text-sm">
+                          {inventario.posicoes_conferidas}/{inventario.total_posicoes}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewInventory(inventario.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ver
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </div>
-      </div>
-
-      {/* Scanner Dialog */}
-      {scannerOpen && selectedPosicao && (
-        <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Scanner de Código de Barras</DialogTitle>
-              <DialogDescription>
-                Escaneie os produtos encontrados nesta posição
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="quantidade">Quantidade</Label>
-                <Input
-                  id="quantidade"
-                  type="number"
-                  value={scannerData.quantidade}
-                  onChange={(e) => setScannerData({...scannerData, quantidade: Number(e.target.value)})}
-                  min="1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="lote">Lote (opcional)</Label>
-                <Input
-                  id="lote"
-                  value={scannerData.lote}
-                  onChange={(e) => setScannerData({...scannerData, lote: e.target.value})}
-                  placeholder="Digite o lote do produto"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="obs">Observações (opcional)</Label>
-                <Textarea
-                  id="obs"
-                  value={scannerData.observacoes}
-                  onChange={(e) => setScannerData({...scannerData, observacoes: e.target.value})}
-                  placeholder="Adicione observações..."
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="codigo-barras">Código de Barras</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="codigo-barras"
-                    value={scannerData.codigo_barras}
-                    onChange={(e) => setScannerData({...scannerData, codigo_barras: e.target.value})}
-                    placeholder="Escaneie ou digite o código"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && scannerData.codigo_barras.trim()) {
-                        handleScanSuccess(scannerData.codigo_barras.trim())
-                      }
-                    }}
-                  />
-                  <Button 
-                    onClick={() => handleScanSuccess(scannerData.codigo_barras.trim())}
-                    disabled={!scannerData.codigo_barras.trim()}
-                  >
-                    <Scan className="h-4 w-4 mr-1" />
-                    Registrar
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setScannerOpen(false)}>
-                Fechar Scanner
-              </Button>
-              {selectedPosicao && (
-                <Button 
-                  onClick={() => handleConcluirPosicao(selectedPosicao)}
-                  disabled={concluirPosicao.isPending}
-                >
-                  Concluir Posição
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
