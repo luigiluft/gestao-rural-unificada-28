@@ -1862,6 +1862,17 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: boolean
       }
+      find_or_create_produto: {
+        Args: {
+          p_codigo_ean?: string
+          p_codigo_produto?: string
+          p_descricao_produto?: string
+          p_nome_produto: string
+          p_unidade_comercial?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       generate_inventory_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1904,6 +1915,10 @@ export type Database = {
       is_ancestor: {
         Args: { _child: string; _parent: string }
         Returns: boolean
+      }
+      process_entrada_itens_without_produto: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {
