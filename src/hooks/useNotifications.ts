@@ -60,20 +60,25 @@ export const useNotifications = () => {
           recebimento = entradasCount || 0
         }
 
-        // ESTOQUE: For produtores - items actually allocated in stock
-        if (isProdutor || isAdmin) {
-          let estoqueQuery = supabase
-            .from("estoque")
-            .select("id", { count: "exact" })
-            .gt("quantidade_atual", 0)
+        // ESTOQUE: For all users - completed allocation waves since last view
+        // Get user's last view time for estoque notifications
+        const { data: lastView } = await supabase
+          .from("user_notification_views")
+          .select("last_viewed_at")
+          .eq("user_id", user.id)
+          .eq("notification_type", "estoque")
+          .single()
 
-          if (!isAdmin) {
-            estoqueQuery = estoqueQuery.eq("user_id", user.id)
-          }
+        const lastViewTime = lastView?.last_viewed_at || '1970-01-01T00:00:00Z'
 
-          const { count: estoqueCount } = await estoqueQuery
-          estoque = estoqueCount || 0
-        }
+        // Count completed allocation waves since last view
+        const { count: estoqueCount } = await supabase
+          .from("allocation_waves")
+          .select("id", { count: "exact" })
+          .eq("status", "concluido")
+          .gte("data_conclusao", lastViewTime)
+
+        estoque = estoqueCount || 0
 
         // ALOCAÇÕES: For franqueados - allocation waves pending allocation
         if (isFranqueado || isAdmin) {

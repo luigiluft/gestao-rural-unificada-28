@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   Search, 
   Filter, 
@@ -40,6 +40,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import { useEstoque, useMovimentacoes } from "@/hooks/useEstoque"
+import { useUpdateNotificationView } from "@/hooks/useNotificationViews"
 import { useNavigate } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -50,6 +51,12 @@ export default function Estoque() {
   const { data: estoque, isLoading } = useEstoque()
   const [selectedItem, setSelectedItem] = useState<any>(null)
   const { data: movimentacoes } = useMovimentacoes(selectedItem?.produto_id)
+  const updateNotificationView = useUpdateNotificationView()
+
+  // Reset estoque notification when page loads
+  useEffect(() => {
+    updateNotificationView.mutate("estoque")
+  }, [])  // Only run once when component mounts
 
   const getStatusColor = (status: string) => {
     switch (status) {
