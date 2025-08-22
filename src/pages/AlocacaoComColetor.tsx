@@ -5,12 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ProductInfo } from "@/components/Alocacao/ProductInfo"
 import { ProgressIndicator } from "@/components/Alocacao/ProgressIndicator"
-import { Scan, MapPin, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
+import { Scan, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function AlocacaoComColetor() {
@@ -29,7 +27,6 @@ export default function AlocacaoComColetor() {
     navigate
   } = useAlocacao(waveId!)
 
-  const [scannerOpen, setScannerOpen] = useState(false)
   const [scannedProductCode, setScannedProductCode] = useState("")
   const [scannedPositionCode, setScannedPositionCode] = useState("")
 
@@ -61,45 +58,22 @@ export default function AlocacaoComColetor() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [currentItem, currentPosition, toast])
 
-  const handleScannerAllocate = async () => {
-    if (!scannedProductCode || !scannedPositionCode) {
-      toast({
-        title: "Dados incompletos",
-        description: "É necessário escanear tanto o produto quanto a posição",
-        variant: "destructive",
-      })
-      return
-    }
+  // Auto-allocate when both codes are scanned correctly
+  useEffect(() => {
+    if (scannedProductCode && scannedPositionCode && !isProcessing) {
+      const expectedProductCode = currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
+      const expectedPositionCode = currentPosition?.codigo
 
-    // Validar se os códigos escaneados conferem com o esperado
-    const expectedProductCode = currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
-    const expectedPositionCode = currentPosition?.codigo
-
-    if (scannedProductCode !== expectedProductCode) {
-      toast({
-        title: "Produto incorreto",
-        description: `Produto escaneado não confere. Esperado: ${expectedProductCode}`,
-        variant: "destructive",
-      })
-      return
+      if (scannedProductCode === expectedProductCode && scannedPositionCode === expectedPositionCode) {
+        handleAllocate(scannedProductCode, scannedPositionCode).then((success) => {
+          if (success) {
+            setScannedProductCode("")
+            setScannedPositionCode("")
+          }
+        })
+      }
     }
-
-    if (scannedPositionCode !== expectedPositionCode) {
-      toast({
-        title: "Posição incorreta",
-        description: `Posição escaneada não confere. Esperado: ${expectedPositionCode}`,
-        variant: "destructive",
-      })
-      return
-    }
-
-    const success = await handleAllocate(scannedProductCode, scannedPositionCode)
-    if (success) {
-      // Reset form
-      setScannedProductCode("")
-      setScannedPositionCode("")
-    }
-  }
+  }, [scannedProductCode, scannedPositionCode, currentItem, currentPosition, isProcessing, handleAllocate])
 
   if (isLoading) {
     return (
@@ -168,74 +142,53 @@ export default function AlocacaoComColetor() {
           {/* Scanner Controls */}
           <Card>
             <CardHeader>
-              <CardTitle>Controles do Scanner</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Scan className="w-5 h-5" />
+                Scanner de Produto
+              </CardTitle>
               <CardDescription>
-                Escaneie ou selecione o produto para confirmação
+                Escaneie o código de barras do produto
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="font-medium">Selecionar Produto Manualmente</Label>
-                <Select 
-                  value={scannedProductCode} 
-                  onValueChange={(value) => {
-                    setScannedProductCode(value)
-                    toast({
-                      title: "Produto selecionado",
-                      description: `Código: ${value}`,
-                    })
-                  }}
-                >
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Escolher produto..." />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-background">
-                    <SelectItem value={currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{currentItem.produtos?.nome}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {currentItem.lote ? `Lote: ${currentItem.lote}` : 'Sem lote'}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">ou</span>
-                </div>
-              </div>
-              
-              <div>
-                <Label className="font-medium">Código do Produto</Label>
+                <Label className="font-medium">Scanner de Produto (F1)</Label>
                 <div className="flex gap-2 mt-2">
                   <Input 
                     value={scannedProductCode}
                     onChange={(e) => setScannedProductCode(e.target.value)}
-                    placeholder="Escanear ou digitar código..."
+                    placeholder="Pressione F1 ou escaneie produto..."
+                    className="flex-1"
                   />
                   <Button 
                     variant="outline" 
-                    size="icon"
-                    onClick={() => setScannerOpen(true)}
+                    onClick={() => {
+                      const productCode = currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
+                      setScannedProductCode(productCode)
+                      toast({
+                        title: "Produto simulado",
+                        description: `Código: ${productCode}`,
+                      })
+                    }}
+                    size="sm"
                   >
-                    <Scan className="w-4 h-4" />
+                    F1
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Dica: Pressione F1 para simular scan do produto
+                  📱 Pressione F1 para simular scanner ou escaneie o código de barras
                 </p>
+                {scannedProductCode && (
+                  <p className="text-xs text-green-600 mt-1">
+                    ✅ Produto escaneado: {scannedProductCode}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Position Confirmation */}
+        {/* Position Scanner */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -243,7 +196,7 @@ export default function AlocacaoComColetor() {
               Scanner de Posição
             </CardTitle>
             <CardDescription>
-              Use o scanner para confirmar a posição designada
+              Escaneie o código da posição designada
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -276,11 +229,11 @@ export default function AlocacaoComColetor() {
                     />
                     <Button 
                       variant="outline" 
-                      size="icon"
-                      onClick={() => setScannerOpen(true)}
+                      size="sm"
+                      onClick={() => setScannedPositionCode(currentPosition.codigo)}
                       className="border-blue-300 text-blue-600 hover:bg-blue-50"
                     >
-                      <Scan className="w-4 h-4" />
+                      F2
                     </Button>
                   </div>
                   <p className="text-xs text-blue-600 mt-1">
@@ -298,17 +251,7 @@ export default function AlocacaoComColetor() {
                   )}
                 </div>
 
-                <div className="pt-6 space-y-2">
-                  <Button 
-                    onClick={handleScannerAllocate}
-                    disabled={!scannedProductCode || !scannedPositionCode || isProcessing}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    size="lg"
-                  >
-                    <Scan className="w-4 h-4 mr-2" />
-                    {isProcessing ? "Processando..." : "📱 Confirmar Scanner - Produto + Posição"}
-                  </Button>
-                  
+                <div className="pt-4">
                   <Button 
                     variant="outline"
                     onClick={handleSkipItem}
@@ -317,15 +260,24 @@ export default function AlocacaoComColetor() {
                   >
                     Pular Item
                   </Button>
+                  
+                  <div className="text-center pt-3">
+                    <p className="text-xs text-muted-foreground">
+                      Modo Scanner: F1 para produto • F2 para posição
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      ⚡ Alocação automática quando ambos forem escaneados corretamente
+                    </p>
+                  </div>
                 </div>
 
                 {(!scannedProductCode || !scannedPositionCode) && (
                   <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-yellow-800">Atenção</p>
+                      <p className="font-medium text-yellow-800">Aguardando Scanner</p>
                       <p className="text-yellow-700">
-                        É necessário escanear tanto o produto quanto a posição antes de confirmar.
+                        Escaneie primeiro o produto (F1) e depois a posição (F2) para alocar automaticamente.
                       </p>
                     </div>
                   </div>
@@ -347,31 +299,6 @@ export default function AlocacaoComColetor() {
       </div>
 
       <ProgressIndicator currentIndex={currentItemIndex} totalItems={pendingItems.length} />
-
-      {/* Scanner Modal */}
-      <Dialog open={scannerOpen} onOpenChange={setScannerOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Scanner de Código de Barras</DialogTitle>
-            <DialogDescription>
-              Funcionalidade de scanner será implementada aqui
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center justify-center py-8">
-            <Scan className="w-16 h-16 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center">
-              Scanner de código de barras<br />
-              (Funcionalidade será integrada com dispositivo físico)
-            </p>
-            <Button 
-              className="mt-4" 
-              onClick={() => setScannerOpen(false)}
-            >
-              Fechar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
