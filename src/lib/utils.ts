@@ -36,3 +36,45 @@ export const findFornecedorByCnpj = async (supabase: any, cnpj: string, userId: 
 
   return fornecedor
 }
+
+// Função para formatar CPF com máscara
+export const formatarCpfComMascara = (cpf: string): string => {
+  const cpfLimpo = cpf.replace(/[^\d]/g, '')
+  if (cpfLimpo.length !== 11) return cpf
+  
+  return cpfLimpo.replace(
+    /^(\d{3})(\d{3})(\d{3})(\d{2})$/,
+    '$1.$2.$3-$4'
+  )
+}
+
+// Função para buscar produtor por CPF/CNPJ (ambos formatos)
+export const findProdutorByCpfCnpj = async (supabase: any, cpfCnpj: string) => {
+  if (!cpfCnpj) return null
+  
+  const cpfCnpjLimpo = cpfCnpj.replace(/[^\d]/g, '')
+  let cpfCnpjComMascara = ''
+  
+  if (cpfCnpjLimpo.length === 11) {
+    // É CPF
+    cpfCnpjComMascara = formatarCpfComMascara(cpfCnpjLimpo)
+  } else if (cpfCnpjLimpo.length === 14) {
+    // É CNPJ
+    cpfCnpjComMascara = formatarCnpjComMascara(cpfCnpjLimpo)
+  } else {
+    return null
+  }
+  
+  const { data: produtor, error } = await supabase
+    .from("profiles")
+    .select("user_id, nome, email, cpf_cnpj, role")
+    .eq("role", "produtor")
+    .or(`cpf_cnpj.eq.${cpfCnpjLimpo},cpf_cnpj.eq.${cpfCnpjComMascara}`)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw error
+  }
+
+  return produtor
+}

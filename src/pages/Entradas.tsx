@@ -75,8 +75,7 @@ import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada"
 import { NFData } from "@/components/Entradas/NFParser"
 import { useToast } from "@/hooks/use-toast"
 import { useEntradas } from "@/hooks/useEntradas"
-import { findProdutorByCpfCnpj } from "@/hooks/useProdutorByCpfCnpj"
-import { findFornecedorByCnpj } from "@/lib/utils"
+import { findFornecedorByCnpj, findProdutorByCpfCnpj } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -160,43 +159,56 @@ export default function Entradas() {
       }
     }
 
-    // Se admin/franqueado está fazendo upload, tentar identificar o produtor
-    if (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'franqueado') {
-      if (data.destinatarioCpfCnpj) {
-        try {
-          const produtor = await findProdutorByCpfCnpj(data.destinatarioCpfCnpj)
+    // Tentar identificar o produtor destinatário
+    if (data.destinatario?.cpfCnpj) {
+      try {
+        const produtorEncontrado = await findProdutorByCpfCnpj(supabase, data.destinatario.cpfCnpj)
+        if (produtorEncontrado) {
+          setProdutorIdentificado(produtorEncontrado)
+          console.log('Produtor identificado:', produtorEncontrado)
           
-          if (produtor) {
-            setProdutorIdentificado(produtor)
-            toast({
-              title: "Produtor identificado",
-              description: `A entrada será registrada para ${produtor.nome}`,
-            })
-          } else {
-            setProdutorError(`Nenhum produtor encontrado com CPF/CNPJ: ${data.destinatarioCpfCnpj}`)
-            toast({
-              title: "Produtor não encontrado",
-              description: `Nenhum produtor cadastrado com o CPF/CNPJ ${data.destinatarioCpfCnpj}`,
-              variant: "destructive",
-            })
+          // Validar se o usuário atual pode importar esta NFe
+          if (currentUserProfile?.role === 'produtor') {
+            // Produtor só pode importar NFe onde ele é o destinatário
+            if (produtorEncontrado.user_id !== user?.id) {
+              setProdutorError('Você só pode importar NFes onde você é o destinatário')
+              toast({
+                title: "NFe não permitida",
+                description: "Você só pode importar NFes onde você é o destinatário.",
+                variant: "destructive",
+              })
+              return
+            }
           }
-        } catch (error) {
-          console.error('Erro ao buscar produtor:', error)
-          setProdutorError('Erro ao buscar produtor no sistema')
+          // Admin e franqueado podem importar de qualquer produtor (já encontrado)
+        } else {
+          console.log('Nenhum produtor encontrado para CPF/CNPJ:', data.destinatario.cpfCnpj)
+          setProdutorError('Nenhum produtor encontrado para o CPF/CNPJ do destinatário')
           toast({
-            title: "Erro",
-            description: "Erro ao buscar produtor no sistema",
+            title: "NFe rejeitada",
+            description: "NFe rejeitada: nenhum usuário produtor encontrado para o CPF/CNPJ do destinatário.",
             variant: "destructive",
           })
+          return // Impedir continuação
         }
-      } else {
-        setProdutorError('NFe não contém CPF/CNPJ do destinatário')
+      } catch (error) {
+        console.error('Erro ao buscar produtor:', error)
+        setProdutorError('Erro ao buscar produtor no sistema')
         toast({
-          title: "Dados incompletos",
-          description: "A NFe não contém CPF/CNPJ do destinatário",
+          title: "Erro",
+          description: "Erro ao buscar produtor no sistema",
           variant: "destructive",
         })
+        return // Impedir continuação
       }
+    } else {
+      setProdutorError('NFe não contém CPF/CNPJ do destinatário')
+      toast({
+        title: "NFe rejeitada",
+        description: "NFe rejeitada: não contém CPF/CNPJ do destinatário.",
+        variant: "destructive",
+      })
+      return // Impedir continuação
     }
 
     setActiveTab("manual")
