@@ -63,12 +63,7 @@ export const useInventarios = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inventarios")
-        .select(`
-          *,
-          franquias (
-            nome
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -85,12 +80,7 @@ export const useInventario = (inventarioId?: string) => {
 
       const { data, error } = await supabase
         .from("inventarios")
-        .select(`
-          *,
-          franquias (
-            nome
-          )
-        `)
+        .select("*")
         .eq("id", inventarioId)
         .single()
 

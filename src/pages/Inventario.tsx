@@ -44,6 +44,7 @@ import {
 } from "@/hooks/useInventarios"
 import { useStoragePositions } from "@/hooks/useStoragePositions"
 import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
+import { useAuth } from "@/contexts/AuthContext"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
 
@@ -90,7 +91,8 @@ export default function Inventario() {
   const { data: posicoes } = useInventarioPosicoes(currentInventoryId || undefined)
   const { data: itens } = useInventarioItens(currentInventoryId || undefined)
   const { data: todasPosicoes } = useStoragePositions(inventoryConfig.franquiaId)
-  const { data: depositos } = useDepositosDisponiveis()
+  const { user } = useAuth()
+  const { data: depositos, isLoading: loadingDepositos } = useDepositosDisponiveis(user?.id)
   
   const criarInventario = useCriarInventario()
   const atualizarInventario = useAtualizarInventario()
@@ -362,11 +364,17 @@ export default function Inventario() {
                   <SelectValue placeholder="Selecione uma franquia" />
                 </SelectTrigger>
                 <SelectContent>
-                  {depositos?.map((deposito) => (
-                    <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
-                      {deposito.deposito_nome}
-                    </SelectItem>
-                  ))}
+                  {loadingDepositos ? (
+                    <SelectItem value="loading" disabled>Carregando franquias...</SelectItem>
+                  ) : depositos && depositos.length > 0 ? (
+                    depositos.map((deposito) => (
+                      <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
+                        {deposito.deposito_nome}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="empty" disabled>Nenhuma franquia encontrada</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
