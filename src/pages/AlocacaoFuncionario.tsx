@@ -325,33 +325,6 @@ export default function AlocacaoFuncionario() {
                   )}
                 </div>
 
-                <div>
-                  <Label className="font-medium">Escanear Posição para Confirmar</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input 
-                      value={scannedPositionCode}
-                      onChange={(e) => setScannedPositionCode(e.target.value)}
-                      placeholder={`Escaneie: ${currentPosition.codigo}`}
-                      className={scannedPositionCode && scannedPositionCode !== currentPosition.codigo ? 'border-destructive' : ''}
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => setScannerOpen(true)}
-                    >
-                      <Scan className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Dica: Pressione F2 para simular scan da posição
-                  </p>
-                  {scannedPositionCode && scannedPositionCode !== currentPosition.codigo && (
-                    <p className="text-xs text-destructive mt-1">
-                      Posição incorreta! Escaneie: {currentPosition.codigo}
-                    </p>
-                  )}
-                </div>
-
                 <div className="pt-6 space-y-2">
                   <Button 
                     onClick={handleAllocate}
@@ -365,13 +338,18 @@ export default function AlocacaoFuncionario() {
                   
                   <Button 
                     variant="secondary"
-                    onClick={handleAllocate}
-                    disabled={!scannedProductCode || !scannedPositionCode || isProcessing}
+                    onClick={() => {
+                      // Para alocação manual, confirma automaticamente produto, lote e posição
+                      setScannedProductCode(currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`)
+                      setScannedPositionCode(currentPosition.codigo)
+                      handleAllocate()
+                    }}
+                    disabled={isProcessing}
                     className="w-full"
                     size="lg"
                   >
                     <Package className="w-4 h-4 mr-2" />
-                    {isProcessing ? "Processando..." : "Alocar Manualmente"}
+                    {isProcessing ? "Processando..." : "Confirmar Produto, Lote e Posição"}
                   </Button>
                   
                   <Button 
