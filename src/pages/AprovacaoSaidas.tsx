@@ -238,8 +238,6 @@ export default function AprovacaoSaidas() {
                               <TableHead>Produto</TableHead>
                               <TableHead>Lote</TableHead>
                               <TableHead className="text-right">Quantidade</TableHead>
-                              <TableHead className="text-right">Valor Unit.</TableHead>
-                              <TableHead className="text-right">Total</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -251,12 +249,6 @@ export default function AprovacaoSaidas() {
                                 <TableCell>{item.lote || "-"}</TableCell>
                                 <TableCell className="text-right">
                                   {item.quantidade} {item.produtos?.unidade_medida || "un"}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(item.valor_unitario)}
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {formatCurrency(item.valor_total)}
                                 </TableCell>
                               </TableRow>
                             ))} 
@@ -274,12 +266,8 @@ export default function AprovacaoSaidas() {
 
                       <Separator />
 
-                      {/* Valor Total e Ações */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xl font-semibold">
-                          Total: {formatCurrency(saida.valor_total)}
-                        </div>
-                        
+                      {/* Ações */}
+                      <div className="flex items-center justify-end">
                         <div className="flex gap-2">
                           {getNextStatusLabel(saida.status) && (
                             <Button
