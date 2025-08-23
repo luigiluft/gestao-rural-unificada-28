@@ -544,22 +544,24 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
 
                   <div>
                     <Label htmlFor="janela-horario">Janela de Horário *</Label>
-                    <Select value={dadosSaida.janela_horario} onValueChange={(value) => setDadosSaida({...dadosSaida, janela_horario: value})}>
+                    <Select 
+                      value={dadosSaida.janela_horario} 
+                      onValueChange={(value) => setDadosSaida({...dadosSaida, janela_horario: value})}
+                      disabled={horariosDisponiveis.length === 0}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o horário" />
+                        <SelectValue placeholder={
+                          horariosDisponiveis.length === 0 
+                            ? "Nenhum horário disponível" 
+                            : "Selecione o horário"
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                        {horariosDisponiveis.length > 0 ? (
-                          horariosDisponiveis.map((horario) => (
-                            <SelectItem key={horario} value={horario}>
-                              {horario}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="" disabled>
-                            Nenhum horário disponível para esta data
+                        {horariosDisponiveis.map((horario) => (
+                          <SelectItem key={horario} value={horario}>
+                            {horario}
                           </SelectItem>
-                        )}
+                        ))}
                       </SelectContent>
                     </Select>
                     {dadosSaida.data_saida && horariosDisponiveis.length === 0 && (
