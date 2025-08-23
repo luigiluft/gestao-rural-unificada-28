@@ -46,7 +46,7 @@ const iconMap = {
   franquias: Building2,
   franqueados: UserCheck,
   recebimento: ClipboardCheck,
-  expedicao: Truck,
+  expedicao: Send,
   produtores: UserPlus,
   fazendas: Tractor,
   subcontas: UserCog,
@@ -57,7 +57,8 @@ const iconMap = {
   "ondas-alocacao": Waves,
   "gerenciar-posicoes": Grid3X3,
   separacao: Clipboard,
-  inventario: Package2
+  inventario: Package2,
+  transporte: Truck
 }
 
 const menuLabels = {
@@ -83,7 +84,8 @@ const menuLabels = {
   "ondas-alocacao": "Alocações",
   "gerenciar-posicoes": "Posições",
   separacao: "Separação",
-  inventario: "Inventário"
+  inventario: "Inventário",
+  transporte: "Transporte"
 }
 
 export const useDynamicMenuItems = () => {
@@ -110,6 +112,7 @@ export const useDynamicMenuItems = () => {
       'saidas',
       'separacao',
       'expedicao',
+      'transporte',
       'rastreio',
       'relatorios',
       'usuarios',
