@@ -106,12 +106,12 @@ export const useNotifications = () => {
           alocacoes = alocacoesCount || 0
         }
 
-        // SEPARAÇÃO: For franqueados - saídas pending separation
+        // SEPARAÇÃO: For franqueados - saídas pending separation and separated
         if (isFranqueado || isAdmin) {
           let separacaoQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
-            .eq("status", "separacao_pendente")
+            .in("status", ["separacao_pendente", "separado"])
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
