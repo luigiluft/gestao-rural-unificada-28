@@ -192,10 +192,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           user_id: user?.id,
           data_saida: dadosSaida.data_saida,
           tipo_saida: dadosSaida.tipo_saida,
-          
           observacoes: dadosSaida.observacoes,
           deposito_id: dadosSaida.deposito_id,
-          valor_total: calcularValorTotal(),
           status: 'separacao_pendente'
         })
         .select()
@@ -209,9 +207,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         saida_id: saida.id,
         produto_id: item.produto_id,
         quantidade: item.quantidade,
-        lote: item.lote,
-        valor_unitario: item.valor_unitario,
-        valor_total: item.valor_total
+        lote: item.lote
       }))
 
       const { error: itensError } = await supabase
@@ -241,7 +237,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         <CardContent className="space-y-4">
           {/* Formulário de novo item */}
           <div className="border rounded-lg p-4 bg-muted/30">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
+            <div className="grid grid-cols-1 lg:grid-cols-9 gap-3 mb-3">
               <div className="lg:col-span-4 space-y-1">
                 <Label className="text-xs font-medium">Produto</Label>
                 <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
@@ -285,16 +281,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                 />
               </div>
 
-              <div className="lg:col-span-3 space-y-1">
-                <Label className="text-xs font-medium">Valor Unit. (Custo Médio)</Label>
-                <Input
-                  type="number"
-                  value={novoItem.valor_unitario?.toFixed(2) || '0.00'}
-                  disabled
-                  className="h-9 bg-muted"
-                />
-              </div>
-
               <div className="lg:col-span-1 space-y-1">
                 <Label className="text-xs font-medium">Ação</Label>
                 <Button onClick={adicionarItem} size="sm" className="w-full h-9">
@@ -312,8 +298,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   <TableHead>Produto</TableHead>
                   <TableHead>Lote</TableHead>
                   <TableHead>Quantidade</TableHead>
-                  <TableHead>Valor Unit.</TableHead>
-                  <TableHead>Valor Total</TableHead>
                   <TableHead className="w-[50px]">Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -323,8 +307,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     <TableCell className="font-medium">{item.produtoNome}</TableCell>
                     <TableCell>{item.lote || "-"}</TableCell>
                     <TableCell>{item.quantidade} {item.unidade}</TableCell>
-                    <TableCell>R$ {(item.valor_unitario || 0).toFixed(2)}</TableCell>
-                    <TableCell>R$ {(item.valor_total || 0).toFixed(2)}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -340,13 +322,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
             </Table>
           )}
 
-          {itens.length > 0 && (
-            <div className="flex justify-end">
-              <div className="text-lg font-semibold">
-                Total: R$ {calcularValorTotal().toFixed(2)}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
