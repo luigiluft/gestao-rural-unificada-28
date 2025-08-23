@@ -15,15 +15,7 @@ import { format } from "date-fns"
 import { Truck, CheckCircle } from "lucide-react"
 
 export default function Transporte() {
-  // Set up default date range (last 30 days)
-  const [dateRange, setDateRange] = useState<DateRange>(() => {
-    const hoje = new Date()
-    const trintaDiasAtras = new Date()
-    trintaDiasAtras.setDate(hoje.getDate() - 30)
-    return { from: trintaDiasAtras, to: hoje }
-  })
-  
-  const { data: saidasData, isLoading } = useSaidasPendentes(dateRange)
+  const { data: saidasData, isLoading } = useSaidasPendentes()
   const atualizarStatus = useAtualizarStatusSaida()
   
   const [selectedSaida, setSelectedSaida] = useState<any>(null)
@@ -125,11 +117,6 @@ export default function Transporte() {
         </p>
       </div>
 
-      {/* Date Filter */}
-      <DateRangeFilter 
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
 
       {/* Content */}
       <div className="space-y-4">

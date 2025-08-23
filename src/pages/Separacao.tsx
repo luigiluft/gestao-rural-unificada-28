@@ -16,15 +16,7 @@ import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 
 export default function Separacao() {
-  // Set up default date range (last 30 days)
-  const [dateRange, setDateRange] = useState<DateRange>(() => {
-    const hoje = new Date()
-    const trintaDiasAtras = new Date()
-    trintaDiasAtras.setDate(hoje.getDate() - 30)
-    return { from: trintaDiasAtras, to: hoje }
-  })
-  
-  const { data: saidas, isLoading } = useSaidasPendentes(dateRange)
+  const { data: saidas, isLoading } = useSaidasPendentes()
   const atualizarStatus = useAtualizarStatusSaida()
   
   const [selectedSaida, setSelectedSaida] = useState<any>(null)
@@ -142,11 +134,6 @@ export default function Separacao() {
         </p>
       </div>
 
-      {/* Date Filter */}
-      <DateRangeFilter 
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
 
 
       {/* Conteúdo da Separação Pendente */}

@@ -37,15 +37,7 @@ interface LeituraBarra {
 export default function AprovacaoEntradas() {
   const isMobile = useIsMobile()
   
-  // Set up default date range (last 30 days)
-  const [dateRange, setDateRange] = useState<DateRange>(() => {
-    const hoje = new Date()
-    const trintaDiasAtras = new Date()
-    trintaDiasAtras.setDate(hoje.getDate() - 30)
-    return { from: trintaDiasAtras, to: hoje }
-  })
-  
-  const { data: entradas, isLoading } = useEntradasPendentes(dateRange)
+  const { data: entradas, isLoading } = useEntradasPendentes()
   const atualizarStatus = useAtualizarStatusEntrada()
   
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
@@ -372,11 +364,6 @@ export default function AprovacaoEntradas() {
         </p>
       </div>
 
-      {/* Date Filter */}
-      <DateRangeFilter 
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
 
       <Tabs defaultValue="aguardando_transporte" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
