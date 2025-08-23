@@ -1,7 +1,6 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
 interface FluxoData {
   produto: string;
@@ -16,28 +15,21 @@ interface FluxoChartProps {
   data: FluxoData[];
 }
 
-const chartConfig = {
-  aCaminho: {
-    label: "A Caminho",
-    color: "#3b82f6", // blue-500
-  },
-  noDeposito: {
-    label: "No Depósito", 
-    color: "#f97316", // orange-500
-  },
-  emSeparacao: {
-    label: "Em Separação",
-    color: "#eab308", // yellow-500
-  },
-  expedido: {
-    label: "Expedido",
-    color: "#10b981", // green-500
-  },
-  entregue: {
-    label: "Entregue",
-    color: "#8b5cf6", // purple-500
-  },
-} as const;
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+        <p className="font-medium mb-2">{`Produto: ${label}`}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {`${entry.name}: ${entry.value}`}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export const FluxoChart = ({ data }: FluxoChartProps) => {
   console.log("FluxoChart - Received data:", data);
@@ -66,10 +58,7 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
         </p>
       </CardHeader>
       <CardContent>
-        <ChartContainer
-          config={chartConfig}
-          className="min-h-[400px] w-full"
-        >
+        <div className="w-full h-96">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               layout="horizontal"
@@ -77,62 +66,54 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
               margin={{
                 top: 20,
                 right: 30,
-                left: 80,
-                bottom: 20,
+                left: 120,
+                bottom: 5,
               }}
             >
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                type="number"
-                tick={{ fontSize: 12 }}
-                className="text-muted-foreground"
-              />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
               <YAxis 
-                type="category"
+                type="category" 
                 dataKey="produto" 
+                width={100}
                 tick={{ fontSize: 12 }}
-                width={120}
-                className="text-muted-foreground"
               />
-              <ChartTooltip
-                content={<ChartTooltipContent />}
-                cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
-              />
-              <ChartLegend content={<ChartLegendContent />} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
               
-              <Bar
-                dataKey="aCaminho"
-                stackId="a"
-                fill="#3b82f6"
+              <Bar 
+                dataKey="aCaminho" 
+                stackId="a" 
+                fill="#3b82f6" 
                 name="A Caminho"
               />
-              <Bar
-                dataKey="noDeposito"
-                stackId="a"
-                fill="#f97316"
+              <Bar 
+                dataKey="noDeposito" 
+                stackId="a" 
+                fill="#f97316" 
                 name="No Depósito"
               />
-              <Bar
-                dataKey="emSeparacao"
-                stackId="a"
-                fill="#eab308"
+              <Bar 
+                dataKey="emSeparacao" 
+                stackId="a" 
+                fill="#eab308" 
                 name="Em Separação"
               />
-              <Bar
-                dataKey="expedido"
-                stackId="a"
-                fill="#10b981"
+              <Bar 
+                dataKey="expedido" 
+                stackId="a" 
+                fill="#10b981" 
                 name="Expedido"
               />
-              <Bar
-                dataKey="entregue"
-                stackId="a"
-                fill="#8b5cf6"
+              <Bar 
+                dataKey="entregue" 
+                stackId="a" 
+                fill="#8b5cf6" 
                 name="Entregue"
               />
             </BarChart>
           </ResponsiveContainer>
-        </ChartContainer>
+        </div>
       </CardContent>
     </Card>
   );
