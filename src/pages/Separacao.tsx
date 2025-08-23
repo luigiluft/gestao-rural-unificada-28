@@ -9,8 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Clock, Package, Scan } from "lucide-react"
+import { Clock, Scan } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"
@@ -44,7 +43,6 @@ export default function Separacao() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       'separacao_pendente': { label: 'Separação Pendente', variant: 'secondary' as const, icon: Clock },
-      'separado': { label: 'Separado', variant: 'default' as const, icon: Package },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -93,10 +91,9 @@ export default function Separacao() {
     return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
   }
 
-  // Filtrar saídas por status (apenas separação pendente e separado)
+  // Filtrar saídas apenas para separação pendente
   const saidasPorStatus = {
-    separacao_pendente: saidas?.filter(s => s.status === 'separacao_pendente') || [],
-    separado: saidas?.filter(s => s.status === 'separado') || []
+    separacao_pendente: saidas?.filter(s => s.status === 'separacao_pendente') || []
   }
 
   const formatCurrency = (value: number | null) => {
@@ -152,137 +149,127 @@ export default function Separacao() {
       />
 
 
-      {/* Tabs por Status */}
-      <Tabs defaultValue="separacao_pendente" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="separacao_pendente" className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Separação Pendente ({saidasPorStatus.separacao_pendente.length})
-          </TabsTrigger>
-          <TabsTrigger value="separado" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Separado ({saidasPorStatus.separado.length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Conteúdo da Separação Pendente */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="w-4 h-4" />
+          <h2 className="text-lg font-semibold">Separação Pendente ({saidasPorStatus.separacao_pendente.length})</h2>
+        </div>
 
-        {Object.entries(saidasPorStatus).map(([status, saidasStatus]) => (
-          <TabsContent key={status} value={status} className="space-y-4">
-            {saidasStatus.length === 0 ? (
-              <EmptyState
-                title="Nenhum pedido para separação"
-                description={getEmptyStateDescription(status)}
-              />
-            ) : (
-              <div className="grid gap-4">
-                {saidasStatus.map((saida) => (
-                  <Card key={saida.id} className="shadow-card">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="font-semibold text-lg">
-                            SAI{saida.id.slice(-6).toUpperCase()}
-                          </div>
-                          {getStatusBadge(saida.status)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(new Date(saida.created_at), 'dd/MM/yyyy HH:mm')}
-                        </div>
+        {saidasPorStatus.separacao_pendente.length === 0 ? (
+          <EmptyState
+            title="Nenhum pedido para separação"
+            description={getEmptyStateDescription('separacao_pendente')}
+          />
+        ) : (
+          <div className="grid gap-4">
+            {saidasPorStatus.separacao_pendente.map((saida) => (
+              <Card key={saida.id} className="shadow-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="font-semibold text-lg">
+                        SAI{saida.id.slice(-6).toUpperCase()}
                       </div>
-                    </CardHeader>
+                      {getStatusBadge(saida.status)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(saida.created_at), 'dd/MM/yyyy HH:mm')}
+                    </div>
+                  </div>
+                </CardHeader>
 
-                    <CardContent className="space-y-4">
-                      {/* Informações da Saída */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <Label className="text-xs font-medium text-muted-foreground">DESTINATÁRIO</Label>
-                          <p className="font-medium">Saída de Produtos</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs font-medium text-muted-foreground">TIPO DE SAÍDA</Label>
-                          <p className="font-medium">{saida.tipo_saida || "Não informado"}</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs font-medium text-muted-foreground">DATA DA SAÍDA</Label>
-                          <p className="font-medium">{format(new Date(saida.data_saida), 'dd/MM/yyyy')}</p>
-                        </div>
-                      </div>
+                <CardContent className="space-y-4">
+                  {/* Informações da Saída */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">DESTINATÁRIO</Label>
+                      <p className="font-medium">Saída de Produtos</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">TIPO DE SAÍDA</Label>
+                      <p className="font-medium">{saida.tipo_saida || "Não informado"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">DATA DA SAÍDA</Label>
+                      <p className="font-medium">{format(new Date(saida.data_saida), 'dd/MM/yyyy')}</p>
+                    </div>
+                  </div>
 
-                      <Separator />
+                  <Separator />
 
-                      {/* Itens da Saída */}
-                      <div>
-                        <Label className="text-sm font-medium mb-3 block">Itens da Saída</Label>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Produto</TableHead>
-                                <TableHead>Lote</TableHead>
-                                <TableHead className="text-right">Quantidade</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {saida.saida_itens?.map((item: any, index: number) => (
-                                <TableRow key={index}>
-                                  <TableCell className="font-medium">
-                                    {item.produtos?.nome || "Nome não disponível"}
-                                  </TableCell>
-                                  <TableCell>{item.lote || "-"}</TableCell>
-                                  <TableCell className="text-right">
-                                    {item.quantidade} {item.produtos?.unidade_medida || "un"}
-                                  </TableCell>
-                                </TableRow>
-                              ))} 
-                            </TableBody>
-                        </Table>
-                      </div>
+                  {/* Itens da Saída */}
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Itens da Saída</Label>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead>Lote</TableHead>
+                          <TableHead className="text-right">Quantidade</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {saida.saida_itens?.map((item: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">
+                              {item.produtos?.nome || "Nome não disponível"}
+                            </TableCell>
+                            <TableCell>{item.lote || "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {item.quantidade} {item.produtos?.unidade_medida || "un"}
+                            </TableCell>
+                          </TableRow>
+                        ))} 
+                      </TableBody>
+                    </Table>
+                  </div>
 
-                      {/* Observações */}
-                      {saida.observacoes && (
-                        <div className="p-3 bg-muted/30 rounded-lg">
-                          <Label className="text-xs font-medium text-muted-foreground">OBSERVAÇÕES</Label>
-                          <p className="text-sm mt-1">{saida.observacoes}</p>
-                        </div>
+                  {/* Observações */}
+                  {saida.observacoes && (
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <Label className="text-xs font-medium text-muted-foreground">OBSERVAÇÕES</Label>
+                      <p className="text-sm mt-1">{saida.observacoes}</p>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Valor Total e Ações */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xl font-semibold">
+                      Total: {formatCurrency(saida.valor_total)}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      {saida.status === 'separacao_pendente' && (
+                        <>
+                          <Button
+                            onClick={() => handleSeparacaoIndividual(saida)}
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-2"
+                          >
+                            <Scan className="h-4 w-4" />
+                            Separação Individual
+                          </Button>
+                          <Button
+                            onClick={() => handleAction(saida)}
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90"
+                          >
+                            Marcar Tudo como Separado
+                          </Button>
+                        </>
                       )}
-
-                      <Separator />
-
-                      {/* Valor Total e Ações */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xl font-semibold">
-                          Total: {formatCurrency(saida.valor_total)}
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          {saida.status === 'separacao_pendente' && (
-                            <>
-                              <Button
-                                onClick={() => handleSeparacaoIndividual(saida)}
-                                size="sm"
-                                variant="outline"
-                                className="flex items-center gap-2"
-                              >
-                                <Scan className="h-4 w-4" />
-                                Separação Individual
-                              </Button>
-                              <Button
-                                onClick={() => handleAction(saida)}
-                                size="sm"
-                                className="bg-primary hover:bg-primary/90"
-                              >
-                                Marcar Tudo como Separado
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Dialog de Confirmação */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
