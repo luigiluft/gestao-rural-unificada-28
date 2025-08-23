@@ -1,20 +1,20 @@
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Separator } from "@/components/ui/separator"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { StatusIndicator } from "@/components/Rastreio/StatusIndicator"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
-import { formatDate } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Truck, Package } from "lucide-react"
+import { format } from "date-fns"
+import { Truck, CheckCircle } from "lucide-react"
 
 export default function Transporte() {
-  const [expandedSaida, setExpandedSaida] = useState<string | null>(null)
-  
   // Set up default date range (last 30 days)
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const hoje = new Date()
@@ -24,35 +24,90 @@ export default function Transporte() {
   })
   
   const { data: saidasData, isLoading } = useSaidasPendentes(dateRange)
+  const atualizarStatus = useAtualizarStatusSaida()
   
-  // Filter only expedido status
-  const saidas = saidasData?.filter(saida => saida.status === 'expedido') || []
-  
-  const { mutate: atualizarStatus, isPending } = useAtualizarStatusSaida()
+  const [selectedSaida, setSelectedSaida] = useState<any>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [observacoes, setObservacoes] = useState('')
 
-  const handleStatusUpdate = (saidaId: string, status: string) => {
-    atualizarStatus({ 
-      saidaId, 
-      status,
-      observacoes: "Entrega confirmada via sistema de transporte"
-    })
+  // Filter only expedido status for transport
+  const saidas = saidasData?.filter(saida => saida.status === 'expedido') || []
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      'expedido': { label: 'Expedido', variant: 'default' as const, icon: Truck },
+      'entregue': { label: 'Entregue', variant: 'outline' as const, icon: CheckCircle },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig]
+    if (!config) return null
+
+    const Icon = config.icon
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    )
   }
 
-  const toggleExpansion = (saidaId: string) => {
-    setExpandedSaida(expandedSaida === saidaId ? null : saidaId)
+  const getNextStatus = (currentStatus: string) => {
+    const statusFlow = {
+      'expedido': 'entregue'
+    }
+    return statusFlow[currentStatus as keyof typeof statusFlow]
+  }
+
+  const getNextStatusLabel = (currentStatus: string) => {
+    const statusLabels = {
+      'expedido': 'Marcar como Entregue'
+    }
+    return statusLabels[currentStatus as keyof typeof statusLabels] || null
+  }
+
+  const handleAction = (saida: any) => {
+    setSelectedSaida(saida)
+    setObservacoes('')
+    setDialogOpen(true)
+  }
+
+  const handleConfirm = async () => {
+    if (!selectedSaida) return
+
+    const nextStatus = getNextStatus(selectedSaida.status)
+    if (!nextStatus) return
+
+    await atualizarStatus.mutateAsync({
+      saidaId: selectedSaida.id,
+      status: nextStatus,
+      observacoes
+    })
+    
+    setDialogOpen(false)
+    setSelectedSaida(null)
+    setObservacoes('')
   }
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Transporte</h1>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="h-32" />
+        
+        <div className="grid gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="shadow-card">
+              <CardHeader>
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
@@ -60,136 +115,162 @@ export default function Transporte() {
     )
   }
 
-  if (!saidas || saidas.length === 0) {
-    return (
-      <div className="p-6 space-y-6">
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Transporte</h1>
-        </div>
-        <EmptyState
-          icon={<Package className="h-12 w-12 text-muted-foreground" />}
-          title="Nenhuma saída expedida"
-          description="Não há saídas expedidas aguardando entrega no momento."
-        />
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Truck className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Transporte</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <DateRangeFilter
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-          />
-          <Badge variant="secondary" className="text-sm">
-            {saidas.length} saída{saidas.length !== 1 ? 's' : ''} expedida{saidas.length !== 1 ? 's' : ''}
-          </Badge>
-        </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Transporte</h1>
+        <p className="text-muted-foreground">
+          Gerencie a entrega dos produtos expedidos e confirme as entregas realizadas
+        </p>
       </div>
 
-      <div className="space-y-4">
-        {saidas.map((saida) => (
-          <Card key={saida.id} className="shadow-card">
-            <CardHeader 
-              className="cursor-pointer hover:bg-muted/30 transition-colors"
-              onClick={() => toggleExpansion(saida.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">
-                    Saída #{saida.id.slice(0, 8)}
-                  </CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>Criada em: {formatDate(new Date(saida.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                    <span>Produtor: {(saida as any).produtor?.nome || "Não identificado"}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <StatusIndicator 
-                    status={saida.status} 
-                    type="saida" 
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    {saida.saida_itens?.length || 0} iten{(saida.saida_itens?.length || 0) !== 1 ? 's' : ''}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
+      {/* Date Filter */}
+      <DateRangeFilter 
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
 
-            {expandedSaida === saida.id && (
-              <CardContent className="space-y-4">
-                {/* Informações da Saída */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-muted-foreground">Data da Saída:</span>
-                    <p>{formatDate(new Date(saida.data_saida), "dd/MM/yyyy", { locale: ptBR })}</p>
+      {/* Content */}
+      <div className="space-y-4">
+        {saidas.length === 0 ? (
+          <EmptyState
+            icon={<Truck className="h-12 w-12 text-muted-foreground" />}
+            title="Nenhuma saída expedida"
+            description="Não há saídas expedidas aguardando entrega no período selecionado. Produtos aparecerão aqui após serem expedidos."
+          />
+        ) : (
+          <div className="grid gap-4">
+            {saidas.map((saida) => (
+              <Card key={saida.id} className="shadow-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="font-semibold text-lg">
+                        SAI{saida.id.slice(-6).toUpperCase()}
+                      </div>
+                      {getStatusBadge(saida.status)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(saida.created_at), 'dd/MM/yyyy HH:mm')}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Depósito:</span>
-                    <p>Depósito #{saida.deposito_id?.slice(0, 8) || "Não identificado"}</p>
-                  </div>
-                  {saida.observacoes && (
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Informações da Saída */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-muted-foreground">Observações:</span>
-                      <p>{saida.observacoes}</p>
+                      <Label className="text-xs font-medium text-muted-foreground">DESTINATÁRIO</Label>
+                      <p className="font-medium">Entrega de Produtos</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">PRODUTOR</Label>
+                      <p className="font-medium">{(saida as any).produtor?.nome || "Não identificado"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">DATA DA SAÍDA</Label>
+                      <p className="font-medium">{format(new Date(saida.data_saida), 'dd/MM/yyyy')}</p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Itens da Saída */}
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Itens da Saída</Label>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead>Lote</TableHead>
+                          <TableHead className="text-right">Quantidade</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {saida.saida_itens?.map((item: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">
+                              {item.produtos?.nome || "Nome não disponível"}
+                            </TableCell>
+                            <TableCell>{item.lote || "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {item.quantidade} {item.produtos?.unidade_medida || "un"}
+                            </TableCell>
+                          </TableRow>
+                        ))} 
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Observações */}
+                  {saida.observacoes && (
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <Label className="text-xs font-medium text-muted-foreground">OBSERVAÇÕES</Label>
+                      <p className="text-sm mt-1">{saida.observacoes}</p>
                     </div>
                   )}
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                {/* Itens da Saída */}
-                <div>
-                  <h4 className="font-medium mb-3">Itens da Saída</h4>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Produto</TableHead>
-                        <TableHead>Lote</TableHead>
-                        <TableHead className="text-right">Quantidade</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {saida.saida_itens?.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {item.produtos?.nome || "Produto não identificado"}
-                          </TableCell>
-                          <TableCell>{item.lote || "-"}</TableCell>
-                          <TableCell className="text-right">
-                            {item.quantidade} {item.produtos?.unidade_medida || "un"}
-                          </TableCell>
-                        </TableRow>
-                      ))} 
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <Separator />
-
-                {/* Ações */}
-                <div className="flex items-center justify-end">
-                  <Button
-                    onClick={() => handleStatusUpdate(saida.id, 'entregue')}
-                    disabled={isPending}
-                    className="bg-gradient-primary hover:bg-primary/90"
-                  >
-                    <Truck className="h-4 w-4 mr-2" />
-                    Confirmar Entrega
-                  </Button>
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
+                  {/* Ações */}
+                  <div className="flex items-center justify-end">
+                    <div className="flex gap-2">
+                      {getNextStatusLabel(saida.status) && (
+                        <Button
+                          onClick={() => handleAction(saida)}
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <Truck className="h-4 w-4 mr-2" />
+                          {getNextStatusLabel(saida.status)}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Dialog de Confirmação */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Entrega</DialogTitle>
+            <DialogDescription>
+              {selectedSaida && `Deseja confirmar a entrega da saída SAI${selectedSaida.id.slice(-6).toUpperCase()}?`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="observacoes">Observações da Entrega (opcional)</Label>
+              <Textarea
+                id="observacoes"
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Adicione observações sobre a entrega..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirm}
+              disabled={atualizarStatus.isPending}
+            >
+              {atualizarStatus.isPending ? "Confirmando..." : "Confirmar Entrega"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
