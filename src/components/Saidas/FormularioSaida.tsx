@@ -251,12 +251,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   <SelectContent>
                     {produtosArray.map((produto) => (
                       <SelectItem key={produto.id} value={produto.id}>
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium text-sm">{produto.nome}</span>
-                          <span className="text-xs text-muted-foreground">
-                            Disponível: {produto.quantidade_total} {produto.unidade_medida}
-                          </span>
-                        </div>
+                        <span className="font-medium text-sm">{produto.nome}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -274,6 +269,11 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   placeholder="0"
                   className="h-9"
                 />
+                {novoItem.produto_id && produtosDisponiveis[novoItem.produto_id] && (
+                  <div className="text-xs text-muted-foreground">
+                    Disponível: {produtosDisponiveis[novoItem.produto_id].quantidade_total} {produtosDisponiveis[novoItem.produto_id].unidade_medida}
+                  </div>
+                )}
               </div>
 
               <div className="lg:col-span-2 space-y-1">
