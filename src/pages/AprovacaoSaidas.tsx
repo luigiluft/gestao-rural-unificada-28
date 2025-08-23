@@ -9,8 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Truck, Package, CheckCircle } from "lucide-react"
+import { Package } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
@@ -40,22 +39,15 @@ export default function AprovacaoSaidas() {
   }, [])
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      'separado': { label: 'Separado', variant: 'default' as const, icon: Package },
-      'expedido': { label: 'Expedido', variant: 'outline' as const, icon: Truck },
-      'entregue': { label: 'Entregue', variant: 'default' as const, icon: CheckCircle },
+    if (status === 'separado') {
+      return (
+        <Badge variant="default" className="flex items-center gap-1">
+          <Package className="h-3 w-3" />
+          Separado
+        </Badge>
+      )
     }
-
-    const config = statusConfig[status as keyof typeof statusConfig]
-    if (!config) return null
-
-    const Icon = config.icon
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <Icon className="h-3 w-3" />
-        {config.label}
-      </Badge>
-    )
+    return null
   }
 
   const getNextStatus = (currentStatus: string) => {
@@ -108,12 +100,8 @@ export default function AprovacaoSaidas() {
     return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
   }
 
-  // Filtrar saídas por status (apenas expedição: separado, expedido, entregue)
-  const saidasPorStatus = {
-    separado: saidas?.filter(s => s.status === 'separado') || [],
-    expedido: saidas?.filter(s => s.status === 'expedido') || [],
-    entregue: saidas?.filter(s => s.status === 'entregue') || []
-  }
+  // Filtrar apenas saídas com status "separado"
+  const saidasSeparadas = saidas?.filter(s => s.status === 'separado') || []
 
   const formatCurrency = (value: number | null) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -168,126 +156,112 @@ export default function AprovacaoSaidas() {
       />
 
 
-      {/* Tabs por Status */}
-      <Tabs defaultValue="separado" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="separado" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Separado ({saidasPorStatus.separado.length})
-          </TabsTrigger>
-          <TabsTrigger value="expedido" className="flex items-center gap-2">
-            <Truck className="w-4 h-4" />
-            Expedido ({saidasPorStatus.expedido.length})
-          </TabsTrigger>
-          <TabsTrigger value="entregue" className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4" />
-            Entregue ({saidasPorStatus.entregue.length})
-          </TabsTrigger>
-        </TabsList>
-
-        {Object.entries(saidasPorStatus).map(([status, saidasStatus]) => (
-          <TabsContent key={status} value={status} className="space-y-4">
-            {saidasStatus.length === 0 ? (
-              <EmptyState
-                title="Nenhum pedido de expedição"
-                description={getEmptyStateDescription(status)}
-              />
-            ) : (
-              <div className="grid gap-4">
-                {saidasStatus.map((saida) => (
-                  <Card key={saida.id} className="shadow-card">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="font-semibold text-lg">
-                            SAI{saida.id.slice(-6).toUpperCase()}
-                          </div>
-                          {getStatusBadge(saida.status)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(new Date(saida.created_at), 'dd/MM/yyyy HH:mm')}
-                        </div>
+      {/* Lista de Produtos Separados */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Package className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-semibold">Produtos Separados ({saidasSeparadas.length})</h2>
+        </div>
+        
+        {saidasSeparadas.length === 0 ? (
+          <EmptyState
+            title="Nenhum pedido de expedição"
+            description="Nenhum produto está separado e pronto para expedição. Produtos aparecerão aqui após serem separados."
+          />
+        ) : (
+          <div className="grid gap-4">
+            {saidasSeparadas.map((saida) => (
+              <Card key={saida.id} className="shadow-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="font-semibold text-lg">
+                        SAI{saida.id.slice(-6).toUpperCase()}
                       </div>
-                    </CardHeader>
+                      {getStatusBadge(saida.status)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(saida.created_at), 'dd/MM/yyyy HH:mm')}
+                    </div>
+                  </div>
+                </CardHeader>
 
-                    <CardContent className="space-y-4">
-                      {/* Informações da Saída */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <Label className="text-xs font-medium text-muted-foreground">DESTINATÁRIO</Label>
-                          <p className="font-medium">Saída de Produtos</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs font-medium text-muted-foreground">TIPO DE SAÍDA</Label>
-                          <p className="font-medium">{saida.tipo_saida || "Não informado"}</p>
-                        </div>
-                        <div>
-                          <Label className="text-xs font-medium text-muted-foreground">DATA DA SAÍDA</Label>
-                          <p className="font-medium">{format(new Date(saida.data_saida), 'dd/MM/yyyy')}</p>
-                        </div>
-                      </div>
+                <CardContent className="space-y-4">
+                  {/* Informações da Saída */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">DESTINATÁRIO</Label>
+                      <p className="font-medium">Saída de Produtos</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">TIPO DE SAÍDA</Label>
+                      <p className="font-medium">{saida.tipo_saida || "Não informado"}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">DATA DA SAÍDA</Label>
+                      <p className="font-medium">{format(new Date(saida.data_saida), 'dd/MM/yyyy')}</p>
+                    </div>
+                  </div>
 
-                      <Separator />
+                  <Separator />
 
-                      {/* Itens da Saída */}
-                      <div>
-                        <Label className="text-sm font-medium mb-3 block">Itens da Saída</Label>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Produto</TableHead>
-                              <TableHead>Lote</TableHead>
-                              <TableHead className="text-right">Quantidade</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {saida.saida_itens?.map((item: any, index: number) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">
-                                  {item.produtos?.nome || "Nome não disponível"}
-                                </TableCell>
-                                <TableCell>{item.lote || "-"}</TableCell>
-                                <TableCell className="text-right">
-                                  {item.quantidade} {item.produtos?.unidade_medida || "un"}
-                                </TableCell>
-                              </TableRow>
-                            ))} 
-                          </TableBody>
-                        </Table>
-                      </div>
+                  {/* Itens da Saída */}
+                  <div>
+                    <Label className="text-sm font-medium mb-3 block">Itens da Saída</Label>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produto</TableHead>
+                          <TableHead>Lote</TableHead>
+                          <TableHead className="text-right">Quantidade</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {saida.saida_itens?.map((item: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">
+                              {item.produtos?.nome || "Nome não disponível"}
+                            </TableCell>
+                            <TableCell>{item.lote || "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {item.quantidade} {item.produtos?.unidade_medida || "un"}
+                            </TableCell>
+                          </TableRow>
+                        ))} 
+                      </TableBody>
+                    </Table>
+                  </div>
 
-                      {/* Observações */}
-                      {saida.observacoes && (
-                        <div className="p-3 bg-muted/30 rounded-lg">
-                          <Label className="text-xs font-medium text-muted-foreground">OBSERVAÇÕES</Label>
-                          <p className="text-sm mt-1">{saida.observacoes}</p>
-                        </div>
+                  {/* Observações */}
+                  {saida.observacoes && (
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <Label className="text-xs font-medium text-muted-foreground">OBSERVAÇÕES</Label>
+                      <p className="text-sm mt-1">{saida.observacoes}</p>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Ações */}
+                  <div className="flex items-center justify-end">
+                    <div className="flex gap-2">
+                      {getNextStatusLabel(saida.status) && (
+                        <Button
+                          onClick={() => handleAction(saida)}
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          {getNextStatusLabel(saida.status)}
+                        </Button>
                       )}
-
-                      <Separator />
-
-                      {/* Ações */}
-                      <div className="flex items-center justify-end">
-                        <div className="flex gap-2">
-                          {getNextStatusLabel(saida.status) && (
-                            <Button
-                              onClick={() => handleAction(saida)}
-                              size="sm"
-                              className="bg-primary hover:bg-primary/90"
-                            >
-                              {getNextStatusLabel(saida.status)}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Dialog de Confirmação */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
