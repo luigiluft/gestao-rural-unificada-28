@@ -65,7 +65,7 @@ export default function OndasAlocacao() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-96" />
@@ -90,10 +90,11 @@ export default function OndasAlocacao() {
   if (!waves || waves.length === 0) {
     console.log('⚠️ Nenhuma onda encontrada - waves:', waves)
     return (
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Ondas de Alocação</h1>
-          <p className="text-muted-foreground mt-2">
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Ondas de Alocação</h1>
+          <p className="text-muted-foreground">
             Gerencie as ondas de alocação de produtos no estoque
           </p>
         </div>
@@ -109,10 +110,11 @@ export default function OndasAlocacao() {
 
   console.log('✅ Renderizando ondas:', waves)
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Ondas de Alocação</h1>
-        <p className="text-muted-foreground mt-2">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Ondas de Alocação</h1>
+        <p className="text-muted-foreground">
           Gerencie as ondas de alocação de produtos no estoque
         </p>
       </div>
