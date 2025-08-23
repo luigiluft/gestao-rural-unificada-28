@@ -40,6 +40,8 @@ const chartConfig = {
 } as const;
 
 export const FluxoChart = ({ data }: FluxoChartProps) => {
+  console.log("FluxoChart - Received data:", data);
+  
   if (!data || data.length === 0) {
     return (
       <Card className="shadow-card">

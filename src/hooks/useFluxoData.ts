@@ -47,6 +47,12 @@ export const useFluxoData = (
   saidas: Saida[]
 ): FluxoData[] => {
   return useMemo(() => {
+    console.log("useFluxoData - Processing data:", { 
+      entradas: entradas.length, 
+      estoque: estoque.length, 
+      saidas: saidas.length 
+    });
+    
     const produtoMap = new Map<string, FluxoData>();
 
     // Processar entradas (A Caminho)
@@ -71,8 +77,10 @@ export const useFluxoData = (
 
     // Processar estoque (No Depósito)
     estoque.forEach(item => {
+      console.log("Processing estoque item:", item);
       if (item.quantidade_atual > 0) {
         const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+        console.log("Adding to chart - produto:", produtoNome, "quantidade:", item.quantidade_atual);
         const current = produtoMap.get(produtoNome) || {
           produto: produtoNome,
           aCaminho: 0,
@@ -88,8 +96,10 @@ export const useFluxoData = (
 
     // Processar saídas
     saidas.forEach(saida => {
+      console.log("Processing saida:", saida);
       saida.saida_itens?.forEach(item => {
         const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+        console.log("Adding saida to chart - produto:", produtoNome, "quantidade:", item.quantidade, "status:", saida.status);
         const current = produtoMap.get(produtoNome) || {
           produto: produtoNome,
           aCaminho: 0,
@@ -112,7 +122,7 @@ export const useFluxoData = (
     });
 
     // Converter Map para Array e filtrar produtos com alguma quantidade
-    return Array.from(produtoMap.values())
+    const result = Array.from(produtoMap.values())
       .filter(item => 
         item.aCaminho > 0 || 
         item.noDeposito > 0 || 
@@ -122,5 +132,8 @@ export const useFluxoData = (
       )
       .sort((a, b) => a.produto.localeCompare(b.produto))
       .slice(0, 20); // Limitar a 20 produtos para melhor visualização
+    
+    console.log("useFluxoData - Final result:", result);
+    return result;
   }, [entradas, estoque, saidas]);
 };
