@@ -35,8 +35,7 @@ export const useRastreamentoEntradas = () => {
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
-          ),
-          profiles!entradas_user_id_fkey(nome)
+          )
         `)
         .in("status_aprovacao", ["aguardando_transporte", "em_transferencia"])
         .order("created_at", { ascending: false })
@@ -55,22 +54,37 @@ export const useRastreamentoEntradas = () => {
 
       console.log("Fetched entradas:", entradas?.length || 0)
 
-      // Get franquia names for each entrada
+      // Get franquia names and user names for each entrada
       const entradasWithFranquias = await Promise.all(
         (entradas || []).map(async (entrada) => {
+          let franquia_nome = null;
+          let user_nome = null;
+
+          // Get franquia name if deposito_id exists
           if (entrada.deposito_id) {
             const { data: franquia } = await supabase
               .from("franquias")
               .select("nome")
               .eq("id", entrada.deposito_id)
-              .single()
+              .maybeSingle()
             
-            return {
-              ...entrada,
-              franquia_nome: franquia?.nome
-            }
+            franquia_nome = franquia?.nome;
           }
-          return entrada
+
+          // Get user name
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("nome")
+            .eq("user_id", entrada.user_id)
+            .maybeSingle()
+          
+          user_nome = profile?.nome;
+          
+          return {
+            ...entrada,
+            franquia_nome,
+            user_nome
+          }
         })
       )
 
@@ -111,8 +125,7 @@ export const useRastreamentoEstoque = () => {
         .from("estoque")
         .select(`
           *,
-          produtos(nome, unidade_medida),
-          profiles!estoque_user_id_fkey(nome)
+          produtos(nome, unidade_medida)
         `)
         .gt("quantidade_atual", 0)
         .order("quantidade_atual", { ascending: false })
@@ -131,22 +144,37 @@ export const useRastreamentoEstoque = () => {
 
       console.log("Fetched estoque:", estoque?.length || 0)
 
-      // Get franquia names for each estoque item
+      // Get franquia names and user names for each estoque item
       const estoqueWithFranquias = await Promise.all(
         (estoque || []).map(async (item) => {
+          let franquia_nome = null;
+          let user_nome = null;
+
+          // Get franquia name if deposito_id exists
           if (item.deposito_id) {
             const { data: franquia } = await supabase
               .from("franquias")
               .select("nome")
               .eq("id", item.deposito_id)
-              .single()
+              .maybeSingle()
             
-            return {
-              ...item,
-              franquia_nome: franquia?.nome
-            }
+            franquia_nome = franquia?.nome;
           }
-          return item
+
+          // Get user name
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("nome")
+            .eq("user_id", item.user_id)
+            .maybeSingle()
+          
+          user_nome = profile?.nome;
+          
+          return {
+            ...item,
+            franquia_nome,
+            user_nome
+          }
         })
       )
 
@@ -198,8 +226,7 @@ export const useRastreamentoSaidas = () => {
             status_atual,
             transportadora,
             data_prevista_entrega
-          ),
-          profiles!saidas_user_id_fkey(nome)
+          )
         `)
         .in("status", ["separacao_pendente", "separado", "expedido"])
         .order("created_at", { ascending: false })
@@ -218,22 +245,37 @@ export const useRastreamentoSaidas = () => {
 
       console.log("Fetched saidas:", saidas?.length || 0)
 
-      // Get franquia names for each saida
+      // Get franquia names and user names for each saida
       const saidasWithFranquias = await Promise.all(
         (saidas || []).map(async (saida) => {
+          let franquia_nome = null;
+          let user_nome = null;
+
+          // Get franquia name if deposito_id exists
           if (saida.deposito_id) {
             const { data: franquia } = await supabase
               .from("franquias")
               .select("nome")
               .eq("id", saida.deposito_id)
-              .single()
+              .maybeSingle()
             
-            return {
-              ...saida,
-              franquia_nome: franquia?.nome
-            }
+            franquia_nome = franquia?.nome;
           }
-          return saida
+
+          // Get user name
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("nome")
+            .eq("user_id", saida.user_id)
+            .maybeSingle()
+          
+          user_nome = profile?.nome;
+          
+          return {
+            ...saida,
+            franquia_nome,
+            user_nome
+          }
         })
       )
 
