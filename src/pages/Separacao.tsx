@@ -151,7 +151,10 @@ export default function Separacao() {
 
       {/* Conteúdo da Separação Pendente */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold mb-4">Separação Pendente ({saidasPorStatus.separacao_pendente.length})</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="w-4 h-4" />
+          <h2 className="text-lg font-semibold">Separação Pendente ({saidasPorStatus.separacao_pendente.length})</h2>
+        </div>
 
         {saidasPorStatus.separacao_pendente.length === 0 ? (
           <EmptyState
