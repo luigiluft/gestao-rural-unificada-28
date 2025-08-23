@@ -680,12 +680,10 @@ export default function Inventario() {
                   {currentPosition?.descricao || currentPosition?.tipo_posicao}
                 </CardDescription>
               </div>
-              {inventoryConfig.method === 'scanner' && (
-                <Button variant="outline" size="sm" onClick={handleSwitchToManual}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar para Manual
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => setCurrentStep('select-positions')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar ao Início
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
