@@ -19,23 +19,23 @@ interface FluxoChartProps {
 const chartConfig = {
   aCaminho: {
     label: "A Caminho",
-    color: "hsl(217, 91%, 60%)", // blue-500
+    color: "#3b82f6", // blue-500
   },
   noDeposito: {
     label: "No Depósito", 
-    color: "hsl(25, 95%, 53%)", // orange-500
+    color: "#f97316", // orange-500
   },
   emSeparacao: {
     label: "Em Separação",
-    color: "hsl(45, 93%, 47%)", // yellow-500
+    color: "#eab308", // yellow-500
   },
   expedido: {
     label: "Expedido",
-    color: "hsl(142, 76%, 36%)", // green-600
+    color: "#10b981", // green-500
   },
   entregue: {
     label: "Entregue",
-    color: "hsl(262, 83%, 58%)", // purple-500
+    color: "#8b5cf6", // purple-500
   },
 } as const;
 
@@ -103,37 +103,32 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
               <Bar
                 dataKey="aCaminho"
                 stackId="a"
-                fill="var(--color-aCaminho)"
+                fill="#3b82f6"
                 name="A Caminho"
-                radius={[0, 0, 0, 0]}
               />
               <Bar
                 dataKey="noDeposito"
                 stackId="a"
-                fill="var(--color-noDeposito)"
+                fill="#f97316"
                 name="No Depósito"
-                radius={[0, 0, 0, 0]}
               />
               <Bar
                 dataKey="emSeparacao"
                 stackId="a"
-                fill="var(--color-emSeparacao)"
+                fill="#eab308"
                 name="Em Separação"
-                radius={[0, 0, 0, 0]}
               />
               <Bar
                 dataKey="expedido"
                 stackId="a"
-                fill="var(--color-expedido)"
+                fill="#10b981"
                 name="Expedido"
-                radius={[0, 0, 0, 0]}
               />
               <Bar
                 dataKey="entregue"
                 stackId="a"
-                fill="var(--color-entregue)"
+                fill="#8b5cf6"
                 name="Entregue"
-                radius={[0, 4, 4, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
