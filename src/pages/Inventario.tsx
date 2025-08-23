@@ -445,10 +445,6 @@ export default function Inventario() {
               Selecione a franquia e as posições que deseja inventariar
             </p>
           </div>
-          <Button variant="outline" onClick={() => window.history.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
         </div>
 
         <Card className="shadow-card">
