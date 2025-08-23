@@ -72,20 +72,12 @@ export function AppHeader() {
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 shadow-card">
-      {/* Left side - Sidebar trigger + Search */}
+      {/* Left side - Sidebar trigger */}
       <div className="flex items-center gap-4 flex-1">
         <SidebarTrigger />
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Visão:</span>
           <Badge variant="secondary">{roleLabel}</Badge>
-        </div>
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar produtos, lotes, pedidos..."
-            className="pl-9 bg-background/50 border-border/50 focus:bg-background transition-all duration-200"
-          />
         </div>
       </div>
 
