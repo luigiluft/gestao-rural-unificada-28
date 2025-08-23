@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator"
 import { EmptyState } from "@/components/ui/empty-state"
 import { StatusIndicator } from "@/components/Rastreio/StatusIndicator"
+import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { formatDate } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -14,7 +15,15 @@ import { Truck, Package } from "lucide-react"
 export default function Transporte() {
   const [expandedSaida, setExpandedSaida] = useState<string | null>(null)
   
-  const { data: saidasData, isLoading } = useSaidasPendentes()
+  // Set up default date range (last 30 days)
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const hoje = new Date()
+    const trintaDiasAtras = new Date()
+    trintaDiasAtras.setDate(hoje.getDate() - 30)
+    return { from: trintaDiasAtras, to: hoje }
+  })
+  
+  const { data: saidasData, isLoading } = useSaidasPendentes(dateRange)
   
   // Filter only expedido status
   const saidas = saidasData?.filter(saida => saida.status === 'expedido') || []
@@ -74,9 +83,15 @@ export default function Transporte() {
           <Truck className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Transporte</h1>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {saidas.length} saída{saidas.length !== 1 ? 's' : ''} expedida{saidas.length !== 1 ? 's' : ''}
-        </Badge>
+        <div className="flex items-center gap-4">
+          <DateRangeFilter
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+          <Badge variant="secondary" className="text-sm">
+            {saidas.length} saída{saidas.length !== 1 ? 's' : ''} expedida{saidas.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
       </div>
 
       <div className="space-y-4">
