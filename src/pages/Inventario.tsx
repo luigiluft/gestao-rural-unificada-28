@@ -676,7 +676,7 @@ export default function Inventario() {
                   {currentPosition?.descricao || currentPosition?.tipo_posicao}
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => window.history.back()}>
+              <Button variant="outline" size="sm" onClick={() => setCurrentStep('select-method')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
