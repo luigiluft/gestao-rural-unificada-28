@@ -4,6 +4,8 @@ import { ProducerDashboard } from '@/components/Rastreio/ProducerDashboard';
 import { EntradasEmAndamento } from '@/components/Rastreio/EntradasEmAndamento';
 import { EstoqueAtual } from '@/components/Rastreio/EstoqueAtual';
 import { SaidasEmAndamento } from '@/components/Rastreio/SaidasEmAndamento';
+import { FluxoChart } from '@/components/Rastreio/FluxoChart';
+import { useFluxoData } from '@/hooks/useFluxoData';
 
 export const Rastreio = () => {
   // Fetch tracking data (for current user or all users if admin)
@@ -22,6 +24,9 @@ export const Rastreio = () => {
     }, 0)
   };
 
+  // Generate chart data
+  const fluxoData = useFluxoData(entradas, estoque, saidas);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <header className="mb-8">
@@ -32,6 +37,11 @@ export const Rastreio = () => {
 
       {/* Dashboard Stats */}
       <ProducerDashboard stats={stats} />
+
+      {/* Chart Section */}
+      <div className="mb-8">
+        <FluxoChart data={fluxoData} />
+      </div>
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
