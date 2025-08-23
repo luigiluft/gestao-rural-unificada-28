@@ -67,16 +67,23 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
                 top: 20,
                 right: 30,
                 left: 120,
-                bottom: 5,
+                bottom: 20,
               }}
+              barCategoryGap="20%"
+              maxBarSize={40}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
+              <XAxis 
+                type="number" 
+                domain={[0, 'dataMax']}
+                tick={{ fontSize: 12 }}
+              />
               <YAxis 
                 type="category" 
                 dataKey="produto" 
                 width={100}
                 tick={{ fontSize: 12 }}
+                interval={0}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
