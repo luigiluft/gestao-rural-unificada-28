@@ -70,25 +70,26 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
+              layout="horizontal"
               data={data}
               margin={{
                 top: 20,
                 right: 30,
-                left: 20,
-                bottom: 60,
+                left: 80,
+                bottom: 20,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
-                dataKey="produto" 
+                type="number"
                 tick={{ fontSize: 12 }}
-                angle={-45}
-                textAnchor="end"
-                height={80}
                 className="text-muted-foreground"
               />
               <YAxis 
+                type="category"
+                dataKey="produto" 
                 tick={{ fontSize: 12 }}
+                width={120}
                 className="text-muted-foreground"
               />
               <ChartTooltip
@@ -130,7 +131,7 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
                 stackId="a"
                 fill="var(--color-entregue)"
                 name="Entregue"
-                radius={[4, 4, 0, 0]}
+                radius={[0, 4, 4, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
