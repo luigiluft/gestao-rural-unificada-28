@@ -80,6 +80,7 @@ import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
+import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
 
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
@@ -87,9 +88,10 @@ export default function Entradas() {
   const [activeTab, setActiveTab] = useState("upload")
   const [produtorIdentificado, setProdutorIdentificado] = useState<any>(null)
   const [produtorError, setProdutorError] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
   const { toast } = useToast()
   const navigate = useNavigate()
-  const { data: entradas, isLoading, refetch } = useEntradas()
+  const { data: entradas, isLoading, refetch } = useEntradas(dateRange)
   const { user } = useAuth()
   const { data: currentUserProfile } = useProfile()
 
@@ -514,29 +516,27 @@ export default function Entradas() {
       </div>
 
       {/* Filters */}
-      <Card className="shadow-card">
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por produto, lote ou origem..."
-                className="pl-9"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="w-4 h-4 mr-2" />
-                Período
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card className="shadow-card">
+            <CardContent className="pt-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por produto, lote ou origem..."
+                  className="pl-9"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div>
+          <DateRangeFilter
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+        </div>
+      </div>
 
       {/* Entradas Table */}
       <Card className="shadow-card">

@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 
-export const useEntradas = () => {
+export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
   return useQuery({
-    queryKey: ["entradas"],
+    queryKey: ["entradas", dateRange],
     queryFn: async () => {
-      const { data: entradas, error } = await supabase
+      let query = supabase
         .from("entradas")
         .select(`
           *,
@@ -15,7 +15,18 @@ export const useEntradas = () => {
             produtos(nome, unidade_medida)
           )
         `)
-        .order("created_at", { ascending: false })
+
+      // Apply date filters if provided
+      if (dateRange?.from) {
+        query = query.gte("created_at", dateRange.from.toISOString())
+      }
+      if (dateRange?.to) {
+        const endDate = new Date(dateRange.to)
+        endDate.setHours(23, 59, 59, 999)
+        query = query.lte("created_at", endDate.toISOString())
+      }
+
+      const { data: entradas, error } = await query.order("created_at", { ascending: false })
 
       if (error) throw error
 
