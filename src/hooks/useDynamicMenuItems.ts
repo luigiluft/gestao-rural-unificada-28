@@ -119,6 +119,7 @@ export const useDynamicMenuItems = () => {
       'perfil',
       'subcontas',
       'controle-acesso',
+      'configuracoes',
       'suporte'
     ]
 

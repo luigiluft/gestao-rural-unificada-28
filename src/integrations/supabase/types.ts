@@ -192,6 +192,33 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_sistema: {
+        Row: {
+          chave: string
+          created_at: string
+          descricao: string | null
+          id: string
+          updated_at: string
+          valor: string
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+          valor: string
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          updated_at?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       entrada_itens: {
         Row: {
           cest: string | null
@@ -1704,11 +1731,16 @@ export type Database = {
       }
       saidas: {
         Row: {
+          cpf_motorista: string | null
           created_at: string
           data_saida: string
           deposito_id: string
           id: string
+          janela_horario: string | null
+          mopp_motorista: string | null
+          nome_motorista: string | null
           observacoes: string | null
+          placa_veiculo: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
           tipo_saida: string
           updated_at: string
@@ -1716,11 +1748,16 @@ export type Database = {
           valor_total: number | null
         }
         Insert: {
+          cpf_motorista?: string | null
           created_at?: string
           data_saida: string
           deposito_id: string
           id?: string
+          janela_horario?: string | null
+          mopp_motorista?: string | null
+          nome_motorista?: string | null
           observacoes?: string | null
+          placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           tipo_saida: string
           updated_at?: string
@@ -1728,11 +1765,16 @@ export type Database = {
           valor_total?: number | null
         }
         Update: {
+          cpf_motorista?: string | null
           created_at?: string
           data_saida?: string
           deposito_id?: string
           id?: string
+          janela_horario?: string | null
+          mopp_motorista?: string | null
+          nome_motorista?: string | null
           observacoes?: string | null
+          placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           tipo_saida?: string
           updated_at?: string
