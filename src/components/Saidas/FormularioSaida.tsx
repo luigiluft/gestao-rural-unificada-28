@@ -13,6 +13,7 @@ import { useProfile, useProdutores, useFazendas } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { usePesoMinimoMopp, useHorariosRetirada } from "@/hooks/useConfiguracoesSistema"
+import { useHorariosDisponiveis, useDatasSemHorarios, useCriarReserva, useRemoverReserva } from "@/hooks/useReservasHorario"
 
 interface FormularioSaidaProps {
   onSubmit: (dados: any) => void
@@ -46,10 +47,22 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     fazenda_id: "",
     placa_veiculo: "",
     nome_motorista: "",
+    telefone_motorista: "",
     cpf_motorista: "",
     mopp_motorista: "",
     janela_horario: ""
   })
+
+  // Hooks para reservas de horário
+  const { data: horariosDisponiveis = [] } = useHorariosDisponiveis(
+    dadosSaida.data_saida, 
+    dadosSaida.tipo_saida === 'retirada_deposito' ? dadosSaida.deposito_id : undefined
+  )
+  const { data: datasSemHorarios = [] } = useDatasSemHorarios(
+    dadosSaida.tipo_saida === 'retirada_deposito' ? dadosSaida.deposito_id : undefined
+  )
+  const criarReserva = useCriarReserva()
+  const removerReserva = useRemoverReserva()
 
   const [itens, setItens] = useState<ItemSaida[]>([])
   const [novoItem, setNovoItem] = useState<ItemSaida>({
@@ -200,8 +213,14 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
 
     // Validações específicas para retirada no depósito
     if (dadosSaida.tipo_saida === 'retirada_deposito') {
-      if (!dadosSaida.placa_veiculo || !dadosSaida.nome_motorista || !dadosSaida.cpf_motorista || !dadosSaida.janela_horario) {
+      if (!dadosSaida.placa_veiculo || !dadosSaida.nome_motorista || !dadosSaida.telefone_motorista || !dadosSaida.janela_horario) {
         toast.error("Preencha todos os dados do transporte para retirada no depósito")
+        return
+      }
+
+      // Verificar se o horário ainda está disponível
+      if (!horariosDisponiveis.includes(dadosSaida.janela_horario)) {
+        toast.error("Este horário já foi reservado. Selecione outro horário disponível.")
         return
       }
 
@@ -212,7 +231,19 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     }
 
     try {
-      // Criar a saída
+      let reservaId: string | undefined
+
+      // 1. Se for retirada no depósito, criar reserva de horário primeiro
+      if (dadosSaida.tipo_saida === 'retirada_deposito' && dadosSaida.deposito_id) {
+        const reserva = await criarReserva.mutateAsync({
+          dataSaida: dadosSaida.data_saida,
+          horario: dadosSaida.janela_horario,
+          depositoId: dadosSaida.deposito_id
+        })
+        reservaId = reserva.id
+      }
+
+      // 2. Criar a saída
       const { data: saida, error: saidaError } = await supabase
         .from("saidas")
         .insert({
@@ -224,6 +255,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           status: 'separacao_pendente',
           placa_veiculo: dadosSaida.placa_veiculo || null,
           nome_motorista: dadosSaida.nome_motorista || null,
+          telefone_motorista: dadosSaida.telefone_motorista || null,
           cpf_motorista: dadosSaida.cpf_motorista || null,
           mopp_motorista: dadosSaida.mopp_motorista || null,
           janela_horario: dadosSaida.janela_horario || null
@@ -231,7 +263,21 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         .select()
         .single()
 
-      if (saidaError) throw saidaError
+      if (saidaError) {
+        // Se erro ao criar saída, remover reserva se foi criada
+        if (reservaId && dadosSaida.tipo_saida === 'retirada_deposito') {
+          await supabase.from("reservas_horario").delete().eq("id", reservaId)
+        }
+        throw saidaError
+      }
+
+      // 3. Atualizar reserva com o ID da saída
+      if (reservaId) {
+        await supabase
+          .from("reservas_horario")
+          .update({ saida_id: saida.id })
+          .eq("id", reservaId)
+      }
 
       // Criar os itens da saída
       const itensComSaidaId = itens.map(item => ({
@@ -368,14 +414,27 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
+                <div className="space-y-2">
                 <Label htmlFor="data_saida">Data da Saída</Label>
                 <Input
                   id="data_saida"
                   type="date"
                   value={dadosSaida.data_saida}
-                  onChange={(e) => setDadosSaida(prev => ({ ...prev, data_saida: e.target.value }))}
+                  onChange={(e) => {
+                    const novaData = e.target.value
+                    setDadosSaida(prev => ({ 
+                      ...prev, 
+                      data_saida: novaData,
+                      janela_horario: '' // Limpar horário ao mudar data
+                    }))
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
                 />
+                {dadosSaida.tipo_saida === 'retirada_deposito' && datasSemHorarios.includes(dadosSaida.data_saida) && (
+                  <p className="text-sm text-destructive">
+                    Esta data não possui horários disponíveis.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -490,13 +549,24 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                         <SelectValue placeholder="Selecione o horário" />
                       </SelectTrigger>
                       <SelectContent>
-                        {horariosRetirada.map((horario) => (
-                          <SelectItem key={horario} value={horario}>
-                            {horario}
+                        {horariosDisponiveis.length > 0 ? (
+                          horariosDisponiveis.map((horario) => (
+                            <SelectItem key={horario} value={horario}>
+                              {horario}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            Nenhum horário disponível para esta data
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
+                    {dadosSaida.data_saida && horariosDisponiveis.length === 0 && (
+                      <p className="text-sm text-destructive">
+                        Todos os horários estão ocupados para esta data. Selecione uma data diferente.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -506,6 +576,17 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                       value={dadosSaida.nome_motorista}
                       onChange={(e) => setDadosSaida({...dadosSaida, nome_motorista: e.target.value})}
                       placeholder="Nome completo"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="telefone-motorista">Telefone do Motorista *</Label>
+                    <Input
+                      id="telefone-motorista"
+                      value={dadosSaida.telefone_motorista}
+                      onChange={(e) => setDadosSaida({...dadosSaida, telefone_motorista: e.target.value})}
+                      placeholder="(00) 00000-0000"
                       required
                     />
                   </div>

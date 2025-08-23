@@ -1637,6 +1637,47 @@ export type Database = {
           },
         ]
       }
+      reservas_horario: {
+        Row: {
+          created_at: string
+          data_saida: string
+          deposito_id: string
+          horario: string
+          id: string
+          saida_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_saida: string
+          deposito_id: string
+          horario: string
+          id?: string
+          saida_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_saida?: string
+          deposito_id?: string
+          horario?: string
+          id?: string
+          saida_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservas_horario_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saida_itens: {
         Row: {
           created_at: string
@@ -1742,6 +1783,7 @@ export type Database = {
           observacoes: string | null
           placa_veiculo: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
+          telefone_motorista: string | null
           tipo_saida: string
           updated_at: string
           user_id: string
@@ -1759,6 +1801,7 @@ export type Database = {
           observacoes?: string | null
           placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
+          telefone_motorista?: string | null
           tipo_saida: string
           updated_at?: string
           user_id: string
@@ -1776,6 +1819,7 @@ export type Database = {
           observacoes?: string | null
           placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
+          telefone_motorista?: string | null
           tipo_saida?: string
           updated_at?: string
           user_id?: string
