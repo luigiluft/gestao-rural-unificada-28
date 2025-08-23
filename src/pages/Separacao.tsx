@@ -212,35 +212,27 @@ export default function Separacao() {
                       {/* Itens da Saída */}
                       <div>
                         <Label className="text-sm font-medium mb-3 block">Itens da Saída</Label>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Produto</TableHead>
-                              <TableHead>Lote</TableHead>
-                              <TableHead className="text-right">Quantidade</TableHead>
-                              <TableHead className="text-right">Valor Unit.</TableHead>
-                              <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {saida.saida_itens?.map((item: any, index: number) => (
-                              <TableRow key={index}>
-                                <TableCell className="font-medium">
-                                  {item.produtos?.nome || "Nome não disponível"}
-                                </TableCell>
-                                <TableCell>{item.lote || "-"}</TableCell>
-                                <TableCell className="text-right">
-                                  {item.quantidade} {item.produtos?.unidade_medida || "un"}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {formatCurrency(item.valor_unitario)}
-                                </TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {formatCurrency(item.valor_total)}
-                                </TableCell>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Produto</TableHead>
+                                <TableHead>Lote</TableHead>
+                                <TableHead className="text-right">Quantidade</TableHead>
                               </TableRow>
-                            ))} 
-                          </TableBody>
+                            </TableHeader>
+                            <TableBody>
+                              {saida.saida_itens?.map((item: any, index: number) => (
+                                <TableRow key={index}>
+                                  <TableCell className="font-medium">
+                                    {item.produtos?.nome || "Nome não disponível"}
+                                  </TableCell>
+                                  <TableCell>{item.lote || "-"}</TableCell>
+                                  <TableCell className="text-right">
+                                    {item.quantidade} {item.produtos?.unidade_medida || "un"}
+                                  </TableCell>
+                                </TableRow>
+                              ))} 
+                            </TableBody>
                         </Table>
                       </div>
 
