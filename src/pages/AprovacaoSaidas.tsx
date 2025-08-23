@@ -167,50 +167,6 @@ export default function AprovacaoSaidas() {
         onDateRangeChange={setDateRange}
       />
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-        <Card className="shadow-card border-blue-200 bg-blue-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Separado</p>
-                <p className="text-2xl font-bold text-blue-700">{saidasPorStatus.separado.length}</p>
-              </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card border-green-200 bg-green-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">Expedido</p>
-                <p className="text-2xl font-bold text-green-700">{saidasPorStatus.expedido.length}</p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Truck className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card border-emerald-200 bg-emerald-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-600">Entregue</p>
-                <p className="text-2xl font-bold text-emerald-700">{saidasPorStatus.entregue.length}</p>
-              </div>
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Tabs por Status */}
       <Tabs defaultValue="separado" className="space-y-4">
