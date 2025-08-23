@@ -6,12 +6,26 @@ import { EstoqueAtual } from '@/components/Rastreio/EstoqueAtual';
 import { SaidasEmAndamento } from '@/components/Rastreio/SaidasEmAndamento';
 import { FluxoChart } from '@/components/Rastreio/FluxoChart';
 import { useFluxoData } from '@/hooks/useFluxoData';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Rastreio = () => {
+  const { user, session, loading } = useAuth();
+  
+  // Log authentication status for debugging
+  console.log("Rastreio page - Auth status:", { 
+    user: user?.id, 
+    session: !!session, 
+    loading 
+  });
   // Fetch tracking data (for current user or all users if admin)
-  const { data: entradas = [], isLoading: isLoadingEntradas } = useRastreamentoEntradas();
-  const { data: estoque = [], isLoading: isLoadingEstoque } = useRastreamentoEstoque();
-  const { data: saidas = [], isLoading: isLoadingSaidas } = useRastreamentoSaidas();
+  const { data: entradas = [], isLoading: isLoadingEntradas, error: errorEntradas } = useRastreamentoEntradas();
+  const { data: estoque = [], isLoading: isLoadingEstoque, error: errorEstoque } = useRastreamentoEstoque();
+  const { data: saidas = [], isLoading: isLoadingSaidas, error: errorSaidas } = useRastreamentoSaidas();
+
+  // Log errors for debugging
+  if (errorEntradas) console.error("Error loading entradas:", errorEntradas);
+  if (errorEstoque) console.error("Error loading estoque:", errorEstoque);
+  if (errorSaidas) console.error("Error loading saidas:", errorSaidas);
 
   // Calculate dashboard stats
   const stats = {

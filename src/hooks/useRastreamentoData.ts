@@ -10,14 +10,22 @@ export const useRastreamentoEntradas = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
+      console.log("Fetching entradas for user:", user.id)
+
       // Check if user is admin
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("user_id", user.id)
-        .single()
+        .maybeSingle()
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError)
+        throw profileError
+      }
 
       const isAdmin = profile?.role === 'admin'
+      console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
         .from("entradas")
@@ -40,7 +48,12 @@ export const useRastreamentoEntradas = () => {
 
       const { data: entradas, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error("Error fetching entradas:", error)
+        throw error
+      }
+
+      console.log("Fetched entradas:", entradas?.length || 0)
 
       // Get franquia names for each entrada
       const entradasWithFranquias = await Promise.all(
@@ -64,6 +77,8 @@ export const useRastreamentoEntradas = () => {
       return entradasWithFranquias || []
     },
     enabled: !!user?.id,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
 
@@ -75,14 +90,22 @@ export const useRastreamentoEstoque = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
+      console.log("Fetching estoque for user:", user.id)
+
       // Check if user is admin
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("user_id", user.id)
-        .single()
+        .maybeSingle()
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError)
+        throw profileError
+      }
 
       const isAdmin = profile?.role === 'admin'
+      console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
         .from("estoque")
@@ -101,7 +124,12 @@ export const useRastreamentoEstoque = () => {
 
       const { data: estoque, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error("Error fetching estoque:", error)
+        throw error
+      }
+
+      console.log("Fetched estoque:", estoque?.length || 0)
 
       // Get franquia names for each estoque item
       const estoqueWithFranquias = await Promise.all(
@@ -127,6 +155,8 @@ export const useRastreamentoEstoque = () => {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     enabled: !!user?.id,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
 
@@ -138,14 +168,22 @@ export const useRastreamentoSaidas = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
+      console.log("Fetching saidas for user:", user.id)
+
       // Check if user is admin
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("user_id", user.id)
-        .single()
+        .maybeSingle()
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError)
+        throw profileError
+      }
 
       const isAdmin = profile?.role === 'admin'
+      console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
         .from("saidas")
@@ -173,7 +211,12 @@ export const useRastreamentoSaidas = () => {
 
       const { data: saidas, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error("Error fetching saidas:", error)
+        throw error
+      }
+
+      console.log("Fetched saidas:", saidas?.length || 0)
 
       // Get franquia names for each saida
       const saidasWithFranquias = await Promise.all(
@@ -197,5 +240,7 @@ export const useRastreamentoSaidas = () => {
       return saidasWithFranquias || []
     },
     enabled: !!user?.id,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
