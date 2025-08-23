@@ -14,6 +14,7 @@ export const useNotifications = () => {
         alocacoes: 0,
         separacao: 0,
         expedicao: 0,
+        transporte: 0,
         suporte: 0,
         subcontas: 0,
       }
@@ -34,6 +35,7 @@ export const useNotifications = () => {
       let alocacoes = 0
       let separacao = 0
       let expedicao = 0
+      let transporte = 0
       let suporte = 0
       let subcontas = 0
 
@@ -154,6 +156,30 @@ export const useNotifications = () => {
           expedicao = saidasCount || 0
         }
 
+        // TRANSPORTE: For franqueados - saídas expedidas awaiting delivery
+        if (isFranqueado || isAdmin) {
+          let transporteQuery = supabase
+            .from("saidas")
+            .select("id", { count: "exact" })
+            .eq("status", "expedido")
+
+          if (!isAdmin) {
+            // Filter by franquias owned by this franqueado
+            const { data: franquias } = await supabase
+              .from("franquias")
+              .select("id")
+              .eq("master_franqueado_id", user.id)
+            
+            const franquiaIds = franquias?.map(f => f.id) || []
+            if (franquiaIds.length > 0) {
+              transporteQuery = transporteQuery.in("deposito_id", franquiaIds)
+            }
+          }
+
+          const { count: transporteCount } = await transporteQuery
+          transporte = transporteCount || 0
+        }
+
         // SUPORTE: Open support tickets for current user
         const { count: suporteCount } = await supabase
           .from("chamados_suporte")
@@ -188,6 +214,7 @@ export const useNotifications = () => {
         alocacoes,
         separacao,
         expedicao,
+        transporte,
         suporte,
         subcontas,
       }

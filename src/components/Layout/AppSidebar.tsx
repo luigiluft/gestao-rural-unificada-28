@@ -109,6 +109,8 @@ export function AppSidebar() {
         return notifications.separacao || 0
       case "Expedição":
         return notifications.expedicao || 0
+      case "Transporte":
+        return notifications.transporte || 0
       case "Suporte":
         return notifications.suporte || 0
       case "Subcontas":

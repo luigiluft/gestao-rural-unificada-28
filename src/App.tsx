@@ -31,6 +31,7 @@ import AlocacaoComColetor from "./pages/AlocacaoComColetor";
 import AlocacaoManual from "./pages/AlocacaoManual";
 import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
+import Transporte from "./pages/Transporte";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="alocar-manual/:waveId" element={<RequirePageAccess pageKey="alocacao-funcionario"><AlocacaoManual /></RequirePageAccess>} />
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
+              <Route path="transporte" element={<RequirePageAccess pageKey="transporte"><Transporte /></RequirePageAccess>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
