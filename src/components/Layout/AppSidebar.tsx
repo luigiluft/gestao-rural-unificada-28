@@ -105,6 +105,8 @@ export function AppSidebar() {
         return notifications.estoque || 0
       case "Alocações":
         return notifications.alocacoes || 0
+      case "Separação":
+        return notifications.separacao || 0
       case "Expedição":
         return notifications.expedicao || 0
       case "Suporte":

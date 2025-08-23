@@ -151,36 +151,6 @@ export default function Separacao() {
         onDateRangeChange={setDateRange}
       />
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <Card className="shadow-card border-amber-200 bg-amber-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-600">Separação Pendente</p>
-                <p className="text-2xl font-bold text-amber-700">{saidasPorStatus.separacao_pendente.length}</p>
-              </div>
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Clock className="w-5 h-5 text-amber-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card border-blue-200 bg-blue-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Separado</p>
-                <p className="text-2xl font-bold text-blue-700">{saidasPorStatus.separado.length}</p>
-              </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Tabs por Status */}
       <Tabs defaultValue="separacao_pendente" className="space-y-4">
