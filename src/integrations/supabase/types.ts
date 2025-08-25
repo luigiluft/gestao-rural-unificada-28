@@ -348,6 +348,83 @@ export type Database = {
           },
         ]
       }
+      entrada_pallet_itens: {
+        Row: {
+          created_at: string
+          entrada_item_id: string
+          id: string
+          pallet_id: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          entrada_item_id: string
+          id?: string
+          pallet_id: string
+          quantidade?: number
+        }
+        Update: {
+          created_at?: string
+          entrada_item_id?: string
+          id?: string
+          pallet_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrada_pallet_itens_entrada_item_id_fkey"
+            columns: ["entrada_item_id"]
+            isOneToOne: false
+            referencedRelation: "entrada_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entrada_pallet_itens_pallet_id_fkey"
+            columns: ["pallet_id"]
+            isOneToOne: false
+            referencedRelation: "entrada_pallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrada_pallets: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          entrada_id: string
+          id: string
+          numero_pallet: number
+          peso_total: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          entrada_id: string
+          id?: string
+          numero_pallet: number
+          peso_total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          entrada_id?: string
+          id?: string
+          numero_pallet?: number
+          peso_total?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrada_pallets_entrada_id_fkey"
+            columns: ["entrada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entrada_status_historico: {
         Row: {
           created_at: string
@@ -2085,6 +2162,7 @@ export type Database = {
         | "conferencia_completa"
         | "confirmado"
         | "rejeitado"
+        | "planejamento"
       inventory_status: "iniciado" | "em_andamento" | "concluido" | "cancelado"
       permission_code:
         | "estoque.view"
@@ -2227,6 +2305,7 @@ export const Constants = {
         "conferencia_completa",
         "confirmado",
         "rejeitado",
+        "planejamento",
       ],
       inventory_status: ["iniciado", "em_andamento", "concluido", "cancelado"],
       permission_code: [
