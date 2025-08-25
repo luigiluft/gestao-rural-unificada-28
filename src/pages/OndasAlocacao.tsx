@@ -1,58 +1,81 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAllocationWaves, useStartAllocationWave } from "@/hooks/useAllocationWaves"
+import { useAllocationWaves, useStartAllocationWave, useDefineWavePositions } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Package, Play, Clock, CheckCircle, User, Eye, MapPin } from "lucide-react"
+import { Package, Play, Clock, CheckCircle, Eye, MapPin } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 export default function OndasAlocacao() {
   const navigate = useNavigate()
-  const { data: waves, isLoading, error } = useAllocationWaves()
-  const startWave = useStartAllocationWave()
+  const { data: waves, isLoading } = useAllocationWaves()
+  const { mutate: startWave, isPending } = useStartAllocationWave()
+  const { mutate: definePositions, isPending: isDefiningPositions } = useDefineWavePositions()
   const [selectedWave, setSelectedWave] = useState<any>(null)
-  
-
-  const [isExecutingAllocation, setIsExecutingAllocation] = useState<string | null>(null)
-
-  // Debug logs para verificar status das ondas
-  console.log('🔍 OndasAlocacao - Estado atual:', { waves, isLoading, error, wavesLength: waves?.length })
-  waves?.forEach((wave: any) => {
-    console.log('📊 Onda:', wave.numero_onda, 'Status:', wave.status, 'Tipo do status:', typeof wave.status)
-  })
+  const [isExecuting, setIsExecuting] = useState(false)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pendente':
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>
-      case 'posicoes_definidas':
-        return <Badge variant="outline"><MapPin className="w-3 h-3 mr-1" />Posições Definidas</Badge>
-      case 'em_andamento':
-        return <Badge variant="default"><Play className="w-3 h-3 mr-1" />Em Andamento</Badge>
-      case 'concluida':
-        return <Badge variant="default"><CheckCircle className="w-3 h-3 mr-1" />Concluída</Badge>
+      case "pendente":
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 bg-orange-50 text-orange-700 border-orange-200">
+            <Clock className="h-3 w-3" />
+            Aguardando Posições
+          </Badge>
+        )
+      case "posicoes_definidas":
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
+            <Package className="h-3 w-3" />
+            Pronto para Alocação
+          </Badge>
+        )
+      case "em_andamento":
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Play className="h-3 w-3" />
+            Em Andamento
+          </Badge>
+        )
+      case "concluido":
+        return (
+          <Badge className="flex items-center gap-1 bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="h-3 w-3" />
+            Concluído
+          </Badge>
+        )
       default:
-        return <Badge variant="secondary">{status}</Badge>
+        return (
+          <Badge variant="secondary">
+            {status}
+          </Badge>
+        )
     }
   }
 
-  const handleExecuteAllocation = async (wave: any) => {
-    try {
-      setIsExecutingAllocation(wave.id)
-      await startWave.mutateAsync({ waveId: wave.id })
-      navigate(`/alocar-scanner/${wave.id}`)
-    } catch (error) {
-      console.error('Erro ao executar alocação:', error)
-    } finally {
-      setIsExecutingAllocation(null)
-    }
+  const handleExecuteAllocation = (waveId: string) => {
+    setIsExecuting(true)
+    startWave(
+      { waveId },
+      {
+        onSuccess: () => {
+          navigate(`/alocacao-com-coletor?wave=${waveId}`)
+        },
+        onSettled: () => {
+          setIsExecuting(false)
+        }
+      }
+    )
+  }
+
+  const handleDefinePositions = (waveId: string) => {
+    definePositions({ waveId })
   }
 
   const getTotalItems = (wave: any) => {
@@ -88,10 +111,8 @@ export default function OndasAlocacao() {
   }
 
   if (!waves || waves.length === 0) {
-    console.log('⚠️ Nenhuma onda encontrada - waves:', waves)
     return (
       <div className="space-y-6">
-        {/* Page Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Ondas de Alocação</h1>
           <p className="text-muted-foreground">
@@ -108,10 +129,8 @@ export default function OndasAlocacao() {
     )
   }
 
-  console.log('✅ Renderizando ondas:', waves)
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Ondas de Alocação</h1>
         <p className="text-muted-foreground">
@@ -155,15 +174,6 @@ export default function OndasAlocacao() {
                       </p>
                     </div>
                   )}
-                  {wave.funcionario_id && (
-                    <div>
-                      <span className="font-medium">Funcionário:</span>
-                      <p className="text-muted-foreground flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        Atribuído
-                      </p>
-                    </div>
-                  )}
                   <div>
                     <span className="font-medium">Progresso:</span>
                     <p className="text-muted-foreground">
@@ -180,48 +190,53 @@ export default function OndasAlocacao() {
                 )}
 
                 <div className="flex gap-2">
-                  {wave.status === 'posicoes_definidas' && (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={() => handleExecuteAllocation(wave)}
-                        disabled={isExecutingAllocation === wave.id}
-                      >
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {isExecutingAllocation === wave.id ? "Iniciando..." : "Executar Alocação"}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
-                        disabled={isExecutingAllocation === wave.id}
-                      >
-                        <Package className="w-4 h-4 mr-1" />
-                        Alocar Manualmente
-                      </Button>
-                    </>
+                  {wave.status === "pendente" && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleDefinePositions(wave.id)}
+                      disabled={isDefiningPositions}
+                      className="flex items-center gap-2"
+                    >
+                      <Package className="h-4 w-4" />
+                      {isDefiningPositions ? "Definindo..." : "Definir Posições"}
+                    </Button>
                   )}
-
-                  {wave.status === 'em_andamento' && (
+                  
+                  {wave.status === "posicoes_definidas" && (
                     <>
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
+                        onClick={() => handleExecuteAllocation(wave.id)}
+                        disabled={isExecuting}
+                        className="flex items-center gap-2"
                       >
-                        <MapPin className="w-4 h-4 mr-1" />
-                        Continuar Alocação
+                        <Play className="h-4 w-4" />
+                        {isExecuting ? "Executando..." : "Executar Alocação"}
                       </Button>
+                      
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
+                        onClick={() => navigate(`/alocacao-manual?wave=${wave.id}`)}
+                        className="flex items-center gap-2"
                       >
-                        <Package className="w-4 h-4 mr-1" />
+                        <Package className="h-4 w-4" />
                         Alocar Manualmente
                       </Button>
                     </>
                   )}
                   
+                  {wave.status === "em_andamento" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/alocacao-com-coletor?wave=${wave.id}`)}
+                      className="flex items-center gap-2"
+                    >
+                      <Play className="h-4 w-4" />
+                      Continuar Alocação
+                    </Button>
+                  )}
                   
                   <Dialog>
                     <DialogTrigger asChild>

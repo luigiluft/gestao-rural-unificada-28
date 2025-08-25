@@ -1982,6 +1982,10 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: boolean
       }
+      define_wave_positions: {
+        Args: { p_wave_id: string }
+        Returns: Json
+      }
       find_or_create_produto: {
         Args: {
           p_codigo_ean?: string

@@ -209,3 +209,47 @@ export const useResetWavePositions = () => {
     },
   })
 }
+
+// Hook para definir posições manualmente
+export const useDefineWavePositions = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  const defineWavePositions = async (waveId: string) => {
+    const { data, error } = await supabase.rpc('define_wave_positions', {
+      p_wave_id: waveId
+    })
+
+    if (error) throw error
+    return data
+  }
+
+  return useMutation({
+    mutationFn: ({ waveId }: { waveId: string }) => defineWavePositions(waveId),
+    onSuccess: (result: any) => {
+      queryClient.invalidateQueries({ queryKey: ["allocation-waves"] })
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] })
+      
+      if (result?.success) {
+        toast({
+          title: "Posições definidas",
+          description: `${result.allocated_items}/${result.total_items} posições alocadas com sucesso.`,
+        })
+      } else {
+        toast({
+          title: "Erro ao definir posições",
+          description: result?.message || "Não foi possível definir as posições.",
+          variant: "destructive",
+        })
+      }
+    },
+    onError: (error: any) => {
+      console.error("Error defining wave positions:", error)
+      toast({
+        title: "Erro ao definir posições",
+        description: error.message || "Não foi possível definir as posições da onda.",
+        variant: "destructive",
+      })
+    },
+  })
+}
