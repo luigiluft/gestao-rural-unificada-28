@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Plus } from "lucide-react"
+import { Trash2, Plus, RefreshCw } from "lucide-react"
 import { RequireAdmin } from "@/components/Auth/RequireAdmin"
 import { useConfiguracoesSistema, useUpdateConfiguracao } from "@/hooks/useConfiguracoesSistema"
 import { useToast } from "@/hooks/use-toast"
@@ -63,6 +63,47 @@ export default function Configuracoes() {
       chave: "horarios_retirada",
       valor: JSON.stringify(novosHorarios)
     })
+  }
+
+  const handleClearCache = () => {
+    try {
+      // Limpar localStorage
+      localStorage.clear()
+      
+      // Limpar sessionStorage  
+      sessionStorage.clear()
+      
+      // Limpar cache do Service Worker se existir
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => registration.unregister())
+        })
+      }
+      
+      // Limpar cache do navegador usando Cache API
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name))
+        })
+      }
+      
+      toast({
+        title: "Cache limpo com sucesso!",
+        description: "A página será recarregada automaticamente.",
+      })
+      
+      // Recarregar a página após limpar o cache
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+      
+    } catch (error) {
+      toast({
+        title: "Erro ao limpar cache",
+        description: "Tente recarregar a página manualmente.",
+        variant: "destructive"
+      })
+    }
   }
 
   if (isLoading) {
@@ -170,6 +211,26 @@ export default function Configuracoes() {
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Botão para Limpar Cache */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cache do Sistema</CardTitle>
+              <CardDescription>
+                Limpe o cache do navegador se estiver com problemas para ver atualizações
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleClearCache}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Limpar Cache e Recarregar
+              </Button>
             </CardContent>
           </Card>
         </div>
