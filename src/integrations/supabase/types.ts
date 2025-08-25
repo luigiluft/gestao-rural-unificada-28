@@ -1984,6 +1984,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      clean_completed_wave_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       clean_expired_reservations: {
         Args: Record<PropertyKey, never>
         Returns: number
