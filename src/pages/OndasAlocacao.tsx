@@ -217,7 +217,7 @@ export default function OndasAlocacao() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/alocacao-manual?wave=${wave.id}`)}
+                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
                         className="flex items-center gap-2"
                       >
                         <Package className="h-4 w-4" />
