@@ -31,6 +31,9 @@ interface LeituraBarra {
   codigo: string
   produto_nome: string
   quantidade: number
+  volumes?: number
+  pallets?: number
+  volumes_por_pallet?: number
   timestamp: Date
 }
 
@@ -49,6 +52,9 @@ export default function AprovacaoEntradas() {
   // Estados para conferência por código de barras
   const [codigoBarras, setCodigoBarras] = useState('')
   const [quantidadeBip, setQuantidadeBip] = useState(1)
+  const [volumes, setVolumes] = useState<number | undefined>()
+  const [pallets, setPallets] = useState<number | undefined>()
+  const [volumesPorPallet, setVolumesPorPallet] = useState<number | undefined>()
   const [leituras, setLeituras] = useState<LeituraBarra[]>([])
   const [modoConferencia, setModoConferencia] = useState(false)
   const inputBarrasRef = useRef<HTMLInputElement>(null)
@@ -173,6 +179,9 @@ export default function AprovacaoEntradas() {
         codigo: codigoBarras.trim(),
         produto_nome: `Produto não encontrado (${codigoBarras.trim()})`,
         quantidade: quantidadeBip,
+        volumes,
+        pallets,
+        volumes_por_pallet: volumesPorPallet,
         timestamp: new Date()
       }
       setLeituras([...leituras, novaLeitura])
@@ -183,7 +192,7 @@ export default function AprovacaoEntradas() {
       if (leituraExistente) {
         const novasLeituras = leituras.map(l => 
           l.codigo === codigoBarras.trim() 
-            ? { ...l, quantidade: l.quantidade + quantidadeBip, timestamp: new Date() }
+            ? { ...l, quantidade: l.quantidade + quantidadeBip, volumes, pallets, volumes_por_pallet: volumesPorPallet, timestamp: new Date() }
             : l
         )
         setLeituras(novasLeituras)
@@ -192,6 +201,9 @@ export default function AprovacaoEntradas() {
           codigo: codigoBarras.trim(),
           produto_nome: item.produtos?.nome || item.nome_produto || 'Produto sem nome',
           quantidade: quantidadeBip,
+          volumes,
+          pallets,
+          volumes_por_pallet: volumesPorPallet,
           timestamp: new Date()
         }
         setLeituras([...leituras, novaLeitura])
@@ -200,6 +212,9 @@ export default function AprovacaoEntradas() {
 
     // Limpar código e focar automaticamente para próxima leitura
     setCodigoBarras('')
+    setVolumes(undefined)
+    setPallets(undefined)
+    setVolumesPorPallet(undefined)
     setTimeout(() => {
       if (inputBarrasRef.current) {
         inputBarrasRef.current.focus()
@@ -578,6 +593,45 @@ export default function AprovacaoEntradas() {
                       </Button>
                     </div>
                   </div>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label htmlFor="volumes">Volumes</Label>
+                      <Input
+                        id="volumes"
+                        type="number"
+                        value={volumes || ""}
+                        onChange={(e) => setVolumes(e.target.value ? Number(e.target.value) : undefined)}
+                        placeholder="Volumes"
+                        min="1"
+                        className="text-center"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pallets">Pallets</Label>
+                      <Input
+                        id="pallets"
+                        type="number"
+                        value={pallets || ""}
+                        onChange={(e) => setPallets(e.target.value ? Number(e.target.value) : undefined)}
+                        placeholder="Pallets"
+                        min="1"
+                        className="text-center"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="volumes-por-pallet">Volumes por Pallet</Label>
+                      <Input
+                        id="volumes-por-pallet"
+                        type="number"
+                        value={volumesPorPallet || ""}
+                        onChange={(e) => setVolumesPorPallet(e.target.value ? Number(e.target.value) : undefined)}
+                        placeholder="Vol/Pallet"
+                        min="1"
+                        className="text-center"
+                      />
+                    </div>
+                  </div>
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <p className="text-sm text-muted-foreground">
                       <strong>Instruções:</strong> O coletor processará automaticamente após cada leitura. 
@@ -608,6 +662,8 @@ export default function AprovacaoEntradas() {
                             <TableHead>Código</TableHead>
                             <TableHead>Produto</TableHead>
                             <TableHead>Quantidade</TableHead>
+                            <TableHead>Volumes</TableHead>
+                            <TableHead>Pallets</TableHead>
                             <TableHead>Hora</TableHead>
                             <TableHead>Ações</TableHead>
                           </TableRow>
@@ -638,6 +694,8 @@ export default function AprovacaoEntradas() {
                                   </Button>
                                 </div>
                               </TableCell>
+                              <TableCell>{leitura.volumes || "-"}</TableCell>
+                              <TableCell>{leitura.pallets || "-"}</TableCell>
                               <TableCell>{format(leitura.timestamp, 'HH:mm:ss')}</TableCell>
                               <TableCell>
                                 <Button
