@@ -447,6 +447,18 @@ export default function Entradas() {
       }
       
       console.log('Entrada encontrada:', entradaExists)
+      
+      // Verificar permissões do usuário atual
+      const { data: currentUser } = await supabase.auth.getUser()
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', currentUser.user?.id)
+        .single()
+      
+      console.log('Usuário atual:', currentUser.user?.id)
+      console.log('Role do usuário:', userProfile?.role)
+      console.log('Entrada pertence ao usuário:', entradaExists.user_id === currentUser.user?.id)
 
       // 1. Deletar entrada_status_historico primeiro
       console.log('STEP 1: Deletando entrada_status_historico para:', entradaId)
@@ -546,8 +558,20 @@ export default function Entradas() {
         throw new Error(`Erro ao deletar itens: ${itensDeleteError.message}`)
       }
 
-      // 7. FINALMENTE, deletar a entrada
+      // 7. FINALMENTE, deletar a entrada - FORÇAR DELEÇÃO DIRETA
       console.log('STEP 7: Deletando entrada principal:', entradaId)
+      
+      // Verificar se é admin, franqueado ou dono da entrada
+      const isOwner = entradaExists.user_id === currentUser.user?.id
+      const isAdmin = userProfile?.role === 'admin'
+      const isFranqueado = userProfile?.role === 'franqueado'
+      
+      console.log('Permissões - Owner:', isOwner, 'Admin:', isAdmin, 'Franqueado:', isFranqueado)
+      
+      if (!isOwner && !isAdmin && !isFranqueado) {
+        throw new Error('Você não tem permissão para deletar esta entrada')
+      }
+      
       const { data: deletedEntrada, error: entradaDeleteError } = await supabase
         .from('entradas')
         .delete()
@@ -561,8 +585,15 @@ export default function Entradas() {
       }
 
       if (!deletedEntrada || deletedEntrada.length === 0) {
-        console.error('NENHUMA ENTRADA FOI DELETADA - possível problema de permissão')
-        throw new Error('Nenhuma entrada foi deletada. Verifique as permissões.')
+        console.error('NENHUMA ENTRADA FOI DELETADA - RLS bloqueou a operação')
+        console.log('Tentando diagnóstico adicional...')
+        
+        // Tentar diagnóstico
+        const { data: debugAuth } = await supabase.auth.getUser()
+        console.log('Debug - User autenticado:', !!debugAuth.user)
+        console.log('Debug - User ID:', debugAuth.user?.id)
+        
+        throw new Error('Nenhuma entrada foi deletada. As políticas de segurança impediram a operação.')
       }
 
       console.log('=== DELEÇÃO CONCLUÍDA COM SUCESSO ===')
