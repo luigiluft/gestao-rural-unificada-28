@@ -27,7 +27,7 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
             produtos(nome, unidade_medida)
           )
         `)
-        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa"])
+        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
         
       // Apply date filters if provided
       if (dateRange?.from) {
@@ -167,7 +167,7 @@ export const useAtualizarStatusEntrada = () => {
       const statusMessages = {
         'em_transferencia': 'Entrada marcada como em transferência',
         'aguardando_conferencia': 'Entrada aguardando conferência',
-        'conferencia_completa': 'Conferência realizada',
+        'planejamento': 'Conferência realizada - Entrada em planejamento',
         'confirmado': 'Entrada confirmada e adicionada ao estoque',
         'rejeitado': 'Entrada rejeitada'
       }
