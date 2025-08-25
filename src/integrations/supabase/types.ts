@@ -1831,6 +1831,9 @@ export type Database = {
           descricao: string | null
           id: string
           ocupado: boolean | null
+          reservado_ate: string | null
+          reservado_por_wave_id: string | null
+          reservado_temporariamente: boolean | null
           tipo_posicao: string | null
           updated_at: string
         }
@@ -1843,6 +1846,9 @@ export type Database = {
           descricao?: string | null
           id?: string
           ocupado?: boolean | null
+          reservado_ate?: string | null
+          reservado_por_wave_id?: string | null
+          reservado_temporariamente?: boolean | null
           tipo_posicao?: string | null
           updated_at?: string
         }
@@ -1855,6 +1861,9 @@ export type Database = {
           descricao?: string | null
           id?: string
           ocupado?: boolean | null
+          reservado_ate?: string | null
+          reservado_por_wave_id?: string | null
+          reservado_temporariamente?: boolean | null
           tipo_posicao?: string | null
           updated_at?: string
         }
@@ -1956,6 +1965,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      clean_expired_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       complete_allocation_and_create_stock: {
         Args: {
           p_barcode_posicao: string
@@ -1979,6 +1992,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      fix_incorrectly_occupied_positions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       generate_inventory_number: {
         Args: Record<PropertyKey, never>
