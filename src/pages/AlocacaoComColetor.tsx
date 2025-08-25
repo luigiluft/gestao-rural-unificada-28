@@ -1,87 +1,83 @@
-import { useState, useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
-import { useAlocacao } from "@/hooks/useAlocacao"
-import { useDefineWavePositions } from "@/hooks/useAllocationWaves"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ProductInfo } from "@/components/Alocacao/ProductInfo"
+import { PalletInfo } from "@/components/Alocacao/PalletInfo"
+import { PalletProductsCheck } from "@/components/Alocacao/PalletProductsCheck"
 import { ProgressIndicator } from "@/components/Alocacao/ProgressIndicator"
-import { Scan, CheckCircle, ArrowLeft, AlertCircle } from "lucide-react"
+import { usePalletAllocation } from "@/hooks/usePalletAllocation"
 import { useToast } from "@/hooks/use-toast"
+import { CheckCircle, Package, SkipForward, Scan } from "lucide-react"
 
 export default function AlocacaoComColetor() {
-  const { waveId } = useParams()
+  const { waveId } = useParams<{ waveId: string }>()
   const { toast } = useToast()
+  
   const {
     wave,
     isLoading,
-    currentItem,
+    currentPallet,
     currentPosition,
-    pendingItems,
-    currentItemIndex,
+    pendingPallets,
+    currentPalletIndex,
     isProcessing,
-    handleAllocate,
-    handleSkipItem,
+    productsStatus,
+    conferenciaMode,
+    allProductsChecked,
+    handleAllocatePallet,
+    handleSkipPallet,
+    updateProductStatus,
+    startConferencia,
+    setConferenciaMode,
     navigate
-  } = useAlocacao(waveId!)
+  } = usePalletAllocation(waveId!)
 
-  const defineWavePositions = useDefineWavePositions()
-
-  const [scannedProductCode, setScannedProductCode] = useState("")
+  const [scannedPalletCode, setScannedPalletCode] = useState("")
   const [scannedPositionCode, setScannedPositionCode] = useState("")
 
-  const handleDefinePositions = async () => {
-    if (!waveId) return
-    await defineWavePositions.mutateAsync({ waveId })
-  }
-
+  // Simular scanner via teclado (F1 para pallet, F2 para posição)
   useEffect(() => {
-    // Simulate barcode scanner integration
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === 'F1') { // F1 to simulate product scan
-        event.preventDefault()
-        const productCode = currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
-        setScannedProductCode(productCode)
-        toast({
-          title: "Produto escaneado",
-          description: `Código: ${productCode}`,
-        })
-      }
-      if (event.key === 'F2') { // F2 to simulate position scan
-        event.preventDefault()
-        if (currentPosition) {
-          setScannedPositionCode(currentPosition.codigo)
-          toast({
-            title: "Posição escaneada",
-            description: `Posição: ${currentPosition.codigo}`,
-          })
-        }
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === "F1") {
+        e.preventDefault()
+        const mockPalletCode = currentPallet?.codigo_barras_pallet || `PALLET-${Date.now()}`
+        setScannedPalletCode(mockPalletCode)
+      } else if (e.key === "F2") {
+        e.preventDefault()
+        const mockPositionCode = currentPosition?.codigo || `POS-${Date.now()}`
+        setScannedPositionCode(mockPositionCode)
       }
     }
 
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentItem, currentPosition, toast])
+    window.addEventListener("keydown", handleKeyPress)
+    return () => window.removeEventListener("keydown", handleKeyPress)
+  }, [currentPallet, currentPosition])
 
-  // Auto-allocate when both codes are scanned correctly
+  // Auto-alocar quando ambos os códigos forem escaneados, todos os produtos conferidos e corresponderem
   useEffect(() => {
-    if (scannedProductCode && scannedPositionCode && !isProcessing) {
-      const expectedProductCode = currentItem?.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
-      const expectedPositionCode = currentPosition?.codigo
+    if (
+      scannedPalletCode && 
+      scannedPositionCode && 
+      currentPallet &&
+      currentPosition &&
+      allProductsChecked &&
+      !isProcessing
+    ) {
+      // Verificar se os códigos correspondem aos esperados
+      const expectedPalletCode = currentPallet.codigo_barras_pallet
+      const expectedPositionCode = currentPosition.codigo
 
-      if (scannedProductCode === expectedProductCode && scannedPositionCode === expectedPositionCode) {
-        handleAllocate(scannedProductCode, scannedPositionCode).then((success) => {
-          if (success) {
-            setScannedProductCode("")
-            setScannedPositionCode("")
-          }
-        })
+      if (scannedPalletCode === expectedPalletCode && scannedPositionCode === expectedPositionCode) {
+        handleAllocatePallet(scannedPalletCode, scannedPositionCode)
+        setScannedPalletCode("")
+        setScannedPositionCode("")
       }
     }
-  }, [scannedProductCode, scannedPositionCode, currentItem, currentPosition, isProcessing, handleAllocate])
+  }, [scannedPalletCode, scannedPositionCode, currentPallet, currentPosition, allProductsChecked, isProcessing, handleAllocatePallet])
 
   if (isLoading) {
     return (
@@ -100,26 +96,38 @@ export default function AlocacaoComColetor() {
     )
   }
 
-  if (!wave || !currentItem) {
+  // Se todos os pallets foram alocados
+  if (pendingPallets.length === 0) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl font-bold">Alocação com Coletor</h1>
-        </div>
-        
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <CheckCircle className="w-16 h-16 text-primary mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Todos os itens foram alocados!</h2>
+      <div className="container mx-auto py-6">
+        <Card className="max-w-md mx-auto text-center">
+          <CardContent className="pt-6">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Alocação Concluída!</h2>
             <p className="text-muted-foreground mb-4">
-              A onda {wave?.numero_onda} foi concluída com sucesso.
+              Todos os pallets foram alocados com sucesso.
             </p>
             <Button onClick={() => navigate("/ondas-alocacao")}>
-              Voltar para Ondas de Alocação
+              Voltar para Ondas
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!currentPallet) {
+    return (
+      <div className="container mx-auto py-6">
+        <Card className="max-w-md mx-auto text-center">
+          <CardContent className="pt-6">
+            <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Pallet não encontrado</h2>
+            <p className="text-muted-foreground mb-4">
+              Não foi possível carregar o pallet atual da onda.
+            </p>
+            <Button onClick={() => navigate("/ondas-alocacao")}>
+              Voltar para Ondas
             </Button>
           </CardContent>
         </Card>
@@ -128,195 +136,169 @@ export default function AlocacaoComColetor() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Voltar
-        </Button>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Alocação com Coletor - {wave.numero_onda}</h1>
+          <h1 className="text-2xl font-bold">Conferência de Pallets</h1>
           <p className="text-muted-foreground">
-            Item {currentItemIndex + 1} de {pendingItems.length} • Modo Scanner/Coletor
+            Onda: {wave?.numero_onda} - {wave?.franquia_nome}
           </p>
         </div>
+        <ProgressIndicator
+          currentIndex={currentPalletIndex}
+          totalItems={pendingPallets.length}
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Product Info */}
+        {/* Informações do Pallet */}
         <div className="space-y-4">
-          <ProductInfo currentItem={currentItem} />
-          
-          {/* Scanner Controls */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Scan className="w-5 h-5" />
-                Scanner de Produto
-              </CardTitle>
-              <CardDescription>
-                Escaneie o código de barras do produto
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="font-medium">Scanner de Produto (F1)</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input 
-                    value={scannedProductCode}
-                    onChange={(e) => setScannedProductCode(e.target.value)}
-                    placeholder="Pressione F1 ou escaneie produto..."
-                    className="flex-1"
-                  />
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      const productCode = currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
-                      setScannedProductCode(productCode)
-                      toast({
-                        title: "Produto simulado",
-                        description: `Código: ${productCode}`,
-                      })
-                    }}
-                    size="sm"
-                  >
-                    F1
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  📱 Pressione F1 para simular scanner ou escaneie o código de barras
-                </p>
-                {scannedProductCode && (
-                  <p className="text-xs text-green-600 mt-1">
-                    ✅ Produto escaneado: {scannedProductCode}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <PalletInfo
+            pallet={currentPallet}
+            currentIndex={currentPalletIndex}
+            totalPallets={pendingPallets.length}
+          />
+
+          {conferenciaMode && (
+            <PalletProductsCheck
+              products={productsStatus}
+              onUpdateProduct={updateProductStatus}
+            />
+          )}
         </div>
 
-        {/* Position Scanner */}
+        {/* Scanner */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Scan className="w-5 h-5" />
-              Scanner de Posição
+              <Scan className="h-5 w-5" />
+              Scanner de Códigos
             </CardTitle>
-            <CardDescription>
-              Escaneie o código da posição designada
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {currentPosition ? (
+            {!conferenciaMode ? (
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground">
+                  Inicie a conferência dos produtos do pallet antes de escanear
+                </p>
+                <Button onClick={startConferencia} className="w-full">
+                  <Package className="h-4 w-4 mr-2" />
+                  Iniciar Conferência
+                </Button>
+              </div>
+            ) : (
               <>
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Scan className="w-5 h-5 text-blue-600" />
-                    <Label className="font-medium text-blue-800">Posição para Scanner</Label>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-800">{currentPosition.codigo}</p>
-                  {currentPosition.descricao && (
-                    <p className="text-sm text-blue-600 mt-1">
-                      {currentPosition.descricao}
-                    </p>
-                  )}
-                  <p className="text-xs text-blue-600 mt-2">
-                    📱 Escaneie ou pressione F2 para confirmar
-                  </p>
-                </div>
-
-                <div>
-                  <Label className="font-medium">Scanner de Posição (F2)</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input 
-                      value={scannedPositionCode}
-                      onChange={(e) => setScannedPositionCode(e.target.value)}
-                      placeholder={`Pressione F2 ou escaneie: ${currentPosition.codigo}`}
-                      className={scannedPositionCode && scannedPositionCode !== currentPosition.codigo ? 'border-destructive' : 'border-blue-300'}
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setScannedPositionCode(currentPosition.codigo)}
-                      className="border-blue-300 text-blue-600 hover:bg-blue-50"
-                    >
-                      F2
-                    </Button>
-                  </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    📱 Pressione F2 para simular scanner ou escaneie o código de barras
-                  </p>
-                  {scannedPositionCode && scannedPositionCode !== currentPosition.codigo && (
-                    <p className="text-xs text-destructive mt-1">
-                      ❌ Posição incorreta! Escaneie: {currentPosition.codigo}
-                    </p>
-                  )}
-                  {scannedPositionCode && scannedPositionCode === currentPosition.codigo && (
-                    <p className="text-xs text-green-600 mt-1">
-                      ✅ Posição confirmada pelo scanner!
+                <div className="space-y-2">
+                  <Label htmlFor="palletCode">Código do Pallet</Label>
+                  <Input
+                    id="palletCode"
+                    placeholder="Escaneie o código do pallet"
+                    value={scannedPalletCode}
+                    onChange={(e) => setScannedPalletCode(e.target.value)}
+                    className={
+                      scannedPalletCode && scannedPalletCode === currentPallet.codigo_barras_pallet
+                        ? "border-green-500 bg-green-50"
+                        : scannedPalletCode
+                        ? "border-red-500 bg-red-50"
+                        : ""
+                    }
+                  />
+                  {scannedPalletCode && (
+                    <p className={`text-sm ${
+                      scannedPalletCode === currentPallet.codigo_barras_pallet
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}>
+                      {scannedPalletCode === currentPallet.codigo_barras_pallet
+                        ? "✓ Código correto"
+                        : `✗ Esperado: ${currentPallet.codigo_barras_pallet}`
+                      }
                     </p>
                   )}
                 </div>
 
-                <div className="pt-4">
-                  <Button 
+                <div className="space-y-2">
+                  <Label htmlFor="positionCode">Código da Posição</Label>
+                  <Input
+                    id="positionCode"
+                    placeholder="Escaneie o código da posição"
+                    value={scannedPositionCode}
+                    onChange={(e) => setScannedPositionCode(e.target.value)}
+                    className={
+                      scannedPositionCode && scannedPositionCode === currentPosition?.codigo
+                        ? "border-green-500 bg-green-50"
+                        : scannedPositionCode
+                        ? "border-red-500 bg-red-50"
+                        : ""
+                    }
+                  />
+                  {scannedPositionCode && (
+                    <p className={`text-sm ${
+                      scannedPositionCode === currentPosition?.codigo
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}>
+                      {scannedPositionCode === currentPosition?.codigo
+                        ? "✓ Posição correta"
+                        : `✗ Esperado: ${currentPosition?.codigo}`
+                      }
+                    </p>
+                  )}
+                </div>
+
+                {!allProductsChecked && (
+                  <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <p className="text-sm text-warning">
+                      Complete a conferência de todos os produtos antes de alocar o pallet
+                    </p>
+                  </div>
+                )}
+
+                <div className="text-sm text-muted-foreground">
+                  <p>Dicas:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Pressione F1 para simular scan do pallet</li>
+                    <li>Pressione F2 para simular scan da posição</li>
+                    <li>Complete a conferência dos produtos primeiro</li>
+                    <li>A alocação acontece automaticamente quando tudo está correto</li>
+                  </ul>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleSkipPallet}
                     variant="outline"
-                    onClick={handleSkipItem}
+                    className="flex-1"
                     disabled={isProcessing}
-                    className="w-full"
                   >
-                    Pular Item
+                    <SkipForward className="h-4 w-4 mr-2" />
+                    Pular Pallet
                   </Button>
-                  
-                  <div className="text-center pt-3">
-                    <p className="text-xs text-muted-foreground">
-                      Modo Scanner: F1 para produto • F2 para posição
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      ⚡ Alocação automática quando ambos forem escaneados corretamente
-                    </p>
-                  </div>
+                  <Button
+                    onClick={() => setConferenciaMode(false)}
+                    variant="outline"
+                    disabled={isProcessing}
+                  >
+                    Cancelar Conferência
+                  </Button>
                 </div>
 
-                {(!scannedProductCode || !scannedPositionCode) && (
-                  <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-medium text-yellow-800">Aguardando Scanner</p>
-                      <p className="text-yellow-700">
-                        Escaneie primeiro o produto (F1) e depois a posição (F2) para alocar automaticamente.
-                      </p>
+                {isProcessing && (
+                  <div className="text-center">
+                    <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-blue-500 hover:bg-blue-400 transition ease-in-out duration-150 cursor-not-allowed">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processando...
                     </div>
                   </div>
                 )}
               </>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium text-red-800">Posição não definida</p>
-                    <p className="text-red-700">
-                      Este item ainda não tem uma posição automaticamente designada pelo sistema.
-                    </p>
-                  </div>
-                </div>
-                
-                <Button
-                  onClick={handleDefinePositions}
-                  disabled={defineWavePositions.isPending}
-                  className="w-full"
-                >
-                  {defineWavePositions.isPending ? "Definindo Posições..." : "Definir Posições"}
-                </Button>
-              </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      <ProgressIndicator currentIndex={currentItemIndex} totalItems={pendingItems.length} />
     </div>
   )
 }

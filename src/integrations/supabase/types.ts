@@ -97,6 +97,51 @@ export type Database = {
           },
         ]
       }
+      allocation_wave_pallets: {
+        Row: {
+          alocado_por: string | null
+          codigo_barras_pallet: string
+          created_at: string
+          data_alocacao: string | null
+          divergencias: Json | null
+          entrada_pallet_id: string
+          id: string
+          posicao_id: string | null
+          produtos_conferidos: Json | null
+          status: string
+          updated_at: string
+          wave_id: string
+        }
+        Insert: {
+          alocado_por?: string | null
+          codigo_barras_pallet: string
+          created_at?: string
+          data_alocacao?: string | null
+          divergencias?: Json | null
+          entrada_pallet_id: string
+          id?: string
+          posicao_id?: string | null
+          produtos_conferidos?: Json | null
+          status?: string
+          updated_at?: string
+          wave_id: string
+        }
+        Update: {
+          alocado_por?: string | null
+          codigo_barras_pallet?: string
+          created_at?: string
+          data_alocacao?: string | null
+          divergencias?: Json | null
+          entrada_pallet_id?: string
+          id?: string
+          posicao_id?: string | null
+          produtos_conferidos?: Json | null
+          status?: string
+          updated_at?: string
+          wave_id?: string
+        }
+        Relationships: []
+      }
       allocation_waves: {
         Row: {
           created_at: string
@@ -2082,6 +2127,17 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: boolean
       }
+      complete_pallet_allocation_and_create_stock: {
+        Args: {
+          p_barcode_pallet: string
+          p_barcode_posicao: string
+          p_divergencias?: Json
+          p_posicao_id: string
+          p_produtos_conferidos: Json
+          p_wave_pallet_id: string
+        }
+        Returns: boolean
+      }
       define_wave_positions: {
         Args: { p_wave_id: string }
         Returns: Json
@@ -2103,6 +2159,10 @@ export type Database = {
       }
       generate_inventory_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_pallet_barcode: {
+        Args: { p_entrada_id: string; p_numero_pallet: number }
         Returns: string
       }
       get_current_user_role: {

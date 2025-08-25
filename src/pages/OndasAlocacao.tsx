@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAllocationWaves, useStartAllocationWave, useDefineWavePositions } from "@/hooks/useAllocationWaves"
+import { usePalletAllocationWaves, useStartAllocationWave } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,9 +14,8 @@ import { ptBR } from "date-fns/locale"
 
 export default function OndasAlocacao() {
   const navigate = useNavigate()
-  const { data: waves, isLoading } = useAllocationWaves()
+  const { data: waves, isLoading } = usePalletAllocationWaves()
   const { mutate: startWave, isPending } = useStartAllocationWave()
-  const { mutate: definePositions, isPending: isDefiningPositions } = useDefineWavePositions()
   const [selectedWave, setSelectedWave] = useState<any>(null)
   const [isExecuting, setIsExecuting] = useState(false)
 
@@ -78,12 +77,12 @@ export default function OndasAlocacao() {
     definePositions({ waveId })
   }
 
-  const getTotalItems = (wave: any) => {
-    return wave.allocation_wave_items?.length || 0
+  const getTotalPallets = (wave: any) => {
+    return wave.allocation_wave_pallets?.length || 0
   }
 
-  const getItemsAlocados = (wave: any) => {
-    return wave.allocation_wave_items?.filter((item: any) => item.status === 'alocado').length || 0
+  const getPalletsAlocados = (wave: any) => {
+    return wave.allocation_wave_pallets?.filter((pallet: any) => pallet.status === 'alocado' || pallet.status === 'com_divergencia').length || 0
   }
 
   if (isLoading) {
@@ -149,7 +148,7 @@ export default function OndasAlocacao() {
                     {wave.numero_onda}
                   </CardTitle>
                   <CardDescription>
-                    {wave.franquias?.nome} • {getTotalItems(wave)} itens
+                    {wave.franquia_nome} • {getTotalPallets(wave)} pallets
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -177,7 +176,7 @@ export default function OndasAlocacao() {
                   <div>
                     <span className="font-medium">Progresso:</span>
                     <p className="text-muted-foreground">
-                      {getItemsAlocados(wave)} / {getTotalItems(wave)} itens
+                      {getPalletsAlocados(wave)} / {getTotalPallets(wave)} pallets
                     </p>
                   </div>
                 </div>
@@ -190,7 +189,7 @@ export default function OndasAlocacao() {
                 )}
 
                 <div className="flex gap-2">
-                  {getTotalItems(wave) === 0 ? (
+                  {getTotalPallets(wave) === 0 ? (
                     <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
                       Onda sem itens para alocar
                     </div>

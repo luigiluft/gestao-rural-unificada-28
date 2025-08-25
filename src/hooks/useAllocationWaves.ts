@@ -2,6 +2,91 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
+// Função para buscar ondas de alocação baseadas em pallets
+export const usePalletAllocationWaves = (waveId?: string) => {
+  return useQuery({
+    queryKey: waveId ? ["pallet-allocation-waves", waveId] : ["pallet-allocation-waves"],
+    queryFn: async () => {
+      const query = supabase
+        .from("allocation_waves")
+        .select(`
+          *,
+          allocation_wave_pallets (
+            *,
+            entrada_pallets (
+              id,
+              numero_pallet,
+              descricao,
+              entrada_pallet_itens (
+                quantidade,
+                entrada_itens (
+                  produto_id,
+                  nome_produto,
+                  lote,
+                  quantidade,
+                  valor_unitario,
+                  data_validade
+                )
+              )
+            ),
+            storage_positions (
+              id,
+              codigo,
+              ocupado
+            )
+          )
+        `)
+        .neq("status", "concluido")
+        .order("created_at", { ascending: false })
+
+      if (waveId) {
+        query.eq("id", waveId)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      if (waveId) {
+        const wave = data[0]
+        if (!wave) return null
+
+        // Enriquecer com nome da franquia
+        const { data: franquia } = await supabase
+          .from("franquias")
+          .select("nome")
+          .eq("id", wave.deposito_id)
+          .single()
+
+        return {
+          ...wave,
+          franquia_nome: franquia?.nome || "Franquia não encontrada"
+        }
+      }
+
+      // Enriquecer com nome da franquia para múltiplas ondas
+      const enrichedData = await Promise.all(
+        data.map(async (wave) => {
+          const { data: franquia } = await supabase
+            .from("franquias")
+            .select("nome")
+            .eq("id", wave.deposito_id)
+            .single()
+
+          return {
+            ...wave,
+            franquia_nome: franquia?.nome || "Franquia não encontrada"
+          }
+        })
+      )
+
+      return enrichedData
+    },
+    enabled: !waveId || !!waveId,
+  })
+}
+
+// Legacy function - manter para compatibilidade
 export const useAllocationWaves = () => {
   return useQuery({
     queryKey: ["allocation-waves"],
@@ -134,6 +219,61 @@ export const useStartAllocationWave = () => {
   })
 }
 
+// Mutation hook para alocar um pallet
+export const useAllocatePallet = () => {
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      wavePalletId,
+      posicaoId,
+      barcodePallet,
+      barcodePosicao,
+      produtosConferidos,
+      divergencias = []
+    }: {
+      wavePalletId: string
+      posicaoId: string
+      barcodePallet: string
+      barcodePosicao: string
+      produtosConferidos: any[]
+      divergencias?: any[]
+    }) => {
+      const { data, error } = await supabase.rpc(
+        "complete_pallet_allocation_and_create_stock",
+        {
+          p_wave_pallet_id: wavePalletId,
+          p_posicao_id: posicaoId,
+          p_barcode_pallet: barcodePallet,
+          p_barcode_posicao: barcodePosicao,
+          p_produtos_conferidos: produtosConferidos,
+          p_divergencias: divergencias,
+        }
+      )
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      toast({
+        title: "Pallet alocado",
+        description: "Pallet alocado com sucesso!",
+      })
+      queryClient.invalidateQueries({ queryKey: ["allocation-waves"] })
+      queryClient.invalidateQueries({ queryKey: ["pallet-allocation-waves"] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro na alocação",
+        description: error.message || "Erro ao alocar pallet",
+        variant: "destructive",
+      })
+    },
+  })
+}
+
+// Legacy function - manter para compatibilidade
 export const useAllocateItem = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
