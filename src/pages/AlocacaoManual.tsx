@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom"
 import { useAlocacao } from "@/hooks/useAlocacao"
-import { useResetWavePositions } from "@/hooks/useAllocationWaves"
+import { useResetWavePositions, useDefineWavePositions } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -25,6 +25,7 @@ export default function AlocacaoManual() {
   } = useAlocacao(waveId!)
 
   const resetWavePositions = useResetWavePositions()
+  const defineWavePositions = useDefineWavePositions()
 
   const handleManualAllocate = async () => {
     if (!currentItem || !currentPosition) return
@@ -38,6 +39,11 @@ export default function AlocacaoManual() {
   const handleResetPositions = async () => {
     if (!waveId) return
     await resetWavePositions.mutateAsync(waveId)
+  }
+
+  const handleDefinePositions = async () => {
+    if (!waveId) return
+    await defineWavePositions.mutateAsync({ waveId })
   }
 
   if (isLoading) {
@@ -176,14 +182,26 @@ export default function AlocacaoManual() {
                 </div>
               </>
             ) : (
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-red-800">Posição não definida</p>
-                  <p className="text-red-700">
-                    Este item ainda não tem uma posição automaticamente designada pelo sistema.
-                  </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-orange-800">Posições não definidas</p>
+                    <p className="text-orange-700">
+                      As posições para esta onda ainda não foram definidas pelo sistema.
+                    </p>
+                  </div>
                 </div>
+                
+                <Button 
+                  onClick={handleDefinePositions}
+                  disabled={defineWavePositions.isPending}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  {defineWavePositions.isPending ? "Definindo..." : "Definir Posições Automaticamente"}
+                </Button>
               </div>
             )}
           </CardContent>
