@@ -12,7 +12,8 @@ import {
   FileText,
   Download,
   User,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,6 +61,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -418,6 +430,99 @@ export default function Entradas() {
     setActiveTab("manual")
   }
 
+  const handleDeleteEntrada = async (entradaId: string, numeroNfe?: string) => {
+    try {
+      // 1. Buscar entrada_itens para deletar allocation_wave_items relacionados
+      const { data: entradaItens } = await supabase
+        .from('entrada_itens')
+        .select('id')
+        .eq('entrada_id', entradaId)
+
+      if (entradaItens && entradaItens.length > 0) {
+        const itemIds = entradaItens.map(item => item.id)
+        
+        // Deletar allocation_wave_items relacionados
+        const { error: waveItemsError } = await supabase
+          .from('allocation_wave_items')
+          .delete()
+          .in('entrada_item_id', itemIds)
+
+        if (waveItemsError) throw waveItemsError
+      }
+
+      // 2. Deletar movimentacoes relacionadas
+      const { error: movimentacoesError } = await supabase
+        .from('movimentacoes')
+        .delete()
+        .eq('referencia_id', entradaId)
+        .eq('referencia_tipo', 'entrada')
+
+      if (movimentacoesError) throw movimentacoesError
+
+      // 3. Deletar estoque relacionado através dos produtos dos itens da entrada
+      if (entradaItens && entradaItens.length > 0) {
+        // Buscar produto_ids dos itens desta entrada
+        const { data: produtoIds } = await supabase
+          .from('entrada_itens')
+          .select('produto_id')
+          .eq('entrada_id', entradaId)
+          .not('produto_id', 'is', null)
+
+        if (produtoIds && produtoIds.length > 0) {
+          const ids = produtoIds.map(item => item.produto_id).filter(Boolean)
+          
+          if (ids.length > 0) {
+            // Deletar estoque relacionado aos produtos desta entrada
+            const { error: estoqueDeleteError } = await supabase
+              .from('estoque')
+              .delete()
+              .in('produto_id', ids)
+
+            // Não tratar como erro crítico se falhar
+          }
+        }
+      }
+
+      // 4. Deletar entrada_itens
+      const { error: itensDeleteError } = await supabase
+        .from('entrada_itens')
+        .delete()
+        .eq('entrada_id', entradaId)
+
+      if (itensDeleteError) throw itensDeleteError
+
+      // 5. Deletar entrada_status_historico
+      const { error: historicoDeleteError } = await supabase
+        .from('entrada_status_historico')
+        .delete()
+        .eq('entrada_id', entradaId)
+
+      if (historicoDeleteError) throw historicoDeleteError
+
+      // 6. Finalmente, deletar a entrada
+      const { error: entradaDeleteError } = await supabase
+        .from('entradas')
+        .delete()
+        .eq('id', entradaId)
+
+      if (entradaDeleteError) throw entradaDeleteError
+
+      toast({
+        title: "Entrada deletada",
+        description: `A entrada ${numeroNfe || `ENT-${entradaId.slice(0, 8)}`} e todos os dados relacionados foram removidos com sucesso.`,
+      })
+
+      refetch() // Recarregar a lista
+    } catch (error: any) {
+      console.error('Erro ao deletar entrada:', error)
+      toast({
+        title: "Erro ao deletar entrada",
+        description: error.message || "Ocorreu um erro ao deletar a entrada e seus dados relacionados.",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -655,6 +760,51 @@ export default function Entradas() {
                                 Download XML
                               </DropdownMenuItem>
                             )}
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem 
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Deletar
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja deletar a entrada{" "}
+                                    <strong>
+                                      {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                                    </strong>?
+                                    <br />
+                                    <br />
+                                    Esta ação é irreversível e irá remover:
+                                    <ul className="list-disc list-inside mt-2 space-y-1">
+                                      <li>A entrada e todos os seus itens</li>
+                                      <li>Movimentações de estoque relacionadas</li>
+                                      <li>Histórico de status</li>
+                                      <li>Dados de alocação em ondas (se houver)</li>
+                                      <li>Registros de estoque criados a partir desta entrada</li>
+                                    </ul>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => handleDeleteEntrada(
+                                      entrada.id, 
+                                      entrada.numero_nfe || undefined
+                                    )}
+                                  >
+                                    Deletar Entrada
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
