@@ -434,7 +434,20 @@ export default function Entradas() {
     try {
       console.log('Iniciando deleção da entrada:', entradaId)
 
-      // 1. Buscar entrada_itens para deletar allocation_wave_items relacionados
+      // 1. Deletar entrada_status_historico primeiro
+      console.log('Deletando entrada_status_historico para:', entradaId)
+      const { error: historicoDeleteError } = await supabase
+        .from('entrada_status_historico')
+        .delete()
+        .eq('entrada_id', entradaId)
+
+      if (historicoDeleteError) {
+        console.error('Erro ao deletar histórico:', historicoDeleteError)
+        throw new Error(`Erro ao deletar histórico: ${historicoDeleteError.message}`)
+      }
+      console.log('Histórico deletado com sucesso')
+
+      // 2. Buscar entrada_itens para deletar allocation_wave_items relacionados
       const { data: entradaItens } = await supabase
         .from('entrada_itens')
         .select('id, produto_id')
@@ -458,19 +471,6 @@ export default function Entradas() {
         }
         console.log('Wave items deletados com sucesso')
       }
-
-      // 2. Deletar entrada_status_historico primeiro
-      console.log('Deletando entrada_status_historico para:', entradaId)
-      const { error: historicoDeleteError } = await supabase
-        .from('entrada_status_historico')
-        .delete()
-        .eq('entrada_id', entradaId)
-
-      if (historicoDeleteError) {
-        console.error('Erro ao deletar histórico:', historicoDeleteError)
-        throw new Error(`Erro ao deletar histórico: ${historicoDeleteError.message}`)
-      }
-      console.log('Histórico deletado com sucesso')
 
       // 3. Deletar movimentacoes relacionadas
       console.log('Deletando movimentações para:', entradaId)
@@ -540,8 +540,8 @@ export default function Entradas() {
         description: `A entrada ${numeroNfe || `ENT-${entradaId.slice(0, 8)}`} e todos os dados relacionados foram removidos com sucesso.`,
       })
 
-      // Recarregar a página após exclusão bem-sucedida
-      window.location.reload()
+      // Recarregar dados sem recarregar a página
+      refetch()
     } catch (error: any) {
       console.error('Erro ao deletar entrada:', error)
       toast({
