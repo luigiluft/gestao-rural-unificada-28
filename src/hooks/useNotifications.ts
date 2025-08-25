@@ -89,7 +89,7 @@ export const useNotifications = () => {
           let alocacoesQuery = supabase
             .from("allocation_waves")
             .select("id", { count: "exact" })
-            .in("status", ["pendente", "posicoes_definidas"])
+            .in("status", ["pendente", "posicoes_definidas", "em_andamento"])
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
