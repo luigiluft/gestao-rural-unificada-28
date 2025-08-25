@@ -10,6 +10,8 @@ interface DateRange {
 export const useEntradasPendentes = (dateRange?: DateRange) => {
   return useQuery({
     queryKey: ["entradas-pendentes", dateRange],
+    staleTime: 0, // Força refetch para evitar cache desatualizado
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       console.log('🔍 Iniciando busca de entradas pendentes...')
       
@@ -98,7 +100,6 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
       return entradasEnriquecidas || []
     },
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
   })
 }
 
@@ -160,9 +161,18 @@ export const useAtualizarStatusEntrada = () => {
       console.log('✅ Status atualizado com sucesso:', data[0])
       return { entradaId, novoStatus }
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] })
-      queryClient.invalidateQueries({ queryKey: ["entradas"] })
+    onSuccess: async (data) => {
+      console.log(`✅ Sucesso na atualização: entrada ${data.entradaId} -> ${data.novoStatus}`)
+      
+      // Invalidate specific queries with await to ensure they complete
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] }),
+        queryClient.invalidateQueries({ queryKey: ["entradas"] }),
+        queryClient.invalidateQueries({ queryKey: ["entrada-stats"] }),
+      ])
+
+      // Force refetch after invalidation
+      await queryClient.refetchQueries({ queryKey: ["entradas-pendentes"] })
       
       const statusMessages = {
         'em_transferencia': 'Entrada marcada como em transferência',
@@ -171,11 +181,15 @@ export const useAtualizarStatusEntrada = () => {
         'confirmado': 'Entrada confirmada e adicionada ao estoque',
         'rejeitado': 'Entrada rejeitada'
       }
-
+      
+      const message = statusMessages[data.novoStatus as keyof typeof statusMessages] || 'Status atualizado'
+      
       toast({
-        title: "Status atualizado",
-        description: statusMessages[data.novoStatus as keyof typeof statusMessages] || "Status da entrada atualizado com sucesso",
+        title: "Sucesso",
+        description: message,
       })
+      
+      console.log(`🔄 Cache invalidado e queries atualizadas para entrada ${data.entradaId}`)
     },
     onError: (error: any) => {
       toast({
