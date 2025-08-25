@@ -190,63 +190,58 @@ export default function OndasAlocacao() {
                 )}
 
                 <div className="flex gap-2">
-                  {wave.status === "pendente" && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleDefinePositions(wave.id)}
-                      disabled={isDefiningPositions}
-                      className="flex items-center gap-2"
-                    >
-                      <Package className="h-4 w-4" />
-                      {isDefiningPositions ? "Definindo..." : "Definir Posições"}
-                    </Button>
-                  )}
-                  
-                  {wave.status === "posicoes_definidas" && (
+                  {getTotalItems(wave) === 0 ? (
+                    <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      Onda sem itens para alocar
+                    </div>
+                  ) : (
                     <>
-                      <Button
-                        size="sm"
-                        onClick={() => handleExecuteAllocation(wave.id)}
-                        disabled={isExecuting}
-                        className="flex items-center gap-2"
-                      >
-                        <Play className="h-4 w-4" />
-                        {isExecuting ? "Executando..." : "Executar Alocação"}
-                      </Button>
+                      {(wave.status === "pendente" || wave.status === "posicoes_definidas") && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
+                            className="flex items-center gap-2"
+                          >
+                            <Play className="h-4 w-4" />
+                            Conferência com Scanner
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/alocar-manual/${wave.id}`)}
+                            className="flex items-center gap-2"
+                          >
+                            <Package className="h-4 w-4" />
+                            Conferência Manual
+                          </Button>
+                        </>
+                      )}
                       
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Package className="h-4 w-4" />
-                        Alocar Manualmente
-                      </Button>
-                    </>
-                  )}
-                  
-                  {wave.status === "em_andamento" && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Play className="h-4 w-4" />
-                        Continuar com Scanner
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Package className="h-4 w-4" />
-                        Continuar Manualmente
-                      </Button>
+                      {wave.status === "em_andamento" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
+                            className="flex items-center gap-2"
+                          >
+                            <Play className="h-4 w-4" />
+                            Continuar com Scanner
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/alocar-manual/${wave.id}`)}
+                            className="flex items-center gap-2"
+                          >
+                            <Package className="h-4 w-4" />
+                            Continuar Manualmente
+                          </Button>
+                        </>
+                      )}
                     </>
                   )}
                   

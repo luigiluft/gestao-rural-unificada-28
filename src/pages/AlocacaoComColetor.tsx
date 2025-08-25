@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { useAlocacao } from "@/hooks/useAlocacao"
+import { useDefineWavePositions } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,8 +28,15 @@ export default function AlocacaoComColetor() {
     navigate
   } = useAlocacao(waveId!)
 
+  const defineWavePositions = useDefineWavePositions()
+
   const [scannedProductCode, setScannedProductCode] = useState("")
   const [scannedPositionCode, setScannedPositionCode] = useState("")
+
+  const handleDefinePositions = async () => {
+    if (!waveId) return
+    await defineWavePositions.mutateAsync({ waveId })
+  }
 
   useEffect(() => {
     // Simulate barcode scanner integration
@@ -284,14 +292,24 @@ export default function AlocacaoComColetor() {
                 )}
               </>
             ) : (
-              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-red-800">Posição não definida</p>
-                  <p className="text-red-700">
-                    Este item ainda não tem uma posição automaticamente designada pelo sistema.
-                  </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-red-800">Posição não definida</p>
+                    <p className="text-red-700">
+                      Este item ainda não tem uma posição automaticamente designada pelo sistema.
+                    </p>
+                  </div>
                 </div>
+                
+                <Button
+                  onClick={handleDefinePositions}
+                  disabled={defineWavePositions.isPending}
+                  className="w-full"
+                >
+                  {defineWavePositions.isPending ? "Definindo Posições..." : "Definir Posições"}
+                </Button>
               </div>
             )}
           </CardContent>
