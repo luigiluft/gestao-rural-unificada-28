@@ -39,25 +39,50 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
 
   const [editingPallet, setEditingPallet] = useState<EntradaPallet | null>(null)
   const [newPallet, setNewPallet] = useState({
-    numero_pallet: pallets.length + 1,
     descricao: "",
-    peso_total: undefined as number | undefined,
   })
   const [selectedProductToPallet, setSelectedProductToPallet] = useState<{ productId: string; palletId: string; quantidade: number } | null>(null)
+  const [selectedProductsForNewPallet, setSelectedProductsForNewPallet] = useState<Array<{
+    productId: string
+    quantidade: number
+    nome: string
+    codigo?: string
+    maxQuantidade: number
+  }>>([])
+
+  const getNextPalletNumber = () => {
+    const existingNumbers = pallets.map(p => p.numero_pallet).sort((a, b) => a - b)
+    for (let i = 1; i <= existingNumbers.length + 1; i++) {
+      if (!existingNumbers.includes(i)) {
+        return i
+      }
+    }
+    return existingNumbers.length + 1
+  }
 
 
   const handleCreatePallet = async () => {
-    await createPallet.mutateAsync({
+    if (selectedProductsForNewPallet.length === 0) return
+
+    const palletData = await createPallet.mutateAsync({
       entrada_id: entradaId,
-      numero_pallet: newPallet.numero_pallet,
+      numero_pallet: getNextPalletNumber(),
       descricao: newPallet.descricao || null,
-      peso_total: newPallet.peso_total || null,
+      peso_total: null,
     })
-    setNewPallet({
-      numero_pallet: pallets.length + 2,
-      descricao: "",
-      peso_total: undefined,
-    })
+
+    // Adicionar todos os produtos selecionados ao pallet recém-criado
+    for (const product of selectedProductsForNewPallet) {
+      await addItemToPallet.mutateAsync({
+        pallet_id: palletData.id,
+        entrada_item_id: product.productId,
+        quantidade: product.quantidade
+      })
+    }
+
+    // Reset
+    setNewPallet({ descricao: "" })
+    setSelectedProductsForNewPallet([])
   }
 
   const handleUpdatePallet = async () => {
@@ -66,7 +91,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     await updatePallet.mutateAsync({
       id: editingPallet.id,
       descricao: editingPallet.descricao,
-      peso_total: editingPallet.peso_total,
+      peso_total: null,
     })
     setEditingPallet(null)
   }
@@ -79,6 +104,37 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     })
   }
 
+  const handleAddProductToNewPallet = (productId: string, quantidade: number) => {
+    const produto = entradaItens.find(p => p.id === productId)
+    if (!produto) return
+
+    const existingIndex = selectedProductsForNewPallet.findIndex(p => p.productId === productId)
+    
+    if (existingIndex >= 0) {
+      // Atualizar quantidade existente
+      setSelectedProductsForNewPallet(prev => 
+        prev.map((item, index) => 
+          index === existingIndex 
+            ? { ...item, quantidade }
+            : item
+        )
+      )
+    } else {
+      // Adicionar novo produto
+      setSelectedProductsForNewPallet(prev => [...prev, {
+        productId,
+        quantidade,
+        nome: produto.nome_produto,
+        codigo: produto.codigo_produto,
+        maxQuantidade: getQuantidadeDisponivel(productId)
+      }])
+    }
+  }
+
+  const handleRemoveProductFromNewPallet = (productId: string) => {
+    setSelectedProductsForNewPallet(prev => prev.filter(p => p.productId !== productId))
+  }
+
   const getTotalQuantidadeAlocada = (itemId: string) => {
     let total = 0
     pallets.forEach(pallet => {
@@ -88,6 +144,14 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
         }
       })
     })
+    
+    // Somar também os produtos selecionados para o novo pallet
+    selectedProductsForNewPallet.forEach(product => {
+      if (product.productId === itemId) {
+        total += product.quantidade
+      }
+    })
+    
     return total
   }
 
@@ -105,6 +169,10 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     if (disponivel === 0) return "text-red-600 bg-red-50"
     if (disponivel < original) return "text-yellow-600 bg-yellow-50"
     return "text-green-600 bg-green-50"
+  }
+
+  const getAvailableProductsForNewPallet = () => {
+    return entradaItens.filter(item => getQuantidadeDisponivel(item.id) > 0)
   }
 
   if (isLoading) {
@@ -202,49 +270,96 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Novo Pallet</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="numero" className="text-sm">Número</Label>
-                <Input
-                  id="numero"
-                  type="number"
-                  value={newPallet.numero_pallet}
-                  onChange={(e) => setNewPallet(prev => ({ ...prev, numero_pallet: parseInt(e.target.value) || 1 }))}
-                  className="h-8"
-                />
-              </div>
-              <div>
-                <Label htmlFor="peso" className="text-sm">Peso (kg)</Label>
-                <Input
-                  id="peso"
-                  type="number"
-                  step="0.01"
-                  value={newPallet.peso_total || ""}
-                  onChange={(e) => setNewPallet(prev => ({ ...prev, peso_total: parseFloat(e.target.value) || undefined }))}
-                  placeholder="Opcional"
-                  className="h-8"
-                />
+          <CardContent className="space-y-4">
+            {/* Seleção de Produtos */}
+            <div>
+              <Label className="text-sm">Selecionar Produtos:</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2 max-h-32 overflow-y-auto">
+                {getAvailableProductsForNewPallet().map((produto) => {
+                  const isSelected = selectedProductsForNewPallet.some(p => p.productId === produto.id)
+                  const disponivel = getQuantidadeDisponivel(produto.id)
+                  
+                  return (
+                    <Button
+                      key={produto.id}
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        if (isSelected) {
+                          handleRemoveProductFromNewPallet(produto.id)
+                        } else {
+                          handleAddProductToNewPallet(produto.id, disponivel)
+                        }
+                      }}
+                      className="text-left justify-start h-auto py-2"
+                    >
+                      <div className="truncate">
+                        <div className="text-xs font-medium">{produto.nome_produto}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Disponível: {disponivel} {produto.codigo_produto ? `(${produto.codigo_produto})` : ''}
+                        </div>
+                      </div>
+                    </Button>
+                  )
+                })}
               </div>
             </div>
+
+            {/* Produtos Selecionados */}
+            {selectedProductsForNewPallet.length > 0 && (
+              <div>
+                <Label className="text-sm">Produtos Selecionados:</Label>
+                <div className="space-y-2 mt-2">
+                  {selectedProductsForNewPallet.map((product) => (
+                    <div key={product.productId} className="flex items-center gap-2 p-2 bg-muted/30 rounded">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{product.nome}</div>
+                        {product.codigo && (
+                          <div className="text-xs text-muted-foreground">{product.codigo}</div>
+                        )}
+                      </div>
+                      <Input
+                        type="number"
+                        value={product.quantidade}
+                        onChange={(e) => handleAddProductToNewPallet(product.productId, parseInt(e.target.value) || 0)}
+                        className="w-20 h-8 text-sm"
+                        max={product.maxQuantidade}
+                        min={1}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveProductFromNewPallet(product.productId)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Descrição */}
             <div>
-              <Label htmlFor="descricao" className="text-sm">Descrição</Label>
+              <Label htmlFor="descricao" className="text-sm">Descrição (opcional)</Label>
               <Input
                 id="descricao"
                 value={newPallet.descricao}
                 onChange={(e) => setNewPallet(prev => ({ ...prev, descricao: e.target.value }))}
-                placeholder="Descrição opcional..."
+                placeholder="Descrição do pallet..."
                 className="h-8"
               />
             </div>
+
             <Button 
               onClick={handleCreatePallet} 
-              disabled={createPallet.isPending}
+              disabled={createPallet.isPending || selectedProductsForNewPallet.length === 0}
               size="sm"
               className="w-full"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {createPallet.isPending ? "Criando..." : "Novo Pallet"}
+              {createPallet.isPending ? "Criando..." : `Criar Pallet com ${selectedProductsForNewPallet.length} produto${selectedProductsForNewPallet.length !== 1 ? 's' : ''}`}
             </Button>
           </CardContent>
         </Card>
@@ -278,9 +393,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                 </div>
                 {pallet.descricao && (
                   <p className="text-sm text-muted-foreground">{pallet.descricao}</p>
-                )}
-                {pallet.peso_total && (
-                  <Badge variant="outline" className="w-fit">Peso: {pallet.peso_total} kg</Badge>
                 )}
               </CardHeader>
               <CardContent>
@@ -409,16 +521,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                   value={editingPallet.descricao || ""}
                   onChange={(e) => setEditingPallet(prev => prev ? { ...prev, descricao: e.target.value } : null)}
                   placeholder="Descrição do pallet..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-peso">Peso Total (kg)</Label>
-                <Input
-                  id="edit-peso"
-                  type="number"
-                  step="0.01"
-                  value={editingPallet.peso_total || ""}
-                  onChange={(e) => setEditingPallet(prev => prev ? { ...prev, peso_total: parseFloat(e.target.value) || undefined } : null)}
                 />
               </div>
             </div>
