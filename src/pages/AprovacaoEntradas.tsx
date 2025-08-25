@@ -518,7 +518,9 @@ export default function AprovacaoEntradas() {
                               </p>
                             </div>
                             <Button
-                              onClick={() => window.open(`/planejamento-pallets/${entrada.id}`, '_blank')}
+                              onClick={() => {
+                                window.location.href = `/planejamento-pallets/${entrada.id}`
+                              }}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               Iniciar Planejamento
