@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { usePalletAllocationWaves, useAllocatePallet } from "@/hooks/useAllocationWaves"
+import { usePalletAllocationWaveById, useAllocatePallet } from "@/hooks/useAllocationWaves"
 import { useToast } from "@/hooks/use-toast"
 
 export interface PalletProduct {
@@ -25,7 +25,7 @@ export interface PalletDivergencia {
 export const usePalletAllocation = (waveId: string) => {
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { data: wave, isLoading } = usePalletAllocationWaves(waveId)
+  const { data: wave, isLoading } = usePalletAllocationWaveById(waveId)
   const allocatePallet = useAllocatePallet()
 
   const [currentPalletIndex, setCurrentPalletIndex] = useState(0)

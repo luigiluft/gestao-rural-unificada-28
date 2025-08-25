@@ -73,9 +73,10 @@ export default function OndasAlocacao() {
     )
   }
 
-  const handleDefinePositions = (waveId: string) => {
-    definePositions({ waveId })
-  }
+  // Função removida - não precisamos mais definir posições manualmente para pallets
+  // const handleDefinePositions = (waveId: string) => {
+  //   definePositions({ waveId })
+  // }
 
   const getTotalPallets = (wave: any) => {
     return wave.allocation_wave_pallets?.length || 0
@@ -109,7 +110,7 @@ export default function OndasAlocacao() {
     )
   }
 
-  if (!waves || waves.length === 0) {
+  if (!waves || !Array.isArray(waves) || waves.length === 0) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
@@ -138,7 +139,7 @@ export default function OndasAlocacao() {
       </div>
 
       <div className="grid gap-6">
-        {waves.map((wave: any) => (
+        {Array.isArray(waves) ? waves.map((wave: any) => (
           <Card key={wave.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -251,59 +252,59 @@ export default function OndasAlocacao() {
                         Ver Itens
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Itens da Onda {wave.numero_onda}</DialogTitle>
-                        <DialogDescription>
-                          Lista de todos os itens para alocação
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="mt-4">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Produto</TableHead>
-                              <TableHead>Lote</TableHead>
-                              <TableHead>Quantidade</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Posição</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {wave.allocation_wave_items?.map((item: any) => (
-                              <TableRow key={item.id}>
-                                <TableCell>
-                                  <div>
-                                    <p className="font-medium">{item.produtos?.nome}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {item.produtos?.unidade_medida}
-                                    </p>
-                                  </div>
-                                </TableCell>
-                                <TableCell>{item.lote || '-'}</TableCell>
-                                <TableCell>{item.quantidade}</TableCell>
-                                <TableCell>
-                                  {item.status === 'pendente' ? (
-                                    <Badge variant="secondary">Pendente</Badge>
-                                  ) : (
-                                    <Badge variant="default">Alocado</Badge>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {item.storage_positions?.codigo || '-'}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </DialogContent>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Pallets da Onda {wave.numero_onda}</DialogTitle>
+                          </DialogHeader>
+                          <div className="mt-4">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Pallet</TableHead>
+                                  <TableHead>Código de Barras</TableHead>
+                                  <TableHead>Produtos</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Posição</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {wave.allocation_wave_pallets?.map((pallet: any) => (
+                                  <TableRow key={pallet.id}>
+                                    <TableCell>
+                                      Pallet {pallet.entrada_pallets?.numero_pallet}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-sm">
+                                      {pallet.codigo_barras_pallet}
+                                    </TableCell>
+                                    <TableCell>
+                                      {pallet.entrada_pallets?.entrada_pallet_itens?.length || 0} itens
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant={
+                                        pallet.status === 'alocado' 
+                                          ? 'default' 
+                                          : pallet.status === 'com_divergencia'
+                                          ? 'destructive'
+                                          : 'secondary'
+                                      }>
+                                        {pallet.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      {pallet.storage_positions?.codigo || 'Não definida'}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </DialogContent>
                   </Dialog>
                 </div>
               </div>
             </CardContent>
           </Card>
-        ))}
+        )) : null}
       </div>
     </div>
   )

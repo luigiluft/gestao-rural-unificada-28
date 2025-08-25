@@ -2,12 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
-// Função para buscar ondas de alocação baseadas em pallets
-export const usePalletAllocationWaves = (waveId?: string) => {
+// Função para buscar ondas de alocação baseadas em pallets (múltiplas ondas)
+export const usePalletAllocationWaves = () => {
   return useQuery({
-    queryKey: waveId ? ["pallet-allocation-waves", waveId] : ["pallet-allocation-waves"],
+    queryKey: ["pallet-allocation-waves"],
     queryFn: async () => {
-      const query = supabase
+      const { data, error } = await supabase
         .from("allocation_waves")
         .select(`
           *,
@@ -39,34 +39,11 @@ export const usePalletAllocationWaves = (waveId?: string) => {
         .neq("status", "concluido")
         .order("created_at", { ascending: false })
 
-      if (waveId) {
-        query.eq("id", waveId)
-      }
-
-      const { data, error } = await query
-
       if (error) throw error
-
-      if (waveId) {
-        const wave = data[0]
-        if (!wave) return null
-
-        // Enriquecer com nome da franquia
-        const { data: franquia } = await supabase
-          .from("franquias")
-          .select("nome")
-          .eq("id", wave.deposito_id)
-          .single()
-
-        return {
-          ...wave,
-          franquia_nome: franquia?.nome || "Franquia não encontrada"
-        }
-      }
 
       // Enriquecer com nome da franquia para múltiplas ondas
       const enrichedData = await Promise.all(
-        data.map(async (wave) => {
+        (data || []).map(async (wave) => {
           const { data: franquia } = await supabase
             .from("franquias")
             .select("nome")
@@ -82,7 +59,61 @@ export const usePalletAllocationWaves = (waveId?: string) => {
 
       return enrichedData
     },
-    enabled: !waveId || !!waveId,
+  })
+}
+
+// Função para buscar uma onda específica por ID (objeto único)
+export const usePalletAllocationWaveById = (waveId: string) => {
+  return useQuery({
+    queryKey: ["pallet-allocation-wave", waveId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("allocation_waves")
+        .select(`
+          *,
+          allocation_wave_pallets (
+            *,
+            entrada_pallets (
+              id,
+              numero_pallet,
+              descricao,
+              entrada_pallet_itens (
+                quantidade,
+                entrada_itens (
+                  produto_id,
+                  nome_produto,
+                  lote,
+                  quantidade,
+                  valor_unitario,
+                  data_validade
+                )
+              )
+            ),
+            storage_positions (
+              id,
+              codigo,
+              ocupado
+            )
+          )
+        `)
+        .eq("id", waveId)
+        .single()
+
+      if (error) throw error
+
+      // Enriquecer com nome da franquia
+      const { data: franquia } = await supabase
+        .from("franquias")
+        .select("nome")
+        .eq("id", data.deposito_id)
+        .single()
+
+      return {
+        ...data,
+        franquia_nome: franquia?.nome || "Franquia não encontrada"
+      }
+    },
+    enabled: !!waveId,
   })
 }
 
