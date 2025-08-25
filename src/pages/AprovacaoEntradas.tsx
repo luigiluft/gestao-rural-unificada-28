@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import AprovacaoEntradasMobile from "@/components/Mobile/AprovacaoEntradasMobile"
-import { PlanejamentoPallets } from "@/components/Entradas/PlanejamentoPallets"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -97,7 +97,7 @@ export default function AprovacaoEntradas() {
       'aguardando_transporte': 'Marcar como Em Transferência',
       'em_transferencia': 'Marcar como Aguardando Conferência',
       'aguardando_conferencia': 'Realizar Conferência',
-      'planejamento': 'Finalizar Planejamento'
+      'planejamento': 'Finalizar Planejamento e Enviar para Alocação'
     }
     return statusLabels[currentStatus as keyof typeof statusLabels] || null
   }
@@ -506,19 +506,24 @@ export default function AprovacaoEntradas() {
                         </div>
                       )}
 
-                      {/* Adicionar PlanejamentoPallets para entradas em status de planejamento */}
+                      {/* Botão para iniciar planejamento de pallets */}
                       {entrada.status_aprovacao === 'planejamento' && (
                         <div className="mt-4">
                           <Separator className="mb-4" />
-                          <PlanejamentoPallets 
-                            entradaId={entrada.id}
-                            entradaItens={entrada.entrada_itens?.map((item: any) => ({
-                              id: item.id,
-                              nome_produto: item.produtos?.nome || item.nome_produto,
-                              codigo_produto: item.produtos?.codigo || item.codigo_produto,
-                              quantidade: item.quantidade
-                            })) || []}
-                          />
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-semibold">Planejamento de Pallets</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Monte os pallets com os produtos desta entrada
+                              </p>
+                            </div>
+                            <Button
+                              onClick={() => window.open(`/planejamento-pallets/${entrada.id}`, '_blank')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Iniciar Planejamento
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </CardContent>

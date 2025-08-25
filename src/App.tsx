@@ -32,6 +32,7 @@ import AlocacaoManual from "./pages/AlocacaoManual";
 import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
 import Transporte from "./pages/Transporte";
+import PlanejamentoPalletsPage from "./pages/PlanejamentoPallets";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               <Route path="transporte" element={<RequirePageAccess pageKey="transporte"><Transporte /></RequirePageAccess>} />
+              <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
