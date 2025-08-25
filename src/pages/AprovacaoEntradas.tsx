@@ -770,12 +770,8 @@ export default function AprovacaoEntradas() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <Label className="text-base font-semibold">Divergências</Label>
-                  <Button onClick={() => addDivergencia()} size="sm" variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Divergência Manual
-                  </Button>
                 </div>
 
                 {divergencias.map((div, index) => (
