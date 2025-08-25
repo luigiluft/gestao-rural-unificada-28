@@ -15,8 +15,8 @@ export const StatusIndicator = ({ status, type, className }: StatusIndicatorProp
           return { label: "Aguardando Transporte", variant: "outline" as const }
         case "em_transferencia":
           return { label: "Em Trânsito", variant: "default" as const }
-        case "conferencia_completa":
-          return { label: "Recebido", variant: "secondary" as const }
+        case "planejamento":
+          return { label: "Planejamento", variant: "secondary" as const }
         default:
           return { label: status, variant: "outline" as const }
       }

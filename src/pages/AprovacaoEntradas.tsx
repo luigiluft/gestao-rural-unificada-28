@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import AprovacaoEntradasMobile from "@/components/Mobile/AprovacaoEntradasMobile"
+import { PlanejamentoPallets } from "@/components/Entradas/PlanejamentoPallets"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X } from "lucide-react"
+import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Package } from "lucide-react"
 import { useEntradasPendentes, useAtualizarStatusEntrada } from "@/hooks/useEntradasPendentes"
 import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
@@ -72,7 +73,7 @@ export default function AprovacaoEntradas() {
       'aguardando_transporte': { label: 'Aguardando Transporte', variant: 'secondary' as const, icon: Clock },
       'em_transferencia': { label: 'Em Transferência', variant: 'default' as const, icon: Truck },
       'aguardando_conferencia': { label: 'Aguardando Conferência', variant: 'outline' as const, icon: Eye },
-      'conferencia_completa': { label: 'Conferência Completa', variant: 'default' as const, icon: CheckCircle },
+      'planejamento': { label: 'Planejamento', variant: 'default' as const, icon: Package },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -91,8 +92,8 @@ export default function AprovacaoEntradas() {
     const statusFlow = {
       'aguardando_transporte': 'em_transferencia',
       'em_transferencia': 'aguardando_conferencia',
-      'aguardando_conferencia': 'conferencia_completa',
-      'conferencia_completa': 'confirmado'
+      'aguardando_conferencia': 'planejamento',
+      'planejamento': 'confirmado'
     }
     return statusFlow[currentStatus as keyof typeof statusFlow]
   }
@@ -102,7 +103,7 @@ export default function AprovacaoEntradas() {
       'aguardando_transporte': 'Marcar como Em Transferência',
       'em_transferencia': 'Marcar como Aguardando Conferência',
       'aguardando_conferencia': 'Realizar Conferência',
-      'conferencia_completa': 'Enviar Para Alocação'
+      'planejamento': 'Finalizar Planejamento'
     }
     return statusLabels[currentStatus as keyof typeof statusLabels] || null
   }
@@ -318,7 +319,7 @@ export default function AprovacaoEntradas() {
       'aguardando_transporte': Clock,
       'em_transferencia': Truck,
       'aguardando_conferencia': Eye,
-      'conferencia_completa': CheckCircle
+      'planejamento': Package
     }
     return icons[status as keyof typeof icons] || Clock
   }
@@ -328,7 +329,7 @@ export default function AprovacaoEntradas() {
       'aguardando_transporte': 'Não há produtos aguardando transporte no momento. Novos pedidos aparecerão aqui quando criados.',
       'em_transferencia': 'Nenhum produto está em transferência. Os pedidos aparecerão aqui quando estiverem a caminho do depósito.',
       'aguardando_conferencia': 'Não há produtos aguardando conferência. Produtos em transferência aparecerão aqui quando chegarem.',
-      'conferencia_completa': 'Nenhuma conferência está completa. Produtos conferidos aparecerão aqui aguardando confirmação final.'
+      'planejamento': 'Não há produtos em planejamento. Produtos conferidos aparecerão aqui para planejamento de pallets.'
     }
     return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
   }
@@ -394,13 +395,13 @@ export default function AprovacaoEntradas() {
             <Eye className="h-4 w-4" />
             Aguardando Conferência ({entradasPorStatus.aguardando_conferencia?.length || 0})
           </TabsTrigger>
-          <TabsTrigger value="conferencia_completa" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Conferência Completa ({entradasPorStatus.conferencia_completa?.length || 0})
+          <TabsTrigger value="planejamento" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Planejamento ({entradasPorStatus.planejamento?.length || 0})
           </TabsTrigger>
         </TabsList>
 
-        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'conferencia_completa'].map((status) => {
+        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'planejamento'].map((status) => {
           const statusEntradas = entradasPorStatus[status] || []
           return (
             <TabsContent key={status} value={status} className="space-y-4">
@@ -517,6 +518,22 @@ export default function AprovacaoEntradas() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Adicionar PlanejamentoPallets para entradas em status de planejamento */}
+                      {entrada.status_aprovacao === 'planejamento' && (
+                        <div className="mt-4">
+                          <Separator className="mb-4" />
+                          <PlanejamentoPallets 
+                            entradaId={entrada.id}
+                            entradaItens={entrada.entrada_itens?.map((item: any) => ({
+                              id: item.id,
+                              nome_produto: item.produtos?.nome || item.nome_produto,
+                              codigo_produto: item.produtos?.codigo || item.codigo_produto,
+                              quantidade: item.quantidade
+                            })) || []}
+                          />
                         </div>
                       )}
                     </CardContent>
