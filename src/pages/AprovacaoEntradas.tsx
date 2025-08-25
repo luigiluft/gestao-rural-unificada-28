@@ -19,6 +19,7 @@ import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calc
 import { useEntradasPendentes, useAtualizarStatusEntrada } from "@/hooks/useEntradasPendentes"
 import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
+import { PlanejamentoPallets } from "@/components/Entradas/PlanejamentoPallets"
 
 interface Divergencia {
   produto: string
@@ -46,6 +47,8 @@ export default function AprovacaoEntradas() {
   const [actionType, setActionType] = useState<'status' | 'conferencia' | 'conferencia_barras'>('status')
   const [observacoes, setObservacoes] = useState('')
   const [divergencias, setDivergencias] = useState<Divergencia[]>([])
+  const [planejamentoModalOpen, setPlanejamentoModalOpen] = useState(false)
+  const [selectedEntradaPlanejamento, setSelectedEntradaPlanejamento] = useState<any>(null)
   
   // Estados para conferência por código de barras
   const [codigoBarras, setCodigoBarras] = useState('')
@@ -136,6 +139,23 @@ export default function AprovacaoEntradas() {
     })
 
     setDialogOpen(false)
+  }
+
+  const handleIniciarPlanejamento = (entrada: any) => {
+    setSelectedEntradaPlanejamento(entrada)
+    setPlanejamentoModalOpen(true)
+  }
+
+  const handleFinalizarPlanejamento = async () => {
+    if (!selectedEntradaPlanejamento) return
+
+    await atualizarStatus.mutateAsync({
+      entradaId: selectedEntradaPlanejamento.id,
+      novoStatus: 'confirmado'
+    })
+
+    setPlanejamentoModalOpen(false)
+    setSelectedEntradaPlanejamento(null)
   }
 
   const addDivergencia = (item?: any) => {
@@ -518,11 +538,11 @@ export default function AprovacaoEntradas() {
                               </p>
                             </div>
                             <Button
-                              onClick={() => {
-                                window.location.href = `/planejamento-pallets/${entrada.id}`
-                              }}
-                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleIniciarPlanejamento(entrada)}
+                              size="sm"
+                              disabled={atualizarStatus.isPending}
                             >
+                              <Package className="h-4 w-4 mr-2" />
                               Iniciar Planejamento
                             </Button>
                           </div>
@@ -842,6 +862,55 @@ export default function AprovacaoEntradas() {
             </Button>
             <Button onClick={handleConfirm} disabled={atualizarStatus.isPending}>
               {atualizarStatus.isPending ? 'Atualizando...' : 'Confirmar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Planejamento de Pallets */}
+      <Dialog open={planejamentoModalOpen} onOpenChange={setPlanejamentoModalOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Planejamento de Pallets - NFe {selectedEntradaPlanejamento?.numero_nfe || 'S/N'}
+            </DialogTitle>
+            <DialogDescription>
+              Monte os pallets com os produtos desta entrada. Organize os produtos de acordo com suas necessidades de armazenamento.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedEntradaPlanejamento && (
+            <div className="space-y-6">
+              {/* Informações da entrada */}
+              <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                <div>
+                  <strong>Produtor:</strong> {selectedEntradaPlanejamento.profiles?.nome}
+                </div>
+                <div>
+                  <strong>Fornecedor:</strong> {selectedEntradaPlanejamento.fornecedores?.nome}
+                </div>
+                <div>
+                  <strong>Data:</strong> {format(new Date(selectedEntradaPlanejamento.data_entrada), 'dd/MM/yyyy')}
+                </div>
+                <div>
+                  <strong>Valor Total:</strong> R$ {selectedEntradaPlanejamento.valor_total?.toFixed(2) || '0,00'}
+                </div>
+              </div>
+
+              {/* Componente de planejamento */}
+              <PlanejamentoPallets 
+                entradaId={selectedEntradaPlanejamento.id}
+                entradaItens={selectedEntradaPlanejamento.entrada_itens || []}
+              />
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPlanejamentoModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFinalizarPlanejamento} disabled={atualizarStatus.isPending}>
+              {atualizarStatus.isPending ? 'Finalizando...' : 'Finalizar Planejamento'}
             </Button>
           </DialogFooter>
         </DialogContent>
