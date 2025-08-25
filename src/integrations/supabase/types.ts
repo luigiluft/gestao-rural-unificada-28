@@ -240,6 +240,7 @@ export type Database = {
           lote: string | null
           ncm: string | null
           nome_produto: string | null
+          pallets: number | null
           produto_id: string | null
           quantidade: number
           quantidade_comercial: number | null
@@ -253,6 +254,8 @@ export type Database = {
           valor_unitario: number | null
           valor_unitario_comercial: number | null
           valor_unitario_tributavel: number | null
+          volumes: number | null
+          volumes_por_pallet: number | null
         }
         Insert: {
           cest?: string | null
@@ -274,6 +277,7 @@ export type Database = {
           lote?: string | null
           ncm?: string | null
           nome_produto?: string | null
+          pallets?: number | null
           produto_id?: string | null
           quantidade: number
           quantidade_comercial?: number | null
@@ -287,6 +291,8 @@ export type Database = {
           valor_unitario?: number | null
           valor_unitario_comercial?: number | null
           valor_unitario_tributavel?: number | null
+          volumes?: number | null
+          volumes_por_pallet?: number | null
         }
         Update: {
           cest?: string | null
@@ -308,6 +314,7 @@ export type Database = {
           lote?: string | null
           ncm?: string | null
           nome_produto?: string | null
+          pallets?: number | null
           produto_id?: string | null
           quantidade?: number
           quantidade_comercial?: number | null
@@ -321,6 +328,8 @@ export type Database = {
           valor_unitario?: number | null
           valor_unitario_comercial?: number | null
           valor_unitario_tributavel?: number | null
+          volumes?: number | null
+          volumes_por_pallet?: number | null
         }
         Relationships: [
           {
