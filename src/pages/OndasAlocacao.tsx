@@ -227,15 +227,27 @@ export default function OndasAlocacao() {
                   )}
                   
                   {wave.status === "em_andamento" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
-                      className="flex items-center gap-2"
-                    >
-                      <Play className="h-4 w-4" />
-                      Continuar Alocação
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
+                        className="flex items-center gap-2"
+                      >
+                        <Play className="h-4 w-4" />
+                        Continuar com Scanner
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/alocar-manual/${wave.id}`)}
+                        className="flex items-center gap-2"
+                      >
+                        <Package className="h-4 w-4" />
+                        Continuar Manualmente
+                      </Button>
+                    </>
                   )}
                   
                   <Dialog>
