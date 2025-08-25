@@ -432,80 +432,108 @@ export default function Entradas() {
 
   const handleDeleteEntrada = async (entradaId: string, numeroNfe?: string) => {
     try {
+      console.log('Iniciando deleção da entrada:', entradaId)
+
       // 1. Buscar entrada_itens para deletar allocation_wave_items relacionados
       const { data: entradaItens } = await supabase
         .from('entrada_itens')
-        .select('id')
+        .select('id, produto_id')
         .eq('entrada_id', entradaId)
+
+      console.log('Entrada itens encontrados:', entradaItens?.length || 0)
 
       if (entradaItens && entradaItens.length > 0) {
         const itemIds = entradaItens.map(item => item.id)
         
+        console.log('Deletando allocation_wave_items para:', itemIds)
         // Deletar allocation_wave_items relacionados
         const { error: waveItemsError } = await supabase
           .from('allocation_wave_items')
           .delete()
           .in('entrada_item_id', itemIds)
 
-        if (waveItemsError) throw waveItemsError
+        if (waveItemsError) {
+          console.error('Erro ao deletar wave items:', waveItemsError)
+          throw new Error(`Erro ao deletar itens de ondas: ${waveItemsError.message}`)
+        }
+        console.log('Wave items deletados com sucesso')
       }
 
-      // 2. Deletar movimentacoes relacionadas
+      // 2. Deletar entrada_status_historico primeiro
+      console.log('Deletando entrada_status_historico para:', entradaId)
+      const { error: historicoDeleteError } = await supabase
+        .from('entrada_status_historico')
+        .delete()
+        .eq('entrada_id', entradaId)
+
+      if (historicoDeleteError) {
+        console.error('Erro ao deletar histórico:', historicoDeleteError)
+        throw new Error(`Erro ao deletar histórico: ${historicoDeleteError.message}`)
+      }
+      console.log('Histórico deletado com sucesso')
+
+      // 3. Deletar movimentacoes relacionadas
+      console.log('Deletando movimentações para:', entradaId)
       const { error: movimentacoesError } = await supabase
         .from('movimentacoes')
         .delete()
         .eq('referencia_id', entradaId)
         .eq('referencia_tipo', 'entrada')
 
-      if (movimentacoesError) throw movimentacoesError
+      if (movimentacoesError) {
+        console.error('Erro ao deletar movimentações:', movimentacoesError)
+        throw new Error(`Erro ao deletar movimentações: ${movimentacoesError.message}`)
+      }
+      console.log('Movimentações deletadas com sucesso')
 
-      // 3. Deletar estoque relacionado através dos produtos dos itens da entrada
+      // 4. Deletar estoque relacionado através dos produtos dos itens da entrada
       if (entradaItens && entradaItens.length > 0) {
-        // Buscar produto_ids dos itens desta entrada
-        const { data: produtoIds } = await supabase
-          .from('entrada_itens')
-          .select('produto_id')
-          .eq('entrada_id', entradaId)
-          .not('produto_id', 'is', null)
-
-        if (produtoIds && produtoIds.length > 0) {
-          const ids = produtoIds.map(item => item.produto_id).filter(Boolean)
+        const produtoIds = entradaItens
+          .map(item => item.produto_id)
+          .filter(Boolean)
           
-          if (ids.length > 0) {
-            // Deletar estoque relacionado aos produtos desta entrada
-            const { error: estoqueDeleteError } = await supabase
-              .from('estoque')
-              .delete()
-              .in('produto_id', ids)
+        if (produtoIds.length > 0) {
+          console.log('Deletando estoque para produtos:', produtoIds)
+          // Deletar estoque relacionado aos produtos desta entrada
+          const { error: estoqueDeleteError } = await supabase
+            .from('estoque')
+            .delete()
+            .in('produto_id', produtoIds)
 
-            // Não tratar como erro crítico se falhar
+          if (estoqueDeleteError) {
+            console.error('Erro ao deletar estoque:', estoqueDeleteError)
+            // Não tratar como erro crítico - continuar com a deleção
+          } else {
+            console.log('Estoque deletado com sucesso')
           }
         }
       }
 
-      // 4. Deletar entrada_itens
+      // 5. Deletar entrada_itens
+      console.log('Deletando entrada_itens para:', entradaId)
       const { error: itensDeleteError } = await supabase
         .from('entrada_itens')
         .delete()
         .eq('entrada_id', entradaId)
 
-      if (itensDeleteError) throw itensDeleteError
-
-      // 5. Deletar entrada_status_historico
-      const { error: historicoDeleteError } = await supabase
-        .from('entrada_status_historico')
-        .delete()
-        .eq('entrada_id', entradaId)
-
-      if (historicoDeleteError) throw historicoDeleteError
+      if (itensDeleteError) {
+        console.error('Erro ao deletar itens:', itensDeleteError)
+        throw new Error(`Erro ao deletar itens: ${itensDeleteError.message}`)
+      }
+      console.log('Entrada itens deletados com sucesso')
 
       // 6. Finalmente, deletar a entrada
+      console.log('Deletando entrada:', entradaId)
       const { error: entradaDeleteError } = await supabase
         .from('entradas')
         .delete()
         .eq('id', entradaId)
 
-      if (entradaDeleteError) throw entradaDeleteError
+      if (entradaDeleteError) {
+        console.error('Erro ao deletar entrada:', entradaDeleteError)
+        throw new Error(`Erro ao deletar entrada: ${entradaDeleteError.message}`)
+      }
+      console.log('Entrada deletada com sucesso')
 
       toast({
         title: "Entrada deletada",
