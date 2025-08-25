@@ -1,12 +1,13 @@
 import { useParams } from "react-router-dom"
 import { useAlocacao } from "@/hooks/useAlocacao"
+import { useResetWavePositions } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ProductInfo } from "@/components/Alocacao/ProductInfo"
 import { ProgressIndicator } from "@/components/Alocacao/ProgressIndicator"
-import { MapPin, CheckCircle, ArrowLeft, Package, AlertCircle } from "lucide-react"
+import { MapPin, CheckCircle, ArrowLeft, Package, AlertCircle, RotateCcw } from "lucide-react"
 
 export default function AlocacaoManual() {
   const { waveId } = useParams()
@@ -23,6 +24,8 @@ export default function AlocacaoManual() {
     navigate
   } = useAlocacao(waveId!)
 
+  const resetWavePositions = useResetWavePositions()
+
   const handleManualAllocate = async () => {
     if (!currentItem || !currentPosition) return
 
@@ -30,6 +33,11 @@ export default function AlocacaoManual() {
     const positionCode = currentPosition.codigo
 
     await handleAllocate(productCode, positionCode)
+  }
+
+  const handleResetPositions = async () => {
+    if (!waveId) return
+    await resetWavePositions.mutateAsync(waveId)
   }
 
   if (isLoading) {
@@ -78,17 +86,27 @@ export default function AlocacaoManual() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Voltar
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Alocação Manual - {wave.numero_onda}</h1>
-          <p className="text-muted-foreground">
-            Item {currentItemIndex + 1} de {pendingItems.length} • Modo Manual
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Alocação Manual - {wave.numero_onda}</h1>
+            <p className="text-muted-foreground">
+              Item {currentItemIndex + 1} de {pendingItems.length} • Modo Manual
+            </p>
+          </div>
         </div>
+        <Button 
+          variant="destructive" 
+          onClick={handleResetPositions}
+          disabled={resetWavePositions.isPending}
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          {resetWavePositions.isPending ? "Resetando..." : "Resetar Posições"}
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

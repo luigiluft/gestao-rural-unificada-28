@@ -2044,6 +2044,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      reset_wave_positions: {
+        Args: { p_wave_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "franqueado" | "produtor"

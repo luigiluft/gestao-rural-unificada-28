@@ -178,3 +178,34 @@ export const useAllocateItem = () => {
     },
   })
 }
+
+export const useResetWavePositions = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async (waveId: string) => {
+      const { data, error } = await supabase.rpc('reset_wave_positions', {
+        p_wave_id: waveId
+      })
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allocation-waves"] })
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] })
+      toast({
+        title: "Posições resetadas",
+        description: "As posições da onda foram resetadas e realocadas com sucesso",
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao resetar posições",
+        description: error.message || "Ocorreu um erro ao resetar as posições",
+        variant: "destructive",
+      })
+    },
+  })
+}
