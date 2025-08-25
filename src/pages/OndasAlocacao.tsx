@@ -65,7 +65,7 @@ export default function OndasAlocacao() {
       { waveId },
       {
         onSuccess: () => {
-          navigate(`/alocacao-com-coletor?wave=${waveId}`)
+          navigate(`/alocar-scanner/${waveId}`)
         },
         onSettled: () => {
           setIsExecuting(false)
@@ -230,7 +230,7 @@ export default function OndasAlocacao() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/alocacao-com-coletor?wave=${wave.id}`)}
+                      onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
                       className="flex items-center gap-2"
                     >
                       <Play className="h-4 w-4" />
