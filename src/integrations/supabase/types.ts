@@ -1429,8 +1429,6 @@ export type Database = {
       produtos: {
         Row: {
           ativo: boolean | null
-          categoria: string | null
-          category: string | null
           cest: string | null
           codigo: string | null
           composition: string | null
@@ -1456,8 +1454,6 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
-          categoria?: string | null
-          category?: string | null
           cest?: string | null
           codigo?: string | null
           composition?: string | null
@@ -1483,8 +1479,6 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
-          categoria?: string | null
-          category?: string | null
           cest?: string | null
           codigo?: string | null
           composition?: string | null

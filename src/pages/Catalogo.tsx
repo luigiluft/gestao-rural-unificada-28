@@ -36,7 +36,6 @@ interface Produto {
   id: string
   nome: string
   codigo: string | null
-  categoria: string | null
   unidade_medida: string
   descricao: string | null
   ativo: boolean | null
@@ -53,7 +52,6 @@ export default function Catalogo() {
     nome: z.string().min(1, "Nome obrigatório"),
     unidade_medida: z.string().min(1, "Unidade obrigatória"),
     codigo: z.string().optional(),
-    categoria: z.string().optional(),
     descricao: z.string().optional(),
     ativo: z.boolean().default(true),
   })
@@ -61,7 +59,7 @@ export default function Catalogo() {
 
   const { register, control, handleSubmit, reset, formState: { isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { nome: "", unidade_medida: "", codigo: "", categoria: "", descricao: "", ativo: true }
+    defaultValues: { nome: "", unidade_medida: "", codigo: "", descricao: "", ativo: true }
   })
 
   const onSubmit = async (values: FormValues) => {
@@ -93,7 +91,6 @@ export default function Catalogo() {
       nome: values.nome.trim(),
       unidade_medida: values.unidade_medida,
       codigo: values.codigo?.trim() || null,
-      categoria: values.categoria?.trim() || null,
       descricao: values.descricao?.trim() || null,
       ativo: values.ativo,
     })
@@ -111,7 +108,7 @@ export default function Catalogo() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("produtos")
-        .select("id, nome, codigo, categoria, unidade_medida, descricao, ativo")
+        .select("id, nome, codigo, unidade_medida, descricao, ativo")
         .order("nome", { ascending: true })
 
       if (error) {
@@ -126,7 +123,7 @@ export default function Catalogo() {
     const term = q.trim().toLowerCase()
     if (!term) return produtos
     return produtos.filter((p) =>
-      [p.nome, p.codigo, p.categoria, p.unidade_medida]
+      [p.nome, p.codigo, p.unidade_medida]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(term))
     )
@@ -154,7 +151,6 @@ export default function Catalogo() {
       position: idx + 1,
       name: p.nome,
       sku: p.codigo || undefined,
-      category: p.categoria || undefined,
       description: p.descricao || undefined,
     })),
   }), [filtered])
@@ -164,7 +160,7 @@ export default function Catalogo() {
       <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Catálogo de Produtos</h1>
-          <p className="text-sm text-muted-foreground">Consulte os produtos cadastrados e filtre pelo nome, código ou categoria.</p>
+          <p className="text-sm text-muted-foreground">Consulte os produtos cadastrados e filtre pelo nome, código ou unidade.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -186,10 +182,6 @@ export default function Catalogo() {
                 <div className="space-y-2">
                   <Label htmlFor="codigo">Código</Label>
                   <Input id="codigo" {...register("codigo")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="categoria">Categoria</Label>
-                  <Input id="categoria" {...register("categoria")} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="unidade_medida">Unidade de medida</Label>
@@ -222,7 +214,7 @@ export default function Catalogo() {
 
       <section className="mb-6">
         <Input
-          placeholder="Pesquisar por nome, código ou categoria..."
+          placeholder="Pesquisar por nome, código ou unidade..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
           aria-label="Pesquisar produtos"
@@ -241,7 +233,6 @@ export default function Catalogo() {
               </TableHead>
               <TableHead className="font-semibold">Nome</TableHead>
               <TableHead className="font-semibold">Código</TableHead>
-              <TableHead className="font-semibold">Categoria</TableHead>
               <TableHead className="font-semibold">Unidade</TableHead>
               <TableHead className="font-semibold">Descrição</TableHead>
               <TableHead className="font-semibold text-center">Status</TableHead>
@@ -260,9 +251,6 @@ export default function Catalogo() {
                   <Skeleton className="h-4 w-[80px]" />
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableCell>
-                <TableCell>
                   <Skeleton className="h-4 w-[60px]" />
                 </TableCell>
                 <TableCell>
@@ -276,7 +264,7 @@ export default function Catalogo() {
 
             {!isLoading && error && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                <TableCell colSpan={6} className="text-center py-8 text-destructive">
                   Erro ao carregar produtos.
                 </TableCell>
               </TableRow>
@@ -284,7 +272,7 @@ export default function Catalogo() {
 
             {!isLoading && !error && filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   Nenhum produto encontrado.
                 </TableCell>
               </TableRow>
@@ -303,11 +291,6 @@ export default function Catalogo() {
                 <TableCell>
                   <span className="font-mono text-sm">
                     {p.codigo || '-'}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm">
-                    {p.categoria || '-'}
                   </span>
                 </TableCell>
                 <TableCell>
