@@ -794,6 +794,7 @@ export type Database = {
           deposito_id: string
           id: string
           lote: string | null
+          posicao_id: string | null
           produto_id: string
           quantidade_atual: number
           quantidade_disponivel: number | null
@@ -807,6 +808,7 @@ export type Database = {
           deposito_id: string
           id?: string
           lote?: string | null
+          posicao_id?: string | null
           produto_id: string
           quantidade_atual?: number
           quantidade_disponivel?: number | null
@@ -820,6 +822,7 @@ export type Database = {
           deposito_id?: string
           id?: string
           lote?: string | null
+          posicao_id?: string | null
           produto_id?: string
           quantidade_atual?: number
           quantidade_disponivel?: number | null
@@ -829,6 +832,13 @@ export type Database = {
           valor_medio?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "estoque_posicao_id_fkey"
+            columns: ["posicao_id"]
+            isOneToOne: false
+            referencedRelation: "storage_positions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estoque_produto_id_fkey"
             columns: ["produto_id"]

@@ -16,7 +16,7 @@ export const useEstoquePosicao = (posicaoId?: string) => {
             codigo
           )
         `)
-        .eq("deposito_id", posicaoId)
+        .eq("posicao_id", posicaoId)
         .gt("quantidade_atual", 0)
 
       if (error) throw error
