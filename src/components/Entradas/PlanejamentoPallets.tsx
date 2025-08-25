@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Package, Edit3 } from "lucide-react"
+import { PalletItemSelector } from "./PalletItemSelector"
 import { 
   useEntradaPallets, 
   useCreatePallet, 
@@ -46,9 +47,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     peso_total: undefined as number | undefined,
   })
 
-  const [selectedItemId, setSelectedItemId] = useState("")
-  const [selectedPalletId, setSelectedPalletId] = useState("")
-  const [itemQuantidade, setItemQuantidade] = useState("")
 
   const handleCreatePallet = async () => {
     await createPallet.mutateAsync({
@@ -76,18 +74,8 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     setEditingPallet(null)
   }
 
-  const handleAddItemToPallet = async () => {
-    if (!selectedItemId || !selectedPalletId || !itemQuantidade) return
-
-    await addItemToPallet.mutateAsync({
-      pallet_id: selectedPalletId,
-      entrada_item_id: selectedItemId,
-      quantidade: parseFloat(itemQuantidade),
-    })
-    
-    setSelectedItemId("")
-    setSelectedPalletId("")
-    setItemQuantidade("")
+  const handleAddItemToPallet = async (data: { pallet_id: string; entrada_item_id: string; quantidade: number }) => {
+    await addItemToPallet.mutateAsync(data)
   }
 
   const getAvailableItems = () => {
@@ -211,102 +199,57 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
               )}
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <h4 className="font-medium">Produtos neste pallet:</h4>
-                {pallet.entrada_pallet_itens?.length ? (
-                  <div className="space-y-2">
-                    {pallet.entrada_pallet_itens.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                        <div>
-                          <span className="font-medium">{item.entrada_itens?.nome_produto}</span>
-                          {item.entrada_itens?.codigo_produto && (
-                            <span className="text-sm text-muted-foreground ml-2">
-                              ({item.entrada_itens.codigo_produto})
-                            </span>
-                          )}
+              <div className="space-y-4">
+                {/* Produtos já alocados */}
+                <div>
+                  <h4 className="font-medium">Produtos neste pallet:</h4>
+                  {pallet.entrada_pallet_itens?.length ? (
+                    <div className="space-y-2 mt-2">
+                      {pallet.entrada_pallet_itens.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-muted/50 rounded border">
+                          <div>
+                            <span className="font-medium">{item.entrada_itens?.nome_produto}</span>
+                            {item.entrada_itens?.codigo_produto && (
+                              <span className="text-sm text-muted-foreground ml-2">
+                                ({item.entrada_itens.codigo_produto})
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{item.quantidade} unidades</Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItemFromPallet.mutate(item.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge>{item.quantidade} unidades</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeItemFromPallet.mutate(item.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nenhum produto alocado neste pallet</p>
-                )}
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-2">Nenhum produto alocado neste pallet</p>
+                  )}
+                </div>
+
+                {/* Seção para adicionar produtos a este pallet específico */}
+                <div className="border-t pt-4">
+                  <h5 className="font-medium text-sm mb-3">Adicionar produtos a este pallet:</h5>
+                  <PalletItemSelector 
+                    palletId={pallet.id}
+                    entradaItens={entradaItens}
+                    onAddItem={handleAddItemToPallet}
+                    isLoading={addItemToPallet.isPending}
+                    usedItems={pallets.flatMap(p => p.entrada_pallet_itens?.map(i => i.entrada_item_id) || [])}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Adicionar item ao pallet */}
-      {getAvailableItems().length > 0 && pallets.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Adicionar Produto ao Pallet</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label>Produto</Label>
-                <Select value={selectedItemId} onValueChange={setSelectedItemId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar produto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableItems().map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.nome_produto} ({item.quantidade} unidades)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Pallet</Label>
-                <Select value={selectedPalletId} onValueChange={setSelectedPalletId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar pallet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pallets.map((pallet) => (
-                      <SelectItem key={pallet.id} value={pallet.id}>
-                        Pallet #{pallet.numero_pallet}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Quantidade</Label>
-                <Input
-                  type="number"
-                  value={itemQuantidade}
-                  onChange={(e) => setItemQuantidade(e.target.value)}
-                  placeholder="Quantidade"
-                />
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  onClick={handleAddItemToPallet}
-                  disabled={!selectedItemId || !selectedPalletId || !itemQuantidade || addItemToPallet.isPending}
-                  className="w-full"
-                >
-                  {addItemToPallet.isPending ? "Adicionando..." : "Adicionar"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Dialog para editar pallet */}
       <Dialog open={!!editingPallet} onOpenChange={() => setEditingPallet(null)}>
