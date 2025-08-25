@@ -512,7 +512,8 @@ export default function Entradas() {
         description: `A entrada ${numeroNfe || `ENT-${entradaId.slice(0, 8)}`} e todos os dados relacionados foram removidos com sucesso.`,
       })
 
-      refetch() // Recarregar a lista
+      // Recarregar a página após exclusão bem-sucedida
+      window.location.reload()
     } catch (error: any) {
       console.error('Erro ao deletar entrada:', error)
       toast({
