@@ -45,7 +45,7 @@ export const useNotifications = () => {
           let entradasQuery = supabase
             .from("entradas")
             .select("id", { count: "exact" })
-            .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa"])
+            .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
