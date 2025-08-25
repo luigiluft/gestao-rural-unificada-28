@@ -31,7 +31,9 @@ interface PlanejamentoPalletsProps {
 }
 
 export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPalletsProps) => {
+  console.log('🎯 PlanejamentoPallets renderizando:', { entradaId, entradaItens: entradaItens?.length })
   const { data: pallets = [], isLoading } = useEntradaPallets(entradaId)
+  console.log('📦 Pallets carregados:', { pallets: pallets?.length, isLoading })
   const createPallet = useCreatePallet()
   const updatePallet = useUpdatePallet()
   const deletePallet = useDeletePallet()
@@ -107,6 +109,11 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
 
   return (
     <div className="space-y-6">
+      {/* Debug info */}
+      <div className="text-xs text-muted-foreground">
+        Debug: {new Date().toISOString()} | Pallets: {pallets.length} | Versão: v2.0
+      </div>
+      
       {/* Header com resumo */}
       <div className="flex items-center justify-between">
         <div>

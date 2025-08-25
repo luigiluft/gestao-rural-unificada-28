@@ -34,6 +34,7 @@ export const PalletItemSelector = ({
   isLoading, 
   usedItems 
 }: PalletItemSelectorProps) => {
+  console.log('🔧 PalletItemSelector renderizando para pallet:', palletId, 'com', entradaItens?.length, 'itens')
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [currentItemId, setCurrentItemId] = useState("")
   const [currentQuantidade, setCurrentQuantidade] = useState("")
