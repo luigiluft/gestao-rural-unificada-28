@@ -750,33 +750,70 @@ export default function AprovacaoEntradas() {
                     <Label className="text-base font-semibold">Itens da Entrada</Label>
                     <div className="border rounded-lg p-4 bg-muted/30">
                       <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Produto</TableHead>
-                            <TableHead>Quantidade</TableHead>
-                            <TableHead>Lote</TableHead>
-                            <TableHead>Ação</TableHead>
-                          </TableRow>
-                        </TableHeader>
+                         <TableHeader>
+                           <TableRow>
+                             <TableHead>Produto</TableHead>
+                             <TableHead>Quantidade</TableHead>
+                             <TableHead>Volumes</TableHead>
+                             <TableHead>Pallets</TableHead>
+                             <TableHead>Vol/Pallet</TableHead>
+                             <TableHead>Lote</TableHead>
+                             <TableHead>Ação</TableHead>
+                           </TableRow>
+                         </TableHeader>
                         <TableBody>
-                          {selectedEntrada.entrada_itens.map((item: any) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.produtos?.nome || item.nome_produto}</TableCell>
-                              <TableCell>{item.quantidade} {item.produtos?.unidade_medida}</TableCell>
-                              <TableCell>{item.lote || '-'}</TableCell>
-                              <TableCell>
-                                <Button
-                                  onClick={() => addDivergencia(item)}
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  <AlertTriangle className="h-3 w-3 mr-1" />
-                                  Registrar Divergência
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                           {selectedEntrada.entrada_itens.map((item: any) => (
+                             <TableRow key={item.id}>
+                               <TableCell>{item.produtos?.nome || item.nome_produto}</TableCell>
+                               <TableCell>{item.quantidade} {item.produtos?.unidade_medida}</TableCell>
+                               <TableCell>
+                                 <Input
+                                   type="number"
+                                   placeholder="Volumes"
+                                   className="w-20 text-center"
+                                   onChange={(e) => {
+                                     const value = e.target.value ? Number(e.target.value) : undefined
+                                     // Armazenar temporariamente o valor no item
+                                     item.volumes_temp = value
+                                   }}
+                                 />
+                               </TableCell>
+                               <TableCell>
+                                 <Input
+                                   type="number"
+                                   placeholder="Pallets"
+                                   className="w-20 text-center"
+                                   onChange={(e) => {
+                                     const value = e.target.value ? Number(e.target.value) : undefined
+                                     item.pallets_temp = value
+                                   }}
+                                 />
+                               </TableCell>
+                               <TableCell>
+                                 <Input
+                                   type="number"
+                                   placeholder="Vol/Pal"
+                                   className="w-20 text-center"
+                                   onChange={(e) => {
+                                     const value = e.target.value ? Number(e.target.value) : undefined
+                                     item.volumes_por_pallet_temp = value
+                                   }}
+                                 />
+                               </TableCell>
+                               <TableCell>{item.lote || '-'}</TableCell>
+                               <TableCell>
+                                 <Button
+                                   onClick={() => addDivergencia(item)}
+                                   size="sm"
+                                   variant="outline"
+                                   className="text-xs"
+                                 >
+                                   <AlertTriangle className="h-3 w-3 mr-1" />
+                                   Registrar Divergência
+                                 </Button>
+                               </TableCell>
+                             </TableRow>
+                           ))}
                         </TableBody>
                       </Table>
                     </div>
