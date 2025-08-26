@@ -101,16 +101,17 @@ export const usePalletAllocationWaveById = (waveId: string) => {
           )
         `)
         .eq("id", waveId)
-        .single()
+        .maybeSingle()
 
       if (error) throw error
+      if (!data) return null
 
       // Enriquecer com nome da franquia
       const { data: franquia } = await supabase
         .from("franquias")
         .select("nome")
         .eq("id", data.deposito_id)
-        .single()
+        .maybeSingle()
 
       return {
         ...data,
