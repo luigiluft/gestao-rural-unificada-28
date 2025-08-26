@@ -130,3 +130,57 @@ export const useUpdateStoragePosition = () => {
     },
   })
 }
+
+export const useBulkCreateStoragePositions = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async (positionsData: {
+      deposito_id: string
+      positions: {
+        codigo: string
+        descricao?: string
+        tipo_posicao?: string
+        capacidade_maxima?: number
+      }[]
+    }) => {
+      const { deposito_id, positions } = positionsData
+      
+      // Prepara os dados para inserção em lote
+      const insertData = positions.map(pos => ({
+        deposito_id,
+        codigo: pos.codigo,
+        descricao: pos.descricao || `Posição ${pos.codigo}`,
+        tipo_posicao: pos.tipo_posicao || 'pallet',
+        capacidade_maxima: pos.capacidade_maxima || 1,
+        ativo: true,
+        ocupado: false,
+        reservado_temporariamente: false
+      }))
+
+      // Inserção em lote usando upsert para evitar duplicatas
+      const { data, error } = await supabase
+        .from("storage_positions")
+        .upsert(insertData, { onConflict: 'deposito_id,codigo' })
+        .select()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] })
+      toast({
+        title: "Posições criadas com sucesso",
+        description: `${data?.length || 0} posições foram criadas em lote`,
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar posições",
+        description: error.message || "Ocorreu um erro ao criar as posições de estoque",
+        variant: "destructive",
+      })
+    },
+  })
+}

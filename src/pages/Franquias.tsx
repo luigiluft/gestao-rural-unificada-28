@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { WarehouseLayoutDesigner, type WarehouseLayout } from "@/components/Franquias/WarehouseLayoutDesigner";
 import { FranquiaWizard } from "@/components/Franquias/FranquiaWizard";
-import { useCreateStoragePosition } from "@/hooks/useStoragePositions";
+import { useCreateStoragePosition, useBulkCreateStoragePositions } from "@/hooks/useStoragePositions";
 
 interface Franquia {
   id: string;
@@ -56,6 +56,7 @@ const Franquias = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFranquia, setEditingFranquia] = useState<Franquia | null>(null);
   const createPosition = useCreateStoragePosition();
+  const bulkCreatePositions = useBulkCreateStoragePositions();
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -189,17 +190,15 @@ const Franquias = () => {
             console.error("Error deleting existing positions:", deleteError);
           }
 
-          // Create new positions
-          for (const position of data.positions) {
-            try {
-              await createPosition.mutateAsync({
-                ...position,
-                deposito_id: franquiaId
-              });
-              console.log("Position created successfully:", position.codigo);
-            } catch (positionError) {
-              console.error("Error creating position:", position.codigo, positionError);
-            }
+          // Create new positions in bulk
+          try {
+            await bulkCreatePositions.mutateAsync({
+              deposito_id: franquiaId,
+              positions: data.positions
+            });
+            console.log(`Successfully created ${data.positions.length} positions in bulk`);
+          } catch (positionError) {
+            console.error("Error creating positions in bulk:", positionError);
           }
         }
       } else {
@@ -214,16 +213,14 @@ const Franquias = () => {
         // Create storage positions for new franquias
         if (data.positions.length > 0) {
           console.log(`Creating ${data.positions.length} positions for new franchise`);
-          for (const position of data.positions) {
-            try {
-              await createPosition.mutateAsync({
-                ...position,
-                deposito_id: franquiaId
-              });
-              console.log("Position created successfully:", position.codigo);
-            } catch (positionError) {
-              console.error("Error creating position:", position.codigo, positionError);
-            }
+          try {
+            await bulkCreatePositions.mutateAsync({
+              deposito_id: franquiaId,
+              positions: data.positions
+            });
+            console.log(`Successfully created ${data.positions.length} positions in bulk for new franchise`);
+          } catch (positionError) {
+            console.error("Error creating positions in bulk:", positionError);
           }
         }
       }
