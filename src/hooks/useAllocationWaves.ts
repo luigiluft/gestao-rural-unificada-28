@@ -309,8 +309,19 @@ export const useAllocatePallet = () => {
       produtosConferidos: any[]
       divergencias?: any[]
     }) => {
+      console.log("🔄 MUTATION useAllocatePallet - INÍCIO")
+      console.log("📤 Parâmetros recebidos na mutation:")
+      console.log("  - wavePalletId:", wavePalletId)
+      console.log("  - posicaoId:", posicaoId)
+      console.log("  - barcodePallet:", barcodePallet)
+      console.log("  - barcodePosicao:", barcodePosicao)
+      console.log("  - produtosConferidos:", produtosConferidos)
+      console.log("  - divergencias:", divergencias)
+
+      console.log("🔄 Chamando RPC complete_pallet_allocation_and_create_stock_debug...")
+
       const { data, error } = await supabase.rpc(
-        "complete_pallet_allocation_and_create_stock",
+        "complete_pallet_allocation_and_create_stock_debug",
         {
           p_wave_pallet_id: wavePalletId,
           p_posicao_id: posicaoId,
@@ -321,10 +332,26 @@ export const useAllocatePallet = () => {
         }
       )
 
-      if (error) throw error
+      console.log("📥 Resposta da RPC:")
+      console.log("  - data:", data)
+      console.log("  - error:", error)
+
+      if (error) {
+        console.error("❌ ERRO na RPC complete_pallet_allocation_and_create_stock_debug:")
+        console.error("  - message:", error.message)
+        console.error("  - details:", error.details)
+        console.error("  - hint:", error.hint)
+        console.error("  - code:", error.code)
+        console.error("  - erro completo:", error)
+        throw error
+      }
+
+      console.log("✅ RPC executada com sucesso, retornando data:", data)
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("🎉 MUTATION useAllocatePallet - SUCESSO")
+      console.log("📊 Data retornada:", data)
       toast({
         title: "Pallet alocado",
         description: "Pallet alocado com sucesso!",
@@ -333,6 +360,14 @@ export const useAllocatePallet = () => {
       queryClient.invalidateQueries({ queryKey: ["pallet-allocation-waves"] })
     },
     onError: (error: any) => {
+      console.error('❌ MUTATION useAllocatePallet - ERRO:')
+      console.error('Tipo do erro:', error.constructor.name)
+      console.error('Mensagem:', error.message)
+      console.error('Detalhes:', error.details)
+      console.error('Hint:', error.hint)
+      console.error('Code:', error.code)
+      console.error('Erro completo:', error)
+      
       toast({
         title: "Erro na alocação",
         description: error.message || "Erro ao alocar pallet",
