@@ -39,6 +39,13 @@ export default function AlocacaoComColetor() {
   const [scannedPalletCode, setScannedPalletCode] = useState("")
   const [scannedPositionCode, setScannedPositionCode] = useState("")
 
+  // Auto-iniciar conferência ao carregar a página
+  useEffect(() => {
+    if (currentPallet && !conferenciaMode) {
+      startConferencia()
+    }
+  }, [currentPallet, conferenciaMode, startConferencia])
+
   // Simular scanner via teclado (F1 para pallet, F2 para posição)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -182,13 +189,13 @@ export default function AlocacaoComColetor() {
           <CardContent className="space-y-4">
             {!conferenciaMode ? (
               <div className="text-center space-y-4">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-muted rounded mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
+                </div>
                 <p className="text-muted-foreground">
-                  Inicie a conferência dos produtos do pallet antes de escanear
+                  Iniciando conferência automática...
                 </p>
-                <Button onClick={startConferencia} className="w-full">
-                  <Package className="h-4 w-4 mr-2" />
-                  Iniciar Conferência
-                </Button>
               </div>
             ) : (
               <>
