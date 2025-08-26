@@ -7,43 +7,30 @@ export const usePalletAllocationWaves = () => {
   return useQuery({
     queryKey: ["pallet-allocation-waves"],
     queryFn: async () => {
+      console.log('🔍 Buscando ondas de alocação de pallets...')
+      
+      // Query simplificada primeiro
       const { data, error } = await supabase
         .from("allocation_waves")
-        .select(`
-          *,
-          allocation_wave_pallets (
-            *,
-            entrada_pallets (
-              id,
-              numero_pallet,
-              descricao,
-              entrada_pallet_itens (
-                quantidade,
-                entrada_itens (
-                  produto_id,
-                  nome_produto,
-                  lote,
-                  quantidade,
-                  valor_unitario,
-                  data_validade
-                )
-              )
-            ),
-            storage_positions (
-              id,
-              codigo,
-              ocupado
-            )
-          )
-        `)
+        .select("*")
         .neq("status", "concluido")
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      console.log('📊 Resultado da busca ondas:', { data, error })
+      
+      if (error) {
+        console.error('❌ Erro ao buscar ondas:', error)
+        throw error
+      }
+
+      if (!data || data.length === 0) {
+        console.log('⚠️ Nenhuma onda encontrada')
+        return []
+      }
 
       // Enriquecer com nome da franquia para múltiplas ondas
       const enrichedData = await Promise.all(
-        (data || []).map(async (wave) => {
+        data.map(async (wave) => {
           const { data: franquia } = await supabase
             .from("franquias")
             .select("nome")
@@ -57,6 +44,7 @@ export const usePalletAllocationWaves = () => {
         })
       )
 
+      console.log('✅ Ondas enriquecidas:', enrichedData)
       return enrichedData
     },
   })
