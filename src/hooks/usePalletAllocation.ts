@@ -114,7 +114,16 @@ export const usePalletAllocation = (waveId: string) => {
 
   // Alocar pallet
   const handleAllocatePallet = async (scannedPalletCode: string, scannedPositionCode: string) => {
+    console.log("🚀 INÍCIO DA ALOCAÇÃO DO PALLET")
+    console.log("📦 Pallet atual:", currentPallet)
+    console.log("📍 Posição atual:", currentPosition)
+    console.log("🔖 Código do pallet scaneado:", scannedPalletCode)
+    console.log("🔖 Código da posição scaneada:", scannedPositionCode)
+    console.log("📋 Status dos produtos:", productsStatus)
+    console.log("⚠️ Divergências:", divergencias)
+
     if (!currentPallet) {
+      console.error("❌ ERRO: Pallet não encontrado")
       toast({
         title: "Dados incompletos",
         description: "Pallet não encontrado",
@@ -124,6 +133,7 @@ export const usePalletAllocation = (waveId: string) => {
     }
 
     if (!currentPosition) {
+      console.error("❌ ERRO: Posição não definida para o pallet:", currentPallet.id)
       toast({
         title: "Posição não definida",
         description: "Este pallet não tem uma posição definida. Retorne à página de ondas e redefina as posições.",
@@ -132,7 +142,11 @@ export const usePalletAllocation = (waveId: string) => {
       return false
     }
 
-    if (!allProductsChecked()) {
+    const allChecked = allProductsChecked()
+    console.log("✅ Todos os produtos conferidos?", allChecked)
+    if (!allChecked) {
+      console.error("❌ ERRO: Nem todos os produtos foram conferidos")
+      console.log("🔍 Produtos pendentes:", productsStatus.filter(p => p.status === 'pendente'))
       toast({
         title: "Conferência incompleta",
         description: "Todos os produtos devem ser conferidos antes da alocação",
@@ -142,6 +156,7 @@ export const usePalletAllocation = (waveId: string) => {
     }
 
     setIsProcessing(true)
+    console.log("⏳ Processamento iniciado...")
 
     try {
       const produtosConferidos = productsStatus.map(product => ({
@@ -154,20 +169,28 @@ export const usePalletAllocation = (waveId: string) => {
         observacoes: product.observacoes
       }))
 
-      await allocatePallet.mutateAsync({
+      console.log("📋 Produtos conferidos para envio:", produtosConferidos)
+      console.log("🔄 Chamando mutation allocatePallet com parâmetros:")
+      const mutationParams = {
         wavePalletId: currentPallet.id,
         posicaoId: currentPosition.id,
         barcodePallet: scannedPalletCode,
         barcodePosicao: scannedPositionCode,
         produtosConferidos,
         divergencias
-      })
+      }
+      console.log("📤 Parâmetros da mutation:", mutationParams)
 
+      await allocatePallet.mutateAsync(mutationParams)
+
+      console.log("✅ Alocação realizada com sucesso!")
       if (currentPalletIndex < pendingPallets.length - 1) {
+        console.log("➡️ Avançando para próximo pallet...")
         setCurrentPalletIndex(currentPalletIndex + 1)
         setConferenciaMode(false)
         initializePalletProducts()
       } else {
+        console.log("🎉 Todos os pallets foram alocados!")
         toast({
           title: "Alocação concluída",
           description: "Todos os pallets foram alocados com sucesso!",
@@ -176,10 +199,32 @@ export const usePalletAllocation = (waveId: string) => {
       }
       return true
     } catch (error) {
-      console.error("Error allocating pallet:", error)
+      console.error("❌ ERRO DETALHADO NA ALOCAÇÃO:")
+      console.error("Tipo do erro:", error.constructor.name)
+      console.error("Mensagem:", error.message)
+      console.error("Stack trace:", error.stack)
+      console.error("Erro completo:", error)
+      
+      // Se o erro tiver uma estrutura específica do Supabase
+      if (error.details) {
+        console.error("Detalhes do erro:", error.details)
+      }
+      if (error.hint) {
+        console.error("Dica do erro:", error.hint)
+      }
+      if (error.code) {
+        console.error("Código do erro:", error.code)
+      }
+      
+      toast({
+        title: "Erro na alocação",
+        description: `Falha ao alocar pallet: ${error.message || 'Erro desconhecido'}`,
+        variant: "destructive",
+      })
       return false
     } finally {
       setIsProcessing(false)
+      console.log("🏁 Processamento finalizado")
     }
   }
 
