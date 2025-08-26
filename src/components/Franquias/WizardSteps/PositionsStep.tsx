@@ -39,6 +39,8 @@ export function PositionsStep({
     capacidade_maxima: ""
   });
 
+  const [isGeneratingPositions, setIsGeneratingPositions] = useState(false);
+
   // Gerar posições automaticamente baseado no layout do armazém
   const generatePositionsFromLayout = (layout: WarehouseLayout) => {
     const newPositions: StoragePosition[] = [];
@@ -78,9 +80,20 @@ export function PositionsStep({
   // Atualizar posições quando o layout do armazém mudar
   useEffect(() => {
     if (warehouseLayout) {
-      const generatedPositions = generatePositionsFromLayout(warehouseLayout);
-      setPositions(generatedPositions);
-      calculateTotalCapacity(generatedPositions);
+      setIsGeneratingPositions(true);
+      
+      // Simular pequeno delay para mostrar o loading
+      setTimeout(() => {
+        const generatedPositions = generatePositionsFromLayout(warehouseLayout);
+        setPositions(generatedPositions);
+        calculateTotalCapacity(generatedPositions);
+        setIsGeneratingPositions(false);
+        
+        toast({
+          title: "Posições geradas",
+          description: `${generatedPositions.length} posições foram geradas automaticamente baseadas no layout`,
+        });
+      }, 100);
     }
   }, [warehouseLayout]);
 
@@ -166,10 +179,18 @@ export function PositionsStep({
           <h4 className="font-medium">Capacidade Total Calculada</h4>
         </div>
         <p className="text-2xl font-bold text-primary mt-1">
-          {formData.capacidade_total || '0'} posições
+          {isGeneratingPositions ? (
+            <span className="text-muted-foreground">Gerando...</span>
+          ) : (
+            `${formData.capacidade_total || '0'} posições`
+          )}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          Baseado em {positions.length} posição(ões) configurada(s)
+          {isGeneratingPositions ? (
+            "Gerando posições baseadas no layout..."
+          ) : (
+            `Baseado em ${positions.length} posição(ões) configurada(s)`
+          )}
         </p>
       </div>
 
@@ -195,7 +216,11 @@ export function PositionsStep({
         <div>
           <h4 className="font-medium">Posições Geradas Automaticamente</h4>
           <p className="text-sm text-muted-foreground">
-            {positions.length} posição(ões) gerada(s) baseado no layout do armazém
+            {isGeneratingPositions ? (
+              "Gerando posições..."
+            ) : (
+              `${positions.length} posição(ões) gerada(s) baseado no layout do armazém`
+            )}
           </p>
         </div>
         

@@ -227,6 +227,7 @@ const Franquias = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["franquias"] });
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
       setDialogOpen(false);
       resetForm();
       toast({
