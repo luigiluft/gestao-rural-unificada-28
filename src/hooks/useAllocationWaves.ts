@@ -425,11 +425,21 @@ export const useDefineWavePositions = () => {
   const { toast } = useToast()
 
   const defineWavePositions = async (waveId: string) => {
+    console.log(`Iniciando definição de posições para onda: ${waveId}`)
+    
+    const startTime = Date.now()
     const { data, error } = await supabase.rpc('define_wave_positions', {
       p_wave_id: waveId
     })
-
-    if (error) throw error
+    const endTime = Date.now()
+    
+    console.log(`Definição de posições concluída em ${endTime - startTime}ms`)
+    console.log('Resultado:', data)
+    
+    if (error) {
+      console.error('Erro na RPC define_wave_positions:', error)
+      throw error
+    }
     return data
   }
 
@@ -441,22 +451,38 @@ export const useDefineWavePositions = () => {
       
       if (result?.success) {
         toast({
-          title: "Posições definidas",
-          description: `${result.allocated_items}/${result.total_items} posições alocadas com sucesso.`,
+          title: "Posições definidas com sucesso",
+          description: `${result.allocated_items || 0} de ${result.total_items || 0} posições foram definidas`,
         })
       } else {
+        console.error('Falha na definição de posições:', result)
         toast({
-          title: "Erro ao definir posições",
-          description: result?.message || "Não foi possível definir as posições.",
+          title: "Falha ao definir posições",
+          description: result?.message || "Não foi possível definir as posições. Verifique se há posições suficientes disponíveis.",
           variant: "destructive",
         })
       }
     },
     onError: (error: any) => {
-      console.error("Error defining wave positions:", error)
+      console.error('Erro completo:', error)
+      
+      let errorMessage = "Ocorreu um erro inesperado ao definir as posições"
+      
+      if (error.message) {
+        if (error.message.includes('timeout')) {
+          errorMessage = "Operação demorou muito para ser concluída. Tente novamente."
+        } else if (error.message.includes('insufficient')) {
+          errorMessage = "Não há posições suficientes disponíveis no depósito"
+        } else if (error.message.includes('permission')) {
+          errorMessage = "Permissão negada para definir posições"
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
       toast({
         title: "Erro ao definir posições",
-        description: error.message || "Não foi possível definir as posições da onda.",
+        description: errorMessage,
         variant: "destructive",
       })
     },
