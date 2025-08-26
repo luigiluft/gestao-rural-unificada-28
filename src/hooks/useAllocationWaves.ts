@@ -71,51 +71,84 @@ export const usePalletAllocationWaveById = (waveId: string) => {
   return useQuery({
     queryKey: ["pallet-allocation-wave", waveId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("allocation_waves")
-        .select(`
-          *,
-          allocation_wave_pallets (
-            *,
-            entrada_pallets (
-              id,
-              numero_pallet,
-              descricao,
-              entrada_pallet_itens (
-                quantidade,
-                entrada_itens (
-                  produto_id,
-                  nome_produto,
-                  lote,
+      try {
+        // Buscar a onda básica primeiro
+        const { data: waveData, error: waveError } = await supabase
+          .from("allocation_waves")
+          .select("*")
+          .eq("id", waveId)
+          .maybeSingle()
+
+        if (waveError) throw waveError
+        if (!waveData) return null
+
+        // Buscar pallets da onda
+        const { data: palletsData, error: palletsError } = await supabase
+          .from("allocation_wave_pallets")
+          .select("*")
+          .eq("wave_id", waveId)
+
+        if (palletsError) throw palletsError
+
+        // Enriquecer pallets com dados completos
+        const palletsWithDetails = await Promise.all(
+          (palletsData || []).map(async (pallet) => {
+            // Buscar dados do entrada_pallet
+            const { data: entradaPallet } = await supabase
+              .from("entrada_pallets")
+              .select(`
+                id,
+                numero_pallet,
+                descricao,
+                entrada_pallet_itens (
                   quantidade,
-                  valor_unitario,
-                  data_validade
+                  entrada_itens (
+                    produto_id,
+                    nome_produto,
+                    lote,
+                    quantidade,
+                    valor_unitario,
+                    data_validade
+                  )
                 )
-              )
-            ),
-            storage_positions (
-              id,
-              codigo,
-              ocupado
-            )
-          )
-        `)
-        .eq("id", waveId)
-        .maybeSingle()
+              `)
+              .eq("id", pallet.entrada_pallet_id)
+              .maybeSingle()
 
-      if (error) throw error
-      if (!data) return null
+            // Buscar posição se existe
+            let position = null
+            if (pallet.posicao_id) {
+              const { data: pos } = await supabase
+                .from("storage_positions")
+                .select("id, codigo, ocupado")
+                .eq("id", pallet.posicao_id)
+                .maybeSingle()
+              position = pos
+            }
 
-      // Enriquecer com nome da franquia
-      const { data: franquia } = await supabase
-        .from("franquias")
-        .select("nome")
-        .eq("id", data.deposito_id)
-        .maybeSingle()
+            return {
+              ...pallet,
+              entrada_pallets: entradaPallet,
+              storage_positions: position
+            }
+          })
+        )
 
-      return {
-        ...data,
-        franquia_nome: franquia?.nome || "Franquia não encontrada"
+        // Buscar nome da franquia
+        const { data: franquia } = await supabase
+          .from("franquias")
+          .select("nome")
+          .eq("id", waveData.deposito_id)
+          .maybeSingle()
+
+        return {
+          ...waveData,
+          allocation_wave_pallets: palletsWithDetails,
+          franquia_nome: franquia?.nome || "Franquia não encontrada"
+        }
+      } catch (error) {
+        console.error('Error fetching wave data:', error)
+        throw error
       }
     },
     enabled: !!waveId,
