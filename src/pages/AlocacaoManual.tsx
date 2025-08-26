@@ -1,49 +1,35 @@
 import { useParams } from "react-router-dom"
-import { useAlocacao } from "@/hooks/useAlocacao"
-import { useResetWavePositions, useDefineWavePositions } from "@/hooks/useAllocationWaves"
+import { usePalletAllocation } from "@/hooks/usePalletAllocation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ProductInfo } from "@/components/Alocacao/ProductInfo"
+import { PalletInfo } from "@/components/Alocacao/PalletInfo"
+import { PalletProductsCheck } from "@/components/Alocacao/PalletProductsCheck"
 import { ProgressIndicator } from "@/components/Alocacao/ProgressIndicator"
-import { MapPin, CheckCircle, ArrowLeft, Package, AlertCircle, RotateCcw } from "lucide-react"
+import { CheckCircle, ArrowLeft, Package } from "lucide-react"
 
 export default function AlocacaoManual() {
   const { waveId } = useParams()
   const {
     wave,
     isLoading,
-    currentItem,
-    currentPosition,
-    pendingItems,
-    currentItemIndex,
+    currentPallet,
+    pendingPallets,
+    currentPalletIndex,
     isProcessing,
-    handleAllocate,
-    handleSkipItem,
-    navigate
-  } = useAlocacao(waveId!)
-
-  const resetWavePositions = useResetWavePositions()
-  const defineWavePositions = useDefineWavePositions()
+    handleAllocatePallet,
+    handleSkipPallet,
+    navigate,
+    allProductsChecked,
+    updateProductStatus,
+    productsStatus,
+    startConferencia,
+    conferenciaMode
+  } = usePalletAllocation(waveId!)
 
   const handleManualAllocate = async () => {
-    if (!currentItem || !currentPosition) return
-
-    const productCode = currentItem.entrada_itens?.codigo_produto || `PRODUTO-${currentItem?.produtos?.nome?.substring(0, 10) || 'SEM-CODIGO'}`
-    const positionCode = currentPosition.codigo
-
-    await handleAllocate(productCode, positionCode)
-  }
-
-  const handleResetPositions = async () => {
-    if (!waveId) return
-    await resetWavePositions.mutateAsync(waveId)
-  }
-
-  const handleDefinePositions = async () => {
-    if (!waveId) return
-    await defineWavePositions.mutateAsync({ waveId })
+    if (!currentPallet || !allProductsChecked) return
+    await handleAllocatePallet(currentPallet.codigo_barras_pallet, currentPallet.posicao_id || '')
   }
 
   if (isLoading) {
@@ -63,7 +49,7 @@ export default function AlocacaoManual() {
     )
   }
 
-  if (!wave || !currentItem) {
+  if (!wave || !currentPallet) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center gap-4 mb-6">
@@ -77,7 +63,7 @@ export default function AlocacaoManual() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <CheckCircle className="w-16 h-16 text-primary mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Todos os itens foram alocados!</h2>
+            <h2 className="text-2xl font-bold mb-2">Todos os pallets foram alocados!</h2>
             <p className="text-muted-foreground mb-4">
               A onda {wave?.numero_onda} foi concluída com sucesso.
             </p>
@@ -92,123 +78,94 @@ export default function AlocacaoManual() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Alocação Manual - {wave.numero_onda}</h1>
-            <p className="text-muted-foreground">
-              Item {currentItemIndex + 1} de {pendingItems.length} • Modo Manual
-            </p>
-          </div>
-        </div>
-        <Button 
-          variant="destructive" 
-          onClick={handleResetPositions}
-          disabled={resetWavePositions.isPending}
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          {resetWavePositions.isPending ? "Resetando..." : "Resetar Posições"}
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Voltar
         </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Alocação Manual - {wave.numero_onda}</h1>
+          <p className="text-muted-foreground">
+            Pallet {currentPalletIndex + 1} de {pendingPallets.length} • Modo Manual
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Product Info */}
-        <ProductInfo currentItem={currentItem} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Pallet Info */}
+        <PalletInfo 
+          pallet={currentPallet}
+          currentIndex={currentPalletIndex}
+          totalPallets={pendingPallets.length}
+        />
 
-        {/* Position Confirmation */}
+        {/* Product Check & Allocation */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Posição Definida pelo Sistema
+              <Package className="w-5 h-5" />
+              Conferência Manual dos Produtos
             </CardTitle>
             <CardDescription>
-              Confirme a alocação do produto na posição indicada
+              Confira manualmente os produtos do pallet antes da alocação
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {currentPosition ? (
-              <>
-                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-5 h-5 text-primary" />
-                    <Label className="font-medium text-primary">Posição Designada</Label>
-                  </div>
-                  <p className="text-2xl font-bold text-primary">{currentPosition.codigo}</p>
-                  {currentPosition.descricao && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {currentPosition.descricao}
-                    </p>
-                  )}
-                </div>
-
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="text-sm">
-                    <p className="font-medium text-green-800 mb-2">Alocação Manual</p>
-                    <p className="text-green-700">
-                      Clique no botão abaixo para confirmar manualmente o produto 
-                      <span className="font-medium"> {currentItem.produtos?.nome} </span>
-                      na posição <span className="font-medium">{currentPosition.codigo}</span>.
-                    </p>
-                    <p className="text-green-600 mt-2 text-xs">
-                      ✓ Sem necessidade de scanner • ✓ Confirmação direta
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-6 space-y-2">
-                  <Button 
-                    onClick={handleManualAllocate}
-                    disabled={isProcessing}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                  >
-                    <Package className="w-4 h-4 mr-2" />
-                    {isProcessing ? "Processando..." : "✓ Confirmar Alocação Manual"}
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={handleSkipItem}
-                    disabled={isProcessing}
-                    className="w-full"
-                  >
-                    Pular Item
-                  </Button>
-                </div>
-              </>
-            ) : (
+            {!conferenciaMode ? (
               <div className="space-y-4">
-                <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="text-sm">
-                    <p className="font-medium text-orange-800">Posições não definidas</p>
-                    <p className="text-orange-700">
-                      As posições para esta onda ainda não foram definidas pelo sistema.
+                    <p className="font-medium text-blue-800 mb-2">Iniciar Conferência Manual</p>
+                    <p className="text-blue-700">
+                      Clique no botão abaixo para iniciar a conferência manual dos produtos 
+                      do pallet {currentPallet.entrada_pallets.numero_pallet}.
                     </p>
                   </div>
                 </div>
                 
                 <Button 
-                  onClick={handleDefinePositions}
-                  disabled={defineWavePositions.isPending}
+                  onClick={startConferencia}
                   className="w-full"
                   size="lg"
                 >
                   <Package className="w-4 h-4 mr-2" />
-                  {defineWavePositions.isPending ? "Definindo..." : "Definir Posições Automaticamente"}
+                  Iniciar Conferência Manual
                 </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <PalletProductsCheck 
+                  products={productsStatus}
+                  onUpdateProduct={updateProductStatus}
+                />
+                
+                <div className="pt-4 space-y-2 border-t">
+                  <Button 
+                    onClick={handleManualAllocate}
+                    disabled={isProcessing || !allProductsChecked}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    size="lg"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    {isProcessing ? "Processando..." : "✓ Confirmar Alocação do Pallet"}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={handleSkipPallet}
+                    disabled={isProcessing}
+                    className="w-full"
+                  >
+                    Pular Pallet
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <ProgressIndicator currentIndex={currentItemIndex} totalItems={pendingItems.length} />
+      <ProgressIndicator currentIndex={currentPalletIndex} totalItems={pendingPallets.length} />
     </div>
   )
 }
