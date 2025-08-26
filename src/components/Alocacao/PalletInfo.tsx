@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, Barcode } from "lucide-react"
+import { Package, Barcode, MapPin } from "lucide-react"
 
 interface PalletInfoProps {
   pallet: {
@@ -20,9 +20,13 @@ interface PalletInfoProps {
   }
   currentIndex: number
   totalPallets: number
+  currentPosition?: {
+    codigo: string
+    descricao?: string
+  }
 }
 
-export const PalletInfo = ({ pallet, currentIndex, totalPallets }: PalletInfoProps) => {
+export const PalletInfo = ({ pallet, currentIndex, totalPallets, currentPosition }: PalletInfoProps) => {
   const totalItens = pallet.entrada_pallets.entrada_pallet_itens.length
   const totalQuantidade = pallet.entrada_pallets.entrada_pallet_itens.reduce(
     (sum, item) => sum + item.quantidade, 0
@@ -46,6 +50,21 @@ export const PalletInfo = ({ pallet, currentIndex, totalPallets }: PalletInfoPro
           <Barcode className="h-4 w-4" />
           <span className="font-mono">{pallet.codigo_barras_pallet}</span>
         </div>
+        
+        {currentPosition && (
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Posição de Armazenamento:</span>
+              <span className="font-bold text-primary text-base">{currentPosition.codigo}</span>
+            </div>
+            {currentPosition.descricao && (
+              <p className="text-xs text-muted-foreground mt-1 ml-6">
+                {currentPosition.descricao}
+              </p>
+            )}
+          </div>
+        )}
         
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>

@@ -102,11 +102,12 @@ export default function AlocacaoManual() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Pallet Info */}
-        <PalletInfo 
-          pallet={currentPallet}
-          currentIndex={currentPalletIndex}
-          totalPallets={pendingPallets.length}
-        />
+            <PalletInfo 
+              pallet={currentPallet}
+              currentIndex={currentPalletIndex}
+              totalPallets={pendingPallets.length}
+              currentPosition={currentPosition}
+            />
 
         {/* Product Check & Allocation */}
         <Card>

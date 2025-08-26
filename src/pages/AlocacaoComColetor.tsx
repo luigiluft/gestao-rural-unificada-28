@@ -164,11 +164,12 @@ export default function AlocacaoComColetor() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Informações do Pallet */}
         <div className="space-y-4">
-          <PalletInfo
-            pallet={currentPallet}
-            currentIndex={currentPalletIndex}
-            totalPallets={pendingPallets.length}
-          />
+            <PalletInfo 
+              pallet={currentPallet}
+              currentIndex={currentPalletIndex}
+              totalPallets={pendingPallets.length}
+              currentPosition={currentPosition}
+            />
 
           {conferenciaMode && (
             <PalletProductsCheck
