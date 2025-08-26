@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { usePalletAllocationWaves, useStartAllocationWave } from "@/hooks/useAllocationWaves"
+import { usePalletAllocationWaves, useStartAllocationWave, useDefineWavePositions } from "@/hooks/useAllocationWaves"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,8 +16,10 @@ export default function OndasAlocacao() {
   const navigate = useNavigate()
   const { data: waves, isLoading } = usePalletAllocationWaves()
   const { mutate: startWave, isPending } = useStartAllocationWave()
+  const { mutate: definePositions, isPending: isDefiningPositions } = useDefineWavePositions()
   const [selectedWave, setSelectedWave] = useState<any>(null)
   const [isExecuting, setIsExecuting] = useState(false)
+  const [processingWaveId, setProcessingWaveId] = useState<string | null>(null)
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -59,15 +61,47 @@ export default function OndasAlocacao() {
   }
 
   const handleExecuteAllocation = (waveId: string) => {
-    setIsExecuting(true)
-    startWave(
+    setProcessingWaveId(waveId)
+    definePositions(
       { waveId },
       {
-        onSuccess: () => {
-          navigate(`/alocar-scanner/${waveId}`)
+        onSuccess: (result: any) => {
+          if (result?.success) {
+            startWave(
+              { waveId },
+              {
+                onSuccess: () => {
+                  navigate(`/alocar-scanner/${waveId}`)
+                },
+                onSettled: () => {
+                  setProcessingWaveId(null)
+                }
+              }
+            )
+          } else {
+            setProcessingWaveId(null)
+          }
         },
-        onSettled: () => {
-          setIsExecuting(false)
+        onError: () => {
+          setProcessingWaveId(null)
+        }
+      }
+    )
+  }
+
+  const handleManualAllocation = (waveId: string) => {
+    setProcessingWaveId(waveId)
+    definePositions(
+      { waveId },
+      {
+        onSuccess: (result: any) => {
+          if (result?.success) {
+            navigate(`/alocar-manual/${waveId}`)
+          }
+          setProcessingWaveId(null)
+        },
+        onError: () => {
+          setProcessingWaveId(null)
         }
       }
     )
@@ -196,52 +230,54 @@ export default function OndasAlocacao() {
                     </div>
                   ) : (
                     <>
-                      {(wave.status === "pendente" || wave.status === "posicoes_definidas") && (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
-                            className="flex items-center gap-2"
-                          >
-                            <Play className="h-4 w-4" />
-                            Alocação com Scanner
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/alocar-manual/${wave.id}`)}
-                            className="flex items-center gap-2"
-                          >
-                            <Package className="h-4 w-4" />
-                            Alocação Manual
-                          </Button>
-                        </>
-                      )}
+                       {(wave.status === "pendente" || wave.status === "posicoes_definidas") && (
+                         <>
+                           <Button
+                             size="sm"
+                             onClick={() => handleExecuteAllocation(wave.id)}
+                             disabled={processingWaveId === wave.id}
+                             className="flex items-center gap-2"
+                           >
+                             <Play className="h-4 w-4" />
+                             {processingWaveId === wave.id ? "Calculando posições..." : "Alocação com Scanner"}
+                           </Button>
+                           
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleManualAllocation(wave.id)}
+                             disabled={processingWaveId === wave.id}
+                             className="flex items-center gap-2"
+                           >
+                             <Package className="h-4 w-4" />
+                             {processingWaveId === wave.id ? "Calculando posições..." : "Alocação Manual"}
+                           </Button>
+                         </>
+                       )}
                       
-                      {wave.status === "em_andamento" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
-                            className="flex items-center gap-2"
-                          >
-                            <Play className="h-4 w-4" />
-                            Continuar Alocação com Scanner
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/alocar-manual/${wave.id}`)}
-                            className="flex items-center gap-2"
-                          >
-                            <Package className="h-4 w-4" />
-                            Continuar Alocação Manual
-                          </Button>
-                        </>
-                      )}
+                       {wave.status === "em_andamento" && (
+                         <>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => navigate(`/alocar-scanner/${wave.id}`)}
+                             className="flex items-center gap-2"
+                           >
+                             <Play className="h-4 w-4" />
+                             Continuar Alocação com Scanner
+                           </Button>
+                           
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => navigate(`/alocar-manual/${wave.id}`)}
+                             className="flex items-center gap-2"
+                           >
+                             <Package className="h-4 w-4" />
+                             Continuar Alocação Manual
+                           </Button>
+                         </>
+                       )}
                     </>
                   )}
                   
