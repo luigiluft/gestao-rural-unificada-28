@@ -64,6 +64,25 @@ export default function OndasAlocacao() {
     setProcessingWaveId(waveId)
     console.log(`Iniciando alocação automática para onda: ${waveId}`)
     
+    // Verificar se a onda já tem posições definidas
+    const wave = waves?.find(w => w.id === waveId)
+    if (wave?.status === 'posicoes_definidas' || wave?.status === 'em_andamento') {
+      console.log('Posições já definidas, iniciando onda diretamente...')
+      startWave(
+        { waveId },
+        {
+          onSuccess: () => {
+            console.log('Onda iniciada, redirecionando para scanner...')
+            navigate(`/alocar-scanner/${waveId}`)
+          },
+          onSettled: () => {
+            setProcessingWaveId(null)
+          }
+        }
+      )
+      return
+    }
+    
     definePositions(
       { waveId },
       {
@@ -99,6 +118,15 @@ export default function OndasAlocacao() {
   const handleManualAllocation = (waveId: string) => {
     setProcessingWaveId(waveId)
     console.log(`Iniciando alocação manual para onda: ${waveId}`)
+    
+    // Verificar se a onda já tem posições definidas
+    const wave = waves?.find(w => w.id === waveId)
+    if (wave?.status === 'posicoes_definidas' || wave?.status === 'em_andamento') {
+      console.log('Posições já definidas, redirecionando para alocação manual...')
+      navigate(`/alocar-manual/${waveId}`)
+      setProcessingWaveId(null)
+      return
+    }
     
     definePositions(
       { waveId },
