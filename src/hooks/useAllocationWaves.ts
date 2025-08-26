@@ -28,18 +28,34 @@ export const usePalletAllocationWaves = () => {
         return []
       }
 
-      // Enriquecer com nome da franquia para múltiplas ondas
+      // Enriquecer com nome da franquia e contagens de pallets
       const enrichedData = await Promise.all(
         data.map(async (wave) => {
+          // Buscar nome da franquia
           const { data: franquia } = await supabase
             .from("franquias")
             .select("nome")
             .eq("id", wave.deposito_id)
             .single()
 
+          // Buscar contagem total de pallets
+          const { count: totalPallets } = await supabase
+            .from("allocation_wave_pallets")
+            .select("*", { count: 'exact', head: true })
+            .eq("wave_id", wave.id)
+
+          // Buscar contagem de pallets alocados
+          const { count: palletsAlocados } = await supabase
+            .from("allocation_wave_pallets")
+            .select("*", { count: 'exact', head: true })
+            .eq("wave_id", wave.id)
+            .in("status", ["alocado", "com_divergencia"])
+
           return {
             ...wave,
-            franquia_nome: franquia?.nome || "Franquia não encontrada"
+            franquia_nome: franquia?.nome || "Franquia não encontrada",
+            total_pallets: totalPallets || 0,
+            pallets_alocados: palletsAlocados || 0,
           }
         })
       )

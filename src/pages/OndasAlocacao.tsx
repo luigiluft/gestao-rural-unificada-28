@@ -79,11 +79,11 @@ export default function OndasAlocacao() {
   // }
 
   const getTotalPallets = (wave: any) => {
-    return wave.allocation_wave_pallets?.length || 0
+    return wave.total_pallets || 0
   }
 
   const getPalletsAlocados = (wave: any) => {
-    return wave.allocation_wave_pallets?.filter((pallet: any) => pallet.status === 'alocado' || pallet.status === 'com_divergencia').length || 0
+    return wave.pallets_alocados || 0
   }
 
   if (isLoading) {
