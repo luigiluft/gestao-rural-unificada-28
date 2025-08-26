@@ -62,15 +62,20 @@ export default function OndasAlocacao() {
 
   const handleExecuteAllocation = (waveId: string) => {
     setProcessingWaveId(waveId)
+    console.log(`Iniciando alocação automática para onda: ${waveId}`)
+    
     definePositions(
       { waveId },
       {
         onSuccess: (result: any) => {
+          console.log('Resultado da definição de posições:', result)
           if (result?.success) {
+            console.log('Posições definidas com sucesso, iniciando onda...')
             startWave(
               { waveId },
               {
                 onSuccess: () => {
+                  console.log('Onda iniciada, redirecionando para scanner...')
                   navigate(`/alocar-scanner/${waveId}`)
                 },
                 onSettled: () => {
@@ -79,10 +84,12 @@ export default function OndasAlocacao() {
               }
             )
           } else {
+            console.error('Falha na definição de posições:', result)
             setProcessingWaveId(null)
           }
         },
-        onError: () => {
+        onError: (error) => {
+          console.error('Erro na definição de posições:', error)
           setProcessingWaveId(null)
         }
       }
@@ -91,16 +98,21 @@ export default function OndasAlocacao() {
 
   const handleManualAllocation = (waveId: string) => {
     setProcessingWaveId(waveId)
+    console.log(`Iniciando alocação manual para onda: ${waveId}`)
+    
     definePositions(
       { waveId },
       {
         onSuccess: (result: any) => {
+          console.log('Resultado da definição de posições:', result)
           if (result?.success) {
+            console.log('Posições definidas com sucesso, redirecionando para alocação manual...')
             navigate(`/alocar-manual/${waveId}`)
           }
           setProcessingWaveId(null)
         },
-        onError: () => {
+        onError: (error) => {
+          console.error('Erro na definição de posições:', error)
           setProcessingWaveId(null)
         }
       }
