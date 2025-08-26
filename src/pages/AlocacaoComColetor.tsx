@@ -187,7 +187,29 @@ export default function AlocacaoComColetor() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!conferenciaMode ? (
+            {!currentPosition ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <div className="text-sm">
+                    <p className="font-medium text-destructive mb-2">Posição não definida</p>
+                    <p className="text-destructive/80">
+                      Este pallet não tem uma posição de armazenamento definida. 
+                      Retorne à página de ondas e redefina as posições automaticamente.
+                    </p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => navigate("/ondas-alocacao")}
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar e Redefinir Posições
+                </Button>
+              </div>
+            ) : !conferenciaMode ? (
               <div className="text-center space-y-4">
                 <div className="animate-pulse">
                   <div className="h-4 bg-muted rounded mb-2"></div>

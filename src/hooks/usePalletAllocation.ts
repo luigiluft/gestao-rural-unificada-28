@@ -114,10 +114,19 @@ export const usePalletAllocation = (waveId: string) => {
 
   // Alocar pallet
   const handleAllocatePallet = async (scannedPalletCode: string, scannedPositionCode: string) => {
-    if (!currentPallet || !currentPosition) {
+    if (!currentPallet) {
       toast({
         title: "Dados incompletos",
-        description: "Pallet ou posição não encontrados",
+        description: "Pallet não encontrado",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (!currentPosition) {
+      toast({
+        title: "Posição não definida",
+        description: "Este pallet não tem uma posição definida. Retorne à página de ondas e redefina as posições.",
         variant: "destructive",
       })
       return false
