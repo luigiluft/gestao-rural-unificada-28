@@ -143,7 +143,8 @@ export default function AlocacaoManual() {
                   <Button 
                     onClick={handleManualAllocate}
                     disabled={isProcessing || !allProductsChecked}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full"
+                    variant="default"
                     size="lg"
                   >
                     <Package className="w-4 h-4 mr-2" />

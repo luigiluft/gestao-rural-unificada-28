@@ -11,7 +11,7 @@ import { PalletProductsCheck } from "@/components/Alocacao/PalletProductsCheck"
 import { ProgressIndicator } from "@/components/Alocacao/ProgressIndicator"
 import { usePalletAllocation } from "@/hooks/usePalletAllocation"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle, Package, SkipForward, Scan } from "lucide-react"
+import { CheckCircle, Package, SkipForward, Scan, ArrowLeft } from "lucide-react"
 
 export default function AlocacaoComColetor() {
   const { waveId } = useParams<{ waveId: string }>()
@@ -137,8 +137,12 @@ export default function AlocacaoComColetor() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate("/ondas-alocacao")}>
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Voltar
+        </Button>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">Conferência de Pallets</h1>
           <p className="text-muted-foreground">
             Onda: {wave?.numero_onda} - {wave?.franquia_nome}
