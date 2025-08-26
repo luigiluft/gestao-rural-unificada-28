@@ -3,24 +3,23 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Trash2, Package, Edit3, AlertCircle, Copy } from "lucide-react"
+import { Plus, Trash2, Package, Minus } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { 
   useEntradaPallets, 
   useCreatePallet, 
-  useUpdatePallet, 
   useDeletePallet,
   useAddItemToPallet,
   useRemoveItemFromPallet,
-  useUpdatePalletItem,
   type EntradaPallet,
   type EntradaPalletItem
 } from "@/hooks/useEntradaPallets"
 
-type ExtendedEntradaPallet = EntradaPallet & { entrada_pallet_itens?: EntradaPalletItem[] }
+type ExtendedEntradaPallet = EntradaPallet & { 
+  entrada_pallet_itens?: EntradaPalletItem[]
+}
 
 interface PlanejamentoPalletsProps {
   entradaId: string
@@ -36,13 +35,10 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const { data: pallets = [], isLoading } = useEntradaPallets(entradaId)
   const typedPallets = pallets as ExtendedEntradaPallet[]
   const createPallet = useCreatePallet()
-  const updatePallet = useUpdatePallet()
   const deletePallet = useDeletePallet()
   const addItemToPallet = useAddItemToPallet()
   const removeItemFromPallet = useRemoveItemFromPallet()
-  const updatePalletItem = useUpdatePalletItem()
 
-  const [editingPallet, setEditingPallet] = useState<ExtendedEntradaPallet | null>(null)
   const [newPallet, setNewPallet] = useState({
     descricao: "",
   })
@@ -54,7 +50,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     codigo?: string
     maxQuantidade: number
   }>>([])
-  const [duplicatingPallet, setDuplicatingPallet] = useState<{ palletId: string; quantity: number } | null>(null)
 
   const getNextPalletNumber = () => {
     const existingNumbers = typedPallets.map(p => p.numero_pallet).sort((a, b) => a - b)
@@ -66,6 +61,28 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     return existingNumbers.length + 1
   }
 
+  // Group pallets by content
+  const getGroupedPallets = () => {
+    const groups: { [key: string]: ExtendedEntradaPallet[] } = {}
+    
+    typedPallets.forEach(pallet => {
+      // Create a key based on pallet content
+      const items = pallet.entrada_pallet_itens?.map(item => 
+        `${item.entrada_item_id}-${item.quantidade}`
+      ).sort().join('|') || ''
+      
+      if (!groups[items]) {
+        groups[items] = []
+      }
+      groups[items].push(pallet)
+    })
+    
+    return Object.values(groups).map(group => ({
+      template: group[0],
+      count: group.length,
+      pallets: group
+    }))
+  }
 
   const handleCreatePallet = async () => {
     if (selectedProductsForNewPallet.length === 0) return
@@ -89,17 +106,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     // Reset
     setNewPallet({ descricao: "" })
     setSelectedProductsForNewPallet([])
-  }
-
-  const handleUpdatePallet = async () => {
-    if (!editingPallet) return
-    
-    await updatePallet.mutateAsync({
-      id: editingPallet.id,
-      descricao: editingPallet.descricao,
-      peso_total: null,
-    })
-    setEditingPallet(null)
   }
 
   const handleAddItemToPallet = async (productId: string, palletId: string, quantidade: number) => {
@@ -143,6 +149,8 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
 
   const getTotalQuantidadeAlocada = (itemId: string) => {
     let total = 0
+    
+    // Count all items in existing pallets (each pallet counts individually)
     typedPallets.forEach(pallet => {
       pallet.entrada_pallet_itens?.forEach(item => {
         if (item.entrada_item_id === itemId) {
@@ -151,7 +159,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       })
     })
     
-    // Somar também os produtos selecionados para o novo pallet
+    // Add products selected for new pallet
     selectedProductsForNewPallet.forEach(product => {
       if (product.productId === itemId) {
         total += product.quantidade
@@ -181,31 +189,21 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     return entradaItens.filter(item => getQuantidadeDisponivel(item.id) > 0)
   }
 
-  const handleDuplicatePallet = async (originalPallet: ExtendedEntradaPallet, quantity: number) => {
-    if (quantity <= 1) {
-      toast({
-        title: "Quantidade inválida",
-        description: "A quantidade deve ser maior que 1.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    // Verificar se há produtos suficientes para duplicar
+  const handleDuplicatePallet = async (templatePallet: ExtendedEntradaPallet) => {
+    // Check if there are enough products to duplicate
     const requiredProducts: { [key: string]: number } = {}
-    originalPallet.entrada_pallet_itens?.forEach(item => {
-      requiredProducts[item.entrada_item_id] = Number(item.quantidade) * (quantity - 1) // -1 porque o original já existe
+    templatePallet.entrada_pallet_itens?.forEach(item => {
+      requiredProducts[item.entrada_item_id] = Number(item.quantidade)
     })
 
-    // Verificar disponibilidade
+    // Check availability
     for (const [itemId, neededQuantity] of Object.entries(requiredProducts)) {
       const available = getQuantidadeDisponivel(itemId)
       if (available < neededQuantity) {
         const produto = entradaItens.find(i => i.id === itemId)
-        const maxPallets = Math.floor(available / Number(originalPallet.entrada_pallet_itens?.find(i => i.entrada_item_id === itemId)?.quantidade || 0)) + 1
         toast({
           title: "Estoque insuficiente",
-          description: `Não há ${produto?.nome_produto} suficiente. Máximo possível: ${maxPallets} pallets.`,
+          description: `Não há ${produto?.nome_produto} suficiente para criar mais um pallet.`,
           variant: "destructive"
         })
         return
@@ -213,39 +211,57 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     }
 
     try {
-      // Criar os pallets duplicados
-      for (let i = 1; i < quantity; i++) {
-        const newPalletData = await createPallet.mutateAsync({
-          entrada_id: entradaId,
-          numero_pallet: getNextPalletNumber(),
-          descricao: originalPallet.descricao ? `${originalPallet.descricao} (Cópia ${i})` : `Pallet ${originalPallet.numero_pallet} (Cópia ${i})`,
-          peso_total: originalPallet.peso_total,
-        })
+      const newPalletData = await createPallet.mutateAsync({
+        entrada_id: entradaId,
+        numero_pallet: getNextPalletNumber(),
+        descricao: templatePallet.descricao,
+        peso_total: templatePallet.peso_total,
+      })
 
-        // Adicionar os mesmos produtos ao pallet duplicado
-        if (originalPallet.entrada_pallet_itens) {
-          for (const item of originalPallet.entrada_pallet_itens) {
-            await addItemToPallet.mutateAsync({
-              pallet_id: newPalletData.id,
-              entrada_item_id: item.entrada_item_id,
-              quantidade: Number(item.quantidade)
-            })
-          }
+      // Add same products to duplicated pallet
+      if (templatePallet.entrada_pallet_itens) {
+        for (const item of templatePallet.entrada_pallet_itens) {
+          await addItemToPallet.mutateAsync({
+            pallet_id: newPalletData.id,
+            entrada_item_id: item.entrada_item_id,
+            quantidade: Number(item.quantidade)
+          })
         }
       }
 
       toast({
-        title: "Pallets duplicados",
-        description: `${quantity - 1} pallet${quantity > 2 ? 's' : ''} criado${quantity > 2 ? 's' : ''} com sucesso!`,
+        title: "Pallet duplicado",
+        description: "Pallet criado com sucesso!",
       })
 
     } catch (error) {
       toast({
         title: "Erro ao duplicar",
-        description: "Erro ao criar pallets duplicados. Tente novamente.",
+        description: "Erro ao criar pallet. Tente novamente.",
         variant: "destructive"
       })
     }
+  }
+
+  const handleRemoveLastPallet = async (group: { template: ExtendedEntradaPallet; pallets: ExtendedEntradaPallet[] }) => {
+    if (group.pallets.length <= 1) return
+    
+    const lastPallet = group.pallets[group.pallets.length - 1]
+    await deletePallet.mutateAsync(lastPallet.id)
+    
+    toast({
+      title: "Pallet removido",
+      description: "Último pallet do grupo removido com sucesso!",
+    })
+  }
+
+  const canAddMorePallets = (templatePallet: ExtendedEntradaPallet) => {
+    if (!templatePallet.entrada_pallet_itens) return false
+    
+    return templatePallet.entrada_pallet_itens.every(item => {
+      const available = getQuantidadeDisponivel(item.entrada_item_id)
+      return available >= Number(item.quantidade)
+    })
   }
 
   if (isLoading) {
@@ -437,119 +453,100 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
           </CardContent>
         </Card>
 
-        {/* Lista de Pallets */}
+        {/* Lista de Pallets Agrupados */}
         <div className="space-y-3">
-          {typedPallets.map((pallet) => (
-            <Card key={pallet.id}>
+          {getGroupedPallets().map((group, groupIndex) => (
+            <Card key={groupIndex}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <Package className="h-4 w-4" />
-                      Pallet #{pallet.numero_pallet}
+                      Pallet #{group.template.numero_pallet}
+                      {group.count > 1 && (
+                        <Badge variant="secondary" className="ml-1">
+                          {group.count}x
+                        </Badge>
+                      )}
                     </CardTitle>
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        min="2"
-                        max="99"
-                        placeholder="Qtd"
-                        className="w-16 h-7 text-xs"
-                        value={duplicatingPallet?.palletId === pallet.id ? duplicatingPallet.quantity : ""}
-                        onChange={(e) => setDuplicatingPallet({
-                          palletId: pallet.id,
-                          quantity: parseInt(e.target.value) || 2
-                        })}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (duplicatingPallet?.palletId === pallet.id && duplicatingPallet.quantity > 1) {
-                            handleDuplicatePallet(pallet, duplicatingPallet.quantity)
-                            setDuplicatingPallet(null)
-                          } else {
-                            toast({
-                              title: "Quantidade necessária",
-                              description: "Insira uma quantidade maior que 1 para duplicar.",
-                              variant: "destructive"
-                            })
-                          }
-                        }}
-                        disabled={!duplicatingPallet?.palletId || duplicatingPallet.palletId !== pallet.id || duplicatingPallet.quantity <= 1}
-                        className="h-7 px-2"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => setEditingPallet(pallet)}
+                      onClick={() => handleDuplicatePallet(group.template)}
+                      disabled={!canAddMorePallets(group.template)}
+                      className="h-7 w-7 p-0"
+                      title="Adicionar mais um pallet igual"
                     >
-                      <Edit3 className="h-3 w-3" />
+                      <Plus className="h-3 w-3" />
                     </Button>
+                    {group.count > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveLastPallet(group)}
+                        className="h-7 w-7 p-0"
+                        title="Remover último pallet"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                    )}
                     <Button
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => deletePallet.mutate(pallet.id)}
+                      onClick={() => {
+                        // Delete all pallets in group
+                        group.pallets.forEach(pallet => deletePallet.mutate(pallet.id))
+                      }}
+                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                      title="Remover todos os pallets deste tipo"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
-                {pallet.descricao && (
-                  <p className="text-sm text-muted-foreground">{pallet.descricao}</p>
+                {group.template.descricao && (
+                  <p className="text-sm text-muted-foreground mt-1">{group.template.descricao}</p>
                 )}
               </CardHeader>
               <CardContent>
-                {/* Produtos já alocados */}
-                {pallet.entrada_pallet_itens?.length ? (
+                {group.template.entrada_pallet_itens && group.template.entrada_pallet_itens.length > 0 ? (
                   <div className="space-y-2">
-                    {pallet.entrada_pallet_itens.map((item) => (
+                    {group.template.entrada_pallet_itens.map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium truncate block">{item.entrada_itens?.nome_produto}</span>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{item.entrada_itens?.nome_produto}</div>
                           {item.entrada_itens?.codigo_produto && (
-                            <span className="text-xs text-muted-foreground">
-                              ({item.entrada_itens.codigo_produto})
-                            </span>
+                            <div className="text-xs text-muted-foreground">{item.entrada_itens.codigo_produto}</div>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">{item.quantidade}</Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeItemFromPallet.mutate(item.id)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <Badge variant="outline">
+                            {item.quantidade} × {group.count} = {Number(item.quantidade) * group.count} unidades
+                          </Badge>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                    <AlertCircle className="h-4 w-4" />
-                    Pallet vazio - clique em um produto disponível para alocar
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Pallet vazio</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           ))}
-
-          {typedPallets.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Nenhum pallet criado ainda</p>
-              <p className="text-sm">Use o formulário acima para criar o primeiro pallet</p>
-            </div>
-          )}
         </div>
+
+        {typedPallets.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>Nenhum pallet criado ainda</p>
+            <p className="text-sm">Use o formulário acima para criar o primeiro pallet</p>
+          </div>
+        )}
       </div>
 
       {/* Dialog para seleção de produto para pallet */}
@@ -609,37 +606,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
             <div className="flex justify-end gap-2 mt-6">
               <Button variant="outline" onClick={() => setSelectedProductToPallet(null)}>
                 Cancelar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Dialog para editar pallet */}
-      {editingPallet && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Editar Pallet #{editingPallet.numero_pallet}</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-descricao">Descrição</Label>
-                <Textarea
-                  id="edit-descricao"
-                  value={editingPallet.descricao || ""}
-                  onChange={(e) => setEditingPallet(prev => prev ? { ...prev, descricao: e.target.value } : null)}
-                  placeholder="Descrição do pallet..."
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => setEditingPallet(null)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleUpdatePallet} disabled={updatePallet.isPending}>
-                {updatePallet.isPending ? "Salvando..." : "Salvar Alterações"}
               </Button>
             </div>
           </div>
