@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom"
+import { useEffect } from "react"
 import { usePalletAllocation } from "@/hooks/usePalletAllocation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,13 @@ export default function AlocacaoManual() {
     startConferencia,
     conferenciaMode
   } = usePalletAllocation(waveId!)
+
+  // Auto-iniciar conferência ao carregar a página
+  useEffect(() => {
+    if (currentPallet && !conferenciaMode) {
+      startConferencia()
+    }
+  }, [currentPallet, conferenciaMode, startConferencia])
 
   const handleManualAllocate = async () => {
     if (!currentPallet || !allProductsChecked) return
@@ -112,25 +120,14 @@ export default function AlocacaoManual() {
           </CardHeader>
           <CardContent className="space-y-4">
             {!conferenciaMode ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-sm">
-                    <p className="font-medium text-blue-800 mb-2">Iniciar Conferência Manual</p>
-                    <p className="text-blue-700">
-                      Clique no botão abaixo para iniciar a conferência manual dos produtos 
-                      do pallet {currentPallet.entrada_pallets.numero_pallet}.
-                    </p>
-                  </div>
+              <div className="text-center space-y-4">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-muted rounded mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
                 </div>
-                
-                <Button 
-                  onClick={startConferencia}
-                  className="w-full"
-                  size="lg"
-                >
-                  <Package className="w-4 h-4 mr-2" />
-                  Iniciar Conferência Manual
-                </Button>
+                <p className="text-muted-foreground">
+                  Iniciando conferência automática...
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
