@@ -204,7 +204,7 @@ export default function OndasAlocacao() {
                             className="flex items-center gap-2"
                           >
                             <Play className="h-4 w-4" />
-                            Conferência com Scanner
+                            Alocação com Scanner
                           </Button>
                           
                           <Button
@@ -214,7 +214,7 @@ export default function OndasAlocacao() {
                             className="flex items-center gap-2"
                           >
                             <Package className="h-4 w-4" />
-                            Conferência Manual
+                            Alocação Manual
                           </Button>
                         </>
                       )}
@@ -228,7 +228,7 @@ export default function OndasAlocacao() {
                             className="flex items-center gap-2"
                           >
                             <Play className="h-4 w-4" />
-                            Continuar com Scanner
+                            Continuar Alocação com Scanner
                           </Button>
                           
                           <Button
@@ -238,7 +238,7 @@ export default function OndasAlocacao() {
                             className="flex items-center gap-2"
                           >
                             <Package className="h-4 w-4" />
-                            Continuar Manualmente
+                            Continuar Alocação Manual
                           </Button>
                         </>
                       )}
