@@ -452,15 +452,27 @@ export default function AprovacaoEntradas() {
                                </Button>
                              </>
                            )}
-                           {entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (
-                             <Button
-                               onClick={() => handleAction(entrada, 'status')}
-                               size="sm"
-                               disabled={atualizarStatus.isPending}
-                             >
-                               {getNextStatusLabel(entrada.status_aprovacao)}
-                             </Button>
-                           )}
+                            {entrada.status_aprovacao === 'planejamento' ? (
+                              <Button 
+                                onClick={() => handleIniciarPlanejamento(entrada)} 
+                                className="ml-2"
+                                size="sm"
+                                disabled={atualizarStatus.isPending}
+                              >
+                                <Package className="h-4 w-4 mr-2" />
+                                Iniciar Alocação
+                              </Button>
+                            ) : (
+                              entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (
+                                <Button
+                                  onClick={() => handleAction(entrada, 'status')}
+                                  size="sm"
+                                  disabled={atualizarStatus.isPending}
+                                >
+                                  {getNextStatusLabel(entrada.status_aprovacao)}
+                                </Button>
+                              )
+                            )}
                          </div>
                       </div>
                     </CardHeader>
@@ -526,28 +538,6 @@ export default function AprovacaoEntradas() {
                         </div>
                       )}
 
-                      {/* Botão para iniciar planejamento de pallets */}
-                      {entrada.status_aprovacao === 'planejamento' && (
-                        <div className="mt-4">
-                          <Separator className="mb-4" />
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="text-lg font-semibold">Planejamento de Pallets</h3>
-                              <p className="text-sm text-muted-foreground">
-                                Monte os pallets com os produtos desta entrada
-                              </p>
-                            </div>
-                            <Button
-                              onClick={() => handleIniciarPlanejamento(entrada)}
-                              size="sm"
-                              disabled={atualizarStatus.isPending}
-                            >
-                              <Package className="h-4 w-4 mr-2" />
-                              Iniciar Planejamento
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 ))}
