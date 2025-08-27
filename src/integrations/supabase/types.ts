@@ -14,187 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      allocation_wave_items: {
-        Row: {
-          alocado_por: string | null
-          barcode_posicao: string | null
-          barcode_produto: string | null
-          created_at: string
-          data_alocacao: string | null
-          entrada_item_id: string
-          id: string
-          lote: string | null
-          posicao_id: string | null
-          produto_id: string
-          quantidade: number
-          quantidade_alocada: number | null
-          status: string
-          updated_at: string
-          wave_id: string
-        }
-        Insert: {
-          alocado_por?: string | null
-          barcode_posicao?: string | null
-          barcode_produto?: string | null
-          created_at?: string
-          data_alocacao?: string | null
-          entrada_item_id: string
-          id?: string
-          lote?: string | null
-          posicao_id?: string | null
-          produto_id: string
-          quantidade: number
-          quantidade_alocada?: number | null
-          status?: string
-          updated_at?: string
-          wave_id: string
-        }
-        Update: {
-          alocado_por?: string | null
-          barcode_posicao?: string | null
-          barcode_produto?: string | null
-          created_at?: string
-          data_alocacao?: string | null
-          entrada_item_id?: string
-          id?: string
-          lote?: string | null
-          posicao_id?: string | null
-          produto_id?: string
-          quantidade?: number
-          quantidade_alocada?: number | null
-          status?: string
-          updated_at?: string
-          wave_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_allocation_wave_items_entrada_item_id"
-            columns: ["entrada_item_id"]
-            isOneToOne: false
-            referencedRelation: "entrada_itens"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_allocation_wave_items_posicao_id"
-            columns: ["posicao_id"]
-            isOneToOne: false
-            referencedRelation: "storage_positions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_allocation_wave_items_produto_id"
-            columns: ["produto_id"]
-            isOneToOne: false
-            referencedRelation: "produtos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_allocation_wave_items_wave_id"
-            columns: ["wave_id"]
-            isOneToOne: false
-            referencedRelation: "allocation_waves"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      allocation_wave_pallets: {
-        Row: {
-          alocado_por: string | null
-          codigo_barras_pallet: string
-          created_at: string
-          data_alocacao: string | null
-          divergencias: Json | null
-          entrada_pallet_id: string
-          id: string
-          posicao_id: string | null
-          produtos_conferidos: Json | null
-          status: string
-          updated_at: string
-          wave_id: string
-        }
-        Insert: {
-          alocado_por?: string | null
-          codigo_barras_pallet: string
-          created_at?: string
-          data_alocacao?: string | null
-          divergencias?: Json | null
-          entrada_pallet_id: string
-          id?: string
-          posicao_id?: string | null
-          produtos_conferidos?: Json | null
-          status?: string
-          updated_at?: string
-          wave_id: string
-        }
-        Update: {
-          alocado_por?: string | null
-          codigo_barras_pallet?: string
-          created_at?: string
-          data_alocacao?: string | null
-          divergencias?: Json | null
-          entrada_pallet_id?: string
-          id?: string
-          posicao_id?: string | null
-          produtos_conferidos?: Json | null
-          status?: string
-          updated_at?: string
-          wave_id?: string
-        }
-        Relationships: []
-      }
-      allocation_waves: {
-        Row: {
-          created_at: string
-          created_by: string
-          data_conclusao: string | null
-          data_criacao: string
-          data_inicio: string | null
-          deposito_id: string
-          funcionario_id: string | null
-          id: string
-          numero_onda: string
-          observacoes: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          data_conclusao?: string | null
-          data_criacao?: string
-          data_inicio?: string | null
-          deposito_id: string
-          funcionario_id?: string | null
-          id?: string
-          numero_onda: string
-          observacoes?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          data_conclusao?: string | null
-          data_criacao?: string
-          data_inicio?: string | null
-          deposito_id?: string
-          funcionario_id?: string | null
-          id?: string
-          numero_onda?: string
-          observacoes?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_allocation_waves_deposito_id"
-            columns: ["deposito_id"]
-            isOneToOne: false
-            referencedRelation: "franquias"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chamados_suporte: {
         Row: {
           categoria: string | null
@@ -1475,6 +1294,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pallet_positions: {
+        Row: {
+          alocado_em: string | null
+          alocado_por: string | null
+          created_at: string | null
+          id: string
+          observacoes: string | null
+          pallet_id: string
+          posicao_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alocado_em?: string | null
+          alocado_por?: string | null
+          created_at?: string | null
+          id?: string
+          observacoes?: string | null
+          pallet_id: string
+          posicao_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alocado_em?: string | null
+          alocado_por?: string | null
+          created_at?: string | null
+          id?: string
+          observacoes?: string | null
+          pallet_id?: string
+          posicao_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pallet_positions_pallet_id_fkey"
+            columns: ["pallet_id"]
+            isOneToOne: true
+            referencedRelation: "entrada_pallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pallet_positions_posicao_id_fkey"
+            columns: ["posicao_id"]
+            isOneToOne: false
+            referencedRelation: "storage_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_invites: {
         Row: {
           created_at: string
@@ -2074,6 +1944,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      allocate_pallet_to_position: {
+        Args: {
+          p_observacoes?: string
+          p_pallet_id: string
+          p_posicao_id: string
+        }
+        Returns: boolean
+      }
       auto_allocate_positions: {
         Args: { p_wave_id: string }
         Returns: boolean
@@ -2126,6 +2004,10 @@ export type Database = {
           p_produtos_conferidos: Json
           p_wave_pallet_id: string
         }
+        Returns: boolean
+      }
+      create_stock_from_pallet: {
+        Args: { p_pallet_id: string }
         Returns: boolean
       }
       define_wave_positions: {

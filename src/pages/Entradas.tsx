@@ -488,21 +488,24 @@ export default function Entradas() {
 
       console.log('Entrada itens encontrados:', entradaItens?.length || 0)
 
-      // 3. Deletar allocation_wave_items se houver itens
-      if (entradaItens && entradaItens.length > 0) {
-        const itemIds = entradaItens.map(item => item.id)
+      // 3. Buscar e remover alocações de pallets se houver
+      const { data: entradaPallets } = await supabase
+        .from('entrada_pallets')
+        .select('id')
+        .eq('entrada_id', entradaId);
         
-        console.log('STEP 3: Deletando allocation_wave_items para:', itemIds)
-        const { data: deletedWaveItems, error: waveItemsError } = await supabase
-          .from('allocation_wave_items')
-          .delete()
-          .in('entrada_item_id', itemIds)
-          .select()
+      if (entradaPallets && entradaPallets.length > 0) {
+        const palletIds = entradaPallets.map(pallet => pallet.id)
+        
+        console.log('STEP 3: Removendo alocações de pallets para:', palletIds)
+        const { error: palletPositionsError } = await supabase
+          .from('pallet_positions')
+          .update({ status: 'removido' })
+          .in('pallet_id', palletIds)
 
-        console.log('Wave items deletados:', deletedWaveItems?.length || 0, 'registros')
-        if (waveItemsError) {
-          console.error('Erro ao deletar wave items:', waveItemsError)
-          throw new Error(`Erro ao deletar itens de ondas: ${waveItemsError.message}`)
+        if (palletPositionsError) {
+          console.error('Erro ao remover alocações de pallets:', palletPositionsError)
+          throw new Error(`Erro ao remover alocações: ${palletPositionsError.message}`)
         }
       }
 

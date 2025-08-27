@@ -75,21 +75,28 @@ export const useNotifications = () => {
 
         const lastViewTime = lastView?.last_viewed_at || '1970-01-01T00:00:00Z'
 
-        // Count completed allocation waves since last view
+        // Count allocated pallets since last view as estoque indicator
         const { count: estoqueCount } = await supabase
-          .from("allocation_waves")
+          .from("pallet_positions")
           .select("id", { count: "exact" })
-          .eq("status", "concluido")
-          .gte("data_conclusao", lastViewTime)
+          .eq("status", "alocado")
+          .gte("alocado_em", lastViewTime)
 
         estoque = estoqueCount || 0
 
-        // ALOCAÇÕES: For franqueados - allocation waves pending allocation
+        // ALOCAÇÕES: For franqueados - pending pallets for allocation
         if (isFranqueado || isAdmin) {
-          let alocacoesQuery = supabase
-            .from("allocation_waves")
-            .select("id", { count: "exact" })
-            .in("status", ["pendente", "posicoes_definidas", "em_andamento"])
+          // Count pallets pending allocation
+          let pendingPalletsQuery = supabase
+            .from("entrada_pallets")
+            .select(`
+              id,
+              entradas!inner (
+                deposito_id,
+                status_aprovacao
+              )
+            `, { count: "exact" })
+            .eq("entradas.status_aprovacao", "confirmado")
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
@@ -100,12 +107,20 @@ export const useNotifications = () => {
             
             const franquiaIds = franquias?.map(f => f.id) || []
             if (franquiaIds.length > 0) {
-              alocacoesQuery = alocacoesQuery.in("deposito_id", franquiaIds)
+              pendingPalletsQuery = pendingPalletsQuery.in("entradas.deposito_id", franquiaIds)
             }
           }
 
-          const { count: alocacoesCount } = await alocacoesQuery
-          alocacoes = alocacoesCount || 0
+          // Filter out already allocated pallets
+          const { data: allPallets } = await pendingPalletsQuery
+          const { data: allocatedPalletIds } = await supabase
+            .from("pallet_positions")
+            .select("pallet_id")
+            .eq("status", "alocado")
+
+          const allocatedIds = new Set(allocatedPalletIds?.map(p => p.pallet_id) || [])
+          const pendingPallets = allPallets?.filter(pallet => !allocatedIds.has(pallet.id)) || []
+          alocacoes = pendingPallets.length
         }
 
         // SEPARAÇÃO: For franqueados - saídas pending separation only

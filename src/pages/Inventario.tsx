@@ -46,7 +46,7 @@ import {
 } from "@/hooks/useInventarios"
 import { useStoragePositions } from "@/hooks/useStoragePositions"
 import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
-import { useEstoquePosicao } from "@/hooks/useEstoquePosicao"
+// Removed useEstoquePosicao hook - no longer needed
 import { useAuth } from "@/contexts/AuthContext"
 import { format } from "date-fns"
 import { useToast } from "@/hooks/use-toast"
@@ -95,7 +95,8 @@ export default function Inventario() {
   const { data: posicoes } = useInventarioPosicoes(currentInventoryId || undefined)
   const { data: itens } = useInventarioItens(currentInventoryId || undefined)
   const { data: todasPosicoes } = useStoragePositions(inventoryConfig.franquiaId)
-  const { data: estoquePosicao } = useEstoquePosicao(currentPosition?.id)
+  // Removed estoquePosicao hook - no longer needed in new allocation system
+  const estoquePosicao: any[] = []
   const { user } = useAuth()
   const { data: depositos, isLoading: loadingDepositos } = useDepositosDisponiveis(user?.id)
   
