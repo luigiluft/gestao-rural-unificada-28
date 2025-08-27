@@ -10,41 +10,38 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePalletsPendentes, useAllocatePallet, useCreateStockFromPallet } from "@/hooks/usePalletPositions";
+import { usePalletsPendentes, useAutoAllocatePallet, useCreateStockFromPallet } from "@/hooks/usePalletPositions";
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function AlocacaoPallets() {
   const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
-  const [selectedPallet, setSelectedPallet] = useState<string>();
-  const [selectedPosition, setSelectedPosition] = useState<string>();
+  const [selectedPallet, setSelectedPallet] = useState<any>();
   const [observacoes, setObservacoes] = useState("");
 
   const { data: palletsPendentes, isLoading: loadingPallets } = usePalletsPendentes(selectedDepositoId);
-  const { data: availablePositions } = useAvailablePositions(selectedDepositoId);
-  const allocatePallet = useAllocatePallet();
+  const autoAllocatePallet = useAutoAllocatePallet();
   const createStock = useCreateStockFromPallet();
 
-  const handleAllocate = async () => {
-    if (!selectedPallet || !selectedPosition) return;
+  const handleAutoAllocate = async (pallet: any) => {
+    if (!pallet?.entradas?.deposito_id) return;
 
     try {
-      await allocatePallet.mutateAsync({
-        palletId: selectedPallet,
-        posicaoId: selectedPosition,
+      const result = await autoAllocatePallet.mutateAsync({
+        palletId: pallet.id,
+        depositoId: pallet.entradas.deposito_id,
         observacoes,
       });
 
-      // Opcionalmente criar estoque imediatamente
-      await createStock.mutateAsync(selectedPallet);
+      // Criar estoque imediatamente após alocação
+      await createStock.mutateAsync(pallet.id);
 
       // Reset form
       setSelectedPallet(undefined);
-      setSelectedPosition(undefined);
       setObservacoes("");
     } catch (error) {
-      console.error("Erro na alocação:", error);
+      console.error("Erro na alocação automática:", error);
     }
   };
 
@@ -107,10 +104,10 @@ export default function AlocacaoPallets() {
                         <Button 
                           variant="default" 
                           size="sm"
-                          onClick={() => setSelectedPallet(pallet.id)}
+                          onClick={() => setSelectedPallet(pallet)}
                         >
                           <MapPin className="h-4 w-4 mr-2" />
-                          Alocar
+                          Alocar Automaticamente
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md">
@@ -118,23 +115,14 @@ export default function AlocacaoPallets() {
                           <DialogTitle>Alocar Pallet #{pallet.numero_pallet}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="position">Posição</Label>
-                            <Select 
-                              value={selectedPosition} 
-                              onValueChange={setSelectedPosition}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione uma posição disponível" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availablePositions?.map((position) => (
-                                  <SelectItem key={position.id} value={position.id}>
-                                    {position.codigo}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <div className="p-4 bg-muted rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <QrCode className="h-5 w-5 text-primary" />
+                              <span className="font-semibold">Posição Selecionada Automaticamente</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              O sistema irá selecionar automaticamente a primeira posição disponível em ordem alfabética para este pallet.
+                            </p>
                           </div>
 
                           <div>
@@ -148,11 +136,11 @@ export default function AlocacaoPallets() {
                           </div>
 
                           <Button 
-                            onClick={handleAllocate}
-                            disabled={!selectedPosition || allocatePallet.isPending}
+                            onClick={() => handleAutoAllocate(selectedPallet)}
+                            disabled={autoAllocatePallet.isPending || createStock.isPending}
                             className="w-full"
                           >
-                            {allocatePallet.isPending ? "Alocando..." : "Confirmar Alocação"}
+                            {(autoAllocatePallet.isPending || createStock.isPending) ? "Alocando..." : "Confirmar Alocação Automática"}
                           </Button>
                         </div>
                       </DialogContent>

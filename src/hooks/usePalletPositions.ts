@@ -157,6 +157,74 @@ export const useAllocatePallet = () => {
   });
 };
 
+// Hook para alocação automática de pallet
+export const useAutoAllocatePallet = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      palletId,
+      depositoId,
+      observacoes,
+    }: {
+      palletId: string;
+      depositoId: string;
+      observacoes?: string;
+    }) => {
+      // Buscar a primeira posição disponível ordenada por código
+      const { data: positions, error: positionError } = await supabase
+        .from("storage_positions")
+        .select("*")
+        .eq("deposito_id", depositoId)
+        .eq("ativo", true)
+        .eq("ocupado", false)
+        .order("codigo", { ascending: true })
+        .limit(1);
+
+      if (positionError) throw positionError;
+      if (!positions || positions.length === 0) {
+        throw new Error("Não há posições disponíveis no depósito");
+      }
+
+      const selectedPosition = positions[0];
+
+      // Alocar o pallet na posição selecionada
+      const { data, error } = await supabase.rpc("allocate_pallet_to_position", {
+        p_pallet_id: palletId,
+        p_posicao_id: selectedPosition.id,
+        p_observacoes: observacoes,
+      });
+
+      if (error) throw error;
+      
+      return {
+        success: true,
+        position: selectedPosition,
+        data
+      };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["available-positions"] });
+      toast({
+        title: "Sucesso",
+        description: `Pallet alocado automaticamente na posição ${result.position.codigo}!`,
+      });
+    },
+    onError: (error) => {
+      console.error("Erro ao alocar pallet automaticamente:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao alocar pallet automaticamente",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 // Hook para criar estoque do pallet
 export const useCreateStockFromPallet = () => {
   const { toast } = useToast();
