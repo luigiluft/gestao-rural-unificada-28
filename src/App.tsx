@@ -71,6 +71,9 @@ const App = () => (
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
               
+              {/* Legacy route redirect */}
+              <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />
+              
               <Route path="alocacao-pallets" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />
               <Route path="gerenciar-alocacoes" element={<RequirePageAccess pageKey="gerenciar-alocacoes"><GerenciarAlocacoes /></RequirePageAccess>} />
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
