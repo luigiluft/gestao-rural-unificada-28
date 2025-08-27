@@ -2128,17 +2128,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      complete_pallet_allocation_and_create_stock_debug: {
-        Args: {
-          p_barcode_pallet: string
-          p_barcode_posicao: string
-          p_divergencias?: Json
-          p_posicao_id: string
-          p_produtos_conferidos: Json
-          p_wave_pallet_id: string
-        }
-        Returns: boolean
-      }
       define_wave_positions: {
         Args: { p_wave_id: string }
         Returns: Json
