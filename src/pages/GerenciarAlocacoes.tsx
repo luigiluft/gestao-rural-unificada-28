@@ -51,7 +51,7 @@ export default function GerenciarAlocacoes() {
 
       {!palletPositions?.length ? (
         <EmptyState
-          icon={Package as any}
+          icon={<Package className="h-8 w-8" />}
           title="Nenhuma alocação encontrada"
           description="Não há pallets alocados no momento."
         />

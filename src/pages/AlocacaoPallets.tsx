@@ -77,7 +77,7 @@ export default function AlocacaoPallets() {
 
       {!palletsPendentes?.length ? (
         <EmptyState
-          icon={Package as any}
+          icon={<Package className="h-8 w-8" />}
           title="Nenhum pallet pendente"
           description="Todos os pallets foram alocados ou não há entradas aprovadas."
         />
