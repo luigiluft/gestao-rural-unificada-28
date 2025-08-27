@@ -738,56 +738,6 @@ export type Database = {
           },
         ]
       }
-      estoque: {
-        Row: {
-          data_validade: string | null
-          deposito_id: string
-          id: string
-          lote: string | null
-          produto_id: string
-          quantidade_atual: number
-          quantidade_disponivel: number | null
-          quantidade_reservada: number
-          updated_at: string
-          user_id: string
-          valor_medio: number | null
-        }
-        Insert: {
-          data_validade?: string | null
-          deposito_id: string
-          id?: string
-          lote?: string | null
-          produto_id: string
-          quantidade_atual?: number
-          quantidade_disponivel?: number | null
-          quantidade_reservada?: number
-          updated_at?: string
-          user_id: string
-          valor_medio?: number | null
-        }
-        Update: {
-          data_validade?: string | null
-          deposito_id?: string
-          id?: string
-          lote?: string | null
-          produto_id?: string
-          quantidade_atual?: number
-          quantidade_disponivel?: number | null
-          quantidade_reservada?: number
-          updated_at?: string
-          user_id?: string
-          valor_medio?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "estoque_produto_id_fkey"
-            columns: ["produto_id"]
-            isOneToOne: false
-            referencedRelation: "produtos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       fazendas: {
         Row: {
           area_total_ha: number | null
@@ -1941,7 +1891,7 @@ export type Database = {
       }
     }
     Views: {
-      estoque_calculado: {
+      estoque: {
         Row: {
           data_validade: string | null
           deposito_id: string | null
@@ -2103,7 +2053,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
-      refresh_estoque_calculado: {
+      refresh_estoque: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

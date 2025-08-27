@@ -140,29 +140,9 @@ export default function Saidas() {
         
         for (const item of saidaItens) {
           if (item.produto_id && item.quantidade) {
-            console.log(`Restaurando ${item.quantidade} unidades do produto ${item.produto_id}`)
-            
-            // Buscar estoque existente
-            const { data: estoqueExistente } = await supabase
-              .from('estoque')
-              .select('id, quantidade_atual')
-              .eq('produto_id', item.produto_id)
-              .eq('user_id', saidaExists.user_id)
-              .single()
-
-            if (estoqueExistente) {
-              // Atualizar estoque existente
-              const { error: updateEstoqueError } = await supabase
-                .from('estoque')
-                .update({
-                  quantidade_atual: estoqueExistente.quantidade_atual + item.quantidade
-                })
-                .eq('id', estoqueExistente.id)
-
-              if (updateEstoqueError) {
-                console.error('Erro ao restaurar estoque:', updateEstoqueError)
-              }
-            }
+            console.log(`Item processado: ${item.quantidade} unidades do produto ${item.produto_id}`)
+            // Não é mais necessário atualizar o estoque manualmente
+            // O estoque será atualizado automaticamente quando as movimentações forem deletadas
           }
         }
       }
