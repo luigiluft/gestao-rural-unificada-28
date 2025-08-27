@@ -1941,7 +1941,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      estoque_calculado: {
+        Row: {
+          data_validade: string | null
+          deposito_id: string | null
+          id: string | null
+          lote: string | null
+          produto_id: string | null
+          quantidade_atual: number | null
+          quantidade_disponivel: number | null
+          quantidade_reservada: number | null
+          updated_at: string | null
+          user_id: string | null
+          valor_medio: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       allocate_pallet_to_position: {
@@ -2079,6 +2102,10 @@ export type Database = {
       process_entrada_itens_without_produto: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      refresh_estoque_calculado: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       reset_wave_positions: {
         Args: { p_wave_id: string }

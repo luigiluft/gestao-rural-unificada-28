@@ -122,7 +122,7 @@ export const useRastreamentoEstoque = () => {
       console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
-        .from("estoque")
+        .from("estoque_calculado")
         .select(`
           *,
           produtos(nome, unidade_medida)

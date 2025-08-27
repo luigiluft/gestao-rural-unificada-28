@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client"
 
 export const useEstoque = () => {
   return useQuery({
-    queryKey: ["estoque"],
+    queryKey: ["estoque_calculado"],
     queryFn: async () => {
       const { data: estoque, error } = await supabase
-        .from("estoque")
+        .from("estoque_calculado")
         .select(`
           *,
           produtos(nome, unidade_medida)

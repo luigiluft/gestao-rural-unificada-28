@@ -7,7 +7,7 @@ export const useDashboardStats = () => {
     queryFn: async () => {
       // Get total stock count
       const { count: totalEstoque } = await supabase
-        .from("estoque")
+        .from("estoque_calculado")
         .select("*", { count: "exact", head: true })
 
       // Get active products count
@@ -18,7 +18,7 @@ export const useDashboardStats = () => {
 
       // Get total stock value
       const { data: estoqueData } = await supabase
-        .from("estoque")
+        .from("estoque_calculado")
         .select("quantidade_atual, valor_medio")
 
       const valorTotal = estoqueData?.reduce((acc, item) => {
@@ -27,7 +27,7 @@ export const useDashboardStats = () => {
 
       // Get low stock alerts (where current < minimum threshold)
       const { data: alertas } = await supabase
-        .from("estoque")
+        .from("estoque_calculado")
         .select(`
           *,
           produtos(nome, unidade_medida)

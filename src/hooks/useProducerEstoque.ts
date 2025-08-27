@@ -3,13 +3,13 @@ import { supabase } from "@/integrations/supabase/client"
 
 export const useProducerEstoque = () => {
   return useQuery({
-    queryKey: ["producer-estoque"],
+    queryKey: ["producer-estoque-calculado"],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
 
       const { data: estoque, error } = await supabase
-        .from("estoque")
+        .from("estoque_calculado")
         .select(`
           *,
           produtos(nome, unidade_medida)
