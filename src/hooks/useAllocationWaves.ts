@@ -318,10 +318,10 @@ export const useAllocatePallet = () => {
       console.log("  - produtosConferidos:", produtosConferidos)
       console.log("  - divergencias:", divergencias)
 
-      console.log("🔄 Chamando RPC complete_pallet_allocation_and_create_stock_debug...")
+      console.log("🔄 Chamando RPC complete_pallet_allocation_and_create_stock...")
 
       const { data, error } = await supabase.rpc(
-        "complete_pallet_allocation_and_create_stock_debug",
+        "complete_pallet_allocation_and_create_stock",
         {
           p_wave_pallet_id: wavePalletId,
           p_posicao_id: posicaoId,
@@ -337,7 +337,7 @@ export const useAllocatePallet = () => {
       console.log("  - error:", error)
 
       if (error) {
-        console.error("❌ ERRO na RPC complete_pallet_allocation_and_create_stock_debug:")
+        console.error("❌ ERRO na RPC complete_pallet_allocation_and_create_stock:")
         console.error("  - message:", error.message)
         console.error("  - details:", error.details)
         console.error("  - hint:", error.hint)
