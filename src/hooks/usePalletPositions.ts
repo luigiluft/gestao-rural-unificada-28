@@ -51,6 +51,8 @@ export const usePalletsPendentes = (depositoId?: string) => {
   return useQuery({
     queryKey: ["pallets-pendentes", depositoId],
     queryFn: async () => {
+      console.log('🔍 Buscando pallets pendentes...', { depositoId });
+      
       let query = supabase
         .from("entrada_pallets")
         .select(`
@@ -74,8 +76,7 @@ export const usePalletsPendentes = (depositoId?: string) => {
             )
           )
         `)
-        .eq("entradas.status_aprovacao", "confirmado")
-        .is("pallet_positions.pallet_id", null); // Pallets sem posição alocada
+        .eq("entradas.status_aprovacao", "confirmado");
 
       if (depositoId) {
         query = query.eq("entradas.deposito_id", depositoId);
@@ -83,17 +84,30 @@ export const usePalletsPendentes = (depositoId?: string) => {
 
       const { data: allData, error } = await query.order("created_at", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao buscar pallets:', error);
+        throw error;
+      }
+
+      console.log('📊 Total de pallets confirmados encontrados:', allData?.length || 0);
 
       // Filter out pallets that are already allocated
-      const { data: allocatedPalletIds } = await supabase
+      const { data: allocatedPalletIds, error: allocatedError } = await supabase
         .from("pallet_positions")
         .select("pallet_id")
         .eq("status", "alocado");
 
+      if (allocatedError) {
+        console.error('❌ Erro ao buscar pallets alocados:', allocatedError);
+      }
+
+      console.log('📋 Pallets já alocados:', allocatedPalletIds?.length || 0);
+
       const allocatedIds = new Set(allocatedPalletIds?.map(p => p.pallet_id) || []);
       const data = allData?.filter(pallet => !allocatedIds.has(pallet.id)) || [];
 
+      console.log('✅ Pallets pendentes filtrados:', data.length);
+      
       return data;
     },
   });
