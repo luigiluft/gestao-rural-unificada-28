@@ -66,7 +66,7 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="w-full h-96">
+        <div className="w-full" style={{ height: Math.max(400, data.length * 40) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
