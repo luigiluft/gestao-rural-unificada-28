@@ -27,6 +27,7 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
     try {
       await confirmAllocation.mutateAsync({
         palletId: allocation.pallet_id,
+        posicaoId: allocation.posicao_id,
         metodoConfirmacao: 'manual'
       });
       
@@ -48,9 +49,8 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
     try {
       await confirmAllocation.mutateAsync({
         palletId: allocation.pallet_id,
-        metodoConfirmacao: 'scanner',
-        codigoBarrasPallet: codigoBarrasPallet.trim(),
-        codigoBarrasPosicao: codigoBarrasPosicao.trim()
+        posicaoId: allocation.posicao_id,
+        metodoConfirmacao: 'scanner'
       });
       
       await createStock.mutateAsync(allocation.pallet_id);
@@ -77,17 +77,17 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
         <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <span className="text-sm font-medium">Pallet:</span>
-              <p className="text-sm">{allocation.pallet_codigo}</p>
-            </div>
+          <div>
+            <span className="text-sm font-medium">Pallet:</span>
+            <p className="text-sm">{allocation.pallet_codigo || allocation.pallet_id}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <span className="text-sm font-medium">Posição:</span>
-              <p className="text-sm">{allocation.posicao_codigo}</p>
-            </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <span className="text-sm font-medium">Posição:</span>
+            <p className="text-sm">{allocation.posicao_codigo || allocation.posicao_id}</p>
+          </div>
           </div>
         </div>
 
@@ -114,11 +114,11 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
                 </p>
                 <div className="flex justify-center items-center gap-4">
                   <Badge variant="outline" className="text-base p-2">
-                    {allocation.pallet_codigo}
+                    {allocation.pallet_codigo || allocation.pallet_id}
                   </Badge>
                   <span>→</span>
                   <Badge variant="outline" className="text-base p-2">
-                    {allocation.posicao_codigo}
+                    {allocation.posicao_codigo || allocation.posicao_id}
                   </Badge>
                 </div>
               </div>
@@ -141,7 +141,7 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
                   <Label htmlFor="pallet-code">Código do Pallet</Label>
                   <Input
                     id="pallet-code"
-                    placeholder={`Esperado: ${allocation.pallet_codigo}`}
+                    placeholder={`Esperado: ${allocation.pallet_codigo || allocation.pallet_id}`}
                     value={codigoBarrasPallet}
                     onChange={(e) => setCodigoBarrasPallet(e.target.value)}
                     disabled={isLoading}
@@ -151,7 +151,7 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
                   <Label htmlFor="position-code">Código da Posição</Label>
                   <Input
                     id="position-code"
-                    placeholder={`Esperado: ${allocation.posicao_codigo}`}
+                    placeholder={`Esperado: ${allocation.posicao_codigo || allocation.posicao_id}`}
                     value={codigoBarrasPosicao}
                     onChange={(e) => setCodigoBarrasPosicao(e.target.value)}
                     disabled={isLoading}

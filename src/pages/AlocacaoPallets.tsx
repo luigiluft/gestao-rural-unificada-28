@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePalletsPendentes, useAutoAllocatePallet, useCreateStockFromPallet } from "@/hooks/usePalletPositions";
+import { usePalletsPendentes, useAutoAllocatePallet, useCreateStockFromPallet, type PalletAllocationResult } from "@/hooks/usePalletPositions";
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
+import ConfirmacaoAlocacao from "@/components/Entradas/ConfirmacaoAlocacao";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -19,6 +20,7 @@ export default function AlocacaoPallets() {
   const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
   const [selectedPallet, setSelectedPallet] = useState<any>();
   const [observacoes, setObservacoes] = useState("");
+  const [pendingAllocation, setPendingAllocation] = useState<PalletAllocationResult | null>(null);
 
   const { data: palletsPendentes, isLoading: loadingPallets } = usePalletsPendentes(selectedDepositoId);
   const autoAllocatePallet = useAutoAllocatePallet();
@@ -34,7 +36,7 @@ export default function AlocacaoPallets() {
         observacoes,
       });
 
-      // Criar estoque imediatamente após alocação
+      // Create stock immediately after allocation (no confirmation needed for now)
       await createStock.mutateAsync(pallet.id);
 
       // Reset form
@@ -43,6 +45,21 @@ export default function AlocacaoPallets() {
     } catch (error) {
       console.error("Erro na alocação automática:", error);
     }
+  };
+
+  const handleConfirmationComplete = async () => {
+    if (pendingAllocation) {
+      try {
+        await createStock.mutateAsync(pendingAllocation.pallet_id);
+        setPendingAllocation(null);
+      } catch (error) {
+        console.error("Erro ao criar estoque:", error);
+      }
+    }
+  };
+
+  const handleConfirmationCancel = () => {
+    setPendingAllocation(null);
   };
 
   if (loadingPallets) {
@@ -208,7 +225,6 @@ export default function AlocacaoPallets() {
           </div>
         </div>
       )}
-      </div>
 
       {/* Confirmation Dialog */}
       {pendingAllocation && (
@@ -222,6 +238,6 @@ export default function AlocacaoPallets() {
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </div>
   );
 }

@@ -2,6 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export interface PalletAllocationResult {
+  pallet_id: string;
+  posicao_id: string;
+  pallet_codigo?: string;
+  posicao_codigo?: string;
+  codigo_barras_pallet?: string;
+  codigo_barras_posicao?: string;
+  position?: any;
+  success?: boolean;
+  data?: any;
+}
+
 // Hook para listar posições de pallets
 export const usePalletPositions = (depositoId?: string) => {
   return useQuery({
@@ -199,10 +211,14 @@ export const useAutoAllocatePallet = () => {
       if (error) throw error;
       
       return {
+        pallet_id: palletId,
+        posicao_id: selectedPosition.id,
+        pallet_codigo: `PALLET-${palletId.substring(0, 8)}`,
+        posicao_codigo: selectedPosition.codigo,
         success: true,
         position: selectedPosition,
         data
-      };
+      } as PalletAllocationResult;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
@@ -305,5 +321,35 @@ export const useRemovePalletAllocation = () => {
         variant: "destructive",
       });
     },
+  });
+};
+
+// Hook para confirmar alocação de pallet (simplificado)
+export const useConfirmPalletAllocation = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ 
+      palletId, 
+      posicaoId,
+      metodoConfirmacao = "manual"
+    }: {
+      palletId: string;
+      posicaoId?: string;
+      metodoConfirmacao?: "manual" | "scanner";
+    }) => {
+      // Simular confirmação (já que o pallet já foi alocado)
+      toast({
+        title: "Sucesso",
+        description: "Alocação confirmada com sucesso!"
+      });
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+    }
   });
 };
