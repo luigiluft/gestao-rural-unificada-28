@@ -91,7 +91,7 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
                 label={{ value: 'Quantidade', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Legend />
+              <Legend verticalAlign="top" height={36} />
               
               <Bar 
                 dataKey="aCaminho" 
