@@ -34,6 +34,9 @@ export function addBusinessDays(startDate: Date, businessDays: number): Date {
  */
 export function getMinScheduleDate(businessDaysBlocked: number): string {
   const today = new Date();
+  // Normalizar para início do dia
+  today.setHours(0, 0, 0, 0);
+  
   const minDate = addBusinessDays(today, businessDaysBlocked);
   
   // Retorna no formato YYYY-MM-DD para input type="date"
@@ -48,7 +51,13 @@ export function isDateAfterBlockedBusinessDays(
   businessDaysBlocked: number
 ): boolean {
   const today = new Date();
+  // Normalizar ambas as datas para início do dia para comparação correta
+  today.setHours(0, 0, 0, 0);
+  
+  const targetDateNormalized = new Date(targetDate);
+  targetDateNormalized.setHours(0, 0, 0, 0);
+  
   const minAllowedDate = addBusinessDays(today, businessDaysBlocked);
   
-  return targetDate >= minAllowedDate;
+  return targetDateNormalized >= minAllowedDate;
 }
