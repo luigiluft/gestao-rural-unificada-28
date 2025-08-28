@@ -45,7 +45,8 @@ import {
   useConcluirPosicao
 } from "@/hooks/useInventarios"
 import { useStoragePositions } from "@/hooks/useStoragePositions"
-import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
+import { useDepositosDisponiveis, useDepositosFranqueado } from "@/hooks/useDepositosDisponiveis"
+import { useProfile } from "@/hooks/useProfile"
 // Removed useEstoquePosicao hook - no longer needed
 import { useAuth } from "@/contexts/AuthContext"
 import { format } from "date-fns"
@@ -98,7 +99,27 @@ export default function Inventario() {
   // Removed estoquePosicao hook - no longer needed in new allocation system
   const estoquePosicao: any[] = []
   const { user } = useAuth()
-  const { data: depositos, isLoading: loadingDepositos } = useDepositosDisponiveis(user?.id)
+  const { data: profile } = useProfile()
+  
+  // Use different hooks based on user role
+  const { data: depositosProdutor, isLoading: loadingDepositosProdutor } = useDepositosDisponiveis(
+    profile?.role === 'produtor' ? user?.id : undefined
+  )
+  const { data: depositosFranqueado, isLoading: loadingDepositosFranqueado } = useDepositosFranqueado()
+  
+  // Normalize data format for both hooks
+  const depositos = profile?.role === 'franqueado' 
+    ? depositosFranqueado?.map(f => ({
+        deposito_id: f.id,
+        deposito_nome: f.nome,
+        franqueado_id: f.master_franqueado_id,
+        franqueado_nome: 'Franqueado'
+      }))
+    : depositosProdutor
+    
+  const loadingDepositos = profile?.role === 'franqueado' 
+    ? loadingDepositosFranqueado 
+    : loadingDepositosProdutor
   
   const criarInventario = useCriarInventario()
   const atualizarInventario = useAtualizarInventario()
