@@ -55,10 +55,12 @@ export const useFluxoData = (
     
     const produtoMap = new Map<string, FluxoData>();
 
-    // Processar entradas (A Caminho)
+    // Processar entradas (A Caminho - incluindo produtos ainda não alocados)
     entradas.forEach(entrada => {
+      // Produtos em trânsito ou aguardando alocação
       if (entrada.status_aprovacao === 'aguardando_transporte' || 
-          entrada.status_aprovacao === 'em_transferencia') {
+          entrada.status_aprovacao === 'em_transferencia' ||
+          entrada.status_aprovacao === 'aguardando_alocacao') {
         entrada.entrada_itens.forEach(item => {
           const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
           const current = produtoMap.get(produtoNome) || {
@@ -75,7 +77,7 @@ export const useFluxoData = (
       }
     });
 
-    // Processar estoque (No Depósito)
+    // Processar estoque (No Depósito - somente produtos já alocados em posições)
     estoque.forEach(item => {
       console.log("Processing estoque item:", item);
       if (item.quantidade_atual > 0) {
