@@ -36,5 +36,21 @@ export const useDepositosFranqueado = () => {
   })
 }
 
+export const useTodasFranquias = () => {
+  return useQuery({
+    queryKey: ["todas-franquias"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("franquias")
+        .select("*")
+        .eq("ativo", true)
+        .order("nome")
+
+      if (error) throw error
+      return data || []
+    },
+  })
+}
+
 // Função removida: useRelacionamentosProdutorFranqueado
 // Agora todos os produtores têm acesso automático a todas as franquias ativas

@@ -45,7 +45,7 @@ import {
   useConcluirPosicao
 } from "@/hooks/useInventarios"
 import { useStoragePositions } from "@/hooks/useStoragePositions"
-import { useDepositosDisponiveis, useDepositosFranqueado } from "@/hooks/useDepositosDisponiveis"
+import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
 import { useProfile } from "@/hooks/useProfile"
 // Removed useEstoquePosicao hook - no longer needed
 import { useAuth } from "@/contexts/AuthContext"
@@ -106,9 +106,17 @@ export default function Inventario() {
     profile?.role === 'produtor' ? user?.id : undefined
   )
   const { data: depositosFranqueado, isLoading: loadingDepositosFranqueado } = useDepositosFranqueado()
+  const { data: todasFranquias, isLoading: loadingTodasFranquias } = useTodasFranquias()
   
-  // Normalize data format for both hooks
-  const depositos = profile?.role === 'franqueado' 
+  // Normalize data format for different user roles
+  const depositos = profile?.role === 'admin' 
+    ? todasFranquias?.map(f => ({
+        deposito_id: f.id,
+        deposito_nome: f.nome,
+        franqueado_id: f.master_franqueado_id,
+        franqueado_nome: 'Admin - Todas as Franquias'
+      }))
+    : profile?.role === 'franqueado' 
     ? depositosFranqueado?.map(f => ({
         deposito_id: f.id,
         deposito_nome: f.nome,
@@ -117,7 +125,9 @@ export default function Inventario() {
       }))
     : depositosProdutor
     
-  const loadingDepositos = profile?.role === 'franqueado' 
+  const loadingDepositos = profile?.role === 'admin' 
+    ? loadingTodasFranquias
+    : profile?.role === 'franqueado' 
     ? loadingDepositosFranqueado 
     : loadingDepositosProdutor
   
