@@ -82,3 +82,9 @@ export const useHorariosRetirada = () => {
     return []
   }
 }
+
+// Hook para obter dias úteis de expedição
+export const useDiasUteisExpedicao = () => {
+  const { valor } = useConfiguracao("dias_uteis_expedicao")
+  return parseInt(valor || "5")
+}

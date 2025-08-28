@@ -12,7 +12,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useProfile, useProdutores, useFazendas } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
-import { usePesoMinimoMopp, useHorariosRetirada } from "@/hooks/useConfiguracoesSistema"
+import { usePesoMinimoMopp, useHorariosRetirada, useDiasUteisExpedicao } from "@/hooks/useConfiguracoesSistema"
+import { getMaxScheduleDate, isDateWithinBusinessDaysLimit } from "@/lib/business-days"
 import { useHorariosDisponiveis, useDatasSemHorarios, useCriarReserva, useRemoverReserva } from "@/hooks/useReservasHorario"
 
 interface FormularioSaidaProps {
@@ -37,6 +38,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const { data: produtores } = useProdutores()
   const pesoMinimoMopp = usePesoMinimoMopp()
   const horariosRetirada = useHorariosRetirada()
+  const diasUteisExpedicao = useDiasUteisExpedicao()
 
   const [dadosSaida, setDadosSaida] = useState({
     data_saida: new Date().toISOString().split('T')[0],
@@ -208,6 +210,13 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
 
     if (!dadosSaida.deposito_id) {
       toast.error("Nenhum depósito disponível para realizar a saída")
+      return
+    }
+
+    // Validar data de saída dentro do limite de dias úteis
+    const dataSaida = new Date(dadosSaida.data_saida)
+    if (!isDateWithinBusinessDaysLimit(dataSaida, diasUteisExpedicao)) {
+      toast.error(`Data de saída deve ser no máximo ${diasUteisExpedicao} dias úteis após hoje`)
       return
     }
 
@@ -429,6 +438,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     }))
                   }}
                   min={new Date().toISOString().split('T')[0]}
+                  max={getMaxScheduleDate(diasUteisExpedicao)}
                 />
                 {dadosSaida.tipo_saida === 'retirada_deposito' && datasSemHorarios.includes(dadosSaida.data_saida) && (
                   <p className="text-sm text-destructive">

@@ -17,11 +17,13 @@ export default function Configuracoes() {
   const [pesoMinimo, setPesoMinimo] = useState("")
   const [novoHorario, setNovoHorario] = useState("")
   const [horarios, setHorarios] = useState<string[]>([])
+  const [diasUteis, setDiasUteis] = useState("")
 
   React.useEffect(() => {
     if (configuracoes.length > 0) {
       const pesoConfig = configuracoes.find(c => c.chave === "peso_minimo_mopp")
       const horariosConfig = configuracoes.find(c => c.chave === "horarios_retirada")
+      const diasUteisConfig = configuracoes.find(c => c.chave === "dias_uteis_expedicao")
       
       if (pesoConfig) {
         setPesoMinimo(pesoConfig.valor)
@@ -33,6 +35,10 @@ export default function Configuracoes() {
         } catch {
           setHorarios([])
         }
+      }
+      
+      if (diasUteisConfig) {
+        setDiasUteis(diasUteisConfig.valor)
       }
     }
   }, [configuracoes])
@@ -62,6 +68,13 @@ export default function Configuracoes() {
     updateConfiguracao.mutate({
       chave: "horarios_retirada",
       valor: JSON.stringify(novosHorarios)
+    })
+  }
+
+  const handleSaveDiasUteis = () => {
+    updateConfiguracao.mutate({
+      chave: "dias_uteis_expedicao",
+      valor: diasUteis
     })
   }
 
@@ -210,6 +223,41 @@ export default function Configuracoes() {
                     Nenhum horário configurado
                   </p>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configuração de Dias Úteis de Expedição */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Dias Úteis de Expedição</CardTitle>
+              <CardDescription>
+                Configure o limite máximo de dias úteis para agendamento de saídas (não inclui fins de semana)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end space-x-4">
+                <div className="flex-1">
+                  <Label htmlFor="dias-uteis">Número de Dias Úteis</Label>
+                  <Input
+                    id="dias-uteis"
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={diasUteis}
+                    onChange={(e) => setDiasUteis(e.target.value)}
+                    placeholder="5"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Clientes só poderão agendar saídas até {diasUteis || "5"} dias úteis no futuro
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleSaveDiasUteis}
+                  disabled={updateConfiguracao.isPending}
+                >
+                  Salvar
+                </Button>
               </div>
             </CardContent>
           </Card>
