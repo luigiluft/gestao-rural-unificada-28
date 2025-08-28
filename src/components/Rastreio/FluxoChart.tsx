@@ -66,29 +66,31 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="w-full h-96">
+        <div className="w-full" style={{ height: Math.max(400, data.length * 40) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
+              layout="horizontal"
               data={data}
               margin={{
                 top: 20,
                 right: 30,
-                left: 20,
-                bottom: 80,
+                left: 160,
+                bottom: 20,
               }}
-              barCategoryGap="15%"
+              barCategoryGap="10%"
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey="produto" 
-                tick={{ fontSize: 11, textAnchor: 'end' }}
-                height={80}
-                interval={0}
-                angle={-45}
+                type="number"
+                tick={{ fontSize: 12 }}
+                label={{ value: 'Quantidade', position: 'insideBottom', offset: -10 }}
               />
               <YAxis 
-                tick={{ fontSize: 12 }}
-                label={{ value: 'Quantidade', angle: -90, position: 'insideLeft' }}
+                type="category"
+                dataKey="produto" 
+                tick={{ fontSize: 11 }}
+                width={150}
+                interval={0}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} />

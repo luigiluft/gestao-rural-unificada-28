@@ -158,7 +158,12 @@ export const useFluxoData = (
         item.expedido > 0 || 
         item.entregue > 0
       )
-      .sort((a, b) => a.produto.localeCompare(b.produto))
+      .sort((a, b) => {
+        // Ordenar por quantidade total (maior para menor)
+        const totalA = a.aCaminho + a.noDeposito + a.emSeparacao + a.expedido + a.entregue;
+        const totalB = b.aCaminho + b.noDeposito + b.emSeparacao + b.expedido + b.entregue;
+        return totalB - totalA;
+      })
       .slice(0, 20); // Limitar a 20 produtos para melhor visualização
     
     console.log("useFluxoData - Final result:", result);
