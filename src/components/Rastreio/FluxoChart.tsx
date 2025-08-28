@@ -17,14 +17,22 @@ interface FluxoChartProps {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
+    
     return (
       <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
         <p className="font-medium mb-2">{`Produto: ${label}`}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }} className="text-sm">
-            {`${entry.name}: ${entry.value}`}
-          </p>
-        ))}
+        <p className="text-sm font-medium mb-1">{`Total: ${total} unidades`}</p>
+        <div className="space-y-1">
+          {payload.map((entry: any, index: number) => {
+            const percentage = ((entry.value / total) * 100).toFixed(1);
+            return (
+              <p key={index} style={{ color: entry.color }} className="text-sm">
+                {`${entry.name}: ${entry.value} (${percentage}%)`}
+              </p>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -61,62 +69,64 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
         <div className="w-full h-96">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              layout="horizontal"
               data={data}
               margin={{
                 top: 20,
                 right: 30,
-                left: 120,
-                bottom: 20,
+                left: 20,
+                bottom: 80,
               }}
-              barCategoryGap="20%"
-              maxBarSize={40}
+              barCategoryGap="15%"
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                type="number" 
-                domain={[0, 'dataMax']}
-                tick={{ fontSize: 12 }}
+                dataKey="produto" 
+                tick={{ fontSize: 11, textAnchor: 'end' }}
+                height={80}
+                interval={0}
+                angle={-45}
               />
               <YAxis 
-                type="category" 
-                dataKey="produto" 
-                width={100}
                 tick={{ fontSize: 12 }}
-                interval={0}
+                label={{ value: 'Quantidade', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
               
               <Bar 
                 dataKey="aCaminho" 
-                stackId="a" 
-                fill="#3b82f6" 
+                stackId="fluxo" 
+                fill="#2563eb" 
                 name="A Caminho"
+                radius={[0, 0, 0, 0]}
               />
               <Bar 
                 dataKey="noDeposito" 
-                stackId="a" 
-                fill="#f97316" 
+                stackId="fluxo" 
+                fill="#059669" 
                 name="No Depósito"
+                radius={[0, 0, 0, 0]}
               />
               <Bar 
                 dataKey="emSeparacao" 
-                stackId="a" 
-                fill="#eab308" 
+                stackId="fluxo" 
+                fill="#d97706" 
                 name="Em Separação"
+                radius={[0, 0, 0, 0]}
               />
               <Bar 
                 dataKey="expedido" 
-                stackId="a" 
-                fill="#10b981" 
+                stackId="fluxo" 
+                fill="#ea580c" 
                 name="Expedido"
+                radius={[0, 0, 0, 0]}
               />
               <Bar 
                 dataKey="entregue" 
-                stackId="a" 
-                fill="#8b5cf6" 
+                stackId="fluxo" 
+                fill="#7c3aed" 
                 name="Entregue"
+                radius={[2, 2, 0, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
