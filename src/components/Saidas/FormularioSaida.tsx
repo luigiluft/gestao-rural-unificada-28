@@ -13,7 +13,7 @@ import { useProfile, useProdutores, useFazendas } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { usePesoMinimoMopp, useHorariosRetirada, useDiasUteisExpedicao } from "@/hooks/useConfiguracoesSistema"
-import { getMaxScheduleDate, isDateWithinBusinessDaysLimit } from "@/lib/business-days"
+import { getMinScheduleDate, isDateAfterBlockedBusinessDays } from "@/lib/business-days"
 import { useHorariosDisponiveis, useDatasSemHorarios, useCriarReserva, useRemoverReserva } from "@/hooks/useReservasHorario"
 
 interface FormularioSaidaProps {
@@ -213,10 +213,10 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
       return
     }
 
-    // Validar data de saída dentro do limite de dias úteis
+    // Validar data de saída após o período bloqueado de dias úteis
     const dataSaida = new Date(dadosSaida.data_saida)
-    if (!isDateWithinBusinessDaysLimit(dataSaida, diasUteisExpedicao)) {
-      toast.error(`Data de saída deve ser no máximo ${diasUteisExpedicao} dias úteis após hoje`)
+    if (!isDateAfterBlockedBusinessDays(dataSaida, diasUteisExpedicao)) {
+      toast.error(`Data de saída deve ser após ${diasUteisExpedicao} dias úteis a partir de hoje`)
       return
     }
 
@@ -437,8 +437,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                       janela_horario: '' // Limpar horário ao mudar data
                     }))
                   }}
-                  min={new Date().toISOString().split('T')[0]}
-                  max={getMaxScheduleDate(diasUteisExpedicao)}
+                  min={getMinScheduleDate(diasUteisExpedicao)}
                 />
                 {dadosSaida.tipo_saida === 'retirada_deposito' && datasSemHorarios.includes(dadosSaida.data_saida) && (
                   <p className="text-sm text-destructive">

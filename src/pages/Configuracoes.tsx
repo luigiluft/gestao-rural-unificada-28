@@ -232,7 +232,7 @@ export default function Configuracoes() {
             <CardHeader>
               <CardTitle>Dias Úteis de Expedição</CardTitle>
               <CardDescription>
-                Configure o limite máximo de dias úteis para agendamento de saídas (não inclui fins de semana)
+                Configure quantos dias úteis serão bloqueados para agendamento (clientes só poderão agendar após esse período)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -249,7 +249,7 @@ export default function Configuracoes() {
                     placeholder="5"
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    Clientes só poderão agendar saídas até {diasUteis || "5"} dias úteis no futuro
+                    Os primeiros {diasUteis || "5"} dias úteis serão bloqueados. Clientes só poderão agendar após esse período.
                   </p>
                 </div>
                 <Button 

@@ -30,25 +30,25 @@ export function addBusinessDays(startDate: Date, businessDays: number): Date {
 }
 
 /**
- * Calcula a data máxima permitida para agendamento baseada em dias úteis
+ * Calcula a data mínima permitida para agendamento (APÓS os dias úteis bloqueados)
  */
-export function getMaxScheduleDate(businessDaysLimit: number): string {
+export function getMinScheduleDate(businessDaysBlocked: number): string {
   const today = new Date();
-  const maxDate = addBusinessDays(today, businessDaysLimit);
+  const minDate = addBusinessDays(today, businessDaysBlocked);
   
   // Retorna no formato YYYY-MM-DD para input type="date"
-  return maxDate.toISOString().split('T')[0];
+  return minDate.toISOString().split('T')[0];
 }
 
 /**
- * Verifica se uma data está dentro do limite de dias úteis permitidos
+ * Verifica se uma data está APÓS o período bloqueado de dias úteis
  */
-export function isDateWithinBusinessDaysLimit(
+export function isDateAfterBlockedBusinessDays(
   targetDate: Date, 
-  businessDaysLimit: number
+  businessDaysBlocked: number
 ): boolean {
   const today = new Date();
-  const maxAllowedDate = addBusinessDays(today, businessDaysLimit);
+  const minAllowedDate = addBusinessDays(today, businessDaysBlocked);
   
-  return targetDate <= maxAllowedDate;
+  return targetDate >= minAllowedDate;
 }
