@@ -462,11 +462,10 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     ) : (
                       // Para franqueados: opções tradicionais
                       <>
-                        <SelectItem value="venda">Venda</SelectItem>
-                        <SelectItem value="transferencia">Transferência</SelectItem>
-                        <SelectItem value="uso_interno">Uso Interno</SelectItem>
-                        <SelectItem value="perda">Perda/Descarte</SelectItem>
-                        <SelectItem value="doacao">Doação</SelectItem>
+                        <SelectItem value="entrega">Entrega</SelectItem>
+                        <SelectItem value="retirada_terceiros">Retirada com terceiros</SelectItem>
+                        <SelectItem value="retirada_destinatario">Retirada por conta do destinatário</SelectItem>
+                        <SelectItem value="sem_frete">Sem frete</SelectItem>
                       </>
                     )}
                   </SelectContent>
