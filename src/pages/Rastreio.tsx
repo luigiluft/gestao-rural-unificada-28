@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRastreamentoEntradas, useRastreamentoEstoque, useRastreamentoSaidas } from '@/hooks/useRastreamentoData';
+import { usePalletsPendentesItems } from '@/hooks/usePalletsPendentesItems';
 import { ProducerDashboard } from '@/components/Rastreio/ProducerDashboard';
 import { EntradasEmAndamento } from '@/components/Rastreio/EntradasEmAndamento';
 import { EstoqueAtual } from '@/components/Rastreio/EstoqueAtual';
@@ -21,11 +22,13 @@ export const Rastreio = () => {
   const { data: entradas = [], isLoading: isLoadingEntradas, error: errorEntradas } = useRastreamentoEntradas();
   const { data: estoque = [], isLoading: isLoadingEstoque, error: errorEstoque } = useRastreamentoEstoque();
   const { data: saidas = [], isLoading: isLoadingSaidas, error: errorSaidas } = useRastreamentoSaidas();
+  const { data: palletsPendentesItems = [], error: errorPalletsPendentes } = usePalletsPendentesItems();
 
   // Log errors for debugging
   if (errorEntradas) console.error("Error loading entradas:", errorEntradas);
   if (errorEstoque) console.error("Error loading estoque:", errorEstoque);
   if (errorSaidas) console.error("Error loading saidas:", errorSaidas);
+  if (errorPalletsPendentes) console.error("Error loading pallets pendentes:", errorPalletsPendentes);
 
   // Calculate dashboard stats
   const stats = {
@@ -39,7 +42,7 @@ export const Rastreio = () => {
   };
 
   // Generate chart data
-  const fluxoData = useFluxoData(entradas, estoque, saidas);
+  const fluxoData = useFluxoData(entradas, estoque, saidas, palletsPendentesItems);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">

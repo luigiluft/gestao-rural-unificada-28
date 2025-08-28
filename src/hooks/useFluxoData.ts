@@ -32,6 +32,14 @@ interface Saida {
   }>;
 }
 
+interface PalletPendenteItem {
+  produto_id: string;
+  quantidade: number;
+  produtos?: {
+    nome: string;
+  };
+}
+
 interface FluxoData {
   produto: string;
   aCaminho: number;
@@ -44,23 +52,24 @@ interface FluxoData {
 export const useFluxoData = (
   entradas: Entrada[],
   estoque: Estoque[],
-  saidas: Saida[]
+  saidas: Saida[],
+  palletsPendentesItems: PalletPendenteItem[] = []
 ): FluxoData[] => {
   return useMemo(() => {
     console.log("useFluxoData - Processing data:", { 
       entradas: entradas.length, 
       estoque: estoque.length, 
-      saidas: saidas.length 
+      saidas: saidas.length,
+      palletsPendentesItems: palletsPendentesItems.length
     });
     
     const produtoMap = new Map<string, FluxoData>();
 
     // Processar entradas (A Caminho - incluindo produtos ainda não alocados)
     entradas.forEach(entrada => {
-      // Produtos em trânsito ou aguardando alocação
+      // Produtos em trânsito
       if (entrada.status_aprovacao === 'aguardando_transporte' || 
-          entrada.status_aprovacao === 'em_transferencia' ||
-          entrada.status_aprovacao === 'aguardando_alocacao') {
+          entrada.status_aprovacao === 'em_transferencia') {
         entrada.entrada_itens.forEach(item => {
           const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
           const current = produtoMap.get(produtoNome) || {
@@ -75,6 +84,23 @@ export const useFluxoData = (
           produtoMap.set(produtoNome, current);
         });
       }
+    });
+
+    // Processar produtos em pallets pendentes (A Caminho)
+    palletsPendentesItems.forEach(item => {
+      console.log("Processing pallet pendente item:", item);
+      const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+      console.log("Adding pallet pendente to chart - produto:", produtoNome, "quantidade:", item.quantidade);
+      const current = produtoMap.get(produtoNome) || {
+        produto: produtoNome,
+        aCaminho: 0,
+        noDeposito: 0,
+        emSeparacao: 0,
+        expedido: 0,
+        entregue: 0,
+      };
+      current.aCaminho += item.quantidade;
+      produtoMap.set(produtoNome, current);
     });
 
     // Processar estoque (No Depósito - somente produtos já alocados em posições)
@@ -137,5 +163,5 @@ export const useFluxoData = (
     
     console.log("useFluxoData - Final result:", result);
     return result;
-  }, [entradas, estoque, saidas]);
+  }, [entradas, estoque, saidas, palletsPendentesItems]);
 };
