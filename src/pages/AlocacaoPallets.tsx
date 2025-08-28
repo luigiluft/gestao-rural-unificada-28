@@ -208,6 +208,20 @@ export default function AlocacaoPallets() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Confirmation Dialog */}
+      {pendingAllocation && (
+        <Dialog open={!!pendingAllocation} onOpenChange={() => setPendingAllocation(null)}>
+          <DialogContent className="max-w-4xl">
+            <ConfirmacaoAlocacao
+              allocation={pendingAllocation}
+              onConfirmed={handleConfirmationComplete}
+              onCancel={handleConfirmationCancel}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
