@@ -169,7 +169,7 @@ export const useAllocatePallet = () => {
   });
 };
 
-// Hook para alocação automática de pallet
+// Hook para alocação automática de pallet (apenas reserva posição)
 export const useAutoAllocatePallet = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -178,11 +178,9 @@ export const useAutoAllocatePallet = () => {
     mutationFn: async ({
       palletId,
       depositoId,
-      observacoes,
     }: {
       palletId: string;
       depositoId: string;
-      observacoes?: string;
     }) => {
       // Buscar a primeira posição disponível ordenada por código
       const { data: positions, error: positionError } = await supabase
@@ -201,14 +199,16 @@ export const useAutoAllocatePallet = () => {
 
       const selectedPosition = positions[0];
 
-      // Alocar o pallet na posição selecionada
-      const { data, error } = await supabase.rpc("allocate_pallet_to_position", {
-        p_pallet_id: palletId,
-        p_posicao_id: selectedPosition.id,
-        p_observacoes: observacoes,
-      });
+      // Apenas reservar temporariamente (não alocar ainda)
+      const { error: updateError } = await supabase
+        .from("storage_positions")
+        .update({ 
+          reservado_temporariamente: true,
+          reservado_ate: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutos
+        })
+        .eq("id", selectedPosition.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
       
       return {
         pallet_id: palletId,
@@ -216,25 +216,21 @@ export const useAutoAllocatePallet = () => {
         pallet_codigo: `PALLET-${palletId.substring(0, 8)}`,
         posicao_codigo: selectedPosition.codigo,
         success: true,
-        position: selectedPosition,
-        data
+        position: selectedPosition
       } as PalletAllocationResult;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["available-positions"] });
       toast({
-        title: "Sucesso",
-        description: `Pallet alocado automaticamente na posição ${result.position.codigo}!`,
+        title: "Posição Reservada",
+        description: `Posição ${result.posicao_codigo} reservada temporariamente`,
       });
     },
     onError: (error) => {
-      console.error("Erro ao alocar pallet automaticamente:", error);
+      console.error("Erro ao reservar posição:", error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao alocar pallet automaticamente",
+        description: error.message || "Erro ao reservar posição",
         variant: "destructive",
       });
     },
@@ -324,7 +320,7 @@ export const useRemovePalletAllocation = () => {
   });
 };
 
-// Hook para confirmar alocação de pallet (simplificado)
+// Hook para confirmar alocação de pallet
 export const useConfirmPalletAllocation = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -332,24 +328,75 @@ export const useConfirmPalletAllocation = () => {
   return useMutation({
     mutationFn: async ({ 
       palletId, 
-      posicaoId,
-      metodoConfirmacao = "manual"
+      positionId,
+      method,
+      palletCode,
+      positionCode
     }: {
       palletId: string;
-      posicaoId?: string;
-      metodoConfirmacao?: "manual" | "scanner";
+      positionId: string;
+      method: "manual" | "scanner";
+      palletCode?: string;
+      positionCode?: string;
     }) => {
-      // Simular confirmação (já que o pallet já foi alocado)
-      toast({
-        title: "Sucesso",
-        description: "Alocação confirmada com sucesso!"
+      // Para método scanner, validar códigos
+      if (method === "scanner") {
+        // Buscar códigos esperados
+        const { data: positionData } = await supabase
+          .from("storage_positions")
+          .select("codigo")
+          .eq("id", positionId)
+          .single();
+
+        const { data: palletData } = await supabase
+          .from("entrada_pallets")
+          .select("descricao")
+          .eq("id", palletId)
+          .single();
+
+        if (positionData?.codigo !== positionCode) {
+          throw new Error(`Código da posição incorreto. Esperado: ${positionData?.codigo}`);
+        }
+
+        if (palletData?.descricao !== palletCode) {
+          throw new Error(`Código do pallet incorreto. Esperado: ${palletData?.descricao}`);
+        }
+      }
+
+      // Alocar pallet na posição e criar estoque
+      const { data, error } = await supabase.rpc("allocate_pallet_to_position", {
+        p_pallet_id: palletId,
+        p_posicao_id: positionId,
+        p_observacoes: `Confirmado via ${method === "manual" ? "confirmação manual" : "scanner"}`
       });
+
+      if (error) throw error;
+
+      // Criar estoque do pallet
+      const { error: stockError } = await supabase.rpc("create_stock_from_pallet", {
+        p_pallet_id: palletId
+      });
+
+      if (stockError) throw stockError;
 
       return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
       queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      toast({
+        title: "Sucesso",
+        description: "Pallet alocado e estoque criado com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 };

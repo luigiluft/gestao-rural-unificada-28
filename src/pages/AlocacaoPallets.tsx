@@ -3,63 +3,102 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Package, MapPin, Calendar, User, Hash, QrCode } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePalletsPendentes, useAutoAllocatePallet, useCreateStockFromPallet, type PalletAllocationResult } from "@/hooks/usePalletPositions";
-import { useAvailablePositions } from "@/hooks/useStoragePositions";
-import ConfirmacaoAlocacao from "@/components/Entradas/ConfirmacaoAlocacao";
+import { Package, Calendar, User, Hash, Hand, Scan } from "lucide-react";
+import { usePalletsPendentes, useAutoAllocatePallet, useConfirmPalletAllocation } from "@/hooks/usePalletPositions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function AlocacaoPallets() {
-  const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
-  const [selectedPallet, setSelectedPallet] = useState<any>();
-  const [observacoes, setObservacoes] = useState("");
-  const [pendingAllocation, setPendingAllocation] = useState<PalletAllocationResult | null>(null);
+  const [activeMethod, setActiveMethod] = useState<string | null>(null);
+  const [activePallet, setActivePallet] = useState<any>(null);
+  const [allocationResult, setAllocationResult] = useState<any>(null);
+  const [scannerData, setScannerData] = useState({
+    palletCode: "",
+    positionCode: ""
+  });
 
-  const { data: palletsPendentes, isLoading: loadingPallets } = usePalletsPendentes(selectedDepositoId);
+  const { data: palletsPendentes, isLoading: loadingPallets } = usePalletsPendentes();
   const autoAllocatePallet = useAutoAllocatePallet();
-  const createStock = useCreateStockFromPallet();
+  const confirmAllocation = useConfirmPalletAllocation();
 
-  const handleAutoAllocate = async (pallet: any) => {
-    if (!pallet?.entradas?.deposito_id) return;
-
-    try {
-      const result = await autoAllocatePallet.mutateAsync({
-        palletId: pallet.id,
-        depositoId: pallet.entradas.deposito_id,
-        observacoes,
-      });
-
-      // Create stock immediately after allocation (no confirmation needed for now)
-      await createStock.mutateAsync(pallet.id);
-
-      // Reset form
-      setSelectedPallet(undefined);
-      setObservacoes("");
-    } catch (error) {
-      console.error("Erro na alocação automática:", error);
-    }
-  };
-
-  const handleConfirmationComplete = async () => {
-    if (pendingAllocation) {
-      try {
-        await createStock.mutateAsync(pendingAllocation.pallet_id);
-        setPendingAllocation(null);
-      } catch (error) {
-        console.error("Erro ao criar estoque:", error);
+  const handleStartManualAllocation = (pallet: any) => {
+    setActivePallet(pallet);
+    setActiveMethod("manual");
+    
+    autoAllocatePallet.mutate(
+      { palletId: pallet.id, depositoId: pallet.entradas.deposito_id },
+      {
+        onSuccess: (result) => {
+          if (result.success) {
+            setAllocationResult(result);
+          }
+        }
       }
-    }
+    );
   };
 
-  const handleConfirmationCancel = () => {
-    setPendingAllocation(null);
+  const handleStartScannerAllocation = (pallet: any) => {
+    setActivePallet(pallet);
+    setActiveMethod("scanner");
+    setScannerData({ palletCode: "", positionCode: "" });
+    
+    autoAllocatePallet.mutate(
+      { palletId: pallet.id, depositoId: pallet.entradas.deposito_id },
+      {
+        onSuccess: (result) => {
+          if (result.success) {
+            setAllocationResult(result);
+          }
+        }
+      }
+    );
+  };
+
+  const handleManualConfirmation = () => {
+    if (!allocationResult) return;
+    
+    confirmAllocation.mutate(
+      {
+        palletId: activePallet.id,
+        positionId: allocationResult.posicao_id,
+        method: "manual"
+      },
+      {
+        onSuccess: () => {
+          resetAllocationState();
+        }
+      }
+    );
+  };
+
+  const handleScannerConfirmation = () => {
+    if (!allocationResult || !scannerData.palletCode || !scannerData.positionCode) return;
+    
+    confirmAllocation.mutate(
+      {
+        palletId: activePallet.id,
+        positionId: allocationResult.posicao_id,
+        method: "scanner",
+        palletCode: scannerData.palletCode,
+        positionCode: scannerData.positionCode
+      },
+      {
+        onSuccess: () => {
+          resetAllocationState();
+        }
+      }
+    );
+  };
+
+  const resetAllocationState = () => {
+    setActiveMethod(null);
+    setActivePallet(null);
+    setAllocationResult(null);
+    setScannerData({ palletCode: "", positionCode: "" });
   };
 
   if (loadingPallets) {
@@ -115,53 +154,104 @@ export default function AlocacaoPallets() {
                         </Badge>
                       )}
                     </CardTitle>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
                         <Button 
-                          variant="default" 
-                          size="sm"
-                          onClick={() => setSelectedPallet(pallet)}
+                          size="sm" 
+                          variant="outline"
+                          disabled={autoAllocatePallet.isPending || activeMethod === "manual"}
+                          onClick={() => handleStartManualAllocation(pallet)}
                         >
-                          <MapPin className="h-4 w-4 mr-2" />
-                          Alocar Automaticamente
+                          <Hand className="h-4 w-4 mr-2" />
+                          Alocar Manualmente
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Alocar Pallet #{pallet.numero_pallet}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="p-4 bg-muted rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <QrCode className="h-5 w-5 text-primary" />
-                              <span className="font-semibold">Posição Selecionada Automaticamente</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              O sistema irá selecionar automaticamente a primeira posição disponível em ordem alfabética para este pallet.
-                            </p>
-                          </div>
+                        <Button 
+                          size="sm"
+                          disabled={autoAllocatePallet.isPending || activeMethod === "scanner"}
+                          onClick={() => handleStartScannerAllocation(pallet)}
+                        >
+                          <Scan className="h-4 w-4 mr-2" />
+                          Alocar com Scanner
+                        </Button>
+                      </div>
 
-                          <div>
-                            <Label htmlFor="observacoes">Observações (opcional)</Label>
-                            <Textarea
-                              id="observacoes"
-                              value={observacoes}
-                              onChange={(e) => setObservacoes(e.target.value)}
-                              placeholder="Observações sobre a alocação..."
-                            />
+                      {/* Seção de Confirmação Manual */}
+                      {activeMethod === "manual" && activePallet?.id === pallet.id && allocationResult && (
+                        <div className="mt-4 p-4 bg-muted rounded-lg border">
+                          <h4 className="font-medium text-sm mb-2">Confirmação Manual</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Posição selecionada: <span className="font-medium">{allocationResult.posicao_codigo}</span>
+                          </p>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Coloque fisicamente o pallet na posição indicada e confirme abaixo.
+                          </p>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm"
+                              onClick={handleManualConfirmation}
+                              disabled={confirmAllocation.isPending}
+                            >
+                              {confirmAllocation.isPending ? "Confirmando..." : "Confirmar que coloquei o pallet"}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={resetAllocationState}
+                            >
+                              Cancelar
+                            </Button>
                           </div>
-
-                          <Button 
-                            onClick={() => handleAutoAllocate(selectedPallet)}
-                            disabled={autoAllocatePallet.isPending || createStock.isPending}
-                            className="w-full"
-                          >
-                            {(autoAllocatePallet.isPending || createStock.isPending) ? "Alocando..." : "Confirmar Alocação Automática"}
-                          </Button>
                         </div>
-                      </DialogContent>
-                    </Dialog>
+                      )}
+
+                      {/* Seção de Confirmação com Scanner */}
+                      {activeMethod === "scanner" && activePallet?.id === pallet.id && allocationResult && (
+                        <div className="mt-4 p-4 bg-muted rounded-lg border">
+                          <h4 className="font-medium text-sm mb-2">Confirmação com Scanner</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Posição selecionada: <span className="font-medium">{allocationResult.posicao_codigo}</span>
+                          </p>
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor="palletCode" className="text-sm">Código do Pallet</Label>
+                              <Input
+                                id="palletCode"
+                                placeholder="Escaneie o código do pallet"
+                                value={scannerData.palletCode}
+                                onChange={(e) => setScannerData(prev => ({ ...prev, palletCode: e.target.value }))}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="positionCode" className="text-sm">Código da Posição</Label>
+                              <Input
+                                id="positionCode"
+                                placeholder="Escaneie o código da posição"
+                                value={scannerData.positionCode}
+                                onChange={(e) => setScannerData(prev => ({ ...prev, positionCode: e.target.value }))}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                              <Button 
+                                size="sm"
+                                onClick={handleScannerConfirmation}
+                                disabled={confirmAllocation.isPending || !scannerData.palletCode || !scannerData.positionCode}
+                              >
+                                {confirmAllocation.isPending ? "Confirmando..." : "Confirmar Escaneamento"}
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={resetAllocationState}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
 
@@ -226,18 +316,6 @@ export default function AlocacaoPallets() {
         </div>
       )}
 
-      {/* Confirmation Dialog */}
-      {pendingAllocation && (
-        <Dialog open={!!pendingAllocation} onOpenChange={() => setPendingAllocation(null)}>
-          <DialogContent className="max-w-4xl">
-            <ConfirmacaoAlocacao
-              allocation={pendingAllocation}
-              onConfirmed={handleConfirmationComplete}
-              onCancel={handleConfirmationCancel}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

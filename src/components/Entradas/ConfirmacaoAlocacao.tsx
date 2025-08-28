@@ -27,8 +27,8 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
     try {
       await confirmAllocation.mutateAsync({
         palletId: allocation.pallet_id,
-        posicaoId: allocation.posicao_id,
-        metodoConfirmacao: 'manual'
+        positionId: allocation.posicao_id,
+        method: 'manual'
       });
       
       await createStock.mutateAsync(allocation.pallet_id);
@@ -49,8 +49,10 @@ export default function ConfirmacaoAlocacao({ allocation, onConfirmed, onCancel 
     try {
       await confirmAllocation.mutateAsync({
         palletId: allocation.pallet_id,
-        posicaoId: allocation.posicao_id,
-        metodoConfirmacao: 'scanner'
+        positionId: allocation.posicao_id,
+        method: 'scanner',
+        palletCode: codigoBarrasPallet,
+        positionCode: codigoBarrasPosicao
       });
       
       await createStock.mutateAsync(allocation.pallet_id);
