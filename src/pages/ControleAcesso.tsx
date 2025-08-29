@@ -32,7 +32,8 @@ const pageInfo = {
   suporte: { name: "Suporte", description: "Central de atendimento e tickets" },
   perfil: { name: "Perfil", description: "Configurações do perfil do usuário" },
   configuracoes: { name: "Configurações", description: "Configurações gerais do sistema" },
-  "controle-acesso": { name: "Controle de Acesso", description: "Gerenciamento de permissões por página" }
+  "controle-acesso": { name: "Controle de Acesso", description: "Gerenciamento de permissões por página" },
+  "perfis-funcionarios": { name: "Perfis de Funcionários", description: "Gerenciamento de perfis de acesso para funcionários" }
 }
 
 const roles = ["admin", "franqueado", "produtor"] as const

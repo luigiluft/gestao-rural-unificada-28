@@ -1,7 +1,8 @@
 import { useMemo } from "react"
+import { useEmployeeProfiles, type EmployeeProfile } from "./useEmployeeProfiles"
 import { PermissionCode, UserRole } from "@/pages/Subcontas"
 
-// Templates de permissões por role
+// Templates de permissões por role (legacy - mantido para compatibilidade)
 export const PERMISSION_TEMPLATES: Record<UserRole, PermissionCode[]> = {
   admin: [
     'estoque.view',
@@ -23,9 +24,9 @@ export const PERMISSION_TEMPLATES: Record<UserRole, PermissionCode[]> = {
   ]
 }
 
-// Permissões que um funcionário pode ter baseado no role do pai
+// Permissões que um funcionário pode ter baseado no role do pai (legacy)
 export const EMPLOYEE_PERMISSIONS: Record<UserRole, PermissionCode[]> = {
-  admin: PERMISSION_TEMPLATES.admin, // Admin pode dar qualquer permissão
+  admin: PERMISSION_TEMPLATES.admin,
   franqueado: [
     'estoque.view',
     'entradas.manage',
@@ -37,6 +38,8 @@ export const EMPLOYEE_PERMISSIONS: Record<UserRole, PermissionCode[]> = {
 }
 
 export const useSubaccountPermissions = (userRole: UserRole | null) => {
+  const { profiles } = useEmployeeProfiles(userRole)
+  
   // Para subcontas, sempre usamos permissões de funcionário do mesmo role do usuário
   const getSubaccountPermissions = (): PermissionCode[] => {
     if (!userRole) return []
@@ -70,10 +73,22 @@ export const useSubaccountPermissions = (userRole: UserRole | null) => {
     return descriptions[userRole] || ''
   }
 
+  // Novos métodos para trabalhar com perfis
+  const getAvailableProfiles = (): EmployeeProfile[] => {
+    return profiles || []
+  }
+
+  const getProfilePermissions = (profileId: string): PermissionCode[] => {
+    const profile = profiles?.find(p => p.id === profileId)
+    return profile?.permissions as PermissionCode[] || []
+  }
+
   return {
     getSubaccountPermissions,
     getSubaccountRole,
     getSubaccountRoleLabel,
-    getSubaccountDescription
+    getSubaccountDescription,
+    getAvailableProfiles,
+    getProfilePermissions
   }
 }

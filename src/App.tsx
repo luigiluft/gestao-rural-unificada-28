@@ -26,6 +26,7 @@ import Franquias from "./pages/Franquias";
 import Fazendas from "./pages/Fazendas";
 import Configuracoes from "./pages/Configuracoes";
 import ControleAcesso from "./pages/ControleAcesso";
+import PerfisFuncionarios from "./pages/PerfisFuncionarios";
 import AlocacaoPallets from "./pages/AlocacaoPallets";
 import GerenciarAlocacoes from "./pages/GerenciarAlocacoes";
 import GerenciarPosicoes from "./pages/GerenciarPosicoes";
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
+              <Route path="perfis-funcionarios" element={<RequirePageAccess pageKey="perfis-funcionarios"><PerfisFuncionarios /></RequirePageAccess>} />
               
               {/* Legacy route redirect */}
               <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />

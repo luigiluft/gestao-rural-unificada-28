@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { usePagePermissions } from "./usePagePermissions"
+import { useUserPagePermissions } from "./useUserPagePermissions"
 import { 
   LayoutDashboard, 
   Package, 
@@ -58,7 +59,8 @@ const iconMap = {
   "gerenciar-posicoes": Grid3X3,
   separacao: Clipboard,
   inventario: Package2,
-  transporte: Truck
+  transporte: Truck,
+  "perfis-funcionarios": Users
 }
 
 const menuLabels = {
@@ -85,14 +87,16 @@ const menuLabels = {
   "gerenciar-posicoes": "Posições",
   separacao: "Separação",
   inventario: "Inventário",
-  transporte: "Transporte"
+  transporte: "Transporte",
+  "perfis-funcionarios": "Perfis de Funcionários"
 }
 
 export const useDynamicMenuItems = () => {
-  const { data: permissions = [], isLoading } = usePagePermissions()
+  const { data: permissions = [], isLoading: isLoadingPagePerms } = usePagePermissions()
+  const { data: userPermissions = [], isLoading: isLoadingUserPerms } = useUserPagePermissions()
 
   const menuItems = useMemo(() => {
-    if (isLoading || !permissions.length) return []
+    if (isLoadingPagePerms || isLoadingUserPerms || !permissions.length) return []
 
     const visiblePages = permissions
       .filter(p => p.visible_in_menu)
@@ -121,6 +125,7 @@ export const useDynamicMenuItems = () => {
       'produtores',
       'perfil',
       'subcontas',
+      'perfis-funcionarios',
       'controle-acesso',
       'configuracoes',
       'suporte'
@@ -128,17 +133,26 @@ export const useDynamicMenuItems = () => {
 
     // Adicionar itens na ordem especificada
     orderedPages.forEach(page => {
-      if (visiblePages.includes(page)) {
-        items.push({
-          path: page === 'dashboard' ? '/' : `/${page}`,
-          label: menuLabels[page as keyof typeof menuLabels],
-          icon: iconMap[page as keyof typeof iconMap]
-        })
-      }
+      // Primeira camada: verificar se o role tem acesso à página
+      if (!visiblePages.includes(page)) return
+
+      // Segunda camada: verificar se o usuário tem permissão individual para ver a página
+      const pageViewPermission = `${page}.view`
+      const hasUserPermission = userPermissions.some(perm => perm === pageViewPermission)
+
+      // Se tem permissões individuais definidas mas não tem essa específica, não mostrar
+      // Se não tem permissões individuais, usar apenas a permissão do role
+      if (userPermissions.length > 0 && !hasUserPermission) return
+
+      items.push({
+        path: page === 'dashboard' ? '/' : `/${page}`,
+        label: menuLabels[page as keyof typeof menuLabels],
+        icon: iconMap[page as keyof typeof iconMap]
+      })
     })
 
     return items
-  }, [permissions, isLoading])
+  }, [permissions, userPermissions, isLoadingPagePerms, isLoadingUserPerms])
 
-  return { menuItems, isLoading }
+  return { menuItems, isLoading: isLoadingPagePerms || isLoadingUserPerms }
 }

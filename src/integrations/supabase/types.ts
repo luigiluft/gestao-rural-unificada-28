@@ -83,6 +83,42 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_profiles: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          is_template: boolean
+          nome: string
+          permissions: Database["public"]["Enums"]["permission_code"][]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_template?: boolean
+          nome: string
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_template?: boolean
+          nome?: string
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       entrada_itens: {
         Row: {
           cest: string | null
