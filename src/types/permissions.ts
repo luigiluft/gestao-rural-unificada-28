@@ -1,9 +1,12 @@
+
 export type UserRole = 'admin' | 'franqueado' | 'produtor';
+
+// Only permissions that are actually allowed in the employee_profiles table
 export type PermissionCode = 
   | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 
   | 'dashboard.view' | 'entradas.view' | 'saidas.view' | 'recebimento.view' 
   | 'alocacao.view' | 'separacao.view' | 'expedicao.view' | 'inventario.view' 
-  | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view' | 'usuarios.manage';
+  | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view';
 
 export interface EmployeeProfile {
   id: string;
@@ -23,7 +26,6 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'entradas.manage', label: 'Gerenciar entradas' },
   { code: 'saidas.manage', label: 'Gerenciar saídas' },
   { code: 'relatorios.view', label: 'Ver relatórios' },
-  { code: 'usuarios.manage', label: 'Gerenciar usuários' },
   { code: 'dashboard.view', label: 'Dashboard' },
   { code: 'entradas.view', label: 'Visualizar Entradas' },
   { code: 'saidas.view', label: 'Visualizar Saídas' },

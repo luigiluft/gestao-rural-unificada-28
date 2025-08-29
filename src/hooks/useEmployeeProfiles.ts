@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -34,7 +35,7 @@ export const useEmployeeProfiles = (userRole?: UserRole) => {
           nome: profile.nome,
           descricao: profile.descricao,
           role: profile.role,
-          permissions: profile.permissions,
+          permissions: profile.permissions as any, // Type cast to work with Supabase
           is_template: profile.is_template,
           user_id: user!.id,
         })
@@ -66,7 +67,7 @@ export const useEmployeeProfiles = (userRole?: UserRole) => {
       const updateData: any = {}
       if (nome !== undefined) updateData.nome = nome
       if (descricao !== undefined) updateData.descricao = descricao
-      if (permissions !== undefined) updateData.permissions = permissions
+      if (permissions !== undefined) updateData.permissions = permissions as any // Type cast
       if (role !== undefined) updateData.role = role
       if (is_template !== undefined) updateData.is_template = is_template
 
