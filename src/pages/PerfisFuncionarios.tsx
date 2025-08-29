@@ -42,7 +42,7 @@ const AVAILABLE_PERMISSIONS = {
 export default function PerfisFuncionarios() {
   const { data: profile } = useProfile()
   const userRole = profile?.role as 'franqueado' | 'produtor'
-  const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole)
+  const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole, true)
   
   const [editingProfile, setEditingProfile] = useState<EmployeeProfile | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -115,6 +115,10 @@ export default function PerfisFuncionarios() {
       </div>
     )
   }
+
+  // Separate profiles by role for better organization
+  const myProfiles = profiles.filter(p => p.role === userRole)
+  const producerProfiles = userRole === 'franqueado' ? profiles.filter(p => p.role === 'produtor') : []
 
   return (
     <div className="space-y-6">
@@ -201,84 +205,143 @@ export default function PerfisFuncionarios() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {profiles.map((profile) => (
-          <Card key={profile.id} className="relative">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">{profile.nome}</CardTitle>
-                  <Badge variant="secondary">
-                    <Users className="mr-1 h-3 w-3" />
-                    {roleLabel}
-                  </Badge>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditProfile(profile)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover Perfil</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja remover o perfil "{profile.nome}"? 
-                          Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={() => deleteProfile(profile.id)}
-                          disabled={isDeleting}
-                        >
-                          Remover
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {profile.descricao && (
-                <p className="text-sm text-muted-foreground mb-3">
-                  {profile.descricao}
-                </p>
-              )}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Permissões ({profile.permissions.length})</h4>
-                <div className="flex flex-wrap gap-1">
-                  {profile.permissions.slice(0, 3).map((permission) => {
-                    const permissionLabel = availablePermissions.find(p => p.code === permission)?.label || permission
-                    return (
-                      <Badge key={permission} variant="outline" className="text-xs">
-                        {permissionLabel}
+      {/* My Profiles Section */}
+      {myProfiles.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Meus Perfis ({roleLabel})</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {myProfiles.map((profile) => (
+              <Card key={profile.id} className="relative">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{profile.nome}</CardTitle>
+                      <Badge variant="secondary">
+                        <Users className="mr-1 h-3 w-3" />
+                        {roleLabel}
                       </Badge>
-                    )
-                  })}
-                  {profile.permissions.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{profile.permissions.length - 3} mais
-                    </Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditProfile(profile)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover Perfil</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja remover o perfil "{profile.nome}"? 
+                              Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => deleteProfile(profile.id)}
+                              disabled={isDeleting}
+                            >
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {profile.descricao && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {profile.descricao}
+                    </p>
                   )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Permissões ({profile.permissions.length})</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {profile.permissions.slice(0, 3).map((permission) => {
+                        const permissionLabel = availablePermissions.find(p => p.code === permission)?.label || permission
+                        return (
+                          <Badge key={permission} variant="outline" className="text-xs">
+                            {permissionLabel}
+                          </Badge>
+                        )
+                      })}
+                      {profile.permissions.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{profile.permissions.length - 3} mais
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {profiles.length === 0 && (
+      {/* Producer Profiles Section (only for franchisees) */}
+      {producerProfiles.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Perfis de Produtores</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {producerProfiles.map((profile) => (
+              <Card key={profile.id} className="relative border-muted-foreground/20">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{profile.nome}</CardTitle>
+                      <Badge variant="outline">
+                        <Users className="mr-1 h-3 w-3" />
+                        Produtor
+                      </Badge>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      Somente leitura
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {profile.descricao && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {profile.descricao}
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Permissões ({profile.permissions.length})</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {profile.permissions.slice(0, 3).map((permission) => {
+                        const producerPermissions = AVAILABLE_PERMISSIONS.produtor || []
+                        const permissionLabel = producerPermissions.find(p => p.code === permission)?.label || permission
+                        return (
+                          <Badge key={permission} variant="outline" className="text-xs">
+                            {permissionLabel}
+                          </Badge>
+                        )
+                      })}
+                      {profile.permissions.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{profile.permissions.length - 3} mais
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {myProfiles.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
