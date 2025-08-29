@@ -1,12 +1,15 @@
 
 export type UserRole = 'admin' | 'franqueado' | 'produtor';
 
-// Only permissions that are actually allowed in the employee_profiles table
+// All possible permissions for pages and actions
 export type PermissionCode = 
   | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 
   | 'dashboard.view' | 'entradas.view' | 'saidas.view' | 'recebimento.view' 
   | 'alocacao.view' | 'separacao.view' | 'expedicao.view' | 'inventario.view' 
-  | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view';
+  | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view'
+  | 'catalogo.view' | 'alocacao-pallets.view' | 'gerenciar-alocacoes.view'
+  | 'gerenciar-posicoes.view' | 'fazendas.view' | 'produtores.view'
+  | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view';
 
 export interface EmployeeProfile {
   id: string;
@@ -21,19 +24,27 @@ export interface EmployeeProfile {
 }
 
 export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
+  { code: 'dashboard.view', label: 'Dashboard' },
+  { code: 'catalogo.view', label: 'Catálogo' },
+  { code: 'entradas.view', label: 'Visualizar Entradas' },
+  { code: 'entradas.manage', label: 'Gerenciar entradas' },
+  { code: 'recebimento.view', label: 'Central de Recebimento' },
+  { code: 'alocacao-pallets.view', label: 'Alocação de Pallets' },
+  { code: 'gerenciar-alocacoes.view', label: 'Gerenciar Alocações' },
   { code: 'estoque.view', label: 'Ver estoque' },
   { code: 'estoque.manage', label: 'Gerenciar estoque' },
-  { code: 'entradas.manage', label: 'Gerenciar entradas' },
-  { code: 'saidas.manage', label: 'Gerenciar saídas' },
-  { code: 'relatorios.view', label: 'Ver relatórios' },
-  { code: 'dashboard.view', label: 'Dashboard' },
-  { code: 'entradas.view', label: 'Visualizar Entradas' },
+  { code: 'inventario.view', label: 'Inventário' },
   { code: 'saidas.view', label: 'Visualizar Saídas' },
-  { code: 'recebimento.view', label: 'Central de Recebimento' },
-  { code: 'alocacao.view', label: 'Central de Alocação' },
+  { code: 'saidas.manage', label: 'Gerenciar saídas' },
   { code: 'separacao.view', label: 'Central de Separação' },
   { code: 'expedicao.view', label: 'Central de Expedição' },
-  { code: 'inventario.view', label: 'Inventário' },
+  { code: 'transporte.view', label: 'Transporte' },
   { code: 'rastreio.view', label: 'Rastreamento' },
+  { code: 'relatorios.view', label: 'Ver relatórios' },
+  { code: 'produtores.view', label: 'Produtores' },
+  { code: 'fazendas.view', label: 'Fazendas' },
+  { code: 'perfil.view', label: 'Perfil' },
+  { code: 'subcontas.view', label: 'Subcontas' },
   { code: 'perfis-funcionarios.view', label: 'Perfis de Funcionários' },
+  { code: 'suporte.view', label: 'Suporte' },
 ];
