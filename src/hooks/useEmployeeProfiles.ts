@@ -5,21 +5,29 @@ import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 import { UserRole, PermissionCode, type EmployeeProfile } from "@/types/permissions"
 
-export const useEmployeeProfiles = (userRole?: UserRole) => {
+export const useEmployeeProfiles = (userRole?: UserRole, includeHierarchy?: boolean) => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
   const { data: profiles, isLoading } = useQuery({
-    queryKey: ["employee-profiles", user?.id, userRole],
+    queryKey: ["employee-profiles", user?.id, userRole, includeHierarchy],
     queryFn: async () => {
       if (!user?.id || !userRole) return []
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("employee_profiles")
         .select("*")
-        .eq("role", userRole)
         .eq("is_template", true)
         .order("nome")
+
+      // Se includeHierarchy é true e o usuário é franqueado, inclui perfis de produtores
+      if (includeHierarchy && userRole === 'franqueado') {
+        query = query.in("role", ['franqueado', 'produtor'])
+      } else {
+        query = query.eq("role", userRole)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       return data as EmployeeProfile[]

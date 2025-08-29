@@ -9,8 +9,7 @@ export const PERMISSION_TEMPLATES: Record<UserRole, PermissionCode[]> = {
     'estoque.manage', 
     'entradas.manage',
     'saidas.manage',
-    'relatorios.view',
-    'usuarios.manage'
+    'relatorios.view'
   ],
   franqueado: [
     'estoque.view',
