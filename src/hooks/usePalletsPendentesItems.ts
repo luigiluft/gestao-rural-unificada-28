@@ -18,8 +18,6 @@ export const usePalletsPendentesItems = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      console.log("Fetching produtos em pallets pendentes for user:", user.id);
-
       // Check if user is admin
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -28,12 +26,10 @@ export const usePalletsPendentesItems = () => {
         .maybeSingle();
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError);
         throw profileError;
       }
 
       const isAdmin = profile?.role === 'admin';
-      console.log("User role:", profile?.role, "Is admin:", isAdmin);
 
       // Buscar pallets confirmados que ainda não foram alocados
       let palletQuery = supabase
@@ -57,11 +53,8 @@ export const usePalletsPendentesItems = () => {
       const { data: allPallets, error: palletsError } = await palletQuery;
 
       if (palletsError) {
-        console.error("Error fetching pallets:", palletsError);
         throw palletsError;
       }
-
-      console.log("Found confirmed pallets:", allPallets?.length || 0);
 
       // Filtrar apenas pallets que não estão alocados
       const { data: allocatedPalletIds, error: allocatedError } = await supabase
@@ -70,13 +63,11 @@ export const usePalletsPendentesItems = () => {
         .eq("status", "alocado");
 
       if (allocatedError) {
-        console.error("Error fetching allocated pallets:", allocatedError);
+        throw allocatedError;
       }
 
       const allocatedIds = new Set(allocatedPalletIds?.map(p => p.pallet_id) || []);
       const pendingPallets = allPallets?.filter(pallet => !allocatedIds.has(pallet.id)) || [];
-
-      console.log("Pallets pendentes filtrados:", pendingPallets.length);
 
       if (pendingPallets.length === 0) {
         return [];
@@ -97,20 +88,16 @@ export const usePalletsPendentesItems = () => {
         .in("pallet_id", pendingPallets.map(p => p.id));
 
       if (itemsError) {
-        console.error("Error fetching pallet items:", itemsError);
         throw itemsError;
       }
 
-      console.log("Found pallet items:", palletItems?.length || 0);
-
       // Transformar dados para o formato esperado
       const items: PalletPendenteItem[] = palletItems?.map(item => ({
-        produto_id: item.entrada_itens.produto_id,
+        produto_id: item.entrada_itens?.produto_id,
         quantidade: item.quantidade,
-        produtos: item.entrada_itens.produtos
+        produtos: item.entrada_itens?.produtos
       })) || [];
 
-      console.log("Transformed pallet items:", items.length);
       return items;
     },
     enabled: !!user?.id,

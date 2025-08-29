@@ -100,11 +100,12 @@ export const useDynamicMenuItems = () => {
   const { data: hierarchyData, isLoading: isLoadingHierarchy } = useUserHierarchy()
 
   const menuItems = useMemo(() => {
-    if (isLoadingPagePerms || isLoadingUserPerms || isLoadingHierarchy || !permissions.length) return []
+    if (isLoadingPagePerms || isLoadingUserPerms || isLoadingHierarchy || !permissions?.length) return []
 
     const visiblePages = permissions
-      .filter(p => p.visible_in_menu)
-      .map(p => p.page_key)
+      ?.filter(p => p?.visible_in_menu)
+      ?.map(p => p?.page_key)
+      .filter(Boolean) || []
 
     const items: MenuItem[] = []
     
@@ -142,21 +143,26 @@ export const useDynamicMenuItems = () => {
 
       // Segunda camada: verificar se o usuário tem permissão individual para ver a página
       const pageViewPermission = `${page}.view`
-      const hasUserPermission = userPermissions.some(perm => perm === pageViewPermission)
+      const hasUserPermission = userPermissions?.some(perm => perm === pageViewPermission) || false
 
       // LÓGICA CORRIGIDA:
       // - Se é master (sem parent): mostrar TODAS as páginas do role, ignorar permissões individuais
       // - Se NÃO é master E tem permissões individuais E não tem essa permissão específica: não mostrar
       // - Se NÃO tem permissões individuais definidas: mostrar (usar apenas role)
-      if (!isMaster && userPermissions.length > 0 && !hasUserPermission) {
+      if (!isMaster && userPermissions?.length > 0 && !hasUserPermission) {
         return
       }
 
-      items.push({
-        path: page === 'dashboard' ? '/' : `/${page}`,
-        label: menuLabels[page as keyof typeof menuLabels],
-        icon: iconMap[page as keyof typeof iconMap]
-      })
+      const label = menuLabels[page as keyof typeof menuLabels]
+      const icon = iconMap[page as keyof typeof iconMap]
+      
+      if (label && icon) {
+        items.push({
+          path: page === 'dashboard' ? '/' : `/${page}`,
+          label,
+          icon
+        })
+      }
     })
 
     return items

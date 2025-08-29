@@ -13,46 +13,35 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
     staleTime: 0, // Força refetch para evitar cache desatualizado
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      console.log('🔍 Iniciando busca de entradas pendentes...')
-      
-      // Check current user first
-      const { data: userData } = await supabase.auth.getUser()
-      console.log('👤 Usuário atual:', userData?.user?.id, userData?.user?.email)
-
-      // Get basic entries data first
-      let query = supabase
-        .from("entradas")
-        .select(`
-          *,
-          entrada_itens(
+      try {
+        let query = supabase
+          .from("entradas")
+          .select(`
             *,
-            produtos(nome, unidade_medida)
-          )
-        `)
-        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
+            entrada_itens(
+              *,
+              produtos(nome, unidade_medida)
+            )
+          `)
+          .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
+          
+        // Apply date filters if provided
+        if (dateRange?.from) {
+          query = query.gte("data_entrada", dateRange.from.toISOString().split('T')[0])
+        }
+        if (dateRange?.to) {
+          query = query.lte("data_entrada", dateRange.to.toISOString().split('T')[0])
+        }
         
-      // Apply date filters if provided
-      if (dateRange?.from) {
-        query = query.gte("data_entrada", dateRange.from.toISOString().split('T')[0])
-      }
-      if (dateRange?.to) {
-        query = query.lte("data_entrada", dateRange.to.toISOString().split('T')[0])
-      }
-      
-      const { data: entradas, error } = await query.order("created_at", { ascending: false })
+        const { data: entradas, error } = await query.order("created_at", { ascending: false })
 
-      if (error) {
-        console.error('❌ Erro ao buscar entradas:', error)
-        throw error
-      }
+        if (error) {
+          throw error
+        }
 
-      console.log('📊 Entradas encontradas:', entradas?.length || 0)
-      console.log('📝 Detalhes das entradas:', entradas)
-
-      if (!entradas || entradas.length === 0) {
-        console.log('⚠️ Nenhuma entrada encontrada - verificando RLS políticas...')
-        return []
-      }
+        if (!entradas || entradas.length === 0) {
+          return []
+        }
 
       // Enrich with additional data
       const entradasEnriquecidas = await Promise.all(
@@ -60,44 +49,64 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
           const enrichedEntry: any = { ...entrada }
 
           // Get user profile
-          if (entrada.user_id) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("nome")
-              .eq("user_id", entrada.user_id)
-              .single()
-            
-            enrichedEntry.profiles = profile
+          if (entrada?.user_id) {
+            try {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("nome")
+                .eq("user_id", entrada.user_id)
+                .single()
+              
+              if (profile) {
+                enrichedEntry.profiles = profile
+              }
+            } catch (err) {
+              // Silently handle profile fetch errors
+            }
           }
 
           // Get supplier info
-          if (entrada.fornecedor_id) {
-            const { data: fornecedor } = await supabase
-              .from("fornecedores")
-              .select("nome")
-              .eq("id", entrada.fornecedor_id)
-              .single()
-            
-            enrichedEntry.fornecedores = fornecedor
+          if (entrada?.fornecedor_id) {
+            try {
+              const { data: fornecedor } = await supabase
+                .from("fornecedores")
+                .select("nome")
+                .eq("id", entrada.fornecedor_id)
+                .single()
+              
+              if (fornecedor) {
+                enrichedEntry.fornecedores = fornecedor
+              }
+            } catch (err) {
+              // Silently handle supplier fetch errors
+            }
           }
 
           // Get franchise info
-          if (entrada.deposito_id) {
-            const { data: franquia } = await supabase
-              .from("franquias")
-              .select("nome")
-              .eq("id", entrada.deposito_id)
-              .single()
-            
-            enrichedEntry.franquias = franquia
+          if (entrada?.deposito_id) {
+            try {
+              const { data: franquia } = await supabase
+                .from("franquias")
+                .select("nome")
+                .eq("id", entrada.deposito_id)
+                .single()
+              
+              if (franquia) {
+                enrichedEntry.franquias = franquia
+              }
+            } catch (err) {
+              // Silently handle franchise fetch errors
+            }
           }
 
           return enrichedEntry
         })
       )
 
-      console.log('✅ Entradas enriquecidas:', entradasEnriquecidas)
       return entradasEnriquecidas || []
+      } catch (error) {
+        throw error
+      }
     },
     refetchOnMount: true,
   })
@@ -119,8 +128,6 @@ export const useAtualizarStatusEntrada = () => {
       observacoes?: string,
       divergencias?: any[]
     }) => {
-      console.log('🔄 Iniciando atualização de status:', { entradaId, novoStatus, observacoes, divergencias })
-
       const updateData: any = {
         status_aprovacao: novoStatus,
       }
@@ -135,10 +142,9 @@ export const useAtualizarStatusEntrada = () => {
 
       if (novoStatus === 'confirmado') {
         updateData.data_aprovacao = new Date().toISOString()
-        updateData.aprovado_por = (await supabase.auth.getUser()).data.user?.id
+        const { data: userData } = await supabase.auth.getUser()
+        updateData.aprovado_por = userData?.user?.id
       }
-
-      console.log('📝 Dados para atualização:', updateData)
 
       const { data, error } = await supabase
         .from("entradas")
@@ -146,24 +152,17 @@ export const useAtualizarStatusEntrada = () => {
         .eq("id", entradaId)
         .select()
 
-      console.log('📊 Resultado da atualização:', { data, error })
-
       if (error) {
-        console.error('❌ Erro na atualização:', error)
         throw error
       }
 
       if (!data || data.length === 0) {
-        console.warn('⚠️ Nenhum registro foi atualizado')
         throw new Error('Nenhum registro foi atualizado. Verifique se você tem permissão para editar esta entrada.')
       }
 
-      console.log('✅ Status atualizado com sucesso:', data[0])
       return { entradaId, novoStatus }
     },
     onSuccess: async (data) => {
-      console.log(`✅ Sucesso na atualização: entrada ${data.entradaId} -> ${data.novoStatus}`)
-      
       // Invalidate specific queries with await to ensure they complete
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] }),
@@ -182,14 +181,12 @@ export const useAtualizarStatusEntrada = () => {
         'rejeitado': 'Entrada rejeitada'
       }
       
-      const message = statusMessages[data.novoStatus as keyof typeof statusMessages] || 'Status atualizado'
+      const message = statusMessages[data?.novoStatus as keyof typeof statusMessages] || 'Status atualizado'
       
       toast({
         title: "Sucesso",
         description: message,
       })
-      
-      console.log(`🔄 Cache invalidado e queries atualizadas para entrada ${data.entradaId}`)
     },
     onError: (error: any) => {
       toast({

@@ -56,59 +56,56 @@ export const useFluxoData = (
   palletsPendentesItems: PalletPendenteItem[] = []
 ): FluxoData[] => {
   return useMemo(() => {
-    console.log("useFluxoData - Processing data:", { 
-      entradas: entradas.length, 
-      estoque: estoque.length, 
-      saidas: saidas.length,
-      palletsPendentesItems: palletsPendentesItems.length
-    });
+    if (!entradas || !estoque || !saidas) {
+      return []
+    }
     
     const produtoMap = new Map<string, FluxoData>();
 
     // Processar entradas (A Caminho - incluindo produtos ainda não alocados)
     entradas.forEach(entrada => {
       // Produtos em trânsito
-      if (entrada.status_aprovacao === 'aguardando_transporte' || 
-          entrada.status_aprovacao === 'em_transferencia') {
-        entrada.entrada_itens.forEach(item => {
-          const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
-          const current = produtoMap.get(produtoNome) || {
-            produto: produtoNome,
-            aCaminho: 0,
-            noDeposito: 0,
-            emSeparacao: 0,
-            expedido: 0,
-            entregue: 0,
-          };
-          current.aCaminho += item.quantidade;
-          produtoMap.set(produtoNome, current);
+      if (entrada?.status_aprovacao === 'aguardando_transporte' || 
+          entrada?.status_aprovacao === 'em_transferencia') {
+        entrada?.entrada_itens?.forEach(item => {
+          if (item?.produto_id && typeof item?.quantidade === 'number') {
+            const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+            const current = produtoMap.get(produtoNome) || {
+              produto: produtoNome,
+              aCaminho: 0,
+              noDeposito: 0,
+              emSeparacao: 0,
+              expedido: 0,
+              entregue: 0,
+            };
+            current.aCaminho += item.quantidade;
+            produtoMap.set(produtoNome, current);
+          }
         });
       }
     });
 
     // Processar produtos em pallets pendentes (A Caminho)
-    palletsPendentesItems.forEach(item => {
-      console.log("Processing pallet pendente item:", item);
-      const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
-      console.log("Adding pallet pendente to chart - produto:", produtoNome, "quantidade:", item.quantidade);
-      const current = produtoMap.get(produtoNome) || {
-        produto: produtoNome,
-        aCaminho: 0,
-        noDeposito: 0,
-        emSeparacao: 0,
-        expedido: 0,
-        entregue: 0,
-      };
-      current.aCaminho += item.quantidade;
-      produtoMap.set(produtoNome, current);
+    palletsPendentesItems?.forEach(item => {
+      if (item?.produto_id && typeof item?.quantidade === 'number') {
+        const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+        const current = produtoMap.get(produtoNome) || {
+          produto: produtoNome,
+          aCaminho: 0,
+          noDeposito: 0,
+          emSeparacao: 0,
+          expedido: 0,
+          entregue: 0,
+        };
+        current.aCaminho += item.quantidade;
+        produtoMap.set(produtoNome, current);
+      }
     });
 
     // Processar estoque (No Depósito - somente produtos já alocados em posições)
     estoque.forEach(item => {
-      console.log("Processing estoque item:", item);
-      if (item.quantidade_atual > 0) {
+      if (item?.quantidade_atual > 0 && item?.produto_id) {
         const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
-        console.log("Adding to chart - produto:", produtoNome, "quantidade:", item.quantidade_atual);
         const current = produtoMap.get(produtoNome) || {
           produto: produtoNome,
           aCaminho: 0,
@@ -124,28 +121,28 @@ export const useFluxoData = (
 
     // Processar saídas
     saidas.forEach(saida => {
-      console.log("Processing saida:", saida);
-      saida.saida_itens?.forEach(item => {
-        const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
-        console.log("Adding saida to chart - produto:", produtoNome, "quantidade:", item.quantidade, "status:", saida.status);
-        const current = produtoMap.get(produtoNome) || {
-          produto: produtoNome,
-          aCaminho: 0,
-          noDeposito: 0,
-          emSeparacao: 0,
-          expedido: 0,
-          entregue: 0,
-        };
+      saida?.saida_itens?.forEach(item => {
+        if (item?.produto_id && typeof item?.quantidade === 'number') {
+          const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+          const current = produtoMap.get(produtoNome) || {
+            produto: produtoNome,
+            aCaminho: 0,
+            noDeposito: 0,
+            emSeparacao: 0,
+            expedido: 0,
+            entregue: 0,
+          };
 
-        if (saida.status === 'separacao_pendente' || saida.status === 'separado') {
-          current.emSeparacao += item.quantidade;
-        } else if (saida.status === 'expedido') {
-          current.expedido += item.quantidade;
-        } else if (saida.status === 'entregue') {
-          current.entregue += item.quantidade;
+          if (saida?.status === 'separacao_pendente' || saida?.status === 'separado') {
+            current.emSeparacao += item.quantidade;
+          } else if (saida?.status === 'expedido') {
+            current.expedido += item.quantidade;
+          } else if (saida?.status === 'entregue') {
+            current.entregue += item.quantidade;
+          }
+
+          produtoMap.set(produtoNome, current);
         }
-
-        produtoMap.set(produtoNome, current);
       });
     });
 
@@ -165,7 +162,6 @@ export const useFluxoData = (
       .sort((a, b) => b.total - a.total) // Ordenar por quantidade total (maior para menor)
       .slice(0, 20); // Limitar a 20 produtos para melhor visualização
     
-    console.log("useFluxoData - Final result:", result);
     return result;
   }, [entradas, estoque, saidas, palletsPendentesItems]);
 };

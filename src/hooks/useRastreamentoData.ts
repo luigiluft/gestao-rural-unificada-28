@@ -10,8 +10,6 @@ export const useRastreamentoEntradas = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
-      console.log("Fetching entradas for user:", user.id)
-
       // Check if user is admin
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -20,12 +18,10 @@ export const useRastreamentoEntradas = () => {
         .maybeSingle()
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError)
         throw profileError
       }
 
       const isAdmin = profile?.role === 'admin'
-      console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
         .from("entradas")
@@ -48,11 +44,8 @@ export const useRastreamentoEntradas = () => {
       const { data: entradas, error } = await query
 
       if (error) {
-        console.error("Error fetching entradas:", error)
         throw error
       }
-
-      console.log("Fetched entradas:", entradas?.length || 0)
 
       // Get franquia names and user names for each entrada
       const entradasWithFranquias = await Promise.all(
@@ -104,8 +97,6 @@ export const useRastreamentoEstoque = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
-      console.log("Fetching estoque for user:", user.id)
-
       // Check if user is admin
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -114,12 +105,10 @@ export const useRastreamentoEstoque = () => {
         .maybeSingle()
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError)
         throw profileError
       }
 
       const isAdmin = profile?.role === 'admin'
-      console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
         .from("estoque")
@@ -138,11 +127,8 @@ export const useRastreamentoEstoque = () => {
       const { data: estoque, error } = await query
 
       if (error) {
-        console.error("Error fetching estoque:", error)
         throw error
       }
-
-      console.log("Fetched estoque:", estoque?.length || 0)
 
       // Get franquia names and user names for each estoque item
       const estoqueWithFranquias = await Promise.all(
@@ -196,8 +182,6 @@ export const useRastreamentoSaidas = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
-      console.log("Fetching saidas for user:", user.id)
-
       // Check if user is admin
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -206,12 +190,10 @@ export const useRastreamentoSaidas = () => {
         .maybeSingle()
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError)
         throw profileError
       }
 
       const isAdmin = profile?.role === 'admin'
-      console.log("User role:", profile?.role, "Is admin:", isAdmin)
 
       let query = supabase
         .from("saidas")
@@ -239,11 +221,8 @@ export const useRastreamentoSaidas = () => {
       const { data: saidas, error } = await query
 
       if (error) {
-        console.error("Error fetching saidas:", error)
         throw error
       }
-
-      console.log("Fetched saidas:", saidas?.length || 0)
 
       // Get franquia names and user names for each saida
       const saidasWithFranquias = await Promise.all(
