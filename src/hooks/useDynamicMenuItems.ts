@@ -57,6 +57,7 @@ const iconMap = {
   configuracoes: Settings,
   "controle-acesso": Shield,
   "alocacao-pallets": Waves,
+  "gerenciar-alocacoes": Grid3X3,
   "gerenciar-posicoes": Grid3X3,
   separacao: Clipboard,
   inventario: Package2,
@@ -85,6 +86,7 @@ const menuLabels = {
   configuracoes: "Configurações",
   "controle-acesso": "Controle de Acesso",
   "alocacao-pallets": "Alocações",
+  "gerenciar-alocacoes": "Gerenciar Alocações",
   "gerenciar-posicoes": "Posições",
   separacao: "Separação",
   inventario: "Inventário",
@@ -105,6 +107,9 @@ export const useDynamicMenuItems = () => {
       .map(p => p.page_key)
 
     const items: MenuItem[] = []
+    
+    // Determinar se é master ANTES do loop
+    const isMaster = hierarchyData?.isMaster ?? false
 
     // Ordem específica definida pelo usuário
     const orderedPages = [
@@ -113,6 +118,7 @@ export const useDynamicMenuItems = () => {
       'entradas',
       'recebimento',
       'alocacao-pallets',
+      'gerenciar-alocacoes',
       'estoque',
       'inventario',
       'saidas',
@@ -121,15 +127,11 @@ export const useDynamicMenuItems = () => {
       'transporte',
       'rastreio',
       'relatorios',
-      'usuarios',
-      'franquias',
-      'franqueados',
       'produtores',
+      'fazendas',
       'perfil',
       'subcontas',
       'perfis-funcionarios',
-      'controle-acesso',
-      'configuracoes',
       'suporte'
     ]
 
@@ -142,13 +144,13 @@ export const useDynamicMenuItems = () => {
       const pageViewPermission = `${page}.view`
       const hasUserPermission = userPermissions.some(perm => perm === pageViewPermission)
 
-      // Para franqueados master (sem parent na hierarquia), usar sempre as permissões do role
-      // Para subcontas, usar o sistema de permissões individuais
-      const isMaster = hierarchyData?.isMaster ?? false
-      
-      // Se tem permissões individuais definidas mas não tem essa específica, não mostrar
-      // EXCETO se for um franqueado master (que deve ter acesso completo do role)
-      if (userPermissions.length > 0 && !hasUserPermission && !isMaster) return
+      // LÓGICA CORRIGIDA:
+      // - Se é master (sem parent): mostrar TODAS as páginas do role, ignorar permissões individuais
+      // - Se NÃO é master E tem permissões individuais E não tem essa permissão específica: não mostrar
+      // - Se NÃO tem permissões individuais definidas: mostrar (usar apenas role)
+      if (!isMaster && userPermissions.length > 0 && !hasUserPermission) {
+        return
+      }
 
       items.push({
         path: page === 'dashboard' ? '/' : `/${page}`,
