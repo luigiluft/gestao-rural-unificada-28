@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { usePagePermissions } from "./usePagePermissions"
 import { useUserPagePermissions } from "./useUserPagePermissions"
+import { useUserHierarchy } from "./useUserHierarchy"
 import { 
   LayoutDashboard, 
   Package, 
@@ -94,9 +95,10 @@ const menuLabels = {
 export const useDynamicMenuItems = () => {
   const { data: permissions = [], isLoading: isLoadingPagePerms } = usePagePermissions()
   const { data: userPermissions = [], isLoading: isLoadingUserPerms } = useUserPagePermissions()
+  const { data: hierarchyData, isLoading: isLoadingHierarchy } = useUserHierarchy()
 
   const menuItems = useMemo(() => {
-    if (isLoadingPagePerms || isLoadingUserPerms || !permissions.length) return []
+    if (isLoadingPagePerms || isLoadingUserPerms || isLoadingHierarchy || !permissions.length) return []
 
     const visiblePages = permissions
       .filter(p => p.visible_in_menu)
@@ -140,9 +142,13 @@ export const useDynamicMenuItems = () => {
       const pageViewPermission = `${page}.view`
       const hasUserPermission = userPermissions.some(perm => perm === pageViewPermission)
 
+      // Para franqueados master (sem parent na hierarquia), usar sempre as permissões do role
+      // Para subcontas, usar o sistema de permissões individuais
+      const isMaster = hierarchyData?.isMaster ?? false
+      
       // Se tem permissões individuais definidas mas não tem essa específica, não mostrar
-      // Se não tem permissões individuais, usar apenas a permissão do role
-      if (userPermissions.length > 0 && !hasUserPermission) return
+      // EXCETO se for um franqueado master (que deve ter acesso completo do role)
+      if (userPermissions.length > 0 && !hasUserPermission && !isMaster) return
 
       items.push({
         path: page === 'dashboard' ? '/' : `/${page}`,
@@ -152,7 +158,7 @@ export const useDynamicMenuItems = () => {
     })
 
     return items
-  }, [permissions, userPermissions, isLoadingPagePerms, isLoadingUserPerms])
+  }, [permissions, userPermissions, isLoadingPagePerms, isLoadingUserPerms, hierarchyData, isLoadingHierarchy])
 
-  return { menuItems, isLoading: isLoadingPagePerms || isLoadingUserPerms }
+  return { menuItems, isLoading: isLoadingPagePerms || isLoadingUserPerms || isLoadingHierarchy }
 }
