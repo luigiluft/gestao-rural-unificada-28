@@ -2078,6 +2078,17 @@ export type Database = {
         | "estoque.manage"
         | "entradas.manage"
         | "saidas.manage"
+        | "dashboard.view"
+        | "entradas.view"
+        | "saidas.view"
+        | "recebimento.view"
+        | "alocacao.view"
+        | "separacao.view"
+        | "expedicao.view"
+        | "inventario.view"
+        | "relatorios.view"
+        | "rastreio.view"
+        | "perfis-funcionarios.view"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -2222,6 +2233,17 @@ export const Constants = {
         "estoque.manage",
         "entradas.manage",
         "saidas.manage",
+        "dashboard.view",
+        "entradas.view",
+        "saidas.view",
+        "recebimento.view",
+        "alocacao.view",
+        "separacao.view",
+        "expedicao.view",
+        "inventario.view",
+        "relatorios.view",
+        "rastreio.view",
+        "perfis-funcionarios.view",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
