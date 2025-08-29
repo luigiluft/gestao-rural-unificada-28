@@ -1856,6 +1856,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_employee_profiles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          profile_id: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          profile_id?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          profile_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_employee_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_hierarchy: {
         Row: {
           child_user_id: string
@@ -2083,6 +2112,10 @@ export type Database = {
       }
       is_ancestor: {
         Args: { _child: string; _parent: string }
+        Returns: boolean
+      }
+      is_subaccount: {
+        Args: { _user_id: string }
         Returns: boolean
       }
       process_entrada_itens_without_produto: {

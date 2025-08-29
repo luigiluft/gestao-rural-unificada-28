@@ -1,7 +1,5 @@
 import { useMemo } from "react"
-import { usePagePermissions } from "./usePagePermissions"
-import { useUserPagePermissions } from "./useUserPagePermissions"
-import { useUserHierarchy } from "./useUserHierarchy"
+import { useSimplifiedPermissions } from "./useSimplifiedPermissions"
 import { 
   LayoutDashboard, 
   Package, 
@@ -95,22 +93,12 @@ const menuLabels = {
 }
 
 export const useDynamicMenuItems = () => {
-  const { data: permissions = [], isLoading: isLoadingPagePerms } = usePagePermissions()
-  const { data: userPermissions = [], isLoading: isLoadingUserPerms } = useUserPagePermissions()
-  const { data: hierarchyData, isLoading: isLoadingHierarchy } = useUserHierarchy()
+  const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
 
   const menuItems = useMemo(() => {
-    if (isLoadingPagePerms || isLoadingUserPerms || isLoadingHierarchy || !permissions?.length) return []
-
-    const visiblePages = permissions
-      ?.filter(p => p?.visible_in_menu)
-      ?.map(p => p?.page_key)
-      .filter(Boolean) || []
+    if (isLoading || !permissions?.length) return []
 
     const items: MenuItem[] = []
-    
-    // Determinar se é master ANTES do loop
-    const isMaster = hierarchyData?.isMaster ?? false
 
     // Ordem específica definida pelo usuário
     const orderedPages = [
@@ -138,20 +126,10 @@ export const useDynamicMenuItems = () => {
 
     // Adicionar itens na ordem especificada
     orderedPages.forEach(page => {
-      // Primeira camada: verificar se o role tem acesso à página
-      if (!visiblePages.includes(page)) return
-
-      // Segunda camada: verificar se o usuário tem permissão individual para ver a página
       const pageViewPermission = `${page}.view`
-      const hasUserPermission = userPermissions?.some(perm => perm === pageViewPermission) || false
-
-      // LÓGICA CORRIGIDA:
-      // - Se é master (sem parent): mostrar TODAS as páginas do role, ignorar permissões individuais
-      // - Se NÃO é master E tem permissões individuais E não tem essa permissão específica: não mostrar
-      // - Se NÃO tem permissões individuais definidas: mostrar (usar apenas role)
-      if (!isMaster && userPermissions?.length > 0 && !hasUserPermission) {
-        return
-      }
+      
+      // Verificar se tem permissão para ver a página
+      if (!permissions.includes(pageViewPermission as any)) return
 
       const label = menuLabels[page as keyof typeof menuLabels]
       const icon = iconMap[page as keyof typeof iconMap]
@@ -166,7 +144,7 @@ export const useDynamicMenuItems = () => {
     })
 
     return items
-  }, [permissions, userPermissions, isLoadingPagePerms, isLoadingUserPerms, hierarchyData, isLoadingHierarchy])
+  }, [permissions, isLoading])
 
-  return { menuItems, isLoading: isLoadingPagePerms || isLoadingUserPerms || isLoadingHierarchy }
+  return { menuItems, isLoading }
 }

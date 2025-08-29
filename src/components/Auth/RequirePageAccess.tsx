@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useCanAccessPage } from "@/hooks/usePagePermissions";
+import { useCanAccessPage } from "@/hooks/useSimplifiedPermissions";
 
 interface RequirePageAccessProps {
   children: ReactNode;
