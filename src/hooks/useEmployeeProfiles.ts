@@ -2,25 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
-
-type UserRole = 'admin' | 'franqueado' | 'produtor'
-type PermissionCode = 
-  | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 
-  | 'dashboard.view' | 'entradas.view' | 'saidas.view' | 'recebimento.view' 
-  | 'alocacao.view' | 'separacao.view' | 'expedicao.view' | 'inventario.view' 
-  | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view'
-
-export type EmployeeProfile = {
-  id: string
-  user_id: string
-  role: UserRole
-  nome: string
-  descricao?: string
-  permissions: PermissionCode[]
-  is_template: boolean
-  created_at: string
-  updated_at: string
-}
+import { UserRole, PermissionCode, type EmployeeProfile } from "@/types/permissions"
 
 export const useEmployeeProfiles = (userRole?: UserRole) => {
   const { user } = useAuth()

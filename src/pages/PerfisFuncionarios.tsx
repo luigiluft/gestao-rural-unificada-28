@@ -9,15 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useProfile } from "@/hooks/useProfile"
-import { useEmployeeProfiles, type EmployeeProfile } from "@/hooks/useEmployeeProfiles"
+import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-
-type PermissionCode = 
-  | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 
-  | 'dashboard.view' | 'entradas.view' | 'saidas.view' | 'recebimento.view' 
-  | 'alocacao.view' | 'separacao.view' | 'expedicao.view' | 'inventario.view' 
-  | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view'
+import { type EmployeeProfile, type PermissionCode, type UserRole } from "@/types/permissions"
 
 const AVAILABLE_PERMISSIONS = {
   franqueado: [

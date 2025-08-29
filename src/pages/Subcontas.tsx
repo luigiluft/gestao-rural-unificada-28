@@ -14,24 +14,13 @@ import { MailPlus, Settings2, Unlink, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubaccountPermissions } from "@/hooks/useSubaccountPermissions";
 import { EmptyState } from "@/components/ui/empty-state";
+import { UserRole, PermissionCode, PERMISSIONS } from "@/types/permissions";
 
 interface ProfileRow {
   user_id: string;
   nome: string | null;
   email: string | null;
 }
-
-export type UserRole = 'admin' | 'franqueado' | 'produtor';
-export type PermissionCode = 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' | 'relatorios.view' | 'usuarios.manage';
-
-const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
-  { code: 'estoque.view', label: 'Ver estoque' },
-  { code: 'estoque.manage', label: 'Gerenciar estoque' },
-  { code: 'entradas.manage', label: 'Gerenciar entradas' },
-  { code: 'saidas.manage', label: 'Gerenciar saídas' },
-  { code: 'relatorios.view', label: 'Ver relatórios' },
-  { code: 'usuarios.manage', label: 'Gerenciar usuários' },
-];
 
 export default function Subcontas() {
   const { toast } = useToast();
@@ -52,6 +41,16 @@ export default function Subcontas() {
     'saidas.manage': false,
     'relatorios.view': false,
     'usuarios.manage': false,
+    'dashboard.view': false,
+    'entradas.view': false,
+    'saidas.view': false,
+    'recebimento.view': false,
+    'alocacao.view': false,
+    'separacao.view': false,
+    'expedicao.view': false,
+    'inventario.view': false,
+    'rastreio.view': false,
+    'perfis-funcionarios.view': false,
   });
   const [loadingPerms, setLoadingPerms] = useState(false);
   const [savingPerms, setSavingPerms] = useState(false);
@@ -308,6 +307,16 @@ export default function Subcontas() {
         'saidas.manage': current.has('saidas.manage'),
         'relatorios.view': current.has('relatorios.view'),
         'usuarios.manage': current.has('usuarios.manage'),
+        'dashboard.view': current.has('dashboard.view'),
+        'entradas.view': current.has('entradas.view'),
+        'saidas.view': current.has('saidas.view'),
+        'recebimento.view': current.has('recebimento.view'),
+        'alocacao.view': current.has('alocacao.view'),
+        'separacao.view': current.has('separacao.view'),
+        'expedicao.view': current.has('expedicao.view'),
+        'inventario.view': current.has('inventario.view'),
+        'rastreio.view': current.has('rastreio.view'),
+        'perfis-funcionarios.view': current.has('perfis-funcionarios.view'),
       });
     } catch (err: any) {
       toast({ title: "Erro ao carregar permissões", description: err.message, variant: "destructive" });

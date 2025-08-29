@@ -1,6 +1,6 @@
 import { useMemo } from "react"
-import { useEmployeeProfiles, type EmployeeProfile } from "./useEmployeeProfiles"
-import { PermissionCode, UserRole } from "@/pages/Subcontas"
+import { useEmployeeProfiles } from "./useEmployeeProfiles"
+import { PermissionCode, UserRole, type EmployeeProfile } from "@/types/permissions"
 
 // Templates de permissões por role (legacy - mantido para compatibilidade)
 export const PERMISSION_TEMPLATES: Record<UserRole, PermissionCode[]> = {
