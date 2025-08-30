@@ -108,6 +108,17 @@ export default function Subcontas() {
     },
   })
 
+  // Função para gerar senha temporária
+  const generateTemporaryPassword = () => {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+    let password = 'Agro'
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    password += '!'
+    return password
+  }
+
   // Mutação para criar usuário diretamente
   const createUserMutation = useMutation({
     mutationFn: async () => {
@@ -135,28 +146,91 @@ export default function Subcontas() {
         }
       }
 
-      const userData = {
-        email: createEmail,
-        inviter_user_id: user?.id,
-        parent_user_id: parentUserId,
-        role: selectedProfile.role,
-        permissions: selectedProfile.permissions,
-        ...(franquiaId && { franquia_id: franquiaId })
-      }
+      // Gerar senha temporária
+      const tempPassword = generateTemporaryPassword()
 
-      const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: userData
+      // Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: createEmail,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          role: selectedProfile.role
+        }
       })
 
-      if (error) throw error
-      if (!data?.success) throw new Error(data?.error || 'Erro ao criar usuário')
+      if (authError) throw new Error(`Erro ao criar usuário: ${authError.message}`)
 
-      return data
+      const newUserId = authData.user.id
+
+      // Inserir na tabela profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: newUserId,
+          email: createEmail,
+          role: selectedProfile.role,
+          nome: createEmail.split('@')[0] // Nome temporário baseado no email
+        })
+
+      if (profileError) {
+        // Se falhar ao criar profile, deletar o usuário criado
+        await supabase.auth.admin.deleteUser(newUserId)
+        throw new Error(`Erro ao criar perfil: ${profileError.message}`)
+      }
+
+      // Configurar hierarquia se necessário
+      if (parentUserId && parentUserId !== newUserId) {
+        const { error: hierarchyError } = await supabase
+          .from('user_hierarchy')
+          .insert({
+            parent_user_id: parentUserId,
+            child_user_id: newUserId
+          })
+
+        if (hierarchyError) {
+          // Se falhar, ainda assim não deletamos o usuário, apenas logamos
+          console.error('Erro ao criar hierarquia:', hierarchyError)
+        }
+      }
+
+      // Se for produtor, inserir na tabela produtores
+      if (selectedProfile.role === 'produtor') {
+        const { error: produtorError } = await supabase
+          .from('produtores')
+          .insert({
+            user_id: newUserId,
+            franquia_id: franquiaId
+          })
+
+        if (produtorError) {
+          console.error('Erro ao criar registro de produtor:', produtorError)
+        }
+      }
+
+      // Atribuir o perfil de funcionário automaticamente
+      try {
+        await supabase
+          .from('user_employee_profiles')
+          .insert({
+            user_id: newUserId,
+            profile_id: selectedProfileId,
+            assigned_by: user?.id
+          })
+      } catch (profileAssignError) {
+        console.error('Erro ao atribuir perfil de funcionário:', profileAssignError)
+      }
+
+      return {
+        email: createEmail,
+        password: tempPassword,
+        userId: newUserId
+      }
     },
     onSuccess: (data) => {
       setCreatedCredentials({
-        email: createEmail,
-        password: data.default_password
+        email: data.email,
+        password: data.password
       })
       toast.success("Usuário criado com sucesso!")
       refetchSubaccounts()
