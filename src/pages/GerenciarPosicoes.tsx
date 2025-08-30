@@ -1,328 +1,272 @@
-import { useState } from "react"
-import { useStoragePositions, useCreateStoragePosition, useUpdateStoragePosition } from "@/hooks/useStoragePositions"
-import { useProfile } from "@/hooks/useProfile"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Skeleton } from "@/components/ui/skeleton"
-import { EmptyState } from "@/components/ui/empty-state"
-import { MapPin, Plus, Edit, Archive, Package } from "lucide-react"
-import { supabase } from "@/integrations/supabase/client"
-import { useQuery } from "@tanstack/react-query"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Package, MapPin, Calendar, User, Trash2, Eye, ArrowRightLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePalletPositions, useRemovePalletAllocation, useReallocatePallet } from "@/hooks/usePalletPositions";
+import { useAvailablePositions } from "@/hooks/useStoragePositions";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function GerenciarPosicoes() {
-  const { data: profile } = useProfile()
-  const [selectedDeposito, setSelectedDeposito] = useState<string>("")
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingPosition, setEditingPosition] = useState<any>(null)
+  const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
+  const [reallocateDialog, setReallocateDialog] = useState<{
+    open: boolean;
+    pallet?: any;
+  }>({ open: false });
+  const [newPositionId, setNewPositionId] = useState<string>("");
+  const [observacoes, setObservacoes] = useState<string>("");
   
-  // Form state
-  const [formData, setFormData] = useState({
-    codigo: "",
-    descricao: "",
-    tipo_posicao: "prateleira",
-    capacidade_maxima: ""
-  })
+  const { data: palletPositions, isLoading } = usePalletPositions(selectedDepositoId);
+  const { data: availablePositions } = useAvailablePositions(selectedDepositoId);
+  const removeAllocation = useRemovePalletAllocation();
+  const reallocatePallet = useReallocatePallet();
 
-  // Fetch user's franquias
-  const { data: franquias } = useQuery({
-    queryKey: ["user-franquias"],
-    queryFn: async () => {
-      if (!profile) return []
-      
-      if (profile.role === 'admin') {
-        const { data } = await supabase
-          .from("franquias")
-          .select("*")
-          .eq("ativo", true)
-        return data || []
-      } else if (profile.role === 'franqueado') {
-        const { data } = await supabase
-          .from("franquias")
-          .select("*")
-          .eq("master_franqueado_id", profile.user_id)
-          .eq("ativo", true)
-        return data || []
-      }
-      
-      return []
-    },
-    enabled: !!profile
-  })
+  const handleRemoveAllocation = async (palletId: string) => {
+    if (confirm("Tem certeza que deseja remover esta alocação?")) {
+      await removeAllocation.mutateAsync(palletId);
+    }
+  };
 
-  const { data: positions, isLoading } = useStoragePositions(selectedDeposito)
-  const createPosition = useCreateStoragePosition()
-  const updatePosition = useUpdateStoragePosition()
+  const handleOpenReallocateDialog = (pallet: any) => {
+    setReallocateDialog({ open: true, pallet });
+    setNewPositionId("");
+    setObservacoes("");
+  };
 
-  const resetForm = () => {
-    setFormData({
-      codigo: "",
-      descricao: "",
-      tipo_posicao: "prateleira",
-      capacidade_maxima: ""
-    })
-    setEditingPosition(null)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleReallocate = async () => {
+    if (!reallocateDialog.pallet || !newPositionId) return;
     
-    const positionData = {
-      ...formData,
-      deposito_id: selectedDeposito,
-      capacidade_maxima: formData.capacidade_maxima ? Number(formData.capacidade_maxima) : undefined
-    }
+    await reallocatePallet.mutateAsync({
+      palletId: reallocateDialog.pallet.pallet_id,
+      newPositionId,
+      observacoes: observacoes || undefined
+    });
+    
+    setReallocateDialog({ open: false });
+    setNewPositionId("");
+    setObservacoes("");
+  };
 
-    if (editingPosition) {
-      await updatePosition.mutateAsync({
-        id: editingPosition.id,
-        updates: positionData
-      })
-    } else {
-      await createPosition.mutateAsync(positionData)
-    }
-
-    setDialogOpen(false)
-    resetForm()
-  }
-
-  const handleEdit = (position: any) => {
-    setEditingPosition(position)
-    setFormData({
-      codigo: position.codigo,
-      descricao: position.descricao || "",
-      tipo_posicao: position.tipo_posicao || "prateleira",
-      capacidade_maxima: position.capacidade_maxima?.toString() || ""
-    })
-    setDialogOpen(true)
-  }
-
-  const handleToggleStatus = async (position: any) => {
-    await updatePosition.mutateAsync({
-      id: position.id,
-      updates: { ativo: !position.ativo }
-    })
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Gerenciar Posições</h1>
+            <p className="text-muted-foreground">Visualize e gerencie pallets nas posições</p>
+          </div>
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Gerenciar Posições de Estoque</h1>
-        <p className="text-muted-foreground mt-2">
-          Configure e gerencie as posições de armazenamento do depósito
-        </p>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Gerenciar Posições</h1>
+          <p className="text-muted-foreground">Visualize e gerencie pallets nas posições</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Selecionar Depósito</CardTitle>
-          <CardDescription>
-            Escolha o depósito para gerenciar suas posições
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedDeposito} onValueChange={setSelectedDeposito}>
-            <SelectTrigger className="max-w-md">
-              <SelectValue placeholder="Selecionar depósito..." />
-            </SelectTrigger>
-            <SelectContent>
-              {franquias?.map((franquia: any) => (
-                <SelectItem key={franquia.id} value={franquia.id}>
-                  {franquia.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {!palletPositions?.length ? (
+        <EmptyState
+          icon={<Package className="h-8 w-8" />}
+          title="Nenhuma posição ocupada"
+          description="Não há pallets alocados no momento."
+        />
+      ) : (
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            {palletPositions.length} pallet(s) alocado(s)
+          </div>
 
-      {selectedDeposito && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Posições de Estoque
-                </CardTitle>
-                <CardDescription>
-                  {positions?.length || 0} posições configuradas
-                </CardDescription>
-              </div>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={resetForm}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Nova Posição
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingPosition ? "Editar Posição" : "Nova Posição"}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {editingPosition ? "Edite os dados da posição" : "Adicione uma nova posição de estoque"}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <Label htmlFor="codigo">Código da Posição *</Label>
-                      <Input
-                        id="codigo"
-                        value={formData.codigo}
-                        onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-                        placeholder="Ex: A01-01-01"
-                        required
-                      />
-                    </div>
+          <div className="grid gap-4">
+            {palletPositions.map((position) => (
+              <Card key={position.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      Pallet #{position.entrada_pallets?.numero_pallet}
+                      {position.entrada_pallets?.descricao && (
+                        <Badge variant="outline" className="text-xs">
+                          {position.entrada_pallets.descricao}
+                        </Badge>
+                      )}
+                    </CardTitle>
                     
-                    <div>
-                      <Label htmlFor="descricao">Descrição</Label>
-                      <Input
-                        id="descricao"
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                        placeholder="Descrição da posição..."
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="tipo_posicao">Tipo de Posição</Label>
-                      <Select 
-                        value={formData.tipo_posicao} 
-                        onValueChange={(value) => setFormData({ ...formData, tipo_posicao: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="prateleira">Prateleira</SelectItem>
-                          <SelectItem value="pallet">Pallet</SelectItem>
-                          <SelectItem value="container">Container</SelectItem>
-                          <SelectItem value="gaveta">Gaveta</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="capacidade_maxima">Capacidade Máxima (kg)</Label>
-                      <Input
-                        id="capacidade_maxima"
-                        type="number"
-                        value={formData.capacidade_maxima}
-                        onChange={(e) => setFormData({ ...formData, capacidade_maxima: e.target.value })}
-                        placeholder="Capacidade em kg..."
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end gap-2 pt-4">
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4 mr-2" />
+                            Detalhes
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle>Detalhes da Posição</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium">Pallet:</span>
+                                <p>#{position.entrada_pallets?.numero_pallet}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Posição:</span>
+                                <p>{position.storage_positions?.codigo}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">Alocado em:</span>
+                                <p>{format(new Date(position.alocado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium">NFe:</span>
+                                <p>{position.entrada_pallets?.entradas?.numero_nfe || "N/A"}</p>
+                              </div>
+                            </div>
+                            
+                            {position.observacoes && (
+                              <div>
+                                <span className="font-medium">Observações:</span>
+                                <p className="text-sm text-muted-foreground mt-1">{position.observacoes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
                       <Button 
-                        type="button" 
                         variant="outline" 
-                        onClick={() => setDialogOpen(false)}
+                        size="sm"
+                        onClick={() => handleOpenReallocateDialog(position)}
+                        disabled={reallocatePallet.isPending}
                       >
-                        Cancelar
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Realocar
                       </Button>
+
                       <Button 
-                        type="submit"
-                        disabled={createPosition.isPending || updatePosition.isPending}
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleRemoveAllocation(position.pallet_id)}
+                        disabled={removeAllocation.isPending}
                       >
-                        {editingPosition ? "Atualizar" : "Criar"}
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remover
                       </Button>
                     </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : !positions || positions.length === 0 ? (
-              <EmptyState
-                icon={<Package className="w-16 h-16" />}
-                title="Nenhuma posição configurada"
-                description="Comece criando sua primeira posição de estoque"
-                action={{
-                  label: "Nova Posição",
-                  onClick: () => setDialogOpen(true)
-                }}
-              />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Capacidade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {positions.map((position: any) => (
-                    <TableRow key={position.id}>
-                      <TableCell className="font-medium">
-                        {position.codigo}
-                      </TableCell>
-                      <TableCell>{position.descricao || '-'}</TableCell>
-                      <TableCell className="capitalize">
-                        {position.tipo_posicao}
-                      </TableCell>
-                      <TableCell>
-                        {position.capacidade_maxima ? `${position.capacidade_maxima} kg` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {position.ocupado ? (
-                            <Badge variant="outline">Ocupado</Badge>
-                          ) : (
-                            <Badge variant="secondary">Livre</Badge>
-                          )}
-                          {position.ativo ? (
-                            <Badge variant="default">Ativo</Badge>
-                          ) : (
-                            <Badge variant="destructive">Inativo</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEdit(position)}
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleToggleStatus(position)}
-                          >
-                            <Archive className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Posição:</span>
+                      <Badge variant="secondary">
+                        {position.storage_positions?.codigo}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Produtor:</span>
+                      <span>Produtor</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Alocado:</span>
+                      <span>{format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Status:</span>
+                      <Badge variant="secondary">Alocado</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       )}
+
+      {/* Dialog de Realocação */}
+      <Dialog open={reallocateDialog.open} onOpenChange={(open) => setReallocateDialog({ open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Realocar Pallet</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Pallet atual</Label>
+              <p className="text-sm text-muted-foreground">
+                #{reallocateDialog.pallet?.entrada_pallets?.numero_pallet} - 
+                Posição atual: {reallocateDialog.pallet?.storage_positions?.codigo}
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="newPosition">Nova Posição</Label>
+              <Select value={newPositionId} onValueChange={setNewPositionId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma posição disponível..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePositions?.map((position) => (
+                    <SelectItem key={position.id} value={position.id}>
+                      {position.codigo} - {position.descricao || 'Sem descrição'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="observacoes">Observações (opcional)</Label>
+              <Textarea
+                id="observacoes"
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Motivo da realocação..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setReallocateDialog({ open: false })}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleReallocate}
+                disabled={!newPositionId || reallocatePallet.isPending}
+              >
+                Realocar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

@@ -311,6 +311,93 @@ export const useRemovePalletAllocation = () => {
   });
 };
 
+// Hook para realocar pallet para nova posição
+export const useReallocatePallet = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      palletId,
+      newPositionId,
+      observacoes
+    }: {
+      palletId: string;
+      newPositionId: string;
+      observacoes?: string;
+    }) => {
+      // Verificar se a nova posição está disponível
+      const { data: newPosition, error: newPositionError } = await supabase
+        .from("storage_positions")
+        .select("*")
+        .eq("id", newPositionId)
+        .eq("ativo", true)
+        .eq("ocupado", false)
+        .single();
+
+      if (newPositionError) throw newPositionError;
+      if (!newPosition) throw new Error("Posição não está disponível");
+
+      // Encontrar a posição atual do pallet
+      const { data: currentPosition, error: currentPositionError } = await supabase
+        .from("pallet_positions")
+        .select("posicao_id")
+        .eq("pallet_id", palletId)
+        .eq("status", "alocado")
+        .single();
+
+      if (currentPositionError) throw currentPositionError;
+
+      // Liberar a posição atual
+      const { error: freeCurrentError } = await supabase
+        .from("storage_positions")
+        .update({ ocupado: false })
+        .eq("id", currentPosition.posicao_id);
+
+      if (freeCurrentError) throw freeCurrentError;
+
+      // Ocupar a nova posição
+      const { error: occupyNewError } = await supabase
+        .from("storage_positions")
+        .update({ ocupado: true })
+        .eq("id", newPositionId);
+
+      if (occupyNewError) throw occupyNewError;
+
+      // Atualizar a alocação do pallet
+      const { error: updatePalletError } = await supabase
+        .from("pallet_positions")
+        .update({ 
+          posicao_id: newPositionId,
+          observacoes: observacoes || null,
+          alocado_em: new Date().toISOString(),
+          alocado_por: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq("pallet_id", palletId);
+
+      if (updatePalletError) throw updatePalletError;
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["available-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      toast({
+        title: "Pallet realocado",
+        description: "O pallet foi realocado para a nova posição com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao realocar pallet",
+        description: error.message || "Ocorreu um erro ao realocar o pallet",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 // Hook para confirmar alocação de pallet
 export const useConfirmPalletAllocation = () => {
   const queryClient = useQueryClient();
