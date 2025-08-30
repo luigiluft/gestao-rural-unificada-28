@@ -16,7 +16,6 @@ import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { useUserEmployeeProfiles } from "@/hooks/useUserEmployeeProfiles"
 import { useCleanupPermissions } from "@/hooks/useCleanupPermissions"
-import { AppLayout } from "@/components/Layout/AppLayout"
 import { EmptyState } from "@/components/ui/empty-state"
 import { EmployeeProfile } from "@/types/permissions"
 
@@ -199,219 +198,215 @@ export default function Subcontas() {
 
   if (!profile?.role) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-muted-foreground">Carregando...</div>
-        </div>
-      </AppLayout>
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-muted-foreground">Carregando...</div>
+      </div>
     )
   }
 
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Subcontas</h1>
-            <p className="text-muted-foreground">
-              Gerencie as subcontas dos seus funcionários
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => cleanupSubaccountPermissions()}
-              size="sm"
-            >
-              Migrar Sistema
-            </Button>
-            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Criar Subconta
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Criar Nova Subconta</DialogTitle>
-                  <DialogDescription>
-                    Selecione um perfil de funcionário e envie um convite por email
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Subcontas</h1>
+          <p className="text-muted-foreground">
+            Gerencie as subcontas dos seus funcionários
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => cleanupSubaccountPermissions()}
+            size="sm"
+          >
+            Migrar Sistema
+          </Button>
+          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Criar Subconta
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Criar Nova Subconta</DialogTitle>
+                <DialogDescription>
+                  Selecione um perfil de funcionário e envie um convite por email
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="funcionario@exemplo.com"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="profile">Perfil de Funcionário</Label>
+                  <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profiles?.map((profile) => (
+                        <SelectItem key={profile.id} value={profile.id}>
+                          {profile.nome} ({profile.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.role === 'produtor' && (
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="funcionario@exemplo.com"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="profile">Perfil de Funcionário</Label>
-                    <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+                    <Label htmlFor="franquia">Franquia</Label>
+                    <Select value={inviteFranquia} onValueChange={setInviteFranquia}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um perfil" />
+                        <SelectValue placeholder="Selecione uma franquia" />
                       </SelectTrigger>
                       <SelectContent>
-                        {profiles?.map((profile) => (
-                          <SelectItem key={profile.id} value={profile.id}>
-                            {profile.nome} ({profile.role})
+                        {franquias.map((franquia: any) => (
+                          <SelectItem key={franquia.id} value={franquia.id}>
+                            {franquia.nome} - {franquia.profiles?.nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.role === 'produtor' && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="franquia">Franquia</Label>
-                      <Select value={inviteFranquia} onValueChange={setInviteFranquia}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma franquia" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {franquias.map((franquia: any) => (
-                            <SelectItem key={franquia.id} value={franquia.id}>
-                              {franquia.nome} - {franquia.profiles?.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setInviteOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button 
-                    onClick={() => sendInviteMutation.mutate()}
-                    disabled={sendInviteMutation.isPending}
-                  >
-                    {sendInviteMutation.isPending ? "Enviando..." : "Enviar Convite"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Subcontas Ativas
-            </CardTitle>
-            <CardDescription>
-              Lista de funcionários vinculados à sua conta
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingSubaccounts ? (
-              <div className="text-center py-4">Carregando...</div>
-            ) : subaccounts.length === 0 ? (
-              <EmptyState
-                icon={<Users className="h-8 w-8" />}
-                title="Nenhuma subconta encontrada"
-                description="Crie sua primeira subconta clicando no botão acima"
-              />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Perfil</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {subaccounts.map((subaccount) => (
-                    <TableRow key={subaccount.user_id}>
-                      <TableCell className="font-medium">
-                        {subaccount.nome || "Sem nome"}
-                      </TableCell>
-                      <TableCell>{subaccount.email}</TableCell>
-                      <TableCell>
-                        {subaccount.employee_profile ? (
-                          <Badge variant="secondary">
-                            {subaccount.employee_profile.nome}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">Sem perfil</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUserId(subaccount.user_id)
-                              setSelectedUserName(subaccount.nome || subaccount.email || "")
-                              setProfileManageOpen(true)
-                            }}
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => unlinkMutation.mutate(subaccount.user_id)}
-                            disabled={unlinkMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Dialog para gerenciar perfil */}
-        <Dialog open={profileManageOpen} onOpenChange={setProfileManageOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Gerenciar Perfil</DialogTitle>
-              <DialogDescription>
-                Alterar o perfil de funcionário para {selectedUserName}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label>Novo Perfil</Label>
-                <Select onValueChange={handleAssignProfile}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um perfil" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profiles?.map((profile) => (
-                      <SelectItem key={profile.id} value={profile.id}>
-                        {profile.nome} ({profile.role})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                )}
               </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleRemoveProfile}>
-                Remover Perfil
-              </Button>
-              <Button variant="outline" onClick={() => setProfileManageOpen(false)}>
-                Cancelar
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setInviteOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => sendInviteMutation.mutate()}
+                  disabled={sendInviteMutation.isPending}
+                >
+                  {sendInviteMutation.isPending ? "Enviando..." : "Enviar Convite"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
-    </AppLayout>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Subcontas Ativas
+          </CardTitle>
+          <CardDescription>
+            Lista de funcionários vinculados à sua conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingSubaccounts ? (
+            <div className="text-center py-4">Carregando...</div>
+          ) : subaccounts.length === 0 ? (
+            <EmptyState
+              icon={<Users className="h-8 w-8" />}
+              title="Nenhuma subconta encontrada"
+              description="Crie sua primeira subconta clicando no botão acima"
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Perfil</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {subaccounts.map((subaccount) => (
+                  <TableRow key={subaccount.user_id}>
+                    <TableCell className="font-medium">
+                      {subaccount.nome || "Sem nome"}
+                    </TableCell>
+                    <TableCell>{subaccount.email}</TableCell>
+                    <TableCell>
+                      {subaccount.employee_profile ? (
+                        <Badge variant="secondary">
+                          {subaccount.employee_profile.nome}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Sem perfil</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedUserId(subaccount.user_id)
+                            setSelectedUserName(subaccount.nome || subaccount.email || "")
+                            setProfileManageOpen(true)
+                          }}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => unlinkMutation.mutate(subaccount.user_id)}
+                          disabled={unlinkMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Dialog para gerenciar perfil */}
+      <Dialog open={profileManageOpen} onOpenChange={setProfileManageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Perfil</DialogTitle>
+            <DialogDescription>
+              Alterar o perfil de funcionário para {selectedUserName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Novo Perfil</Label>
+              <Select onValueChange={handleAssignProfile}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles?.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.nome} ({profile.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={handleRemoveProfile}>
+              Remover Perfil
+            </Button>
+            <Button variant="outline" onClick={() => setProfileManageOpen(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
