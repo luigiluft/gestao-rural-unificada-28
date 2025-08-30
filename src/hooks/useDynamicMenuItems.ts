@@ -84,7 +84,7 @@ const menuLabels = {
   configuracoes: "Configurações",
   "controle-acesso": "Controle de Acesso",
   "alocacao-pallets": "Alocações",
-  "gerenciar-alocacoes": "Gerenciar Alocações",
+  "gerenciar-alocacoes": "Gerenciar Posições",
   "gerenciar-posicoes": "Posições",
   separacao: "Separação",
   inventario: "Inventário",

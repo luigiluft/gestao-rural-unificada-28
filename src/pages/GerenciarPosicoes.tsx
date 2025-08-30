@@ -24,7 +24,10 @@ export default function GerenciarPosicoes() {
   const [observacoes, setObservacoes] = useState<string>("");
   
   const { data: palletPositions, isLoading } = usePalletPositions(selectedDepositoId);
-  const { data: availablePositions } = useAvailablePositions(selectedDepositoId);
+  
+  // Extrair depositoId do primeiro pallet para usar no availablePositions
+  const depositoId = palletPositions?.[0]?.entrada_pallets?.entradas?.deposito_id;
+  const { data: availablePositions } = useAvailablePositions(depositoId);
   const removeAllocation = useRemovePalletAllocation();
   const reallocatePallet = useReallocatePallet();
 
@@ -225,16 +228,27 @@ export default function GerenciarPosicoes() {
 
             <div>
               <Label htmlFor="newPosition">Nova Posição</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Depósito: {depositoId} | Posições disponíveis: {availablePositions?.length || 0}
+              </p>
               <Select value={newPositionId} onValueChange={setNewPositionId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma posição disponível..." />
                 </SelectTrigger>
-                <SelectContent>
-                  {availablePositions?.map((position) => (
-                    <SelectItem key={position.id} value={position.id}>
-                      {position.codigo} - {position.descricao || 'Sem descrição'}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {!availablePositions || availablePositions.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      Nenhuma posição disponível
+                    </div>
+                  ) : (
+                    availablePositions
+                      ?.filter(position => position.id !== reallocateDialog.pallet?.posicao_id)
+                      ?.map((position) => (
+                        <SelectItem key={position.id} value={position.id}>
+                          {position.codigo} - {position.descricao || 'Sem descrição'}
+                        </SelectItem>
+                      ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

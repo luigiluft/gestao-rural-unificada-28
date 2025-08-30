@@ -30,7 +30,7 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'entradas.manage', label: 'Gerenciar entradas' },
   { code: 'recebimento.view', label: 'Central de Recebimento' },
   { code: 'alocacao-pallets.view', label: 'Alocação de Pallets' },
-  { code: 'gerenciar-alocacoes.view', label: 'Gerenciar Alocações' },
+  { code: 'gerenciar-alocacoes.view', label: 'Gerenciar Posições' },
   { code: 'estoque.view', label: 'Ver estoque' },
   { code: 'estoque.manage', label: 'Gerenciar estoque' },
   { code: 'inventario.view', label: 'Inventário' },
