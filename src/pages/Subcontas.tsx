@@ -31,11 +31,12 @@ export default function Subcontas() {
   const { data: profile } = useProfile()
   const queryClient = useQueryClient()
   
-  // Estados para o formulário de convite
-  const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState("")
+  // Estados para o formulário de criação
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createEmail, setCreateEmail] = useState("")
   const [selectedProfileId, setSelectedProfileId] = useState("")
-  const [inviteFranquia, setInviteFranquia] = useState("")
+  const [createFranquia, setCreateFranquia] = useState("")
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string, password: string} | null>(null)
   
   // Estados para gerenciar perfil de subconta
   const [profileManageOpen, setProfileManageOpen] = useState(false)
@@ -107,10 +108,10 @@ export default function Subcontas() {
     },
   })
 
-  // Mutação para enviar convite
-  const sendInviteMutation = useMutation({
+  // Mutação para criar usuário diretamente
+  const createUserMutation = useMutation({
     mutationFn: async () => {
-      if (!inviteEmail || !selectedProfileId) {
+      if (!createEmail || !selectedProfileId) {
         throw new Error("Email e perfil são obrigatórios")
       }
 
@@ -124,18 +125,18 @@ export default function Subcontas() {
       let franquiaId = null
 
       if (profile?.role === 'admin' && selectedProfile.role === 'produtor') {
-        if (!inviteFranquia) {
+        if (!createFranquia) {
           throw new Error("Selecione uma franquia para o produtor")
         }
-        const selectedFranquiaData = franquias.find(f => f.id === inviteFranquia)
+        const selectedFranquiaData = franquias.find(f => f.id === createFranquia)
         if (selectedFranquiaData) {
           parentUserId = selectedFranquiaData.master_franqueado_id
-          franquiaId = inviteFranquia
+          franquiaId = createFranquia
         }
       }
 
-      const inviteData = {
-        email: inviteEmail,
+      const userData = {
+        email: createEmail,
         inviter_user_id: user?.id,
         parent_user_id: parentUserId,
         role: selectedProfile.role,
@@ -144,23 +145,27 @@ export default function Subcontas() {
       }
 
       const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: inviteData
+        body: userData
       })
 
       if (error) throw error
-      if (!data?.success) throw new Error(data?.error || 'Erro ao enviar convite')
+      if (!data?.success) throw new Error(data?.error || 'Erro ao criar usuário')
 
       return data
     },
-    onSuccess: () => {
-      toast.success("Convite enviado com sucesso!")
-      setInviteOpen(false)
-      setInviteEmail("")
+    onSuccess: (data) => {
+      setCreatedCredentials({
+        email: createEmail,
+        password: data.default_password
+      })
+      toast.success("Usuário criado com sucesso!")
+      refetchSubaccounts()
+      setCreateEmail("")
       setSelectedProfileId("")
-      setInviteFranquia("")
+      setCreateFranquia("")
     },
     onError: (error: Error) => {
-      toast.error(`Erro ao enviar convite: ${error.message}`)
+      toast.error(`Erro ao criar usuário: ${error.message}`)
     }
   })
 
@@ -214,14 +219,7 @@ export default function Subcontas() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => cleanupSubaccountPermissions()}
-            size="sm"
-          >
-            Migrar Sistema
-          </Button>
-          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button>
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -232,64 +230,94 @@ export default function Subcontas() {
               <DialogHeader>
                 <DialogTitle>Criar Nova Subconta</DialogTitle>
                 <DialogDescription>
-                  Selecione um perfil de funcionário e envie um convite por email
+                  O usuário será criado com uma senha temporária
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="funcionario@exemplo.com"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="profile">Perfil de Funcionário</Label>
-                  <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um perfil" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {profiles?.map((profile) => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.nome} ({profile.role})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.role === 'produtor' && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="franquia">Franquia</Label>
-                    <Select value={inviteFranquia} onValueChange={setInviteFranquia}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma franquia" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {franquias.map((franquia: any) => (
-                          <SelectItem key={franquia.id} value={franquia.id}>
-                            {franquia.nome} - {franquia.profiles?.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              
+              {createdCredentials ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Usuário criado com sucesso!</h3>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium">Email:</span> {createdCredentials.email}
+                      </div>
+                      <div>
+                        <span className="font-medium">Senha temporária:</span> {createdCredentials.password}
+                      </div>
+                    </div>
+                    <p className="text-xs text-green-700 dark:text-green-300 mt-2">
+                      O usuário deverá alterar a senha no primeiro login.
+                    </p>
                   </div>
-                )}
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setInviteOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={() => sendInviteMutation.mutate()}
-                  disabled={sendInviteMutation.isPending}
-                >
-                  {sendInviteMutation.isPending ? "Enviando..." : "Enviar Convite"}
-                </Button>
-              </div>
+                  <div className="flex justify-end">
+                    <Button onClick={() => {
+                      setCreatedCredentials(null)
+                      setCreateOpen(false)
+                    }}>
+                      Fechar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={createEmail}
+                        onChange={(e) => setCreateEmail(e.target.value)}
+                        placeholder="funcionario@exemplo.com"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="profile">Perfil de Funcionário</Label>
+                      <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um perfil" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {profiles?.map((profile) => (
+                            <SelectItem key={profile.id} value={profile.id}>
+                              {profile.nome} ({profile.role})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.role === 'produtor' && (
+                      <div className="grid gap-2">
+                        <Label htmlFor="franquia">Franquia</Label>
+                        <Select value={createFranquia} onValueChange={setCreateFranquia}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma franquia" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {franquias.map((franquia: any) => (
+                              <SelectItem key={franquia.id} value={franquia.id}>
+                                {franquia.nome} - {franquia.profiles?.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={() => createUserMutation.mutate()}
+                      disabled={createUserMutation.isPending}
+                    >
+                      {createUserMutation.isPending ? "Criando..." : "Criar Usuário"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         </div>
