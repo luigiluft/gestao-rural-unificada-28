@@ -23,7 +23,7 @@ import {
 import { NFData, NFItem } from "./NFParser";
 import { Plus, Trash2 } from "lucide-react";
 import { SeletorDeposito } from "./SeletorDeposito";
-import { useFranquiaByProdutorCpf } from "@/hooks/useFranquiaByProdutorCpf";
+import { useFranquiaByCnpj } from "@/hooks/useFranquiaByCnpj";
 import { useToast } from "@/hooks/use-toast";
 
 interface FormularioEntradaProps {
@@ -51,9 +51,10 @@ interface ItemEntrada {
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
   const { toast } = useToast();
   
-  // Buscar franquia através do CPF/CNPJ do produtor destinatário
-  const cpfCnpjBusca = nfData?.destinatarioCpfCnpj;
-  const { data: franquiaData, isLoading: franquiaLoading } = useFranquiaByProdutorCpf(cpfCnpjBusca);
+  // Buscar franquia através dos dados de entrega da NFe
+  const entregaCnpj = nfData?.entrega?.cnpj;
+  const entregaIe = nfData?.entrega?.ie;
+  const { data: franquiaData, isLoading: franquiaLoading } = useFranquiaByCnpj(entregaCnpj, entregaIe);
   const [dadosEntrada, setDadosEntrada] = useState({
     numeroNF: '',
     serie: '',
@@ -89,7 +90,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         dataEmissao: nfData.dataEmissao,
         origem: nfData.emitente.nome,
         observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
-        depositoId: franquiaData?.franquia?.id || ''
+        depositoId: franquiaData?.id || ''
       });
 
       // Converter itens da NFe para itens de entrada
@@ -111,20 +112,20 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       setItens(itensConvertidos);
       
       // Mostrar toast informando se a franquia foi encontrada ou não
-      if (franquiaData?.franquia) {
+      if (franquiaData) {
         toast({
           title: "Franquia identificada",
-          description: `Franquia ${franquiaData.franquia.nome} selecionada automaticamente (produtor: ${franquiaData.produtor.nome})`,
+          description: `Franquia ${franquiaData.nome} selecionada automaticamente pelos dados de entrega.`,
         });
-      } else if (cpfCnpjBusca && !franquiaLoading) {
+      } else if ((entregaCnpj || entregaIe) && !franquiaLoading) {
         toast({
-          title: "Produtor não encontrado",
-          description: `Não foi possível encontrar um produtor com o CPF/CNPJ ${cpfCnpjBusca}. Selecione a franquia manualmente.`,
+          title: "Franquia não foi encontrada",
+          description: "Não foi possível identificar uma franquia pelos dados de entrega. Selecione manualmente.",
           variant: "destructive"
         });
       }
     }
-  }, [nfData, franquiaData, franquiaLoading, toast]);
+  }, [nfData, franquiaData, franquiaLoading, entregaCnpj, entregaIe, toast]);
 
   const adicionarItem = () => {
     if (novoItem.produto && novoItem.quantidade > 0) {
