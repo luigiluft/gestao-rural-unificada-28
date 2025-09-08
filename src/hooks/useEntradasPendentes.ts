@@ -155,13 +155,11 @@ export const useAtualizarStatusEntrada = () => {
       return { entradaId, novoStatus }
     },
     onSuccess: (data) => {
-      // Debounced invalidation to prevent request flooding
-      setTimeout(() => {
-        queryClient.invalidateQueries({ 
-          queryKey: ["entradas-pendentes"],
-          exact: true 
-        })
-      }, 100)
+      // Invalidate multiple query keys to refresh all related data
+      queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] })
+      queryClient.invalidateQueries({ queryKey: ["entradas"] })
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
       
       const statusMessages = {
         'em_transferencia': 'Entrada marcada como em transferência',
