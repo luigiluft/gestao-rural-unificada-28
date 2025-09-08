@@ -87,6 +87,7 @@ import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada"
 import { NFData } from "@/components/Entradas/NFParser"
 import { useToast } from "@/hooks/use-toast"
 import { useEntradas } from "@/hooks/useEntradas"
+import { useQueryClient } from "@tanstack/react-query"
 import { findFornecedorByCnpj, findProdutorByCpfCnpj } from "@/lib/utils"
 import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
@@ -103,7 +104,8 @@ export default function Entradas() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
   const { toast } = useToast()
   const navigate = useNavigate()
-  const { data: entradas, isLoading, refetch } = useEntradas(dateRange)
+  const queryClient = useQueryClient()
+  const { data: entradas, isLoading } = useEntradas(dateRange)
   const { user } = useAuth()
   const { data: currentUserProfile } = useProfile()
 
@@ -404,7 +406,8 @@ export default function Entradas() {
       setProdutorIdentificado(null)
       setProdutorError(null)
       setActiveTab("upload")
-      refetch() // Recarregar a lista de entradas
+      // Invalidate queries to refresh the list efficiently
+      queryClient.invalidateQueries({ queryKey: ["entradas"] })
     } catch (error) {
       console.error('Erro ao registrar entrada:', error)
       toast({
@@ -606,8 +609,8 @@ export default function Entradas() {
         description: `A entrada ${numeroNfe || `ENT-${entradaId.slice(0, 8)}`} e todos os dados relacionados foram removidos com sucesso.`,
       })
 
-      // Recarregar dados
-      refetch()
+      // Invalidate queries to refresh the list efficiently
+      queryClient.invalidateQueries({ queryKey: ["entradas"] })
     } catch (error: any) {
       console.error('=== ERRO NA DELEÇÃO ===', error)
       toast({

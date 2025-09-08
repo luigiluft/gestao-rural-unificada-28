@@ -13,7 +13,8 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
-          )
+          ),
+          franquias:deposito_id(nome)
         `)
 
       // Apply date filters if provided
@@ -30,26 +31,10 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
 
       if (error) throw error
 
-      // Get franquia names for each entrada
-      const entradasWithFranquias = await Promise.all(
-        (entradas || []).map(async (entrada) => {
-          if (entrada.deposito_id) {
-            const { data: franquia } = await supabase
-              .from("franquias")
-              .select("nome")
-              .eq("id", entrada.deposito_id)
-              .single()
-            
-            return {
-              ...entrada,
-              franquias: franquia
-            }
-          }
-          return entrada
-        })
-      )
-
-      return entradasWithFranquias || []
+      return entradas || []
     },
+    // Add some caching to reduce requests
+    staleTime: 30000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
   })
 }
