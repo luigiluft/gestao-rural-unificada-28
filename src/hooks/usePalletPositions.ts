@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface PalletAllocationResult {
   pallet_id: string;
@@ -60,9 +61,26 @@ export const usePalletPositions = (depositoId?: string) => {
 
 // Hook para pallets pendentes de alocação 
 export const usePalletsPendentes = (depositoId?: string) => {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["pallets-pendentes", depositoId],
+    queryKey: ["pallets-pendentes", depositoId, user?.id],
     queryFn: async () => {
+      if (!user?.id) throw new Error("User not authenticated");
+
+      // Check if user is admin
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
+      }
+
+      const isAdmin = profile?.role === "admin";
+
       let query = supabase
         .from("entrada_pallets")
         .select(`
@@ -87,6 +105,22 @@ export const usePalletsPendentes = (depositoId?: string) => {
           )
         `)
         .eq("entradas.status_aprovacao", "confirmado");
+
+      // Apply franchise filtering for non-admin users
+      if (!isAdmin) {
+        const { data: franquias } = await supabase
+          .from("franquias")
+          .select("id")
+          .eq("master_franqueado_id", user.id);
+        
+        const franquiaIds = franquias?.map(f => f.id) || [];
+        if (franquiaIds.length > 0) {
+          query = query.in("entradas.deposito_id", franquiaIds);
+        } else {
+          // If user has no franchises, return empty array
+          return [];
+        }
+      }
 
       if (depositoId) {
         query = query.eq("entradas.deposito_id", depositoId);
@@ -113,6 +147,7 @@ export const usePalletsPendentes = (depositoId?: string) => {
       
       return data;
     },
+    enabled: !!user?.id,
   });
 };
 
