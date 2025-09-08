@@ -22,7 +22,10 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
             entrada_itens(
               *,
               produtos(nome, unidade_medida)
-            )
+            ),
+            profiles!user_id(nome),
+            fornecedores(nome),
+            franquias!deposito_id(nome)
           `)
           .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
           
@@ -37,88 +40,28 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
         const { data: entradas, error } = await query.order("created_at", { ascending: false })
 
         if (error) {
+          console.error('❌ Error fetching entradas:', error)
           throw error
         }
 
         console.log(`📦 Found ${entradas?.length || 0} entradas`)
         
-        if (!entradas || entradas.length === 0) {
-          console.log('⚠️ No entradas found')
-          return []
-        }
-
-        // Log entrada_itens for debugging
-        entradas.forEach((entrada, index) => {
-          console.log(`Entrada ${index + 1} (${entrada.numero_nfe}):`, {
+        // Log detailed entry info
+        entradas?.forEach((entrada, index) => {
+          console.log(`📋 Entrada ${index + 1}:`, {
             id: entrada.id,
+            numero_nfe: entrada.numero_nfe,
             status: entrada.status_aprovacao,
+            user_id: entrada.user_id,
+            deposito_id: entrada.deposito_id,
             entrada_itens_count: entrada.entrada_itens?.length || 0,
-            entrada_itens: entrada.entrada_itens
+            has_profiles: !!entrada.profiles,
+            has_fornecedores: !!entrada.fornecedores,
+            has_franquias: !!entrada.franquias
           })
         })
 
-        // Optimize: Get unique IDs for batch fetching
-        const userIds = [...new Set(entradas.map(e => e.user_id).filter(Boolean))]
-        const fornecedorIds = [...new Set(entradas.map(e => e.fornecedor_id).filter(Boolean))]
-        const depositoIds = [...new Set(entradas.map(e => e.deposito_id).filter(Boolean))]
-        
-        // Batch fetch profiles
-        let profilesMap = new Map()
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from("profiles")
-            .select("user_id, nome")
-            .in("user_id", userIds)
-          
-          profiles?.forEach(p => profilesMap.set(p.user_id, p))
-        }
-        
-        // Batch fetch fornecedores
-        let fornecedoresMap = new Map()
-        if (fornecedorIds.length > 0) {
-          const { data: fornecedores } = await supabase
-            .from("fornecedores")
-            .select("id, nome")
-            .in("id", fornecedorIds)
-          
-          fornecedores?.forEach(f => fornecedoresMap.set(f.id, f))
-        }
-        
-        // Batch fetch franquias
-        let franquiasMap = new Map()
-        if (depositoIds.length > 0) {
-          const { data: franquias } = await supabase
-            .from("franquias")
-            .select("id, nome")
-            .in("id", depositoIds)
-          
-          franquias?.forEach(f => franquiasMap.set(f.id, f))
-        }
-
-        // Map enriched data to entradas
-        const entradasEnriquecidas = entradas.map((entrada) => {
-          const enrichedEntry: any = { ...entrada }
-
-          // Add profile data
-          if (entrada.user_id) {
-            enrichedEntry.profiles = profilesMap.get(entrada.user_id) || null
-          }
-
-          // Add fornecedor data
-          if (entrada.fornecedor_id) {
-            enrichedEntry.fornecedores = fornecedoresMap.get(entrada.fornecedor_id) || null
-          }
-
-          // Add franquia data
-          if (entrada.deposito_id) {
-            enrichedEntry.franquias = franquiasMap.get(entrada.deposito_id) || null
-          }
-
-          return enrichedEntry
-        })
-
-        console.log('✅ Entradas enriched successfully')
-        return entradasEnriquecidas || []
+        return entradas || []
       } catch (error) {
         throw error
       }
