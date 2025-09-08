@@ -2022,6 +2022,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_franqueado_import_for_delivery: {
+        Args: { _delivery_cnpj: string; _franqueado_id: string }
+        Returns: boolean
+      }
       can_view_user_data: {
         Args: { _owner: string; _viewer: string }
         Returns: boolean
