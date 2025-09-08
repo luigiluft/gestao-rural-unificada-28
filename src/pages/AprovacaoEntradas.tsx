@@ -106,8 +106,11 @@ export default function AprovacaoEntradas() {
   }
 
   const handleAction = (entrada: any, type: 'status' | 'conferencia' | 'conferencia_barras') => {
-    console.log('handleAction called with type:', type)
-    console.log('entrada:', entrada)
+    console.log('🔍 handleAction called with type:', type)
+    console.log('🔍 entrada:', entrada)
+    console.log('🔍 entrada_itens count:', entrada?.entrada_itens?.length || 0)
+    console.log('🔍 entrada_itens data:', entrada?.entrada_itens)
+    
     setSelectedEntrada(entrada)
     setActionType(type)
     setObservacoes('')
@@ -116,7 +119,6 @@ export default function AprovacaoEntradas() {
     setCodigoBarras('')
     setQuantidadeBip(1)
     setModoConferencia(type === 'conferencia_barras')
-    console.log('Setting dialogOpen to true, actionType to:', type)
     setDialogOpen(true)
   }
 
@@ -722,7 +724,7 @@ export default function AprovacaoEntradas() {
             {actionType === 'conferencia' && (
               <div className="space-y-4">
                 {/* Lista de itens para seleção rápida */}
-                {selectedEntrada?.entrada_itens?.length > 0 && (
+                {selectedEntrada?.entrada_itens?.length > 0 ? (
                   <div className="space-y-2">
                     <Label className="text-base font-semibold">Itens da Entrada</Label>
                     <div className="border rounded-lg p-4 bg-muted/30">
@@ -757,11 +759,34 @@ export default function AprovacaoEntradas() {
                         </TableBody>
                       </Table>
                     </div>
-                  </div>
-                )}
+                   </div>
+                 ) : (
+                   <div className="border rounded-lg p-4 bg-muted/30">
+                     <div className="text-center text-muted-foreground">
+                       <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+                       <p className="font-medium">Nenhum item encontrado nesta entrada</p>
+                       <p className="text-sm">Verifique se a entrada possui itens cadastrados.</p>
+                       {selectedEntrada && (
+                         <div className="mt-2 text-xs">
+                           <p>ID da entrada: {selectedEntrada.id}</p>
+                           <p>Status: {selectedEntrada.status_aprovacao}</p>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 )}
 
                 <div className="flex items-center">
                   <Label className="text-base font-semibold">Divergências</Label>
+                  <Button
+                    onClick={() => addDivergencia()}
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Divergência
+                  </Button>
                 </div>
 
                 {divergencias.map((div, index) => (
