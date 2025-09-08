@@ -22,10 +22,7 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
             entrada_itens(
               *,
               produtos(nome, unidade_medida)
-            ),
-            profiles!user_id(nome),
-            fornecedores(nome),
-            franquias!deposito_id(nome)
+            )
           `)
           .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
           
@@ -46,22 +43,59 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
 
         console.log(`📦 Found ${entradas?.length || 0} entradas`)
         
-        // Log detailed entry info
-        entradas?.forEach((entrada, index) => {
-          console.log(`📋 Entrada ${index + 1}:`, {
-            id: entrada.id,
-            numero_nfe: entrada.numero_nfe,
-            status: entrada.status_aprovacao,
-            user_id: entrada.user_id,
-            deposito_id: entrada.deposito_id,
-            entrada_itens_count: entrada.entrada_itens?.length || 0,
-            has_profiles: !!entrada.profiles,
-            has_fornecedores: !!entrada.fornecedores,
-            has_franquias: !!entrada.franquias
-          })
-        })
+        if (!entradas || entradas.length === 0) {
+          console.log('⚠️ No entradas found')
+          return []
+        }
 
-        return entradas || []
+        // Fetch related data separately
+        const userIds = [...new Set(entradas.map(e => e.user_id).filter(Boolean))]
+        const fornecedorIds = [...new Set(entradas.map(e => e.fornecedor_id).filter(Boolean))]
+        const depositoIds = [...new Set(entradas.map(e => e.deposito_id).filter(Boolean))]
+        
+        // Batch fetch profiles
+        let profilesMap = new Map()
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("user_id, nome")
+            .in("user_id", userIds)
+          
+          profiles?.forEach(p => profilesMap.set(p.user_id, p))
+        }
+        
+        // Batch fetch fornecedores  
+        let fornecedoresMap = new Map()
+        if (fornecedorIds.length > 0) {
+          const { data: fornecedores } = await supabase
+            .from("fornecedores")
+            .select("id, nome")
+            .in("id", fornecedorIds)
+          
+          fornecedores?.forEach(f => fornecedoresMap.set(f.id, f))
+        }
+        
+        // Batch fetch franquias
+        let franquiasMap = new Map()
+        if (depositoIds.length > 0) {
+          const { data: franquias } = await supabase
+            .from("franquias")
+            .select("id, nome")
+            .in("id", depositoIds)
+          
+          franquias?.forEach(f => franquiasMap.set(f.id, f))
+        }
+
+        // Enrich entradas with related data
+        const enrichedEntradas = entradas.map(entrada => ({
+          ...entrada,
+          profiles: entrada.user_id ? profilesMap.get(entrada.user_id) : null,
+          fornecedores: entrada.fornecedor_id ? fornecedoresMap.get(entrada.fornecedor_id) : null,
+          franquias: entrada.deposito_id ? franquiasMap.get(entrada.deposito_id) : null
+        }))
+
+        console.log('✅ Entradas loaded with related data')
+        return enrichedEntradas
       } catch (error) {
         throw error
       }
