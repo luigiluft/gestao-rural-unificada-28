@@ -38,7 +38,15 @@ import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqu
 import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
