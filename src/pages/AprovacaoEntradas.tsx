@@ -454,7 +454,7 @@ export default function AprovacaoEntradas() {
                                </Button>
                              </>
                            )}
-                            {entrada.status_aprovacao === 'planejamento' ? (
+                             {entrada.status_aprovacao === 'planejamento' ? (
                               <Button 
                                 onClick={() => handleIniciarPlanejamento(entrada)} 
                                 className="ml-2"
@@ -462,7 +462,7 @@ export default function AprovacaoEntradas() {
                                 disabled={atualizarStatus.isPending}
                               >
                                 <Package className="h-4 w-4 mr-2" />
-                                Iniciar Alocação
+                                Planejar Pallets
                               </Button>
                             ) : (
                               entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && (

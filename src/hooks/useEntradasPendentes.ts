@@ -155,15 +155,11 @@ export const useAtualizarStatusEntrada = () => {
       return { entradaId, novoStatus }
     },
     onSuccess: async (data) => {
-      // Invalidate specific queries with await to ensure they complete
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] }),
-        queryClient.invalidateQueries({ queryKey: ["entradas"] }),
-        queryClient.invalidateQueries({ queryKey: ["entrada-stats"] }),
-      ])
-
-      // Force refetch after invalidation
-      await queryClient.refetchQueries({ queryKey: ["entradas-pendentes"] })
+      // More targeted invalidation to reduce unnecessary re-renders
+      queryClient.invalidateQueries({ 
+        queryKey: ["entradas-pendentes"],
+        exact: true 
+      })
       
       const statusMessages = {
         'em_transferencia': 'Entrada marcada como em transferência',
