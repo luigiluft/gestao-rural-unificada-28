@@ -13,8 +13,7 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
-          ),
-          franquias:deposito_id(nome)
+          )
         `)
 
       // Apply date filters if provided
@@ -31,7 +30,26 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
 
       if (error) throw error
 
-      return entradas || []
+      // Optimize: Get unique deposito_ids and batch fetch franquias
+      const depositoIds = [...new Set(entradas?.map(e => e.deposito_id).filter(Boolean))]
+      
+      let franquiasMap = new Map()
+      if (depositoIds.length > 0) {
+        const { data: franquias } = await supabase
+          .from("franquias")
+          .select("id, nome")
+          .in("id", depositoIds)
+        
+        franquias?.forEach(f => franquiasMap.set(f.id, f))
+      }
+
+      // Map franquias to entradas
+      const entradasWithFranquias = entradas?.map(entrada => ({
+        ...entrada,
+        franquias: entrada.deposito_id ? franquiasMap.get(entrada.deposito_id) : null
+      }))
+
+      return entradasWithFranquias || []
     },
     // Add some caching to reduce requests
     staleTime: 30000, // 30 seconds
