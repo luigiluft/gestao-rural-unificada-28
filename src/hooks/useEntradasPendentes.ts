@@ -19,7 +19,7 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
           .from("entradas")
           .select(`
             *,
-            entrada_itens!inner(
+            entrada_itens(
               *,
               produtos(nome, unidade_medida)
             )
