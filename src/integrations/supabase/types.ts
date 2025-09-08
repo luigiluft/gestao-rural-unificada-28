@@ -2088,6 +2088,16 @@ export type Database = {
         }
         Returns: string
       }
+      find_produtor_for_import: {
+        Args: { _cpf_cnpj: string; _requesting_user_id: string }
+        Returns: {
+          cpf_cnpj: string
+          email: string
+          nome: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
       fix_incorrectly_occupied_positions: {
         Args: Record<PropertyKey, never>
         Returns: number

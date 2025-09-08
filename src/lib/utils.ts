@@ -52,29 +52,30 @@ export const formatarCpfComMascara = (cpf: string): string => {
 export const findProdutorByCpfCnpj = async (supabase: any, cpfCnpj: string) => {
   if (!cpfCnpj) return null
   
-  const cpfCnpjLimpo = cpfCnpj.replace(/[^\d]/g, '')
-  let cpfCnpjComMascara = ''
-  
-  if (cpfCnpjLimpo.length === 11) {
-    // É CPF
-    cpfCnpjComMascara = formatarCpfComMascara(cpfCnpjLimpo)
-  } else if (cpfCnpjLimpo.length === 14) {
-    // É CNPJ
-    cpfCnpjComMascara = formatarCnpjComMascara(cpfCnpjLimpo)
-  } else {
-    return null
-  }
-  
-  const { data: produtor, error } = await supabase
-    .from("profiles")
-    .select("user_id, nome, email, cpf_cnpj, role")
-    .eq("role", "produtor")
-    .or(`cpf_cnpj.eq.${cpfCnpjLimpo},cpf_cnpj.eq.${cpfCnpjComMascara}`)
-    .maybeSingle()
+  try {
+    // Get current user to pass to the function
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    
+    console.log('Buscando produtor para CPF/CNPJ:', cpfCnpj, 'usuário:', user.id)
+    
+    // Use the new security definer function that bypasses RLS
+    const { data: produtores, error } = await supabase.rpc('find_produtor_for_import', {
+      _cpf_cnpj: cpfCnpj,
+      _requesting_user_id: user.id
+    })
 
-  if (error && error.code !== 'PGRST116') {
+    if (error) {
+      console.error('Erro na busca do produtor:', error)
+      throw error
+    }
+
+    const produtor = produtores?.[0] || null
+    console.log('Resultado da busca:', produtor)
+    
+    return produtor
+  } catch (error) {
+    console.error('Erro ao buscar produtor:', error)
     throw error
   }
-
-  return produtor
 }
