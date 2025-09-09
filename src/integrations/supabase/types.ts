@@ -2172,6 +2172,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      process_saida_items: {
+        Args: { p_saida_id: string }
+        Returns: boolean
+      }
       refresh_estoque: {
         Args: Record<PropertyKey, never>
         Returns: undefined

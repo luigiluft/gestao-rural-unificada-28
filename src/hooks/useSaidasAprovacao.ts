@@ -56,39 +56,7 @@ export const useAprovarSaida = () => {
 
       if (error) throw error
       
-      // Se aprovado, processar a saída manualmente (criar movimentações)
-      if (aprovado) {
-        // Buscar itens da saída
-        const { data: itens, error: itensError } = await supabase
-          .from("saida_itens")
-          .select("*")
-          .eq("saida_id", saidaId)
-        
-        if (itensError) throw itensError
-        
-        // Criar movimentações de saída para cada item
-        if (itens && itens.length > 0) {
-          for (const item of itens) {
-            const { error: movError } = await supabase
-              .from("movimentacoes")
-              .insert({
-                user_id: item.user_id,
-                produto_id: item.produto_id,
-                deposito_id: null, // Será preenchido automaticamente
-                tipo_movimentacao: "saida",
-                quantidade: -item.quantidade, // Negativo para saída
-                valor_unitario: item.valor_unitario,
-                referencia_id: saidaId,
-                referencia_tipo: "saida",
-                lote: item.lote,
-                observacoes: "Saída aprovada pelo produtor",
-                data_movimentacao: new Date().toISOString()
-              })
-            
-            if (movError) throw movError
-          }
-        }
-      }
+      // Movimentações de estoque serão criadas automaticamente pelos triggers do banco
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["saidas-pendentes-aprovacao"] })
