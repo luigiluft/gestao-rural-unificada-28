@@ -82,8 +82,21 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const isProdutor = profile?.role === 'produtor'
   const isFranqueado = profile?.role === 'franqueado'
   
+  // DEBUG - Console logs para debugging
+  console.log('=== FORMULARIO SAIDA DEBUG ===')
+  console.log('user:', user)
+  console.log('profile:', profile)
+  console.log('isProdutor:', isProdutor)
+  console.log('isFranqueado:', isFranqueado)
+  console.log('produtoresComEstoque:', produtoresComEstoque)
+  console.log('isLoadingProdutoresComEstoque:', isLoadingProdutoresComEstoque)
+  console.log('produtores (fallback):', produtores)
+  
   // Usar hook correto baseado no tipo de usuário
   const produtoresParaDropdown = isFranqueado ? produtoresComEstoque : produtores
+  
+  console.log('produtoresParaDropdown final:', produtoresParaDropdown)
+  console.log('=== FIM DEBUG ===')
   
   // Get the target producer ID for farms (current user if producer, selected producer if franchisee)
   const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
