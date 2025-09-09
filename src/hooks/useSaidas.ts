@@ -30,27 +30,92 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             )
           `)
 
-        // For producers, include both their own saídas and pending approvals from franchisees
+        let saidasData: any[] = []
+
+        // For producers, we need to handle two cases:
+        // 1. Their own saídas (with date filter)
+        // 2. Pending approval saídas from franchisees (always shown, regardless of date)
         if (userProfile?.role === 'produtor') {
-          query = query.or(`user_id.eq.${user.id},and(criado_por_franqueado.eq.true,produtor_destinatario_id.eq.${user.id})`)
+          // First, get their own saídas with date filters
+          let ownSaidasQuery = supabase
+            .from("saidas")
+            .select(`
+              *,
+              saida_itens(
+                *,
+                produtos(nome, unidade_medida)
+              )
+            `)
+            .eq("user_id", user.id)
+
+          // Apply date filters for own saídas
+          if (dateRange?.from) {
+            ownSaidasQuery = ownSaidasQuery.gte("created_at", dateRange.from.toISOString())
+          }
+          if (dateRange?.to) {
+            const endDate = new Date(dateRange.to)
+            endDate.setHours(23, 59, 59, 999)
+            ownSaidasQuery = ownSaidasQuery.lte("created_at", endDate.toISOString())
+          }
+
+          // Second, get pending approval saídas from franchisees (no date filter)
+          let pendingSaidasQuery = supabase
+            .from("saidas")
+            .select(`
+              *,
+              saida_itens(
+                *,
+                produtos(nome, unidade_medida)
+              )
+            `)
+            .eq("criado_por_franqueado", true)
+            .eq("produtor_destinatario_id", user.id)
+            .eq("status_aprovacao_produtor", "pendente")
+
+          console.log('🚀 Executando queries para produtor...')
+          const [ownSaidasResult, pendingSaidasResult] = await Promise.all([
+            ownSaidasQuery.order("created_at", { ascending: false }),
+            pendingSaidasQuery.order("created_at", { ascending: false })
+          ])
+
+          if (ownSaidasResult.error) throw ownSaidasResult.error
+          if (pendingSaidasResult.error) throw pendingSaidasResult.error
+
+          // Combine results, avoiding duplicates
+          const ownSaidas = ownSaidasResult.data || []
+          const pendingSaidas = pendingSaidasResult.data || []
+          
+          console.log('📊 Own saídas:', ownSaidas.length)
+          console.log('📊 Pending approval saídas:', pendingSaidas.length)
+
+          // Merge and remove duplicates by id
+          const allSaidas = [...ownSaidas, ...pendingSaidas]
+          const uniqueSaidas = allSaidas.filter((saida, index, array) => 
+            array.findIndex(s => s.id === saida.id) === index
+          )
+          
+          saidasData = uniqueSaidas.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )
+
+        } else {
+          // For non-producers, use the original query with date filters
+          if (dateRange?.from) {
+            query = query.gte("created_at", dateRange.from.toISOString())
+          }
+          if (dateRange?.to) {
+            const endDate = new Date(dateRange.to)
+            endDate.setHours(23, 59, 59, 999)
+            query = query.lte("created_at", endDate.toISOString())
+          }
+
+          console.log('🚀 Executando query para não-produtor...')
+          const result = await query.order("created_at", { ascending: false })
+          if (result.error) throw result.error
+          saidasData = result.data || []
         }
 
-        console.log('✅ Query inicial montada para role:', userProfile?.role)
-        
-        // Apply date filters if provided
-        if (dateRange?.from) {
-          query = query.gte("created_at", dateRange.from.toISOString())
-          console.log('📅 Filtro FROM aplicado:', dateRange.from.toISOString())
-        }
-        if (dateRange?.to) {
-          const endDate = new Date(dateRange.to)
-          endDate.setHours(23, 59, 59, 999)
-          query = query.lte("created_at", endDate.toISOString())
-          console.log('📅 Filtro TO aplicado:', endDate.toISOString())
-        }
-
-        console.log('🚀 Executando query principal...')
-        const { data: saidasData, error: saidasError } = await query.order("created_at", { ascending: false })
+        const saidasError = null // Already handled above
 
         console.log('📊 Resultado da query principal:')
         console.log('- saidasData:', saidasData)

@@ -69,28 +69,6 @@ const Saidas = () => {
   const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
   const aprovarSaida = useAprovarSaida()
 
-  // Debug logging
-  console.log("🔍 DEBUG Saidas page - Total saídas returned:", saidas.length)
-  console.log("🔍 DEBUG Saidas page - User profile role:", userProfile?.role)
-  console.log("🔍 DEBUG Saidas page - Date range:", dateRange)
-  console.log("🔍 DEBUG Saidas page - Saídas data:", saidas.map(s => ({
-    id: s.id,
-    status_aprovacao_produtor: s.status_aprovacao_produtor,
-    criado_por_franqueado: s.criado_por_franqueado,
-    produtor_destinatario_id: s.produtor_destinatario_id,
-    user_id: s.user_id,
-    data_saida: s.data_saida,
-    created_at: s.created_at
-  })))
-
-  // Check specifically for SAI16A
-  const sai16a = saidas.find(s => s.id.slice(-3).toUpperCase() === '16A')
-  if (sai16a) {
-    console.log("🎯 DEBUG Found SAI16A:", sai16a)
-  } else {
-    console.log("❌ DEBUG SAI16A not found in saidas list")
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "entregue":
