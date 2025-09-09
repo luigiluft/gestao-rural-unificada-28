@@ -1755,6 +1755,8 @@ export type Database = {
         Row: {
           cpf_motorista: string | null
           created_at: string
+          criado_por_franqueado: boolean | null
+          data_aprovacao_produtor: string | null
           data_saida: string
           deposito_id: string
           id: string
@@ -1762,8 +1764,10 @@ export type Database = {
           mopp_motorista: string | null
           nome_motorista: string | null
           observacoes: string | null
+          observacoes_aprovacao: string | null
           placa_veiculo: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
+          status_aprovacao_produtor: string | null
           telefone_motorista: string | null
           tipo_saida: string
           updated_at: string
@@ -1773,6 +1777,8 @@ export type Database = {
         Insert: {
           cpf_motorista?: string | null
           created_at?: string
+          criado_por_franqueado?: boolean | null
+          data_aprovacao_produtor?: string | null
           data_saida: string
           deposito_id: string
           id?: string
@@ -1780,8 +1786,10 @@ export type Database = {
           mopp_motorista?: string | null
           nome_motorista?: string | null
           observacoes?: string | null
+          observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
+          status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
           tipo_saida: string
           updated_at?: string
@@ -1791,6 +1799,8 @@ export type Database = {
         Update: {
           cpf_motorista?: string | null
           created_at?: string
+          criado_por_franqueado?: boolean | null
+          data_aprovacao_produtor?: string | null
           data_saida?: string
           deposito_id?: string
           id?: string
@@ -1798,8 +1808,10 @@ export type Database = {
           mopp_motorista?: string | null
           nome_motorista?: string | null
           observacoes?: string | null
+          observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
+          status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
           tipo_saida?: string
           updated_at?: string

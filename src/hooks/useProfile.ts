@@ -70,35 +70,29 @@ export const useProdutoresComEstoqueNaFranquia = () => {
     queryFn: async () => {
       if (!user?.id) return []
       
-      // Buscar produtores que têm estoque nas franquias do franqueado logado
-      // Usando o relacionamento correto: produtores.franquia_id -> franquias.id
-      const { data, error } = await supabase
-        .from("produtores")
-        .select(`
-          user_id,
-          profiles!inner(
-            user_id,
-            nome,
-            email,
-            role
-          ),
-          franquias!inner(
-            id,
-            nome,
-            master_franqueado_id
-          )
-        `)
+      // Primeiro buscar IDs das franquias do franqueado
+      const { data: franquias, error: franquiasError } = await supabase
+        .from("franquias")
+        .select("id")
+        .eq("master_franqueado_id", user.id)
         .eq("ativo", true)
-        .eq("profiles.role", "produtor")
-        .eq("franquias.master_franqueado_id", user.id)
-        .eq("franquias.ativo", true)
 
-      if (error) throw error
+      if (franquiasError) throw franquiasError
+      if (!franquias || franquias.length === 0) return []
       
-      // Filtrar apenas produtores que realmente têm estoque
-      if (!data || data.length === 0) return []
+      const franquiaIds = franquias.map(f => f.id)
       
-      const produtorIds = data.map(p => p.user_id)
+      // Buscar produtores vinculados às franquias
+      const { data: produtoresData, error: produtoresError } = await supabase
+        .from("produtores")
+        .select("user_id, franquia_id")
+        .eq("ativo", true)
+        .in("franquia_id", franquiaIds)
+
+      if (produtoresError) throw produtoresError
+      if (!produtoresData || produtoresData.length === 0) return []
+      
+      const produtorIds = produtoresData.map(p => p.user_id)
       
       // Verificar quais produtores têm estoque atual > 0
       const { data: estoqueData, error: estoqueError } = await supabase
@@ -108,17 +102,24 @@ export const useProdutoresComEstoqueNaFranquia = () => {
         .in("user_id", produtorIds)
 
       if (estoqueError) throw estoqueError
+      if (!estoqueData || estoqueData.length === 0) return []
       
-      const produtoresComEstoque = estoqueData?.map(e => e.user_id) || []
+      const produtoresComEstoque = estoqueData.map(e => e.user_id)
       
-      // Retornar apenas produtores que têm estoque
-      return data
-        .filter(p => produtoresComEstoque.includes(p.user_id))
-        .map(p => ({
-          user_id: p.profiles.user_id,
-          nome: p.profiles.nome,
-          email: p.profiles.email
-        }))
+      // Buscar perfis dos produtores que têm estoque
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select(`
+          user_id, 
+          nome, 
+          email
+        `)
+        .eq("role", "produtor")
+        .in("user_id", produtoresComEstoque)
+        .order("nome")
+
+      if (profilesError) throw profilesError
+      return profilesData || []
     },
     enabled: !!user?.id,
     staleTime: 0,

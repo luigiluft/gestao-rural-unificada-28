@@ -43,10 +43,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { FormularioSaida } from "@/components/Saidas/FormularioSaida"
+import { AprovacaoSaidas } from "@/components/Saidas/AprovacaoSaidas"
 import { useSaidas } from "@/hooks/useSaidas"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
+import { useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/contexts/AuthContext"
+import { useProfile } from "@/hooks/useProfile"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 
@@ -253,21 +260,30 @@ export default function Saidas() {
           </Dialog>
         </div>
       </div>
+      
+      {/* Conditional rendering based on user role */}
+      {userProfile?.role === 'produtor' ? (
+        <Tabs defaultValue="saidas" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="saidas">Minhas Saídas</TabsTrigger>
+            <TabsTrigger value="aprovacoes">Aprovações Pendentes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="saidas" className="space-y-4">
+            {/* Date Range Filter */}
+            <DateRangeFilter
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
 
-      {/* Date Range Filter */}
-      <DateRangeFilter
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
-
-      {/* Saidas Table */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Lista de Saídas</CardTitle>
-          <CardDescription>
-            {saidas?.length || 0} saídas registradas
-          </CardDescription>
-        </CardHeader>
+            {/* Saidas Table */}
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle>Lista de Saídas</CardTitle>
+                <CardDescription>
+                  {saidas?.length || 0} saídas registradas
+                </CardDescription>
+              </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="space-y-2">
@@ -402,6 +418,34 @@ export default function Saidas() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+          
+          </TabsContent>
+          
+          <TabsContent value="aprovacoes" className="space-y-4">
+            <AprovacaoSaidas />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <>
+          <DateRangeFilter
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Lista de Saídas</CardTitle>
+              <CardDescription>
+                {saidas?.length || 0} saídas registradas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Existing table content */}
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }
+
+export default Saidas
