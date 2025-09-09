@@ -54,12 +54,10 @@ import { supabase } from "@/integrations/supabase/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
 
-import { useQueryClient } from "@tanstack/react-query"
-
-export default function Saidas() {
+const Saidas = () => {
+  const { user } = useAuth()
+  const { data: userProfile } = useProfile()
   const [isNewSaidaOpen, setIsNewSaidaOpen] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
