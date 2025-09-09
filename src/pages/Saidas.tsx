@@ -45,13 +45,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { FormularioSaida } from "@/components/Saidas/FormularioSaida"
-import { AprovacaoSaidas } from "@/components/Saidas/AprovacaoSaidas"
 import { useSaidas } from "@/hooks/useSaidas"
 import { useAprovarSaida } from "@/hooks/useSaidasAprovacao"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useQueryClient } from "@tanstack/react-query"
@@ -254,6 +252,14 @@ const Saidas = () => {
     }
   }
 
+  const formatCurrency = (value: number | null | undefined) => {
+    if (!value) return "R$ 0,00"
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -289,378 +295,210 @@ const Saidas = () => {
         </div>
       </div>
       
-      {/* Conditional rendering based on user role */}
-      {userProfile?.role === 'produtor' ? (
-        <Tabs defaultValue="saidas" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="saidas">Minhas Saídas</TabsTrigger>
-            <TabsTrigger value="aprovacoes">Aprovações Pendentes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="saidas" className="space-y-4">
-            {/* Date Range Filter */}
-            <DateRangeFilter
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
+      {/* Date Range Filter */}
+      <DateRangeFilter
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
+
+      {/* Saidas Table */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>Lista de Saídas</CardTitle>
+          <CardDescription>
+            {saidas?.length || 0} saídas registradas
+            {userProfile?.role === 'produtor' && ' (incluindo aprovações pendentes)'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : !saidas || saidas.length === 0 ? (
+            <EmptyState
+              icon={<Package className="w-8 h-8 text-muted-foreground" />}
+              title="Nenhuma saída encontrada"
+              description="Não há saídas registradas no sistema."
+              action={{
+                label: "Registrar Primeira Saída",
+                onClick: () => setIsNewSaidaOpen(true)
+              }}
             />
-
-            {/* Saidas Table */}
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Lista de Saídas</CardTitle>
-                <CardDescription>
-                  {saidas?.length || 0} saídas registradas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : !saidas || saidas.length === 0 ? (
-                  <EmptyState
-                    icon={<Package className="w-8 h-8 text-muted-foreground" />}
-                    title="Nenhuma saída encontrada"
-                    description="Não há saídas registradas no sistema."
-                    action={{
-                      label: "Registrar Primeira Saída",
-                      onClick: () => setIsNewSaidaOpen(true)
-                    }}
-                  />
-                ) : (
-                  <div className="overflow-x-auto">
-                      <Table className="min-w-[900px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Criado por</TableHead>
-                        <TableHead>Destinatário</TableHead>
-                        <TableHead>Produtos</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Aprovação</TableHead>
-                        <TableHead>Valor Total</TableHead>
-                        <TableHead className="w-[100px]">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                      <TableBody>
-                        {saidas.map((saida) => (
-                          <TableRow key={saida.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium">
-                            SAI{saida.id.slice(-3).toUpperCase()}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {saida.profiles?.nome || "Usuário não encontrado"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {saida.produtor_destinatario?.nome || "-"}
-                            </span>
-                          </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-1">
-                                {saida.saida_itens?.slice(0, 2).map((item, idx) => (
-                                  <div key={idx} className="flex items-center gap-2">
-                                    <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                                      <Package className="w-3 h-3 text-primary" />
-                                    </div>
-                                    <span className="text-sm">
-                                      {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
-                                    </span>
-                                  </div>
-                                ))}
-                                {(saida.saida_itens?.length || 0) > 2 && (
-                                  <span className="text-xs text-muted-foreground">
-                                    +{(saida.saida_itens?.length || 0) - 2} mais
-                                  </span>
-                                )}
+          ) : (
+            <div className="overflow-x-auto">
+              <Table className="min-w-[1000px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Criado por</TableHead>
+                    <TableHead>Destinatário</TableHead>
+                    <TableHead>Produtos</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Aprovação</TableHead>
+                    <TableHead>Valor Total</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {saidas.map((saida) => (
+                    <TableRow key={saida.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        SAI{saida.id.slice(-3).toUpperCase()}
+                      </TableCell>
+                      <TableCell>
+                        {saida.criado_por_franqueado ? (
+                          <Badge variant="secondary" className="text-xs">
+                            Franqueado
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            Própria
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {saida.profiles?.nome || "Usuário não encontrado"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {saida.produtor_destinatario?.nome || "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {saida.saida_itens?.slice(0, 2).map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
+                                <Package className="w-3 h-3 text-primary" />
                               </div>
-                            </TableCell>
-                            <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"}>
-                                {saida.status === 'separacao_pendente' ? 'Separação Pendente' : 
-                                 saida.status === 'separado' ? 'Separado' :
-                                 saida.status === 'expedido' ? 'Expedido' :
-                                 saida.status === 'entregue' ? 'Entregue' : 
-                                 saida.status || "Separação Pendente"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"}>
-                                  {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' :
-                                   saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' :
-                                   saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
-                                </Badge>
-                                {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
-                                  <div className="flex gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                                      onClick={() => handleApproval(saida.id, true)}
-                                      disabled={aprovarSaida.isPending}
-                                    >
-                                      <Check className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-                                      onClick={() => handleApproval(saida.id, false)}
-                                      disabled={aprovarSaida.isPending}
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              R$ {(saida.valor_total || 0).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Visualizar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    className="text-destructive"
-                                    onClick={() => handleDeleteClick(saida.id)}
-                                  >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Deletar
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Delete Confirmation Dialog */}
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja deletar a saída SAI{saidaToDelete?.slice(-3).toUpperCase()}?
-                    <br /><br />
-                    Esta ação é irreversível e irá remover:
-                    <ul className="list-disc list-inside mt-2 space-y-1">
-                      <li>A saída e todos os seus itens</li>
-                      <li>Movimentações de estoque relacionadas</li>
-                      <li>Histórico de status (se houver)</li>
-                      <li>As quantidades serão restauradas ao estoque</li>
-                    </ul>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteSaida} className="bg-destructive hover:bg-destructive/90">
-                    Deletar Saída
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </TabsContent>
-          
-          <TabsContent value="aprovacoes" className="space-y-4">
-            <AprovacaoSaidas />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <>
-          <DateRangeFilter
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-          />
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Lista de Saídas</CardTitle>
-              <CardDescription>
-                {saidas?.length || 0} saídas registradas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : !saidas || saidas.length === 0 ? (
-                <EmptyState
-                  icon={<Package className="w-8 h-8 text-muted-foreground" />}
-                  title="Nenhuma saída encontrada"
-                  description="Não há saídas registradas no sistema."
-                  action={{
-                    label: "Registrar Primeira Saída",
-                    onClick: () => setIsNewSaidaOpen(true)
-                  }}
-                />
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table className="min-w-[900px]">
-                     <TableHeader>
-                       <TableRow>
-                         <TableHead>ID</TableHead>
-                         <TableHead>Criado por</TableHead>
-                         <TableHead>Destinatário</TableHead>
-                         <TableHead>Produtos</TableHead>
-                         <TableHead>Data</TableHead>
-                         <TableHead>Tipo</TableHead>
-                         <TableHead>Status</TableHead>
-                         <TableHead>Aprovação</TableHead>
-                         <TableHead>Valor Total</TableHead>
-                         <TableHead className="w-[100px]">Ações</TableHead>
-                       </TableRow>
-                     </TableHeader>
-                    <TableBody>
-                      {saidas.map((saida) => (
-                        <TableRow key={saida.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium">
-                            SAI{saida.id.slice(-3).toUpperCase()}
-                          </TableCell>
-                           <TableCell>
-                             <span className="text-sm text-muted-foreground">
-                               {saida.profiles?.nome || "Usuário não encontrado"}
-                             </span>
-                           </TableCell>
-                           <TableCell>
-                             <span className="text-sm text-muted-foreground">
-                               {saida.produtor_destinatario?.nome || "-"}
-                             </span>
-                           </TableCell>
-                           <TableCell>
-                            <div className="flex flex-col gap-1">
-                              {saida.saida_itens?.slice(0, 2).map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                                    <Package className="w-3 h-3 text-primary" />
-                                  </div>
-                                  <span className="text-sm">
-                                    {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
-                                  </span>
-                                </div>
-                              ))}
-                              {(saida.saida_itens?.length || 0) > 2 && (
-                                <span className="text-xs text-muted-foreground">
-                                  +{(saida.saida_itens?.length || 0) - 2} mais
-                                </span>
-                              )}
+                              <span className="text-sm">
+                                {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
+                              </span>
                             </div>
-                          </TableCell>
-                          <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"}>
-                              {saida.status === 'separacao_pendente' ? 'Separação Pendente' : 
-                               saida.status === 'separado' ? 'Separado' :
-                               saida.status === 'expedido' ? 'Expedido' :
-                               saida.status === 'entregue' ? 'Entregue' : 
-                               saida.status || "Separação Pendente"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"}>
-                              {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' :
-                               saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' :
-                               saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            R$ {(saida.valor_total || 0).toFixed(2)}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Visualizar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(saida.id)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Deletar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                          ))}
+                          {(saida.saida_itens?.length || 0) > 2 && (
+                            <span className="text-xs text-muted-foreground">
+                              +{(saida.saida_itens?.length || 0) - 2} mais
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"}>
+                          {saida.status === 'separacao_pendente' ? 'Separação Pendente' : 
+                           saida.status === 'separado' ? 'Separado' :
+                           saida.status === 'expedido' ? 'Expedido' :
+                           saida.status === 'entregue' ? 'Entregue' : 
+                           saida.status || "Separação Pendente"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"}>
+                            {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' :
+                             saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' :
+                             saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
+                          </Badge>
+                          {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
+                            <div className="flex gap-1 ml-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                                onClick={() => handleApproval(saida.id, true)}
+                                disabled={aprovarSaida.isPending}
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                                onClick={() => handleApproval(saida.id, false)}
+                                disabled={aprovarSaida.isPending}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(saida.valor_total)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Abrir menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeleteClick(saida.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Deletar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Delete Confirmation Dialog */}
-          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja deletar a saída SAI{saidaToDelete?.slice(-3).toUpperCase()}?
-                  <br /><br />
-                  Esta ação é irreversível e irá remover:
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>A saída e todos os seus itens</li>
-                    <li>Movimentações de estoque relacionadas</li>
-                    <li>Histórico de status (se houver)</li>
-                    <li>As quantidades serão restauradas ao estoque</li>
-                  </ul>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteSaida} className="bg-destructive hover:bg-destructive/90">
-                  Deletar Saída
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar a saída SAI{saidaToDelete?.slice(-3).toUpperCase()}?
+              <br /><br />
+              Esta ação é irreversível e irá remover:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>A saída e todos os seus itens</li>
+                <li>Movimentações de estoque relacionadas</li>
+                <li>Histórico de status (se houver)</li>
+                <li>As quantidades serão restauradas ao estoque</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSaida} className="bg-destructive hover:bg-destructive/90">
+              Deletar Saída
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

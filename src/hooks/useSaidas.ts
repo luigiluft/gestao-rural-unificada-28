@@ -9,7 +9,17 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
       console.log('📅 dateRange:', dateRange)
       
       try {
-        // Primeiro buscar as saídas com itens
+        // Get current user to determine role and build appropriate query
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('User not authenticated')
+
+        // Get user profile to check role
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("user_id", user.id)
+          .single()
+
         let query = supabase
           .from("saidas")
           .select(`
@@ -20,7 +30,12 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             )
           `)
 
-        console.log('✅ Query inicial montada')
+        // For producers, include both their own saídas and pending approvals from franchisees
+        if (userProfile?.role === 'produtor') {
+          query = query.or(`user_id.eq.${user.id},and(criado_por_franqueado.eq.true,produtor_destinatario_id.eq.${user.id})`)
+        }
+
+        console.log('✅ Query inicial montada para role:', userProfile?.role)
         
         // Apply date filters if provided
         if (dateRange?.from) {
