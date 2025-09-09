@@ -44,7 +44,7 @@ export function getMinScheduleDate(businessDaysBlocked: number): string {
 }
 
 /**
- * Verifica se uma data está APÓS o período bloqueado de dias úteis
+ * Verifica se uma data está A PARTIR do período de dias úteis bloqueados (inclusive)
  */
 export function isDateAfterBlockedBusinessDays(
   targetDate: Date, 

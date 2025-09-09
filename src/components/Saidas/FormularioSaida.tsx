@@ -233,7 +233,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     // Validar data de saída após o período bloqueado de dias úteis
     const dataSaida = new Date(dadosSaida.data_saida)
     if (!isDateAfterBlockedBusinessDays(dataSaida, diasUteisExpedicao)) {
-      toast.error(`Data de saída deve ser após ${diasUteisExpedicao} dias úteis a partir de hoje`)
+      toast.error(`Data de saída deve ser a partir de ${diasUteisExpedicao} dias úteis (mínimo: ${getMinScheduleDate(diasUteisExpedicao)})`)
       return
     }
 
