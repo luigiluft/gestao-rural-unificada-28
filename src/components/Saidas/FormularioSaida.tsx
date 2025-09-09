@@ -269,7 +269,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         reservaId = reserva.id
       }
 
-      // 2. Criar a saída
+      // 2. Criar a saída com lógica de aprovação baseada no role do usuário
+      const isProdutor = profile?.role === 'produtor'
       const { data: saida, error: saidaError } = await supabase
         .from("saidas")
         .insert({
@@ -284,7 +285,10 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           telefone_motorista: dadosSaida.telefone_motorista || null,
           cpf_motorista: dadosSaida.cpf_motorista || null,
           mopp_motorista: dadosSaida.mopp_motorista || null,
-          janela_horario: dadosSaida.janela_horario || null
+          janela_horario: dadosSaida.janela_horario || null,
+          // Lógica de aprovação
+          criado_por_franqueado: !isProdutor, // true se criado por admin/franqueado
+          status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente' // Auto-aprovado se é produtor
         })
         .select()
         .single()
