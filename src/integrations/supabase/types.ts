@@ -1766,6 +1766,7 @@ export type Database = {
           observacoes: string | null
           observacoes_aprovacao: string | null
           placa_veiculo: string | null
+          produtor_destinatario_id: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor: string | null
           telefone_motorista: string | null
@@ -1788,6 +1789,7 @@ export type Database = {
           observacoes?: string | null
           observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
+          produtor_destinatario_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
@@ -1810,6 +1812,7 @@ export type Database = {
           observacoes?: string | null
           observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
+          produtor_destinatario_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null

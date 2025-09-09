@@ -336,6 +336,7 @@ const Saidas = () => {
                       <TableRow>
                         <TableHead>ID</TableHead>
                         <TableHead>Criado por</TableHead>
+                        <TableHead>Destinatário</TableHead>
                         <TableHead>Produtos</TableHead>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
@@ -354,6 +355,11 @@ const Saidas = () => {
                           <TableCell>
                             <span className="text-sm text-muted-foreground">
                               {saida.profiles?.nome || "Usuário não encontrado"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {saida.produtor_destinatario?.nome || "-"}
                             </span>
                           </TableCell>
                             <TableCell>

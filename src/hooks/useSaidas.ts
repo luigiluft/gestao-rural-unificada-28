@@ -47,13 +47,14 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           throw saidasError
         }
 
-        // Para cada saída, buscar o nome da franquia e do usuário
-        console.log('🏢 Iniciando busca de franquias e usuários...')
+        // Para cada saída, buscar o nome da franquia, usuário criador e destinatário
+        console.log('🏢 Iniciando busca de franquias, usuários e destinatários...')
         const saidasComDadosCompletos = await Promise.all(
           (saidasData || []).map(async (saida, index) => {
             console.log(`🔄 Processando saída ${index + 1}/${saidasData?.length}:`, saida.id)
             let depositoNome = null
             let usuarioNome = null
+            let destinatarioNome = null
 
             // Buscar nome da franquia
             if (saida.deposito_id) {
@@ -68,7 +69,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
               }
             }
 
-            // Buscar nome do usuário
+            // Buscar nome do usuário criador
             if (saida.user_id) {
               const { data: usuario } = await supabase
                 .from("profiles")
@@ -81,11 +82,25 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
               }
             }
 
-            console.log(`✅ Saída ${index + 1} processada - Depósito: ${depositoNome}, Usuário: ${usuarioNome}`)
+            // Buscar nome do destinatário
+            if (saida.produtor_destinatario_id) {
+              const { data: destinatario } = await supabase
+                .from("profiles")
+                .select("nome")
+                .eq("user_id", saida.produtor_destinatario_id)
+                .maybeSingle()
+
+              if (destinatario) {
+                destinatarioNome = destinatario.nome
+              }
+            }
+
+            console.log(`✅ Saída ${index + 1} processada - Depósito: ${depositoNome}, Criador: ${usuarioNome}, Destinatário: ${destinatarioNome}`)
             return {
               ...saida,
               depositos: depositoNome ? { nome: depositoNome } : null,
-              profiles: usuarioNome ? { nome: usuarioNome } : null
+              profiles: usuarioNome ? { nome: usuarioNome } : null,
+              produtor_destinatario: destinatarioNome ? { nome: destinatarioNome } : null
             }
           })
         )

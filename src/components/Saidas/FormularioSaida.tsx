@@ -288,7 +288,9 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
           janela_horario: dadosSaida.janela_horario || null,
           // Lógica de aprovação
           criado_por_franqueado: !isProdutor, // true se criado por admin/franqueado
-          status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente' // Auto-aprovado se é produtor
+          status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente', // Auto-aprovado se é produtor
+          // Definir destinatário
+          produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario
         })
         .select()
         .single()
