@@ -527,31 +527,37 @@ const Saidas = () => {
               ) : (
                 <div className="overflow-x-auto">
                   <Table className="min-w-[900px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Criado por</TableHead>
-                        <TableHead>Produtos</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Aprovação</TableHead>
-                        <TableHead>Valor Total</TableHead>
-                        <TableHead className="w-[100px]">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                     <TableHeader>
+                       <TableRow>
+                         <TableHead>ID</TableHead>
+                         <TableHead>Criado por</TableHead>
+                         <TableHead>Destinatário</TableHead>
+                         <TableHead>Produtos</TableHead>
+                         <TableHead>Data</TableHead>
+                         <TableHead>Tipo</TableHead>
+                         <TableHead>Status</TableHead>
+                         <TableHead>Aprovação</TableHead>
+                         <TableHead>Valor Total</TableHead>
+                         <TableHead className="w-[100px]">Ações</TableHead>
+                       </TableRow>
+                     </TableHeader>
                     <TableBody>
                       {saidas.map((saida) => (
                         <TableRow key={saida.id} className="hover:bg-muted/50">
                           <TableCell className="font-medium">
                             SAI{saida.id.slice(-3).toUpperCase()}
                           </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {saida.profiles?.nome || "Usuário não encontrado"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
+                           <TableCell>
+                             <span className="text-sm text-muted-foreground">
+                               {saida.profiles?.nome || "Usuário não encontrado"}
+                             </span>
+                           </TableCell>
+                           <TableCell>
+                             <span className="text-sm text-muted-foreground">
+                               {saida.produtor_destinatario?.nome || "-"}
+                             </span>
+                           </TableCell>
+                           <TableCell>
                             <div className="flex flex-col gap-1">
                               {saida.saida_itens?.slice(0, 2).map((item, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
