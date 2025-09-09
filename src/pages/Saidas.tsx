@@ -332,24 +332,30 @@ const Saidas = () => {
                 ) : (
                   <div className="overflow-x-auto">
                       <Table className="min-w-[900px]">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Produtos</TableHead>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Aprovação</TableHead>
-                            <TableHead>Valor Total</TableHead>
-                            <TableHead className="w-[100px]">Ações</TableHead>
-                          </TableRow>
-                        </TableHeader>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Criado por</TableHead>
+                        <TableHead>Produtos</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Aprovação</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                        <TableHead className="w-[100px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
                       <TableBody>
                         {saidas.map((saida) => (
                           <TableRow key={saida.id} className="hover:bg-muted/50">
-                            <TableCell className="font-medium">
-                              SAI{saida.id.slice(-3).toUpperCase()}
-                            </TableCell>
+                          <TableCell className="font-medium">
+                            SAI{saida.id.slice(-3).toUpperCase()}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {saida.profiles?.nome || "Usuário não encontrado"}
+                            </span>
+                          </TableCell>
                             <TableCell>
                               <div className="flex flex-col gap-1">
                                 {saida.saida_itens?.slice(0, 2).map((item, idx) => (
@@ -518,6 +524,7 @@ const Saidas = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
+                        <TableHead>Criado por</TableHead>
                         <TableHead>Produtos</TableHead>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
@@ -532,6 +539,11 @@ const Saidas = () => {
                         <TableRow key={saida.id} className="hover:bg-muted/50">
                           <TableCell className="font-medium">
                             SAI{saida.id.slice(-3).toUpperCase()}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {saida.profiles?.nome || "Usuário não encontrado"}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col gap-1">

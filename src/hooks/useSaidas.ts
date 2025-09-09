@@ -47,39 +47,54 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           throw saidasError
         }
 
-        // Para cada saída, buscar o nome da franquia
-        console.log('🏢 Iniciando busca de franquias...')
-        const saidasComDeposito = await Promise.all(
+        // Para cada saída, buscar o nome da franquia e do usuário
+        console.log('🏢 Iniciando busca de franquias e usuários...')
+        const saidasComDadosCompletos = await Promise.all(
           (saidasData || []).map(async (saida, index) => {
             console.log(`🔄 Processando saída ${index + 1}/${saidasData?.length}:`, saida.id)
             let depositoNome = null
+            let usuarioNome = null
 
-          if (saida.deposito_id) {
             // Buscar nome da franquia
-            const { data: franquia } = await supabase
-              .from("franquias")
-              .select("nome")
-              .eq("id", saida.deposito_id)
-              .single()
+            if (saida.deposito_id) {
+              const { data: franquia } = await supabase
+                .from("franquias")
+                .select("nome")
+                .eq("id", saida.deposito_id)
+                .maybeSingle()
 
-            if (franquia) {
-              depositoNome = franquia.nome
+              if (franquia) {
+                depositoNome = franquia.nome
+              }
             }
-          }
 
-            console.log(`✅ Saída ${index + 1} processada com depósito:`, depositoNome)
+            // Buscar nome do usuário
+            if (saida.user_id) {
+              const { data: usuario } = await supabase
+                .from("profiles")
+                .select("nome")
+                .eq("user_id", saida.user_id)
+                .maybeSingle()
+
+              if (usuario) {
+                usuarioNome = usuario.nome
+              }
+            }
+
+            console.log(`✅ Saída ${index + 1} processada - Depósito: ${depositoNome}, Usuário: ${usuarioNome}`)
             return {
               ...saida,
-              depositos: depositoNome ? { nome: depositoNome } : null
+              depositos: depositoNome ? { nome: depositoNome } : null,
+              profiles: usuarioNome ? { nome: usuarioNome } : null
             }
           })
         )
 
         console.log('🎯 RESULTADO FINAL:')
-        console.log('- Total de saídas processadas:', saidasComDeposito.length)
-        console.log('- Dados finais:', saidasComDeposito)
+        console.log('- Total de saídas processadas:', saidasComDadosCompletos.length)
+        console.log('- Dados finais:', saidasComDadosCompletos)
         
-        return saidasComDeposito
+        return saidasComDadosCompletos
         
       } catch (error) {
         console.error('💥 ERRO GERAL no hook useSaidas:', error)
