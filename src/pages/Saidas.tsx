@@ -300,6 +300,19 @@ const Saidas = () => {
               }}
             />
           ) : (
+            <div className="overflow-x-auto">
+              <Table className="min-w-[800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Produtos</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Valor Total</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
               <div className="overflow-x-auto">
                 <Table className="min-w-[800px]">
                   <TableHeader>
@@ -384,11 +397,14 @@ const Saidas = () => {
                         </TableCell>
                       </TableRow>
                     ))}
-                  </TableBody>
+                </TableBody>
+              </Table>
                 </Table>
               </div>
+          )}
             )}
           </CardContent>
+        </Card>
         </Card>
 
         {/* Delete Confirmation Dialog */}
