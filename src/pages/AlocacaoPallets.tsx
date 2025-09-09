@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function AlocacaoPallets() {
+  const queryClient = useQueryClient();
   const [activeMethod, setActiveMethod] = useState<string | null>(null);
   const [activePallet, setActivePallet] = useState<any>(null);
   const [allocationResult, setAllocationResult] = useState<any>(null);
@@ -158,23 +160,40 @@ export default function AlocacaoPallets() {
     const currentPalletId = selectedPallets[currentWaveIndex];
     const currentPallet = palletsPendentes?.find(p => p.id === currentPalletId);
     
-    if (!currentPallet) return;
+    if (!currentPallet) {
+      console.error("Pallet não encontrado:", currentPalletId, "Index:", currentWaveIndex);
+      return;
+    }
+
+    console.log("Processando pallet:", currentPallet.numero_pallet, "Index:", currentWaveIndex);
     
     autoAllocatePallet.mutate(
       { palletId: currentPallet.id, depositoId: currentPallet.entradas.deposito_id },
       {
         onSuccess: (result) => {
+          console.log("Auto-alocação bem-sucedida:", result);
           if (result.success) {
             setWaveResults(prev => [...prev, { pallet: currentPallet, result }]);
           }
+        },
+        onError: (error) => {
+          console.error("Erro na auto-alocação:", error);
         }
       }
     );
   };
 
   const confirmWaveStep = () => {
-    const currentResult = waveResults[waveResults.length - 1];
-    if (!currentResult) return;
+    // Usar currentWaveIndex para pegar o resultado correto
+    const currentPalletId = selectedPallets[currentWaveIndex];
+    const currentResult = waveResults.find(r => r.pallet.id === currentPalletId);
+    
+    if (!currentResult) {
+      console.error("Resultado não encontrado para pallet:", currentPalletId);
+      return;
+    }
+
+    console.log("Confirmando pallet:", currentResult.pallet.numero_pallet, "Index:", currentWaveIndex);
 
     const method = isWaveMode;
     const confirmData: any = {
@@ -190,21 +209,35 @@ export default function AlocacaoPallets() {
 
     confirmAllocation.mutate(confirmData, {
       onSuccess: () => {
+        console.log("Confirmação bem-sucedida para:", currentResult.pallet.numero_pallet);
+        
         const newCompleted = waveProgress!.completed + 1;
         setWaveProgress(prev => prev ? { ...prev, completed: newCompleted } : null);
+        
+        // Forçar atualização da query para refletir as mudanças
+        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
         
         if (newCompleted < selectedPallets.length) {
           // Próximo pallet da onda
           setCurrentWaveIndex(prev => prev + 1);
           setScannerData({ palletCode: "", positionCode: "" });
           
-          // Processar próximo pallet
-          setTimeout(processNextWavePallet, 500);
+          // Aguardar atualização da query antes de processar próximo
+          setTimeout(() => {
+            queryClient.refetchQueries({ queryKey: ["pallets-pendentes"] }).then(() => {
+              processNextWavePallet();
+            });
+          }, 1000);
         } else {
           // Onda completa
+          console.log("Onda completa!");
           resetWaveState();
           resetAllocationState();
+          queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
         }
+      },
+      onError: (error) => {
+        console.error("Erro na confirmação:", error);
       }
     });
   };
