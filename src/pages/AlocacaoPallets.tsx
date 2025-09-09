@@ -287,18 +287,20 @@ export default function AlocacaoPallets() {
       const newCompleted = waveProgress!.completed + 1;
       setWaveProgress(prev => prev ? { ...prev, completed: newCompleted } : null);
       
-      // Remover o resultado processado
+      // Remover o resultado processado somente após incrementar o progresso
       setWaveResults(prev => prev.filter(r => r.pallet.id !== currentResult.pallet.id));
       
       // Forçar atualização da query
       queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
       
       // Verificar se há mais pallets para processar baseado nos originalmente selecionados
-      const remainingPallets = selectedPallets.filter(id => 
-        !processedPallets.has(id) || id === currentResult.pallet.id // incluir o atual que acabou de ser confirmado
+      const remainingUnprocessed = selectedPallets.filter(id => 
+        !processedPallets.has(id) && id !== currentResult.pallet.id
       );
       
-      if (remainingPallets.length > 1) { // Mais de 1 porque inclui o atual
+      console.log("Remaining unprocessed pallets:", remainingUnprocessed.length);
+      
+      if (remainingUnprocessed.length > 0 && newCompleted < selectedPallets.length) {
         setScannerData({ palletCode: "", positionCode: "" });
         
         // Aguardar atualização antes de processar próximo
@@ -420,7 +422,7 @@ export default function AlocacaoPallets() {
           )}
 
           {/* Confirmação da onda atual */}
-          {isWaveMode && waveResults.length > 0 && waveResults.length > waveProgress?.completed! && (
+          {isWaveMode && waveResults.length > 0 && waveProgress && waveProgress.completed < waveProgress.total && (
             <div className="p-4 bg-muted rounded-lg border">
               {(() => {
                 const currentResult = waveResults[waveResults.length - 1];
