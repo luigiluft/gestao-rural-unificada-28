@@ -93,7 +93,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   console.log('produtores (fallback):', produtores)
   
   // Usar hook correto baseado no tipo de usuário
-  const produtoresParaDropdown = isFranqueado ? produtoresComEstoque : produtores
+  const produtoresParaDropdown = isFranqueado ? (produtoresComEstoque || []) : (produtores || [])
   
   console.log('produtoresParaDropdown final:', produtoresParaDropdown)
   console.log('=== FIM DEBUG ===')

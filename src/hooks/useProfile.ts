@@ -65,6 +65,8 @@ export const useFazendas = (produtorId?: string) => {
 export const useProdutoresComEstoqueNaFranquia = () => {
   const { user } = useAuth()
   
+  console.log('🚀 HOOK EXECUTANDO - useProdutoresComEstoqueNaFranquia, user?.id:', user?.id)
+  
   return useQuery({
     queryKey: ["produtores-com-estoque-franquia", user?.id],
     queryFn: async () => {
@@ -137,5 +139,7 @@ export const useProdutoresComEstoqueNaFranquia = () => {
       return data || []
     },
     enabled: !!user?.id,
+    staleTime: 0, // Force fresh data
+    refetchOnMount: true, // Always fetch on mount
   })
 }
