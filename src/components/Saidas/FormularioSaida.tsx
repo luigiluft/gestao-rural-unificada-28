@@ -476,21 +476,10 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {isProdutor ? (
-                      // Para produtores: apenas entrega
-                      <>
-                        <SelectItem value="entrega_propriedade">Entrega na Propriedade</SelectItem>
-                        <SelectItem value="retirada_deposito">Retirada no Depósito</SelectItem>
-                      </>
-                    ) : (
-                      // Para franqueados: opções tradicionais
-                      <>
-                        <SelectItem value="entrega">Entrega</SelectItem>
-                        <SelectItem value="retirada_terceiros">Retirada com terceiros</SelectItem>
-                        <SelectItem value="retirada_destinatario">Retirada por conta do destinatário</SelectItem>
-                        <SelectItem value="sem_frete">Sem frete</SelectItem>
-                      </>
-                    )}
+                    <SelectItem value="entrega">Entrega</SelectItem>
+                    <SelectItem value="retirada_terceiros">Retirada com terceiros</SelectItem>
+                    <SelectItem value="retirada_destinatario">Retirada por conta do destinatário</SelectItem>
+                    <SelectItem value="sem_frete">Sem frete</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
