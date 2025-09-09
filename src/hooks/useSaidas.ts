@@ -59,6 +59,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    staleTime: 0, // Force fresh data every time
   })
 }
 
