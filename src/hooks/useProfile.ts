@@ -61,3 +61,54 @@ export const useFazendas = (produtorId?: string) => {
     enabled: !!produtorId,
   })
 }
+
+export const useProdutoresComEstoqueNaFranquia = () => {
+  const { user } = useAuth()
+  
+  return useQuery({
+    queryKey: ["produtores-com-estoque-franquia", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return []
+      
+      // Buscar IDs das franquias do franqueado logado
+      const { data: franquias, error: franquiasError } = await supabase
+        .from("franquias")
+        .select("id")
+        .eq("master_franqueado_id", user.id)
+        .eq("ativo", true)
+
+      if (franquiasError) throw franquiasError
+      if (!franquias || franquias.length === 0) return []
+
+      const franquiaIds = franquias.map(f => f.id)
+
+      // Buscar user_ids dos produtores que têm estoque nas franquias
+      const { data: estoqueUsers, error: estoqueError } = await supabase
+        .from("estoque")
+        .select("user_id")
+        .gt("quantidade_atual", 0)
+        .in("deposito_id", franquiaIds)
+
+      if (estoqueError) throw estoqueError
+      if (!estoqueUsers || estoqueUsers.length === 0) return []
+
+      const userIds = [...new Set(estoqueUsers.map(e => e.user_id))]
+
+      // Buscar perfis dos produtores
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(`
+          user_id, 
+          nome, 
+          email
+        `)
+        .eq("role", "produtor")
+        .in("user_id", userIds)
+        .order("nome")
+
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!user?.id,
+  })
+}

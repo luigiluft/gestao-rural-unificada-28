@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2 } from "lucide-react"
 import { useEstoque } from "@/hooks/useEstoque"
 import { useAuth } from "@/contexts/AuthContext"
-import { useProfile, useProdutores, useFazendas } from "@/hooks/useProfile"
+import { useProfile, useProdutores, useFazendas, useProdutoresComEstoqueNaFranquia } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { usePesoMinimoMopp, useHorariosRetirada, useDiasUteisExpedicao } from "@/hooks/useConfiguracoesSistema"
@@ -36,6 +36,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const { data: estoque } = useEstoque()
   const { data: profile } = useProfile()
   const { data: produtores } = useProdutores()
+  const { data: produtoresComEstoque } = useProdutoresComEstoqueNaFranquia()
   const pesoMinimoMopp = usePesoMinimoMopp()
   const horariosRetirada = useHorariosRetirada()
   const diasUteisExpedicao = useDiasUteisExpedicao()
@@ -80,6 +81,9 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   // Detectar tipo de usuário
   const isProdutor = profile?.role === 'produtor'
   const isFranqueado = profile?.role === 'franqueado'
+  
+  // Usar hook correto baseado no tipo de usuário
+  const produtoresParaDropdown = isFranqueado ? produtoresComEstoque : produtores
   
   // Get the target producer ID for farms (current user if producer, selected producer if franchisee)
   const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
@@ -482,15 +486,17 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                     onValueChange={(value) => {
                       setDadosSaida(prev => ({ 
                         ...prev, 
-                        produtor_destinatario: value
+                        produtor_destinatario: value, 
+                        fazenda_id: "" 
                       }))
                     }}
+                    disabled={!produtoresParaDropdown || produtoresParaDropdown.length === 0}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o produtor" />
                     </SelectTrigger>
                     <SelectContent>
-                      {produtores?.map((produtor) => (
+                      {produtoresParaDropdown?.map((produtor) => (
                         <SelectItem key={produtor.user_id} value={produtor.user_id}>
                           {produtor.nome}
                         </SelectItem>
