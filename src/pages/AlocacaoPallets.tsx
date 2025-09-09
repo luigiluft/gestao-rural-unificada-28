@@ -171,13 +171,15 @@ export default function AlocacaoPallets() {
       return;
     }
 
-    // Filtrar pallets ainda pendentes da lista atual
-    const availablePallets = selectedPallets.filter(palletId => {
-      const pallet = palletsPendentes?.find(p => p.id === palletId);
-      return pallet && !processedPallets.has(palletId);
-    });
+    // Calcular pallets restantes baseado na lista original menos os processados
+    const remainingPallets = selectedPallets.filter(palletId => 
+      !processedPallets.has(palletId) && 
+      palletsPendentes?.find(p => p.id === palletId)
+    );
 
-    if (currentWaveIndex >= availablePallets.length) {
+    console.log("Remaining pallets:", remainingPallets.length, "Processed:", processedPallets.size);
+
+    if (remainingPallets.length === 0) {
       console.log("Todos os pallets foram processados");
       const completedCount = waveProgress?.completed || 0;
       if (completedCount >= selectedPallets.length) {
@@ -188,26 +190,26 @@ export default function AlocacaoPallets() {
       return;
     }
 
-    const currentPalletId = availablePallets[currentWaveIndex];
+    // Pegar sempre o primeiro pallet não processado
+    const currentPalletId = remainingPallets[0];
     const currentPallet = palletsPendentes?.find(p => p.id === currentPalletId);
     
     if (!currentPallet) {
-      console.error("Pallet não encontrado:", currentPalletId, "Index:", currentWaveIndex);
-      // Pular para o próximo pallet
-      setCurrentWaveIndex(prev => prev + 1);
+      console.error("Pallet não encontrado:", currentPalletId);
+      // Marcar como processado para pular
+      setProcessedPallets(prev => new Set([...prev, currentPalletId]));
       setTimeout(processNextWavePallet, 100);
       return;
     }
 
-    // Verificar se o pallet já foi processado
+    // Verificar se o pallet já foi processado (dupla verificação)
     if (processedPallets.has(currentPallet.id)) {
       console.log("Pallet já processado:", currentPallet.numero_pallet);
-      setCurrentWaveIndex(prev => prev + 1);
       setTimeout(processNextWavePallet, 100);
       return;
     }
 
-    console.log("Processando pallet:", currentPallet.numero_pallet, "Index:", currentWaveIndex, "ID:", currentPallet.id);
+    console.log("Processando pallet:", currentPallet.numero_pallet, "ID:", currentPallet.id);
     
     // Marcar como processando
     setProcessedPallets(prev => new Set([...prev, currentPallet.id]));
@@ -239,6 +241,8 @@ export default function AlocacaoPallets() {
             newSet.delete(currentPallet.id);
             return newSet;
           });
+          // Tentar próximo pallet após erro
+          setTimeout(processNextWavePallet, 1000);
         }
       }
     );
@@ -257,7 +261,7 @@ export default function AlocacaoPallets() {
       console.error("Nenhum resultado encontrado para confirmar");
       console.log("Wave results:", waveResults);
       console.log("Selected pallets:", selectedPallets);
-      console.log("Current wave index:", currentWaveIndex);
+      console.log("Processed pallets:", processedPallets);
       return;
     }
 
@@ -283,28 +287,25 @@ export default function AlocacaoPallets() {
       const newCompleted = waveProgress!.completed + 1;
       setWaveProgress(prev => prev ? { ...prev, completed: newCompleted } : null);
       
-      // Remover o pallet confirmado da lista de selecionados
-      setSelectedPallets(prev => prev.filter(id => id !== currentResult.pallet.id));
-      
       // Remover o resultado processado
       setWaveResults(prev => prev.filter(r => r.pallet.id !== currentResult.pallet.id));
       
       // Forçar atualização da query
       queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
       
-      // Verificar se há mais pallets para processar
-      const remainingPallets = selectedPallets.filter(id => id !== currentResult.pallet.id);
+      // Verificar se há mais pallets para processar baseado nos originalmente selecionados
+      const remainingPallets = selectedPallets.filter(id => 
+        !processedPallets.has(id) || id === currentResult.pallet.id // incluir o atual que acabou de ser confirmado
+      );
       
-      if (remainingPallets.length > 0) {
-        // Não incrementar o índice, manter em 0 após remoção
-        setCurrentWaveIndex(0);
+      if (remainingPallets.length > 1) { // Mais de 1 porque inclui o atual
         setScannerData({ palletCode: "", positionCode: "" });
         
         // Aguardar atualização antes de processar próximo
         setTimeout(async () => {
           await queryClient.refetchQueries({ queryKey: ["pallets-pendentes"] });
           processNextWavePallet();
-        }, 1000);
+        }, 800);
       } else {
         // Onda completa
         console.log("Onda completa!");
@@ -314,7 +315,7 @@ export default function AlocacaoPallets() {
       }
     } catch (error) {
       console.error("Erro na confirmação:", error);
-      // Em caso de erro, remover da lista de processados
+      // Em caso de erro, remover da lista de processados para permitir reprocessamento
       setProcessedPallets(prev => {
         const newSet = new Set(prev);
         newSet.delete(currentResult.pallet.id);
