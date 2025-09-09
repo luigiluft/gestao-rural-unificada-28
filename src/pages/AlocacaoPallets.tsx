@@ -29,6 +29,8 @@ export default function AlocacaoPallets() {
   const [waveProgress, setWaveProgress] = useState<{ completed: number; total: number } | null>(null);
   const [waveResults, setWaveResults] = useState<any[]>([]);
   const [currentWaveIndex, setCurrentWaveIndex] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processedPallets, setProcessedPallets] = useState<Set<string>>(new Set());
 
   const { data: palletsPendentes, isLoading: loadingPallets } = usePalletsPendentes();
   const autoAllocatePallet = useAutoAllocatePallet();
@@ -116,6 +118,8 @@ export default function AlocacaoPallets() {
     setWaveResults([]);
     setCurrentWaveIndex(0);
     setSelectedPallets([]);
+    setIsProcessing(false);
+    setProcessedPallets(new Set());
   };
 
   // Funções de seleção múltipla
@@ -133,39 +137,80 @@ export default function AlocacaoPallets() {
 
   // Funções de onda de alocação
   const handleWaveManualAllocation = () => {
-    if (selectedPallets.length === 0) return;
+    if (selectedPallets.length === 0 || isProcessing) return;
     
+    setIsProcessing(true);
     setIsWaveMode("manual");
     setWaveProgress({ completed: 0, total: selectedPallets.length });
     setWaveResults([]);
     setCurrentWaveIndex(0);
+    setProcessedPallets(new Set());
     
-    // Processar primeiro pallet da onda
-    processNextWavePallet();
+    // Processar primeiro pallet da onda após breve delay
+    setTimeout(processNextWavePallet, 100);
   };
 
   const handleWaveScannerAllocation = () => {
-    if (selectedPallets.length === 0) return;
+    if (selectedPallets.length === 0 || isProcessing) return;
     
+    setIsProcessing(true);
     setIsWaveMode("scanner");
     setWaveProgress({ completed: 0, total: selectedPallets.length });
     setWaveResults([]);
     setCurrentWaveIndex(0);
+    setProcessedPallets(new Set());
     
-    // Processar primeiro pallet da onda
-    processNextWavePallet();
+    // Processar primeiro pallet da onda após breve delay
+    setTimeout(processNextWavePallet, 100);
   };
 
-  const processNextWavePallet = () => {
-    const currentPalletId = selectedPallets[currentWaveIndex];
+  const processNextWavePallet = async () => {
+    // Verificar se já estamos processando para evitar duplicatas
+    if (isProcessing && autoAllocatePallet.isPending) {
+      console.log("Processamento já em andamento, ignorando...");
+      return;
+    }
+
+    // Filtrar pallets ainda pendentes da lista atual
+    const availablePallets = selectedPallets.filter(palletId => {
+      const pallet = palletsPendentes?.find(p => p.id === palletId);
+      return pallet && !processedPallets.has(palletId);
+    });
+
+    if (currentWaveIndex >= availablePallets.length) {
+      console.log("Todos os pallets foram processados");
+      const completedCount = waveProgress?.completed || 0;
+      if (completedCount >= selectedPallets.length) {
+        resetWaveState();
+        resetAllocationState();
+        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+      }
+      return;
+    }
+
+    const currentPalletId = availablePallets[currentWaveIndex];
     const currentPallet = palletsPendentes?.find(p => p.id === currentPalletId);
     
     if (!currentPallet) {
       console.error("Pallet não encontrado:", currentPalletId, "Index:", currentWaveIndex);
+      // Pular para o próximo pallet
+      setCurrentWaveIndex(prev => prev + 1);
+      setTimeout(processNextWavePallet, 100);
       return;
     }
 
-    console.log("Processando pallet:", currentPallet.numero_pallet, "Index:", currentWaveIndex);
+    // Verificar se o pallet já foi processado
+    if (processedPallets.has(currentPallet.id)) {
+      console.log("Pallet já processado:", currentPallet.numero_pallet);
+      setCurrentWaveIndex(prev => prev + 1);
+      setTimeout(processNextWavePallet, 100);
+      return;
+    }
+
+    console.log("Processando pallet:", currentPallet.numero_pallet, "Index:", currentWaveIndex, "ID:", currentPallet.id);
+    
+    // Marcar como processando
+    setProcessedPallets(prev => new Set([...prev, currentPallet.id]));
     
     autoAllocatePallet.mutate(
       { palletId: currentPallet.id, depositoId: currentPallet.entradas.deposito_id },
@@ -173,23 +218,70 @@ export default function AlocacaoPallets() {
         onSuccess: (result) => {
           console.log("Auto-alocação bem-sucedida:", result);
           if (result.success) {
-            setWaveResults(prev => [...prev, { pallet: currentPallet, result }]);
+            setWaveResults(prev => {
+              // Verificar se já existe resultado para este pallet
+              const existingIndex = prev.findIndex(r => r.pallet.id === currentPallet.id);
+              if (existingIndex >= 0) {
+                console.log("Resultado já existe, substituindo...");
+                const newResults = [...prev];
+                newResults[existingIndex] = { pallet: currentPallet, result };
+                return newResults;
+              }
+              return [...prev, { pallet: currentPallet, result }];
+            });
           }
         },
         onError: (error) => {
           console.error("Erro na auto-alocação:", error);
+          // Remover da lista de processados em caso de erro
+          setProcessedPallets(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(currentPallet.id);
+            return newSet;
+          });
         }
       }
     );
   };
 
-  const confirmWaveStep = () => {
-    // Usar currentWaveIndex para pegar o resultado correto
-    const currentPalletId = selectedPallets[currentWaveIndex];
+  const confirmWaveStep = async () => {
+    if (confirmAllocation.isPending) {
+      console.log("Confirmação já em andamento, ignorando...");
+      return;
+    }
+
+    // Filtrar pallets ainda disponíveis
+    const availablePallets = selectedPallets.filter(palletId => {
+      const pallet = palletsPendentes?.find(p => p.id === palletId);
+      return pallet && !processedPallets.has(palletId);
+    });
+
+    const currentPalletId = availablePallets[currentWaveIndex];
     const currentResult = waveResults.find(r => r.pallet.id === currentPalletId);
     
     if (!currentResult) {
       console.error("Resultado não encontrado para pallet:", currentPalletId);
+      console.log("Results disponíveis:", waveResults.map(r => ({ id: r.pallet.id, numero: r.pallet.numero_pallet })));
+      console.log("Available pallets:", availablePallets);
+      console.log("Current index:", currentWaveIndex);
+      return;
+    }
+
+    // Verificar se o pallet ainda está pendente
+    const stillPending = palletsPendentes?.find(p => p.id === currentResult.pallet.id);
+    if (!stillPending) {
+      console.log("Pallet não está mais pendente, pulando...");
+      const newCompleted = waveProgress!.completed + 1;
+      setWaveProgress(prev => prev ? { ...prev, completed: newCompleted } : null);
+      
+      if (newCompleted < selectedPallets.length) {
+        setCurrentWaveIndex(prev => prev + 1);
+        setScannerData({ palletCode: "", positionCode: "" });
+        setTimeout(processNextWavePallet, 500);
+      } else {
+        resetWaveState();
+        resetAllocationState();
+      }
       return;
     }
 
@@ -207,39 +299,52 @@ export default function AlocacaoPallets() {
       confirmData.positionCode = scannerData.positionCode;
     }
 
-    confirmAllocation.mutate(confirmData, {
-      onSuccess: () => {
-        console.log("Confirmação bem-sucedida para:", currentResult.pallet.numero_pallet);
+    try {
+      await confirmAllocation.mutateAsync(confirmData);
+      
+      console.log("Confirmação bem-sucedida para:", currentResult.pallet.numero_pallet);
+      
+      const newCompleted = waveProgress!.completed + 1;
+      setWaveProgress(prev => prev ? { ...prev, completed: newCompleted } : null);
+      
+      // Remover o pallet confirmado da lista de selecionados
+      setSelectedPallets(prev => prev.filter(id => id !== currentResult.pallet.id));
+      
+      // Limpar o resultado processado
+      setWaveResults(prev => prev.filter(r => r.pallet.id !== currentResult.pallet.id));
+      
+      // Forçar atualização da query
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+      
+      // Verificar se há mais pallets para processar
+      const remainingPallets = selectedPallets.filter(id => id !== currentResult.pallet.id);
+      
+      if (remainingPallets.length > 0 && newCompleted < selectedPallets.length) {
+        // Reset do índice para 0 após remoção
+        setCurrentWaveIndex(0);
+        setScannerData({ palletCode: "", positionCode: "" });
         
-        const newCompleted = waveProgress!.completed + 1;
-        setWaveProgress(prev => prev ? { ...prev, completed: newCompleted } : null);
-        
-        // Forçar atualização da query para refletir as mudanças
+        // Aguardar atualização antes de processar próximo
+        setTimeout(async () => {
+          await queryClient.refetchQueries({ queryKey: ["pallets-pendentes"] });
+          processNextWavePallet();
+        }, 1500);
+      } else {
+        // Onda completa
+        console.log("Onda completa!");
+        resetWaveState();
+        resetAllocationState();
         queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-        
-        if (newCompleted < selectedPallets.length) {
-          // Próximo pallet da onda
-          setCurrentWaveIndex(prev => prev + 1);
-          setScannerData({ palletCode: "", positionCode: "" });
-          
-          // Aguardar atualização da query antes de processar próximo
-          setTimeout(() => {
-            queryClient.refetchQueries({ queryKey: ["pallets-pendentes"] }).then(() => {
-              processNextWavePallet();
-            });
-          }, 1000);
-        } else {
-          // Onda completa
-          console.log("Onda completa!");
-          resetWaveState();
-          resetAllocationState();
-          queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-        }
-      },
-      onError: (error) => {
-        console.error("Erro na confirmação:", error);
       }
-    });
+    } catch (error) {
+      console.error("Erro na confirmação:", error);
+      // Em caso de erro, remover da lista de processados
+      setProcessedPallets(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(currentResult.pallet.id);
+        return newSet;
+      });
+    }
   };
 
   if (loadingPallets) {
@@ -300,19 +405,19 @@ export default function AlocacaoPallets() {
               <Button
                 size="sm"
                 variant="outline"
-                disabled={selectedPallets.length === 0 || isWaveMode !== null}
+                disabled={selectedPallets.length === 0 || isWaveMode !== null || isProcessing}
                 onClick={handleWaveManualAllocation}
               >
                 <Hand className="h-4 w-4 mr-2" />
-                Alocar Selecionados Manualmente
+                {isProcessing ? "Processando..." : "Alocar Selecionados Manualmente"}
               </Button>
               <Button
                 size="sm"
-                disabled={selectedPallets.length === 0 || isWaveMode !== null}
+                disabled={selectedPallets.length === 0 || isWaveMode !== null || isProcessing}
                 onClick={handleWaveScannerAllocation}
               >
                 <Scan className="h-4 w-4 mr-2" />
-                Alocar Selecionados com Scanner
+                {isProcessing ? "Processando..." : "Alocar Selecionados com Scanner"}
               </Button>
             </div>
           </div>
