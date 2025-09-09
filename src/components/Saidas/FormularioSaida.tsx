@@ -42,7 +42,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const diasUteisExpedicao = useDiasUteisExpedicao()
 
   const [dadosSaida, setDadosSaida] = useState({
-    data_saida: new Date().toISOString().split('T')[0],
+    data_saida: getMinScheduleDate(diasUteisExpedicao),
     tipo_saida: "",
     observacoes: "",
     deposito_id: "",
