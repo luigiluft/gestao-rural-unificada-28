@@ -134,6 +134,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     staleTime: 0, // Force fresh data every time
+    gcTime: 0, // Force cache clear immediately
   })
 }
 

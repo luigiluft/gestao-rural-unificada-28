@@ -90,7 +90,7 @@ const Saidas = () => {
       case "reprovado":
         return "destructive"
       case "pendente":
-        return "outline"
+        return "secondary"  // Changed from outline to secondary for better visibility
       default:
         return "outline"
     }
@@ -411,28 +411,30 @@ const Saidas = () => {
                              saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' :
                              saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
                           </Badge>
-                          {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
-                            <div className="flex gap-1 ml-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                                onClick={() => handleApproval(saida.id, true)}
-                                disabled={aprovarSaida.isPending}
-                              >
-                                <Check className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-                                onClick={() => handleApproval(saida.id, false)}
-                                disabled={aprovarSaida.isPending}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          )}
+                           {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
+                             <div className="flex gap-1 ml-2">
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                                 onClick={() => handleApproval(saida.id, true)}
+                                 disabled={aprovarSaida.isPending}
+                                 title="Aprovar saída"
+                               >
+                                 <Check className="w-3 h-3" />
+                               </Button>
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                                 onClick={() => handleApproval(saida.id, false)}
+                                 disabled={aprovarSaida.isPending}
+                                 title="Reprovar saída"
+                               >
+                                 <X className="w-3 h-3" />
+                               </Button>
+                             </div>
+                           )}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">

@@ -20,7 +20,7 @@ export const useSaidasPendentesAprovacao = () => {
             produtos(nome, unidade_medida)
           )
         `)
-        .eq("user_id", user.id)
+        .eq("produtor_destinatario_id", user.id)
         .eq("criado_por_franqueado", true)
         .eq("status_aprovacao_produtor", "pendente")
         .order("created_at", { ascending: false })
@@ -61,6 +61,7 @@ export const useAprovarSaida = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["saidas-pendentes-aprovacao"] })
       queryClient.invalidateQueries({ queryKey: ["saidas"] })
+      queryClient.invalidateQueries({ queryKey: ["estoque"] })
       
       toast.success(
         variables.aprovado 
