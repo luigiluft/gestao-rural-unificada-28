@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, MapPin, Calendar, User, Trash2, Eye, ArrowRightLeft } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Package, MapPin, Calendar, User, Trash2, Eye, ArrowRightLeft, MoreHorizontal } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -66,10 +67,9 @@ export default function GerenciarPosicoes() {
             <p className="text-muted-foreground">Visualize e gerencie pallets nas posições</p>
           </div>
         </div>
-        <div className="grid gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
         </div>
       </div>
     );
@@ -92,121 +92,144 @@ export default function GerenciarPosicoes() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">
-            {palletPositions.length} pallet(s) alocado(s)
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {palletPositions.length} pallet(s) alocado(s)
+            </div>
           </div>
 
-          <div className="grid gap-4">
-            {palletPositions.map((position) => (
-              <Card key={position.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Pallet #{position.entrada_pallets?.numero_pallet}
-                      {position.entrada_pallets?.descricao && (
-                        <Badge variant="outline" className="text-xs">
-                          {position.entrada_pallets.descricao}
-                        </Badge>
-                      )}
-                    </CardTitle>
-                    
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-2" />
-                            Detalhes
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-lg">
-                          <DialogHeader>
-                            <DialogTitle>Detalhes da Posição</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="font-medium">Pallet:</span>
-                                <p>#{position.entrada_pallets?.numero_pallet}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Posição:</span>
-                                <p>{position.storage_positions?.codigo}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Alocado em:</span>
-                                <p>{format(new Date(position.alocado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">NFe:</span>
-                                <p>{position.entrada_pallets?.entradas?.numero_nfe || "N/A"}</p>
-                              </div>
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pallet</TableHead>
+                  <TableHead>Posição</TableHead>
+                  <TableHead>NFe</TableHead>
+                  <TableHead>Alocado em</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {palletPositions.map((position) => (
+                  <TableRow key={position.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="font-medium">#{position.entrada_pallets?.numero_pallet}</div>
+                          {position.entrada_pallets?.descricao && (
+                            <div className="text-xs text-muted-foreground">
+                              {position.entrada_pallets.descricao}
                             </div>
-                            
-                            {position.observacoes && (
-                              <div>
-                                <span className="font-medium">Observações:</span>
-                                <p className="text-sm text-muted-foreground mt-1">{position.observacoes}</p>
-                              </div>
-                            )}
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <Badge variant="secondary">
+                          {position.storage_positions?.codigo}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="text-sm">
+                        {position.entrada_pallets?.entradas?.numero_nfe || "N/A"}
+                      </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div className="text-sm">
+                          {format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(position.alocado_em), "HH:mm", { locale: ptBR })}
                           </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleOpenReallocateDialog(position)}
-                        disabled={reallocatePallet.isPending}
-                      >
-                        <ArrowRightLeft className="h-4 w-4 mr-2" />
-                        Realocar
-                      </Button>
-
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleRemoveAllocation(position.pallet_id)}
-                        disabled={removeAllocation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Remover
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Posição:</span>
-                      <Badge variant="secondary">
-                        {position.storage_positions?.codigo}
-                      </Badge>
-                    </div>
+                        </div>
+                      </div>
+                    </TableCell>
                     
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Produtor:</span>
-                      <span>Produtor</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Alocado:</span>
-                      <span>{format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Status:</span>
+                    <TableCell>
                       <Badge variant="secondary">Alocado</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </TableCell>
+                    
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Ver Detalhes
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-lg">
+                              <DialogHeader>
+                                <DialogTitle>Detalhes da Posição</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium">Pallet:</span>
+                                    <p>#{position.entrada_pallets?.numero_pallet}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Posição:</span>
+                                    <p>{position.storage_positions?.codigo}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Alocado em:</span>
+                                    <p>{format(new Date(position.alocado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">NFe:</span>
+                                    <p>{position.entrada_pallets?.entradas?.numero_nfe || "N/A"}</p>
+                                  </div>
+                                </div>
+                                
+                                {position.observacoes && (
+                                  <div>
+                                    <span className="font-medium">Observações:</span>
+                                    <p className="text-sm text-muted-foreground mt-1">{position.observacoes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleOpenReallocateDialog(position)}
+                            disabled={reallocatePallet.isPending}
+                          >
+                            <ArrowRightLeft className="h-4 w-4 mr-2" />
+                            Realocar
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleRemoveAllocation(position.pallet_id)}
+                            disabled={removeAllocation.isPending}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remover
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
