@@ -36,7 +36,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const { data: estoque } = useEstoque()
   const { data: profile } = useProfile()
   const { data: produtores } = useProdutores()
-  const { data: produtoresComEstoque } = useProdutoresComEstoqueNaFranquia()
+  const { data: produtoresComEstoque, isLoading: isLoadingProdutoresComEstoque } = useProdutoresComEstoqueNaFranquia()
   const pesoMinimoMopp = usePesoMinimoMopp()
   const horariosRetirada = useHorariosRetirada()
   const diasUteisExpedicao = useDiasUteisExpedicao()
@@ -490,7 +490,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                         fazenda_id: "" 
                       }))
                     }}
-                    disabled={!produtoresParaDropdown || produtoresParaDropdown.length === 0}
+                    disabled={isFranqueado ? isLoadingProdutoresComEstoque : false}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o produtor" />
