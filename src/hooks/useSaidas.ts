@@ -59,6 +59,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           }
 
           // Second, get pending approval saídas from franchisees (no date filter)
+          // Only show pending saídas, rejected ones should be hidden
           let pendingSaidasQuery = supabase
             .from("saidas")
             .select(`

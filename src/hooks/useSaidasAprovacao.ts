@@ -59,9 +59,14 @@ export const useAprovarSaida = () => {
       // Movimentações de estoque serão criadas automaticamente pelos triggers do banco
     },
     onSuccess: (_, variables) => {
+      // Invalidate all related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["saidas-pendentes-aprovacao"] })
       queryClient.invalidateQueries({ queryKey: ["saidas"] })
       queryClient.invalidateQueries({ queryKey: ["estoque"] })
+      queryClient.invalidateQueries({ queryKey: ["saida-stats"] })
+      
+      // Force refetch to ensure immediate UI update
+      queryClient.refetchQueries({ queryKey: ["saidas"] })
       
       toast.success(
         variables.aprovado 
