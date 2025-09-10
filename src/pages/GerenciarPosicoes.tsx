@@ -123,9 +123,13 @@ export default function GerenciarPosicoes() {
               </TableHeader>
               <TableBody>
                 {palletPositions.map((position) => {
-                  // Extrair produtos únicos do pallet
+                  // Extrair produtos únicos do pallet baseado na estrutura real dos dados
                   const produtos = position.entrada_pallets?.entrada_pallet_itens?.reduce((acc: string[], item: any) => {
-                    const nomeProduto = item.entrada_itens?.produtos?.nome || item.entrada_itens?.nome_produto;
+                    // Acessar o nome do produto corretamente baseado na estrutura retornada
+                    const nomeProduto = 
+                      item.entrada_itens?.produtos?.nome || 
+                      item.entrada_itens?.nome_produto;
+                    
                     if (nomeProduto && !acc.includes(nomeProduto)) {
                       acc.push(nomeProduto);
                     }
