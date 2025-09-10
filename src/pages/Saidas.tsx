@@ -69,14 +69,6 @@ const Saidas = () => {
   
   const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
   const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useProfilesForSaidas(saidas)
-  
-  // Debug logging
-  console.log('🔧 Saidas.tsx Debug:', { 
-    saidasCount: saidas?.length || 0, 
-    profilesData, 
-    isLoadingProfiles,
-    profilesError
-  })
   const aprovarSaida = useAprovarSaida()
 
   const getStatusColor = (status: string) => {
@@ -373,22 +365,14 @@ const Saidas = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {isLoadingProfiles ? (
-                            <Skeleton className="h-4 w-20" />
-                          ) : (
-                            profilesData?.criadores[saida.user_id]?.nome || "Usuário não encontrado"
-                          )}
-                        </span>
+                        {saida.criado_por_franqueado ? (
+                          profilesData?.criadores[saida.user_id]?.nome || "Carregando..."
+                        ) : (
+                          "Própria"
+                        )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {isLoadingProfiles ? (
-                            <Skeleton className="h-4 w-20" />
-                          ) : (
-                            profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "-"
-                          )}
-                        </span>
+                        {profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "Carregando..."}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
