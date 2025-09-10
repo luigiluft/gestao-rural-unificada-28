@@ -74,16 +74,25 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
 
   const handleQuantidadeChange = (itemId: string, novaQuantidade: number) => {
     atualizarQuantidadeSeparada(itemId, novaQuantidade)
-    separarItem.mutate({ itemId, quantidadeSeparada: novaQuantidade })
     
-    // Se completou o item atual, ir para o próximo
     const item = itensSeparacao.find(i => i.id === itemId)
-    if (item && novaQuantidade >= item.quantidade_total) {
-      const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
-        index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
-      )
-      if (proximoIncompleto !== -1) {
-        setItemAtualIndex(proximoIncompleto)
+    if (item) {
+      separarItem.mutate({ 
+        itemId, 
+        quantidadeSeparada: novaQuantidade,
+        lote: item.lote,
+        palletId: item.pallet_id,
+        posicaoId: item.sugestao_fefo?.posicao_codigo
+      })
+      
+      // Se completou o item atual, ir para o próximo
+      if (novaQuantidade >= item.quantidade_total) {
+        const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
+          index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
+        )
+        if (proximoIncompleto !== -1) {
+          setItemAtualIndex(proximoIncompleto)
+        }
       }
     }
   }

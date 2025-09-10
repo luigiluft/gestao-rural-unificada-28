@@ -12,6 +12,8 @@ export interface ItemSeparacao {
   lote?: string
   unidade_medida: string
   deposito_id?: string
+  pallet_id?: string
+  pallet_numero?: number
   posicoes_disponiveis?: Array<{
     posicao_codigo: string
     posicao_id: string
@@ -21,6 +23,8 @@ export interface ItemSeparacao {
     dias_para_vencer?: number
     status_validade: 'critico' | 'atencao' | 'normal'
     prioridade_fefo: number
+    pallet_id?: string
+    pallet_numero?: number
   }>
   sugestao_fefo?: {
     posicao_codigo: string
@@ -28,6 +32,8 @@ export interface ItemSeparacao {
     data_validade?: string
     dias_para_vencer?: number
     status_validade: 'critico' | 'atencao' | 'normal'
+    pallet_id?: string
+    pallet_numero?: number
   }
 }
 
@@ -40,12 +46,14 @@ export function useSeparacaoItens() {
       itemId, 
       quantidadeSeparada, 
       posicaoId, 
-      lote 
+      lote,
+      palletId 
     }: { 
       itemId: string, 
       quantidadeSeparada: number,
       posicaoId?: string,
-      lote?: string 
+      lote?: string,
+      palletId?: string
     }) => {
       // Atualizar a quantidade separada do item
       const { data, error } = await supabase
@@ -59,9 +67,82 @@ export function useSeparacaoItens() {
 
       if (error) throw error
 
-      // Se há posição informada, atualizar/reduzir estoque na posição
-      if (posicaoId && quantidadeSeparada > 0) {
-        // Criar movimentação de saída para reduzir estoque
+      // Se há palletId, reduzir quantidade do pallet específico
+      if (palletId && quantidadeSeparada > 0) {
+        const item = itensSeparacao.find(i => i.id === itemId);
+        if (item && item.deposito_id) {
+          const { data: user } = await supabase.auth.getUser();
+          
+          // Buscar item do pallet específico
+          const { data: palletItems, error: palletError } = await supabase
+            .from('entrada_pallet_itens')
+            .select(`
+              id,
+              quantidade,
+              entrada_itens!inner(produto_id)
+            `)
+            .eq('pallet_id', palletId)
+            .eq('entrada_itens.produto_id', item.produto_id);
+
+          if (!palletError && palletItems && palletItems.length > 0) {
+            const palletItem = palletItems[0];
+            const novaQuantidade = palletItem.quantidade - quantidadeSeparada;
+            
+            if (novaQuantidade <= 0) {
+              // Se quantidade chegou a zero, remover item do pallet
+              await supabase
+                .from('entrada_pallet_itens')
+                .delete()
+                .eq('id', palletItem.id);
+
+              // Verificar se pallet está vazio para liberar posição
+              const { data: remainingItems } = await supabase
+                .from('entrada_pallet_itens')
+                .select('id')
+                .eq('pallet_id', palletId);
+
+              if (remainingItems?.length === 0) {
+                // Pallet vazio, liberar posição
+                await supabase
+                  .from('storage_positions')
+                  .update({ ocupado: false })
+                  .in('id', (
+                    await supabase
+                      .from('pallet_positions')
+                      .select('posicao_id')
+                      .eq('pallet_id', palletId)
+                  ).data?.map(p => p.posicao_id) || []);
+
+                console.log('✅ Posição liberada - pallet vazio');
+              }
+            } else {
+              // Reduzir quantidade do pallet
+              await supabase
+                .from('entrada_pallet_itens')
+                .update({ quantidade: novaQuantidade })
+                .eq('id', palletItem.id);
+            }
+          }
+
+          // Criar movimentação de saída para reduzir estoque
+          if (user.user) {
+            await supabase
+              .from('movimentacoes')
+              .insert({
+                user_id: user.user.id,
+                produto_id: item.produto_id,
+                deposito_id: item.deposito_id,
+                tipo_movimentacao: 'saida',
+                quantidade: -quantidadeSeparada,
+                lote: lote,
+                referencia_id: palletId || itemId,
+                referencia_tipo: palletId ? 'separacao_pallet' : 'separacao',
+                observacoes: `Separação ${palletId ? `do pallet ${palletId}` : 'manual'} - Posição: ${posicaoId || 'N/A'}`
+              });
+          }
+        }
+      } else if (posicaoId && quantidadeSeparada > 0) {
+        // Lógica antiga para compatibilidade
         const item = itensSeparacao.find(i => i.id === itemId);
         if (item && item.deposito_id) {
           const { data: user } = await supabase.auth.getUser();
@@ -159,41 +240,106 @@ export function useSeparacaoItens() {
     )
   }
 
-  const inicializarSeparacao = (itens: any[], depositoId?: string) => {
-    const itensSeparacao: ItemSeparacao[] = itens.map((item, index) => {
-      // Usar dados determinísticos para evitar loop
-      const baseDate = new Date();
-      const diasFixos = 30 + (index * 15);
-      const dataValidade = new Date(baseDate.getTime() + (diasFixos * 24 * 60 * 60 * 1000));
-      const diasParaVencer = Math.ceil((dataValidade.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
-      if (diasParaVencer <= 15) {
-        statusValidade = 'critico';
-      } else if (diasParaVencer <= 30) {
-        statusValidade = 'atencao';
-      }
+  const inicializarSeparacao = async (itens: any[], depositoId?: string) => {
+    const itensSeparacao: ItemSeparacao[] = await Promise.all(
+      itens.map(async (item, index) => {
+        // Buscar dados FEFO reais dos pallets para este produto
+        const { data: palletsData } = await supabase
+          .from("entrada_pallets")
+          .select(`
+            id,
+            numero_pallet,
+            entradas!inner(
+              data_entrada,
+              deposito_id
+            ),
+            entrada_pallet_itens!inner(
+              quantidade,
+              entrada_itens!inner(
+                produto_id,
+                lote,
+                data_validade
+              )
+            ),
+            pallet_positions!inner(
+              posicao_id,
+              status,
+              storage_positions!inner(
+                codigo
+              )
+            )
+          `)
+          .eq("entradas.deposito_id", depositoId)
+          .eq("entrada_pallet_itens.entrada_itens.produto_id", item.produto_id)
+          .eq("pallet_positions.status", "alocado")
+          .order('entradas.data_entrada', { ascending: true })
+          .limit(1);
 
-      const sugestaoFEFO = {
-        posicao_codigo: `R${String(Math.floor(index / 10) + 1).padStart(2, '0')}-M${String((index % 10) + 1).padStart(2, '0')}-A${String((index % 5) + 1)}`,
-        lote: `LT${baseDate.getFullYear()}${String(baseDate.getMonth() + 1).padStart(2, '0')}${String(baseDate.getDate()).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`,
-        data_validade: dataValidade.toISOString().split('T')[0],
-        dias_para_vencer: diasParaVencer,
-        status_validade: statusValidade
-      };
+        let sugestaoFEFO;
+        if (palletsData && palletsData.length > 0) {
+          const primeiroLote = palletsData[0];
+          const entradaItem = primeiroLote.entrada_pallet_itens[0]?.entrada_itens;
+          const posicao = primeiroLote.pallet_positions[0]?.storage_positions;
+          
+          const dataValidade = entradaItem?.data_validade ? new Date(entradaItem.data_validade) : null;
+          const diasParaVencer = dataValidade ? 
+            Math.ceil((dataValidade.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 
+            999;
+          
+          let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
+          if (diasParaVencer <= 15) {
+            statusValidade = 'critico';
+          } else if (diasParaVencer <= 30) {
+            statusValidade = 'atencao';
+          }
 
-      return {
-        id: item.id,
-        produto_id: item.produto_id,
-        produto_nome: item.produtos?.nome || 'Nome não disponível',
-        quantidade_total: item.quantidade,
-        quantidade_separada: item.quantidade_separada || 0,
-        lote: item.lote || sugestaoFEFO.lote,
-        unidade_medida: item.produtos?.unidade_medida || 'un',
-        deposito_id: depositoId,
-        sugestao_fefo: sugestaoFEFO
-      };
-    });
+          sugestaoFEFO = {
+            posicao_codigo: posicao?.codigo || `PALLET-${primeiroLote.numero_pallet}`,
+            lote: entradaItem?.lote || `P${primeiroLote.numero_pallet}-LOTE`,
+            data_validade: entradaItem?.data_validade,
+            dias_para_vencer: diasParaVencer,
+            status_validade: statusValidade,
+            pallet_id: primeiroLote.id,
+            pallet_numero: primeiroLote.numero_pallet
+          };
+        } else {
+          // Fallback para dados determinísticos se não houver pallets
+          const baseDate = new Date();
+          const diasFixos = 30 + (index * 15);
+          const dataValidade = new Date(baseDate.getTime() + (diasFixos * 24 * 60 * 60 * 1000));
+          const diasParaVencer = Math.ceil((dataValidade.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
+          if (diasParaVencer <= 15) {
+            statusValidade = 'critico';
+          } else if (diasParaVencer <= 30) {
+            statusValidade = 'atencao';
+          }
+
+          sugestaoFEFO = {
+            posicao_codigo: `R${String(Math.floor(index / 10) + 1).padStart(2, '0')}-M${String((index % 10) + 1).padStart(2, '0')}-A${String((index % 5) + 1)}`,
+            lote: `LT${baseDate.getFullYear()}${String(baseDate.getMonth() + 1).padStart(2, '0')}${String(baseDate.getDate()).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`,
+            data_validade: dataValidade.toISOString().split('T')[0],
+            dias_para_vencer: diasParaVencer,
+            status_validade: statusValidade
+          };
+        }
+
+        return {
+          id: item.id,
+          produto_id: item.produto_id,
+          produto_nome: item.produtos?.nome || 'Nome não disponível',
+          quantidade_total: item.quantidade,
+          quantidade_separada: item.quantidade_separada || 0,
+          lote: item.lote || sugestaoFEFO.lote,
+          unidade_medida: item.produtos?.unidade_medida || 'un',
+          deposito_id: depositoId,
+          pallet_id: sugestaoFEFO.pallet_id,
+          pallet_numero: sugestaoFEFO.pallet_numero,
+          sugestao_fefo: sugestaoFEFO
+        };
+      })
+    );
     setItensSeparacao(itensSeparacao);
   }
 
