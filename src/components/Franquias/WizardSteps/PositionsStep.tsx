@@ -35,7 +35,6 @@ export function PositionsStep({
   const [positionFormData, setPositionFormData] = useState({
     codigo: "",
     descricao: "",
-    tipo_posicao: "pallet",
     capacidade_maxima: ""
   });
 
@@ -57,8 +56,7 @@ export function PositionsStep({
             const codigo = `R${String(rua).padStart(2, '0')}-M${String(modulo).padStart(2, '0')}-A${String(andar).padStart(2, '0')}`;
             newPositions.push({
               codigo,
-              descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`,
-              tipo_posicao: "pallet"
+              descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`
             });
           }
         }
@@ -105,7 +103,6 @@ export function PositionsStep({
     setPositionFormData({
       codigo: "",
       descricao: "",
-      tipo_posicao: "pallet",
       capacidade_maxima: ""
     });
     setEditingIndex(null);
@@ -150,7 +147,6 @@ export function PositionsStep({
     setPositionFormData({
       codigo: position.codigo,
       descricao: position.descricao,
-      tipo_posicao: position.tipo_posicao,
       capacidade_maxima: position.capacidade_maxima?.toString() || ""
     });
     setEditingIndex(index);
@@ -261,20 +257,16 @@ export function PositionsStep({
                   placeholder="Descrição da posição..."
                 />
               </div>
-              
-              <div>
-                <Label htmlFor="tipo_posicao">Tipo de Posição</Label>
-                <Select 
-                  value={positionFormData.tipo_posicao} 
-                  onValueChange={(value) => setPositionFormData({ ...positionFormData, tipo_posicao: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pallet">Pallet</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                <Label htmlFor="capacidade_maxima">Capacidade Máxima (pallets)</Label>
+                <Input
+                  id="capacidade_maxima"
+                  type="number"
+                  min="1"
+                  value={positionFormData.capacidade_maxima}
+                  onChange={(e) => setPositionFormData(prev => ({ ...prev, capacidade_maxima: e.target.value }))}
+                  placeholder="Ex: 1"
+                />
               </div>
               
               
@@ -314,11 +306,6 @@ export function PositionsStep({
                     {position.codigo}
                   </TableCell>
                   <TableCell>{position.descricao || '-'}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="capitalize">
-                      {position.tipo_posicao}
-                    </Badge>
-                  </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button 

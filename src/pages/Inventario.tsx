@@ -563,7 +563,7 @@ export default function Inventario() {
                           }}
                         />
                         <Label htmlFor={posicao.id} className="text-sm">
-                          {posicao.codigo} - {posicao.descricao || posicao.tipo_posicao}
+                          {posicao.codigo} - {posicao.descricao || 'Posição'}
                         </Label>
                       </div>
                     ))}

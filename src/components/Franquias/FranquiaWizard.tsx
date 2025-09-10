@@ -35,7 +35,6 @@ export interface FranquiaFormData {
 export interface StoragePosition {
   codigo: string;
   descricao: string;
-  tipo_posicao: string;
   capacidade_maxima?: number;
 }
 

@@ -33,7 +33,6 @@ export interface InventarioPosicao {
   storage_positions?: {
     codigo: string
     descricao?: string
-    tipo_posicao: string
   }
 }
 
@@ -103,8 +102,7 @@ export const useInventarioPosicoes = (inventarioId?: string) => {
           *,
           storage_positions (
             codigo,
-            descricao,
-            tipo_posicao
+            descricao
           )
         `)
         .eq("inventario_id", inventarioId)

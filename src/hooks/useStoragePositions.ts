@@ -58,7 +58,6 @@ export const useCreateStoragePosition = () => {
       deposito_id: string
       codigo: string
       descricao?: string
-      tipo_posicao?: string
       capacidade_maxima?: number
     }) => {
       const { data, error } = await supabase
@@ -99,7 +98,6 @@ export const useUpdateStoragePosition = () => {
       updates: {
         codigo?: string
         descricao?: string
-        tipo_posicao?: string
         capacidade_maxima?: number
         ocupado?: boolean
         ativo?: boolean
@@ -141,7 +139,6 @@ export const useBulkCreateStoragePositions = () => {
       positions: {
         codigo: string
         descricao?: string
-        tipo_posicao?: string
         capacidade_maxima?: number
       }[]
     }) => {
@@ -152,7 +149,6 @@ export const useBulkCreateStoragePositions = () => {
         deposito_id,
         codigo: pos.codigo,
         descricao: pos.descricao || `Posição ${pos.codigo}`,
-        tipo_posicao: pos.tipo_posicao || 'pallet',
         capacidade_maxima: pos.capacidade_maxima || 1,
         ativo: true,
         ocupado: false,

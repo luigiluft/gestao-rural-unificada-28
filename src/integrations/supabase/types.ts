@@ -1836,7 +1836,6 @@ export type Database = {
           reservado_ate: string | null
           reservado_por_wave_id: string | null
           reservado_temporariamente: boolean | null
-          tipo_posicao: string | null
           updated_at: string
         }
         Insert: {
@@ -1851,7 +1850,6 @@ export type Database = {
           reservado_ate?: string | null
           reservado_por_wave_id?: string | null
           reservado_temporariamente?: boolean | null
-          tipo_posicao?: string | null
           updated_at?: string
         }
         Update: {
@@ -1866,7 +1864,6 @@ export type Database = {
           reservado_ate?: string | null
           reservado_por_wave_id?: string | null
           reservado_temporariamente?: boolean | null
-          tipo_posicao?: string | null
           updated_at?: string
         }
         Relationships: []
