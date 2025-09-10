@@ -58,8 +58,8 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             ownSaidasQuery = ownSaidasQuery.lte("created_at", endDate.toISOString())
           }
 
-          // Second, get pending approval saídas from franchisees (no date filter)
-          // Only show pending saídas, rejected ones should be hidden
+          // Second, get approval saídas from franchisees (no date filter)
+          // Show pending and approved saídas, hide only rejected ones
           let pendingSaidasQuery = supabase
             .from("saidas")
             .select(`
@@ -71,7 +71,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             `)
             .eq("criado_por_franqueado", true)
             .eq("produtor_destinatario_id", user.id)
-            .eq("status_aprovacao_produtor", "pendente")
+            .in("status_aprovacao_produtor", ["pendente", "aprovado"])
 
           console.log('🚀 Executando queries para produtor...')
           const [ownSaidasResult, pendingSaidasResult] = await Promise.all([
