@@ -52,11 +52,6 @@ export const ItemSeparacaoCard = ({ item, depositoId, formatCurrency }: ItemSepa
         </div>
         {getAlertBadge()}
       </div>
-      <div className="text-right">
-        <p className="text-sm text-muted-foreground">
-          R$ {formatCurrency(item.valor_unitario || 0)}
-        </p>
-      </div>
     </div>
   );
 };
