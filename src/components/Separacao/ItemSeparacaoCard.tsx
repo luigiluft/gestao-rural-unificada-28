@@ -34,22 +34,17 @@ export const ItemSeparacaoCard = ({ item, depositoId, formatCurrency }: ItemSepa
   const posicaoSugerida = estoqueFEFO?.[0]?.posicao_codigo;
 
   return (
-    <div className="flex justify-between items-start py-2 border-b border-muted">
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <p className="font-medium">{item.produtos?.nome}</p>
-          {getAlertIcon()}
-        </div>
-        <div className="flex items-center gap-2 mb-1">
-          <p className="text-sm text-muted-foreground">
-            Qtd: {item.quantidade} {item.produtos?.unidade_medida}
-          </p>
-          {posicaoSugerida && (
-            <Badge variant="outline" className="text-xs font-mono">
-              {posicaoSugerida}
-            </Badge>
-          )}
-        </div>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <p className="font-medium">{item.produtos?.nome}</p>
+        {getAlertIcon()}
+      </div>
+      <div className="flex items-center gap-2">
+        {posicaoSugerida && (
+          <Badge variant="outline" className="text-xs font-mono">
+            {posicaoSugerida}
+          </Badge>
+        )}
         {getAlertBadge()}
       </div>
     </div>

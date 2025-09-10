@@ -207,8 +207,12 @@ export default function Separacao() {
                                 formatCurrency={formatCurrency}
                               />
                             </TableCell>
+                            <TableCell>{item.lote || "Não informado"}</TableCell>
+                            <TableCell className="text-right">
+                              {item.quantidade} {item.produtos?.unidade_medida}
+                            </TableCell>
                           </TableRow>
-                        ))} 
+                        ))}
                       </TableBody>
                     </Table>
                   </div>
