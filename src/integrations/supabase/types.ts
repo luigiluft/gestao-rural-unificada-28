@@ -2026,6 +2026,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      alocar_produtos_orfaos: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       auto_allocate_positions: {
         Args: { p_wave_id: string }
         Returns: boolean
@@ -2174,6 +2178,14 @@ export type Database = {
       }
       process_saida_items: {
         Args: { p_saida_id: string }
+        Returns: boolean
+      }
+      produto_tem_posicao_fisica: {
+        Args: {
+          p_deposito_id: string
+          p_produto_id: string
+          p_quantidade?: number
+        }
         Returns: boolean
       }
       refresh_estoque: {
