@@ -11,7 +11,14 @@ export const useEstoque = () => {
 
       if (error) throw error
 
-      return estoque || []
+      // Mapear os dados para o formato esperado pelo frontend
+      const estoqueFormatado = (estoque || []).map((item: any) => ({
+        ...item,
+        produtos: item.produtos ? JSON.parse(item.produtos) : null,
+        franquias: item.franquia_nome ? { nome: item.franquia_nome } : null
+      }))
+
+      return estoqueFormatado
     },
     // Force refetch every time the component mounts
     refetchOnMount: true,
