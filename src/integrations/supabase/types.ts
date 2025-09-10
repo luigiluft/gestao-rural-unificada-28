@@ -2155,9 +2155,10 @@ export type Database = {
           produto_id: string
           produtos: Json
           quantidade_atual: number
+          quantidade_disponivel: number
+          quantidade_reservada: number
           user_id: string
           valor_medio: number
-          valor_total: number
         }[]
       }
       get_producer_available_deposits: {

@@ -8,8 +8,8 @@ export interface EstoqueItem {
   deposito_id: string
   quantidade_atual: number
   quantidade_disponivel?: number
+  quantidade_reservada?: number
   valor_medio: number
-  valor_total: number
   data_ultima_movimentacao: string
   lote: string
   data_validade: string
