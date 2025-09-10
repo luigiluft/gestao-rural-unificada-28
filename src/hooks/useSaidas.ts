@@ -20,16 +20,14 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           .eq("user_id", user.id)
           .single()
 
-        // Base query with JOINs for profiles and franquias
+        // Base query with JOINs for franquias and profiles
         const baseSelectQuery = `
           *,
           saida_itens(
             *,
             produtos(nome, unidade_medida)
           ),
-          franquias:deposito_id(nome),
-          profiles:user_id(nome),
-          produtor_destinatario:produtor_destinatario_id(nome)
+          franquias:deposito_id(nome)
         `
 
         let query = supabase
