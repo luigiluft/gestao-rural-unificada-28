@@ -11,6 +11,24 @@ export interface ItemSeparacao {
   quantidade_separada: number
   lote?: string
   unidade_medida: string
+  deposito_id?: string
+  posicoes_disponiveis?: Array<{
+    posicao_codigo: string
+    posicao_id: string
+    quantidade_disponivel: number
+    lote?: string
+    data_validade?: string
+    dias_para_vencer?: number
+    status_validade: 'critico' | 'atencao' | 'normal'
+    prioridade_fefo: number
+  }>
+  sugestao_fefo?: {
+    posicao_codigo: string
+    lote?: string
+    data_validade?: string
+    dias_para_vencer?: number
+    status_validade: 'critico' | 'atencao' | 'normal'
+  }
 }
 
 export function useSeparacaoItens() {
@@ -103,17 +121,35 @@ export function useSeparacaoItens() {
     )
   }
 
-  const inicializarSeparacao = (itens: any[]) => {
-    const itensSeparacao: ItemSeparacao[] = itens.map(item => ({
-      id: item.id,
-      produto_id: item.produto_id,
-      produto_nome: item.produtos?.nome || 'Nome não disponível',
-      quantidade_total: item.quantidade,
-      quantidade_separada: item.quantidade_separada || 0,
-      lote: item.lote,
-      unidade_medida: item.produtos?.unidade_medida || 'un'
-    }))
-    setItensSeparacao(itensSeparacao)
+  const inicializarSeparacao = (itens: any[], depositoId?: string) => {
+    const itensSeparacao: ItemSeparacao[] = itens.map(item => {
+      // Simular sugestão FEFO para demonstração
+      const sugestaoFEFO = {
+        posicao_codigo: `R01-M04-A${Math.floor(Math.random() * 5) + 1}`,
+        lote: `LT${new Date().getFullYear()}${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 99) + 1).padStart(2, '0')}`,
+        data_validade: new Date(Date.now() + (Math.floor(Math.random() * 200) + 15) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        dias_para_vencer: Math.floor(Math.random() * 200) + 15,
+        status_validade: (() => {
+          const dias = Math.floor(Math.random() * 200) + 15;
+          if (dias <= 15) return 'critico' as const;
+          if (dias <= 30) return 'atencao' as const;
+          return 'normal' as const;
+        })()
+      };
+
+      return {
+        id: item.id,
+        produto_id: item.produto_id,
+        produto_nome: item.produtos?.nome || 'Nome não disponível',
+        quantidade_total: item.quantidade,
+        quantidade_separada: item.quantidade_separada || 0,
+        lote: item.lote,
+        unidade_medida: item.produtos?.unidade_medida || 'un',
+        deposito_id: depositoId,
+        sugestao_fefo: sugestaoFEFO
+      };
+    });
+    setItensSeparacao(itensSeparacao);
   }
 
   return {

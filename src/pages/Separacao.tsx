@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Clock, Scan } from "lucide-react"
+import { Clock, Scan, AlertTriangle } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
+import { ItemSeparacaoCard } from "@/components/Separacao/ItemSeparacaoCard"
 
 export default function Separacao() {
   const { data: saidas, isLoading } = useSaidasPendentes()
@@ -199,12 +200,12 @@ export default function Separacao() {
                       <TableBody>
                         {saida.saida_itens?.map((item: any, index: number) => (
                           <TableRow key={index}>
-                            <TableCell className="font-medium">
-                              {item.produtos?.nome || "Nome não disponível"}
-                            </TableCell>
-                            <TableCell>{item.lote || "-"}</TableCell>
-                            <TableCell className="text-right">
-                              {item.quantidade} {item.produtos?.unidade_medida || "un"}
+                            <TableCell>
+                              <ItemSeparacaoCard 
+                                item={item} 
+                                depositoId={saida.deposito_id}
+                                formatCurrency={formatCurrency}
+                              />
                             </TableCell>
                           </TableRow>
                         ))} 

@@ -7,9 +7,12 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Package, Scan, CheckCircle, Minus, Plus } from 'lucide-react'
+import { Package, Scan, CheckCircle, Minus, Plus, AlertTriangle, Clock } from 'lucide-react'
 import { useSeparacaoItens, ItemSeparacao } from '@/hooks/useSeparacaoItens'
 import { ScannerCodigoBarras } from './ScannerCodigoBarras'
+import { PosicoesProduto } from '@/components/Separacao/PosicoesProduto'
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 interface SeparacaoIndividualProps {
   saida: any
@@ -31,7 +34,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
 
   useEffect(() => {
     if (saida?.saida_itens && open) {
-      inicializarSeparacao(saida.saida_itens)
+      inicializarSeparacao(saida.saida_itens, saida.deposito_id)
       setItemAtualIndex(0)
     }
   }, [saida, open, inicializarSeparacao])
@@ -44,6 +47,30 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
   }, [open, itensSeparacao.length])
 
   const itemAtual = itensSeparacao[itemAtualIndex]
+
+  // Função para obter ícone do status de validade
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case 'critico':
+        return <AlertTriangle className="h-4 w-4 text-destructive" />
+      case 'atencao':
+        return <Clock className="h-4 w-4 text-warning" />
+      default:
+        return <CheckCircle className="h-4 w-4 text-success" />
+    }
+  }
+
+  // Função para obter variante do badge de status
+  const getStatusVariant = (status?: string) => {
+    switch (status) {
+      case 'critico':
+        return 'destructive' as const
+      case 'atencao':
+        return 'secondary' as const
+      default:
+        return 'default' as const
+    }
+  }
 
   const handleQuantidadeChange = (itemId: string, novaQuantidade: number) => {
     atualizarQuantidadeSeparada(itemId, novaQuantidade)
@@ -164,6 +191,44 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                 </CardHeader>
 
                 <CardContent className="space-y-4">
+                  {/* Sugestão FEFO */}
+                  {itemAtual.sugestao_fefo && (
+                    <div className="border-l-4 border-l-primary bg-primary/5 rounded-r-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="default" className="text-xs">SUGERIDO - FEFO</Badge>
+                          {getStatusIcon(itemAtual.sugestao_fefo.status_validade)}
+                        </div>
+                        {itemAtual.sugestao_fefo.dias_para_vencer !== undefined && (
+                          <Badge variant={getStatusVariant(itemAtual.sugestao_fefo.status_validade)}>
+                            {itemAtual.sugestao_fefo.dias_para_vencer <= 0 
+                              ? 'VENCIDO' 
+                              : `${itemAtual.sugestao_fefo.dias_para_vencer} dias`
+                            }
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="font-medium">Posição:</span>
+                          <p className="font-mono text-lg">{itemAtual.sugestao_fefo.posicao_codigo}</p>
+                        </div>
+                        {itemAtual.sugestao_fefo.lote && (
+                          <div>
+                            <span className="font-medium">Lote:</span>
+                            <p className="font-mono">{itemAtual.sugestao_fefo.lote}</p>
+                          </div>
+                        )}
+                        {itemAtual.sugestao_fefo.data_validade && (
+                          <div className="col-span-2">
+                            <span className="font-medium">Validade:</span>
+                            <p>{format(new Date(itemAtual.sugestao_fefo.data_validade), "dd/MM/yyyy", { locale: ptBR })}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-center">
                     <div className="text-3xl font-bold text-primary">
                       {itemAtual.quantidade_separada} / {itemAtual.quantidade_total}
@@ -218,6 +283,15 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {/* Posições do Produto */}
+            {itemAtual && itemAtual.produto_id && saida.deposito_id && (
+              <PosicoesProduto 
+                produtoId={itemAtual.produto_id}
+                depositoId={saida.deposito_id}
+                produtoNome={itemAtual.produto_nome}
+              />
             )}
 
             {/* Lista de Todos os Itens - Resumo */}
