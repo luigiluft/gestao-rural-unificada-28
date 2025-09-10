@@ -98,6 +98,20 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
                 statusValidade = 'atencao';
               }
 
+              // Sempre priorizar mostrar a posição física real
+              let posicaoCodigo = position?.storage_positions?.codigo;
+              
+              // Se não encontrou posição, buscar na storage_positions através do posicao_id
+              if (!posicaoCodigo && position?.posicao_id) {
+                // A posição será buscada em uma query separada se necessário
+                posicaoCodigo = `POS-${position.posicao_id.substring(0, 8)}`;
+              }
+              
+              // Só usar fallback para pallet se realmente não encontrar posição
+              if (!posicaoCodigo) {
+                posicaoCodigo = `PALLET-${pallet.numero_pallet}`;
+              }
+
               return {
                 id: `pallet-${pallet.id}-item-${item.id}`,
                 produto_id: entradaItem.produto_id,
@@ -107,7 +121,7 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
                 lote: entradaItem.lote || `P${pallet.numero_pallet}-${entrada.id.substring(0, 8)}`,
                 data_validade: entradaItem.data_validade,
                 data_entrada: entrada.data_entrada,
-                posicao_codigo: position?.storage_positions?.codigo || `PALLET-${pallet.numero_pallet}`,
+                posicao_codigo: posicaoCodigo,
                 posicao_id: position?.posicao_id,
                 dias_para_vencer: diasParaVencer,
                 prioridade_fefo: calcularPrioridadeFEFO(entradaItem.data_validade, entrada.data_entrada),
@@ -117,6 +131,24 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
               };
             });
         });
+        
+        // Para pallets que não mostraram posição física, buscar as posições reais
+        for (const item of palletsFEFO) {
+          if (item.posicao_codigo.startsWith('POS-') || item.posicao_codigo.startsWith('PALLET-')) {
+            if (item.posicao_id) {
+              const { data: posicaoReal } = await supabase
+                .from("storage_positions")
+                .select("codigo")
+                .eq("id", item.posicao_id)
+                .single();
+              
+              if (posicaoReal?.codigo) {
+                item.posicao_codigo = posicaoReal.codigo;
+              }
+            }
+          }
+        }
+        
         estoqueFEFO.push(...palletsFEFO);
       }
 
