@@ -1821,7 +1821,15 @@ export type Database = {
           user_id?: string
           valor_total?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "saidas_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       storage_positions: {
         Row: {
