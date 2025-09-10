@@ -36,8 +36,8 @@ export const Rastreio = () => {
     itensNoEstoque: estoque.length,
     saidasEmAndamento: saidas.length,
     valorTotalEstoque: estoque.reduce((total, item) => {
-      const valor = (item.valor_medio || 0) * item.quantidade_atual;
-      return total + valor;
+      // Using valor_total_estoque since valor_medio doesn't exist in estoque view
+      return total + (item.valor_total_estoque || 0);
     }, 0)
   };
 

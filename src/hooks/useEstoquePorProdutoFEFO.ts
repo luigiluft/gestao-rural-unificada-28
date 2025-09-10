@@ -267,9 +267,8 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
             .single();
 
           if (estoque) {
-            const diasParaVencer = estoque.data_validade 
-              ? Math.ceil((new Date(estoque.data_validade).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-              : 999;
+            // The estoque view doesn't have data_validade, so we'll use a default
+            const diasParaVencer = 999; // No expiration data available from estoque view
             
             let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
             if (diasParaVencer <= 15) {
@@ -284,12 +283,12 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
               produto_nome: estoque.produtos?.nome || '',
               deposito_id: depositoId,
               quantidade_atual: estoque.quantidade_atual,
-              data_validade: estoque.data_validade,
+              data_validade: null, // Not available in estoque view
               data_entrada: new Date().toISOString().split('T')[0],
-              lote: estoque.lote || `EST-${posicao.codigo}`,
+              lote: estoque.lotes || `EST-${posicao.codigo}`,
               dias_para_vencer: diasParaVencer,
               status_validade: statusValidade,
-              prioridade_fefo: calcularPrioridadeFEFO(estoque.data_validade, new Date().toISOString()),
+              prioridade_fefo: calcularPrioridadeFEFO(null, new Date().toISOString()),
               posicao_codigo: posicao.codigo,
               posicao_id: posicao.id,
               pallet_id: undefined,

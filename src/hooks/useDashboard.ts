@@ -16,10 +16,9 @@ export const useDashboardStats = () => {
         .select("*", { count: "exact", head: true })
         .eq("ativo", true)
 
-      // Get total stock value
+      // Get total stock value from secure function
       const { data: estoqueData } = await supabase
-        .from("estoque")
-        .select("quantidade_atual, valor_medio")
+        .rpc("get_estoque_seguro")
 
       const valorTotal = estoqueData?.reduce((acc, item) => {
         return acc + (item.quantidade_atual * (item.valor_medio || 0))
