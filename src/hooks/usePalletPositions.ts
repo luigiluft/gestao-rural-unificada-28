@@ -35,6 +35,22 @@ export const usePalletPositions = (depositoId?: string) => {
               deposito_id,
               numero_nfe,
               user_id
+            ),
+            entrada_pallet_itens (
+              id,
+              quantidade,
+              entrada_itens (
+                id,
+                produto_id,
+                nome_produto,
+                lote,
+                data_validade,
+                produtos (
+                  id,
+                  nome,
+                  codigo
+                )
+              )
             )
           ),
           storage_positions (

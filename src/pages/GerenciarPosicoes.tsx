@@ -114,6 +114,7 @@ export default function GerenciarPosicoes() {
                 <TableRow>
                   <TableHead>Pallet</TableHead>
                   <TableHead>Posição</TableHead>
+                  <TableHead>Produtos</TableHead>
                   <TableHead>NFe</TableHead>
                   <TableHead>Alocado em</TableHead>
                   <TableHead>Status</TableHead>
@@ -121,87 +122,117 @@ export default function GerenciarPosicoes() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {palletPositions.map((position) => (
-                  <TableRow key={position.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="font-medium">#{position.entrada_pallets?.numero_pallet}</div>
-                          {position.entrada_pallets?.descricao && (
+                {palletPositions.map((position) => {
+                  // Extrair produtos únicos do pallet
+                  const produtos = position.entrada_pallets?.entrada_pallet_itens?.reduce((acc: string[], item: any) => {
+                    const nomeProduto = item.entrada_itens?.produtos?.nome || item.entrada_itens?.nome_produto;
+                    if (nomeProduto && !acc.includes(nomeProduto)) {
+                      acc.push(nomeProduto);
+                    }
+                    return acc;
+                  }, []) || [];
+
+                  return (
+                    <TableRow key={position.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <div className="font-medium">#{position.entrada_pallets?.numero_pallet}</div>
+                            {position.entrada_pallets?.descricao && (
+                              <div className="text-xs text-muted-foreground">
+                                {position.entrada_pallets.descricao}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <Badge variant="secondary">
+                            {position.storage_positions?.codigo}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="space-y-1">
+                          {produtos.length > 0 ? (
+                            produtos.slice(0, 2).map((produto, index) => (
+                              <div key={index} className="text-sm">
+                                {produto}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-muted-foreground">Nenhum produto</div>
+                          )}
+                          {produtos.length > 2 && (
                             <div className="text-xs text-muted-foreground">
-                              {position.entrada_pallets.descricao}
+                              +{produtos.length - 2} mais
                             </div>
                           )}
                         </div>
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <Badge variant="secondary">
-                          {position.storage_positions?.codigo}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="text-sm">
-                        {position.entrada_pallets?.entradas?.numero_nfe || "N/A"}
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
+                      
+                      <TableCell>
                         <div className="text-sm">
-                          {format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(position.alocado_em), "HH:mm", { locale: ptBR })}
+                          {position.entrada_pallets?.entradas?.numero_nfe || "N/A"}
+                        </div>
+                      </TableCell>
+                      
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <div className="text-sm">
+                            {format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}
+                            <div className="text-xs text-muted-foreground">
+                              {format(new Date(position.alocado_em), "HH:mm", { locale: ptBR })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Badge variant="secondary">Alocado</Badge>
-                    </TableCell>
-                    
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenDetailsDialog(position)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver Detalhes
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuItem 
-                            onClick={() => handleOpenReallocateDialog(position)}
-                            disabled={reallocatePallet.isPending}
-                          >
-                            <ArrowRightLeft className="h-4 w-4 mr-2" />
-                            Realocar
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuItem 
-                            onClick={() => handleRemoveAllocation(position.pallet_id)}
-                            disabled={removeAllocation.isPending}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Remover
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      
+                      <TableCell>
+                        <Badge variant="secondary">Alocado</Badge>
+                      </TableCell>
+                      
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenDetailsDialog(position)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Detalhes
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem 
+                              onClick={() => handleOpenReallocateDialog(position)}
+                              disabled={reallocatePallet.isPending}
+                            >
+                              <ArrowRightLeft className="h-4 w-4 mr-2" />
+                              Realocar
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem 
+                              onClick={() => handleRemoveAllocation(position.pallet_id)}
+                              disabled={removeAllocation.isPending}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Remover
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
