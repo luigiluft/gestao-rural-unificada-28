@@ -68,7 +68,15 @@ const Saidas = () => {
   const { toast } = useToast()
   
   const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
-  const { data: profilesData, isLoading: isLoadingProfiles } = useProfilesForSaidas(saidas)
+  const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useProfilesForSaidas(saidas)
+  
+  // Debug logging
+  console.log('🔧 Saidas.tsx Debug:', { 
+    saidasCount: saidas?.length || 0, 
+    profilesData, 
+    isLoadingProfiles,
+    profilesError
+  })
   const aprovarSaida = useAprovarSaida()
 
   const getStatusColor = (status: string) => {
