@@ -1,10 +1,32 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 
+export interface EstoqueItem {
+  id: string
+  user_id: string
+  produto_id: string
+  deposito_id: string
+  quantidade_atual: number
+  quantidade_disponivel?: number
+  valor_medio: number
+  valor_total: number
+  data_ultima_movimentacao: string
+  lote: string
+  data_validade: string
+  produtos: {
+    nome: string
+    unidade_medida: string
+  }
+  franquias: {
+    nome: string
+  } | null
+  franquia_nome: string
+}
+
 export const useEstoque = () => {
   return useQuery({
     queryKey: ["estoque"],
-    queryFn: async () => {
+    queryFn: async (): Promise<EstoqueItem[]> => {
       // Use função segura que aplica RLS baseado no role do usuário
       const { data: estoque, error } = await supabase
         .rpc("get_estoque_seguro")
