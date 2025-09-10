@@ -20,15 +20,21 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           .eq("user_id", user.id)
           .single()
 
+        // Base query with JOINs for profiles and franquias
+        const baseSelectQuery = `
+          *,
+          saida_itens(
+            *,
+            produtos(nome, unidade_medida)
+          ),
+          franquias:deposito_id(nome),
+          profiles:user_id(nome),
+          produtor_destinatario:produtor_destinatario_id(nome)
+        `
+
         let query = supabase
           .from("saidas")
-          .select(`
-            *,
-            saida_itens(
-              *,
-              produtos(nome, unidade_medida)
-            )
-          `)
+          .select(baseSelectQuery)
 
         let saidasData: any[] = []
 
@@ -39,13 +45,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           // First, get their own saídas with date filters
           let ownSaidasQuery = supabase
             .from("saidas")
-            .select(`
-              *,
-              saida_itens(
-                *,
-                produtos(nome, unidade_medida)
-              )
-            `)
+            .select(baseSelectQuery)
             .eq("user_id", user.id)
 
           // Apply date filters for own saídas
@@ -62,13 +62,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           // Show pending and approved saídas, hide only rejected ones
           let pendingSaidasQuery = supabase
             .from("saidas")
-            .select(`
-              *,
-              saida_itens(
-                *,
-                produtos(nome, unidade_medida)
-              )
-            `)
+            .select(baseSelectQuery)
             .eq("criado_por_franqueado", true)
             .eq("produtor_destinatario_id", user.id)
             .in("status_aprovacao_produtor", ["pendente", "aprovado"])
@@ -128,69 +122,12 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
           throw saidasError
         }
 
-        // Para cada saída, buscar o nome da franquia, usuário criador e destinatário
-        console.log('🏢 Iniciando busca de franquias, usuários e destinatários...')
-        const saidasComDadosCompletos = await Promise.all(
-          (saidasData || []).map(async (saida, index) => {
-            console.log(`🔄 Processando saída ${index + 1}/${saidasData?.length}:`, saida.id)
-            let depositoNome = null
-            let usuarioNome = null
-            let destinatarioNome = null
-
-            // Buscar nome da franquia
-            if (saida.deposito_id) {
-              const { data: franquia } = await supabase
-                .from("franquias")
-                .select("nome")
-                .eq("id", saida.deposito_id)
-                .maybeSingle()
-
-              if (franquia) {
-                depositoNome = franquia.nome
-              }
-            }
-
-            // Buscar nome do usuário criador
-            if (saida.user_id) {
-              const { data: usuario } = await supabase
-                .from("profiles")
-                .select("nome")
-                .eq("user_id", saida.user_id)
-                .maybeSingle()
-
-              if (usuario) {
-                usuarioNome = usuario.nome
-              }
-            }
-
-            // Buscar nome do destinatário
-            if (saida.produtor_destinatario_id) {
-              const { data: destinatario } = await supabase
-                .from("profiles")
-                .select("nome")
-                .eq("user_id", saida.produtor_destinatario_id)
-                .maybeSingle()
-
-              if (destinatario) {
-                destinatarioNome = destinatario.nome
-              }
-            }
-
-            console.log(`✅ Saída ${index + 1} processada - Depósito: ${depositoNome}, Criador: ${usuarioNome}, Destinatário: ${destinatarioNome}`)
-            return {
-              ...saida,
-              depositos: depositoNome ? { nome: depositoNome } : null,
-              profiles: usuarioNome ? { nome: usuarioNome } : null,
-              produtor_destinatario: destinatarioNome ? { nome: destinatarioNome } : null
-            }
-          })
-        )
-
+        // Now data already includes the joined profile and franquia names
         console.log('🎯 RESULTADO FINAL:')
-        console.log('- Total de saídas processadas:', saidasComDadosCompletos.length)
-        console.log('- Dados finais:', saidasComDadosCompletos)
+        console.log('- Total de saídas processadas:', saidasData.length)
+        console.log('- Dados finais:', saidasData)
         
-        return saidasComDadosCompletos
+        return saidasData
         
       } catch (error) {
         console.error('💥 ERRO GERAL no hook useSaidas:', error)
