@@ -27,7 +27,9 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             *,
             produtos(nome, unidade_medida)
           ),
-          franquias:deposito_id(nome)
+          franquias:deposito_id(nome),
+          profiles:user_id(nome, email),
+          produtor_destinatario:produtor_destinatario_id(nome, email)
         `
 
         let query = supabase
