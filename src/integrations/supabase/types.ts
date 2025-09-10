@@ -774,6 +774,45 @@ export type Database = {
           },
         ]
       }
+      estoque_reservas: {
+        Row: {
+          created_at: string
+          data_validade: string | null
+          deposito_id: string
+          id: string
+          lote: string | null
+          produto_id: string
+          quantidade_reservada: number
+          saida_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_validade?: string | null
+          deposito_id: string
+          id?: string
+          lote?: string | null
+          produto_id: string
+          quantidade_reservada: number
+          saida_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_validade?: string | null
+          deposito_id?: string
+          id?: string
+          lote?: string | null
+          produto_id?: string
+          quantidade_reservada?: number
+          saida_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fazendas: {
         Row: {
           area_total_ha: number | null
@@ -1996,17 +2035,21 @@ export type Database = {
     Views: {
       estoque: {
         Row: {
-          data_validade: string | null
           deposito_id: string | null
+          franquia_nome: string | null
           id: string | null
-          lote: string | null
+          lotes: string | null
+          produto_codigo: string | null
           produto_id: string | null
+          produto_nome: string | null
           quantidade_atual: number | null
           quantidade_disponivel: number | null
           quantidade_reservada: number | null
-          updated_at: string | null
+          status_estoque: string | null
+          ultima_movimentacao: string | null
+          unidade_medida: string | null
           user_id: string | null
-          valor_medio: number | null
+          valor_total_estoque: number | null
         }
         Relationships: [
           {
