@@ -5,36 +5,13 @@ export const useEstoque = () => {
   return useQuery({
     queryKey: ["estoque"],
     queryFn: async () => {
+      // Use função segura que aplica RLS baseado no role do usuário
       const { data: estoque, error } = await supabase
-        .from("estoque")
-        .select(`
-          *,
-          produtos(nome, unidade_medida)
-        `)
-        .order("quantidade_atual", { ascending: true })
+        .rpc("get_estoque_seguro")
 
       if (error) throw error
 
-      // Get franquia names for each estoque item
-      const estoqueWithFranquias = await Promise.all(
-        (estoque || []).map(async (item) => {
-          if (item.deposito_id) {
-            const { data: franquia } = await supabase
-              .from("franquias")
-              .select("nome")
-              .eq("id", item.deposito_id)
-              .single()
-            
-            return {
-              ...item,
-              franquias: franquia
-            }
-          }
-          return item
-        })
-      )
-
-      return estoqueWithFranquias || []
+      return estoque || []
     },
     // Force refetch every time the component mounts
     refetchOnMount: true,

@@ -2131,6 +2131,23 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_estoque_seguro: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          data_ultima_movimentacao: string
+          data_validade: string
+          deposito_id: string
+          franquia_nome: string
+          id: string
+          lote: string
+          produto_id: string
+          produtos: Json
+          quantidade_atual: number
+          user_id: string
+          valor_medio: number
+          valor_total: number
+        }[]
+      }
       get_producer_available_deposits: {
         Args: { _producer_id: string }
         Returns: {
