@@ -9,10 +9,9 @@ export interface EstoqueItem {
   quantidade_atual: number
   quantidade_disponivel?: number
   quantidade_reservada?: number
-  valor_medio: number
-  data_ultima_movimentacao: string
-  lote: string
-  data_validade: string
+  valor_total_estoque: number
+  ultima_movimentacao: string
+  lotes: string[]
   produtos: {
     nome: string
     unidade_medida: string

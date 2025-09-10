@@ -236,7 +236,7 @@ export default function Estoque() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{item.lote || 'N/A'}</TableCell>
+                      <TableCell>{item.lotes?.[0] || 'N/A'}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
@@ -262,12 +262,12 @@ export default function Estoque() {
                           {status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {item.valor_medio && item.quantidade_atual
-                          ? `R$ ${(item.valor_medio * item.quantidade_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                          : 'N/A'
-                        }
-                      </TableCell>
+                       <TableCell className="font-medium">
+                         {item.valor_total_estoque
+                           ? `R$ ${item.valor_total_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                           : 'N/A'
+                         }
+                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Dialog>
@@ -304,7 +304,7 @@ export default function Estoque() {
                                         </div>
                                         <div>
                                           <h4 className="font-medium">Lote</h4>
-                                          <p className="text-muted-foreground">{selectedItem.lote || 'N/A'}</p>
+                                          <p className="text-muted-foreground">{selectedItem.lotes?.[0] || 'N/A'}</p>
                                         </div>
                                       </div>
                                       
@@ -334,15 +334,15 @@ export default function Estoque() {
                                           <h4 className="font-medium">Franquia</h4>
                                           <p className="text-muted-foreground">{selectedItem.franquias?.nome}</p>
                                         </div>
-                                        <div>
-                                          <h4 className="font-medium">Valor Médio</h4>
-                                          <p className="text-muted-foreground">
-                                            {selectedItem.valor_medio 
-                                              ? `R$ ${selectedItem.valor_medio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                                              : 'N/A'
-                                            }
-                                          </p>
-                                        </div>
+                                         <div>
+                                           <h4 className="font-medium">Valor Total</h4>
+                                           <p className="text-muted-foreground">
+                                             {selectedItem.valor_total_estoque 
+                                               ? `R$ ${selectedItem.valor_total_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                               : 'N/A'
+                                             }
+                                           </p>
+                                         </div>
                                       </div>
 
                                       {selectedItem.data_validade && (

@@ -21,7 +21,7 @@ export const useDashboardStats = () => {
         .rpc("get_estoque_seguro")
 
       const valorTotal = estoqueData?.reduce((acc, item) => {
-        return acc + (item.quantidade_atual * (item.valor_medio || 0))
+        return acc + (item.valor_total_estoque || 0)
       }, 0) || 0
 
       // Get low stock alerts (where current < minimum threshold)

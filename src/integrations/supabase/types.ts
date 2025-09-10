@@ -2193,19 +2193,18 @@ export type Database = {
       get_estoque_seguro: {
         Args: Record<PropertyKey, never>
         Returns: {
-          data_ultima_movimentacao: string
-          data_validade: string
           deposito_id: string
           franquia_nome: string
           id: string
-          lote: string
+          lotes: string[]
           produto_id: string
           produtos: Json
           quantidade_atual: number
           quantidade_disponivel: number
           quantidade_reservada: number
+          ultima_movimentacao: string
           user_id: string
-          valor_medio: number
+          valor_total_estoque: number
         }[]
       }
       get_producer_available_deposits: {
