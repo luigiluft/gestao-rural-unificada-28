@@ -47,6 +47,7 @@ import {
 import { FormularioSaida } from "@/components/Saidas/FormularioSaida"
 import { useSaidas } from "@/hooks/useSaidas"
 import { useAprovarSaida } from "@/hooks/useSaidasAprovacao"
+import { useProfilesForSaidas } from "@/hooks/useProfilesForSaidas"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
@@ -67,6 +68,7 @@ const Saidas = () => {
   const { toast } = useToast()
   
   const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
+  const { data: profilesData, isLoading: isLoadingProfiles } = useProfilesForSaidas(saidas)
   const aprovarSaida = useAprovarSaida()
 
   const getStatusColor = (status: string) => {
@@ -364,12 +366,20 @@ const Saidas = () => {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {saida.profiles?.nome || "Usuário não encontrado"}
+                          {isLoadingProfiles ? (
+                            <Skeleton className="h-4 w-20" />
+                          ) : (
+                            profilesData?.criadores[saida.user_id]?.nome || "Usuário não encontrado"
+                          )}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {saida.produtor_destinatario?.nome || "-"}
+                          {isLoadingProfiles ? (
+                            <Skeleton className="h-4 w-20" />
+                          ) : (
+                            profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "-"
+                          )}
                         </span>
                       </TableCell>
                       <TableCell>
