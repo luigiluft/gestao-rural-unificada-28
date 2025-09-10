@@ -35,7 +35,7 @@ export function PositionsStep({
   const [positionFormData, setPositionFormData] = useState({
     codigo: "",
     descricao: "",
-    tipo_posicao: "prateleira",
+    tipo_posicao: "pallet",
     capacidade_maxima: ""
   });
 
@@ -58,7 +58,7 @@ export function PositionsStep({
             newPositions.push({
               codigo,
               descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`,
-              tipo_posicao: "prateleira"
+              tipo_posicao: "pallet"
             });
           }
         }
@@ -105,7 +105,7 @@ export function PositionsStep({
     setPositionFormData({
       codigo: "",
       descricao: "",
-      tipo_posicao: "prateleira",
+      tipo_posicao: "pallet",
       capacidade_maxima: ""
     });
     setEditingIndex(null);
@@ -272,10 +272,7 @@ export function PositionsStep({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="prateleira">Prateleira</SelectItem>
                     <SelectItem value="pallet">Pallet</SelectItem>
-                    <SelectItem value="container">Container</SelectItem>
-                    <SelectItem value="gaveta">Gaveta</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
