@@ -101,15 +101,14 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
               // Sempre priorizar mostrar a posição física real
               let posicaoCodigo = position?.storage_positions?.codigo;
               
-              // Se não encontrou posição, buscar na storage_positions através do posicao_id
+              // Se não encontrou posição, marcar para busca posterior
               if (!posicaoCodigo && position?.posicao_id) {
-                // A posição será buscada em uma query separada se necessário
-                posicaoCodigo = `POS-${position.posicao_id.substring(0, 8)}`;
+                posicaoCodigo = `BUSCAR_${position.posicao_id}`;
               }
               
-              // Só usar fallback para pallet se realmente não encontrar posição
+              // Fallback apenas se realmente não conseguir encontrar posição
               if (!posicaoCodigo) {
-                posicaoCodigo = `PALLET-${pallet.numero_pallet}`;
+                posicaoCodigo = `SEM POSIÇÃO`;
               }
 
               return {
@@ -134,17 +133,18 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
         
         // Para pallets que não mostraram posição física, buscar as posições reais
         for (const item of palletsFEFO) {
-          if (item.posicao_codigo.startsWith('POS-') || item.posicao_codigo.startsWith('PALLET-')) {
-            if (item.posicao_id) {
-              const { data: posicaoReal } = await supabase
-                .from("storage_positions")
-                .select("codigo")
-                .eq("id", item.posicao_id)
-                .single();
-              
-              if (posicaoReal?.codigo) {
-                item.posicao_codigo = posicaoReal.codigo;
-              }
+          if (item.posicao_codigo.startsWith('BUSCAR_')) {
+            const posicaoId = item.posicao_codigo.replace('BUSCAR_', '');
+            const { data: posicaoReal } = await supabase
+              .from("storage_positions")
+              .select("codigo")
+              .eq("id", posicaoId)
+              .single();
+            
+            if (posicaoReal?.codigo) {
+              item.posicao_codigo = posicaoReal.codigo;
+            } else {
+              item.posicao_codigo = 'SEM POSIÇÃO';
             }
           }
         }
