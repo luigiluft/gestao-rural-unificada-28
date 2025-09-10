@@ -36,6 +36,7 @@ export const useEstoque = () => {
       // Mapear os dados para o formato esperado pelo frontend
       const estoqueFormatado = (estoque || []).map((item: any) => ({
         ...item,
+        produtos: typeof item.produtos === 'string' ? JSON.parse(item.produtos) : item.produtos,
         franquias: item.franquia_nome ? { nome: item.franquia_nome } : null
       }))
 
