@@ -12,12 +12,17 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePalletPositions, useRemovePalletAllocation, useReallocatePallet } from "@/hooks/usePalletPositions";
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
+import { usePalletDetails } from "@/hooks/usePalletDetails";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function GerenciarPosicoes() {
   const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
   const [reallocateDialog, setReallocateDialog] = useState<{
+    open: boolean;
+    pallet?: any;
+  }>({ open: false });
+  const [detailsDialog, setDetailsDialog] = useState<{
     open: boolean;
     pallet?: any;
   }>({ open: false });
@@ -29,6 +34,7 @@ export default function GerenciarPosicoes() {
   // Extrair depositoId do primeiro pallet para usar no availablePositions
   const depositoId = palletPositions?.[0]?.entrada_pallets?.entradas?.deposito_id;
   const { data: availablePositions } = useAvailablePositions(depositoId);
+  const { data: palletDetails } = usePalletDetails(detailsDialog.pallet?.pallet_id);
   const removeAllocation = useRemovePalletAllocation();
   const reallocatePallet = useReallocatePallet();
 
@@ -42,6 +48,10 @@ export default function GerenciarPosicoes() {
     setReallocateDialog({ open: true, pallet });
     setNewPositionId("");
     setObservacoes("");
+  };
+
+  const handleOpenDetailsDialog = (pallet: any) => {
+    setDetailsDialog({ open: true, pallet });
   };
 
   const handleReallocate = async () => {
@@ -166,46 +176,10 @@ export default function GerenciarPosicoes() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalhes
-                              </DropdownMenuItem>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-lg">
-                              <DialogHeader>
-                                <DialogTitle>Detalhes da Posição</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div>
-                                    <span className="font-medium">Pallet:</span>
-                                    <p>#{position.entrada_pallets?.numero_pallet}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Posição:</span>
-                                    <p>{position.storage_positions?.codigo}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Alocado em:</span>
-                                    <p>{format(new Date(position.alocado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">NFe:</span>
-                                    <p>{position.entrada_pallets?.entradas?.numero_nfe || "N/A"}</p>
-                                  </div>
-                                </div>
-                                
-                                {position.observacoes && (
-                                  <div>
-                                    <span className="font-medium">Observações:</span>
-                                    <p className="text-sm text-muted-foreground mt-1">{position.observacoes}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <DropdownMenuItem onClick={() => handleOpenDetailsDialog(position)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Detalhes
+                          </DropdownMenuItem>
                           
                           <DropdownMenuItem 
                             onClick={() => handleOpenReallocateDialog(position)}
@@ -233,6 +207,82 @@ export default function GerenciarPosicoes() {
           </div>
         </div>
       )}
+
+      {/* Dialog de Detalhes */}
+      <Dialog open={detailsDialog.open} onOpenChange={(open) => setDetailsDialog({ open })}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Pallet</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="font-medium">Pallet:</span>
+                <p>#{detailsDialog.pallet?.entrada_pallets?.numero_pallet}</p>
+              </div>
+              <div>
+                <span className="font-medium">Posição:</span>
+                <p>{detailsDialog.pallet?.storage_positions?.codigo}</p>
+              </div>
+              <div>
+                <span className="font-medium">Alocado em:</span>
+                <p>{detailsDialog.pallet?.alocado_em ? format(new Date(detailsDialog.pallet.alocado_em), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "N/A"}</p>
+              </div>
+              <div>
+                <span className="font-medium">NFe:</span>
+                <p>{detailsDialog.pallet?.entrada_pallets?.entradas?.numero_nfe || "N/A"}</p>
+              </div>
+            </div>
+
+            {detailsDialog.pallet?.observacoes && (
+              <div>
+                <span className="font-medium">Observações:</span>
+                <p className="text-sm text-muted-foreground mt-1">{detailsDialog.pallet.observacoes}</p>
+              </div>
+            )}
+
+            {/* Produtos do Pallet */}
+            <div>
+              <h4 className="font-medium mb-3">Produtos no Pallet</h4>
+              {palletDetails && palletDetails.length > 0 ? (
+                <div className="space-y-3">
+                  {palletDetails.map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium">{item.entrada_itens.produtos?.nome || item.entrada_itens.nome_produto}</p>
+                          {item.entrada_itens.produtos?.codigo && (
+                            <p className="text-xs text-muted-foreground">Código: {item.entrada_itens.produtos.codigo}</p>
+                          )}
+                        </div>
+                        <Badge variant="outline">{item.quantidade} unidades</Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Lote:</span>
+                          <p className="text-muted-foreground">{item.entrada_itens.lote || "N/A"}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Validade:</span>
+                          <p className="text-muted-foreground">
+                            {item.entrada_itens.data_validade 
+                              ? format(new Date(item.entrada_itens.data_validade), "dd/MM/yyyy", { locale: ptBR })
+                              : "N/A"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum produto encontrado neste pallet.</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Realocação */}
       <Dialog open={reallocateDialog.open} onOpenChange={(open) => setReallocateDialog({ open })}>
