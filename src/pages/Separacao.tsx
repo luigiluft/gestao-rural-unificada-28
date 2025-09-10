@@ -223,12 +223,8 @@ export default function Separacao() {
 
                   <Separator />
 
-                  {/* Valor Total e Ações */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-xl font-semibold">
-                      Total: {formatCurrency(saida.valor_total)}
-                    </div>
-                    
+                  {/* Ações */}
+                  <div className="flex justify-end">
                     <div className="flex gap-2">
                       {saida.status === 'separacao_pendente' && (
                         <>
