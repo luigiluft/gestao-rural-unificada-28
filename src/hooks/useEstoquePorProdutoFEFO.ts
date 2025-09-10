@@ -74,10 +74,10 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
 
       // Para demonstração, vamos buscar dados fictícios baseados nas movimentações
       const estoqueFEFO: EstoqueFEFO[] = movimentacoes.map((mov, index) => {
-        // Simular data de validade baseada na data de movimentação (para demonstração)
+        // Usar data fixa baseada no índice para evitar loop de re-renderização
         const baseDate = new Date(mov.data_movimentacao);
-        const diasAleatorios = Math.floor(Math.random() * 365) + 30; // Entre 30 e 395 dias
-        const dataValidade = new Date(baseDate.getTime() + (diasAleatorios * 24 * 60 * 60 * 1000));
+        const diasFixos = 30 + (index * 15); // Dias fixos baseados no índice
+        const dataValidade = new Date(baseDate.getTime() + (diasFixos * 24 * 60 * 60 * 1000));
         
         const hoje = new Date();
         const diasParaVencer = Math.ceil((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
@@ -89,7 +89,7 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
           statusValidade = 'atencao';
         }
 
-        // Encontrar posição relacionada (simulação - na prática seria baseada em referência específica)
+        // Encontrar posição relacionada de forma determinística
         const posicaoRelacionada = posicoes?.[index % (posicoes?.length || 1)];
         
         return {

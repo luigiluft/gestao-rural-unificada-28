@@ -36,15 +36,53 @@ export function useSeparacaoItens() {
   const queryClient = useQueryClient()
 
   const separarItem = useMutation({
-    mutationFn: async ({ itemId, quantidadeSeparada }: { itemId: string, quantidadeSeparada: number }) => {
+    mutationFn: async ({ 
+      itemId, 
+      quantidadeSeparada, 
+      posicaoId, 
+      lote 
+    }: { 
+      itemId: string, 
+      quantidadeSeparada: number,
+      posicaoId?: string,
+      lote?: string 
+    }) => {
       // Atualizar a quantidade separada do item
       const { data, error } = await supabase
         .from('saida_itens')
-        .update({ quantidade_separada: quantidadeSeparada } as any)
+        .update({ 
+          quantidade_separada: quantidadeSeparada,
+          lote: lote 
+        } as any)
         .eq('id', itemId)
         .select()
 
       if (error) throw error
+
+      // Se há posição informada, atualizar/reduzir estoque na posição
+      if (posicaoId && quantidadeSeparada > 0) {
+        // Criar movimentação de saída para reduzir estoque
+        const item = itensSeparacao.find(i => i.id === itemId);
+        if (item && item.deposito_id) {
+          const { data: user } = await supabase.auth.getUser();
+          if (user.user) {
+            await supabase
+              .from('movimentacoes')
+              .insert({
+                user_id: user.user.id,
+                produto_id: item.produto_id,
+                deposito_id: item.deposito_id,
+                tipo_movimentacao: 'saida',
+                quantidade: -quantidadeSeparada,
+                lote: lote,
+                referencia_id: itemId,
+                referencia_tipo: 'separacao',
+                observacoes: `Separação manual - Posição: ${posicaoId}`
+              });
+          }
+        }
+      }
+
       return data
     },
     onSuccess: () => {
@@ -122,19 +160,26 @@ export function useSeparacaoItens() {
   }
 
   const inicializarSeparacao = (itens: any[], depositoId?: string) => {
-    const itensSeparacao: ItemSeparacao[] = itens.map(item => {
-      // Simular sugestão FEFO para demonstração
+    const itensSeparacao: ItemSeparacao[] = itens.map((item, index) => {
+      // Usar dados determinísticos para evitar loop
+      const baseDate = new Date();
+      const diasFixos = 30 + (index * 15);
+      const dataValidade = new Date(baseDate.getTime() + (diasFixos * 24 * 60 * 60 * 1000));
+      const diasParaVencer = Math.ceil((dataValidade.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
+      if (diasParaVencer <= 15) {
+        statusValidade = 'critico';
+      } else if (diasParaVencer <= 30) {
+        statusValidade = 'atencao';
+      }
+
       const sugestaoFEFO = {
-        posicao_codigo: `R01-M04-A${Math.floor(Math.random() * 5) + 1}`,
-        lote: `LT${new Date().getFullYear()}${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 99) + 1).padStart(2, '0')}`,
-        data_validade: new Date(Date.now() + (Math.floor(Math.random() * 200) + 15) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        dias_para_vencer: Math.floor(Math.random() * 200) + 15,
-        status_validade: (() => {
-          const dias = Math.floor(Math.random() * 200) + 15;
-          if (dias <= 15) return 'critico' as const;
-          if (dias <= 30) return 'atencao' as const;
-          return 'normal' as const;
-        })()
+        posicao_codigo: `R${String(Math.floor(index / 10) + 1).padStart(2, '0')}-M${String((index % 10) + 1).padStart(2, '0')}-A${String((index % 5) + 1)}`,
+        lote: `LT${baseDate.getFullYear()}${String(baseDate.getMonth() + 1).padStart(2, '0')}${String(baseDate.getDate()).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`,
+        data_validade: dataValidade.toISOString().split('T')[0],
+        dias_para_vencer: diasParaVencer,
+        status_validade: statusValidade
       };
 
       return {
@@ -143,7 +188,7 @@ export function useSeparacaoItens() {
         produto_nome: item.produtos?.nome || 'Nome não disponível',
         quantidade_total: item.quantidade,
         quantidade_separada: item.quantidade_separada || 0,
-        lote: item.lote,
+        lote: item.lote || sugestaoFEFO.lote,
         unidade_medida: item.produtos?.unidade_medida || 'un',
         deposito_id: depositoId,
         sugestao_fefo: sugestaoFEFO
