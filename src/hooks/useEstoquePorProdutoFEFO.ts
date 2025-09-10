@@ -120,63 +120,155 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
         estoqueFEFO.push(...palletsFEFO);
       }
 
-      // 2. Buscar produtos que vieram de allocation_waves com posições ocupadas
-      const { data: wavesData, error: wavesError } = await supabase
+      // 2. Buscar movimentações com posições específicas nas observações
+      const { data: movimentacoes, error: movError } = await supabase
         .from("movimentacoes")
         .select(`
-          referencia_id,
-          lote,
-          data_movimentacao,
-          quantidade
+          *,
+          produtos(nome, unidade_medida)
         `)
         .eq("produto_id", produtoId)
         .eq("deposito_id", depositoId)
-        .eq("referencia_tipo", "allocation_wave")
-        .eq("tipo_movimentacao", "entrada");
+        .eq("tipo_movimentacao", "entrada")
+        .gt("quantidade", 0)
+        .order("data_movimentacao", { ascending: true });
 
-      if (wavesError) {
-        console.error('❌ Erro ao buscar allocation_waves:', wavesError);
-      } else if (wavesData && wavesData.length > 0) {
-        // Para cada movimentação de wave, buscar posições ocupadas no depósito
-        const { data: positionsData } = await supabase
-          .from("storage_positions")
-          .select("id, codigo")
-          .eq("deposito_id", depositoId)
-          .eq("ocupado", true)
-          .limit(1); // Pegar a primeira posição ocupada como sugestão
-        
-        const { data: productData } = await supabase
-          .from("produtos")
-          .select("nome")
-          .eq("id", produtoId)
-          .single();
-
-        // Processar allocation_waves em dados FEFO
-        const wavesFEFO = wavesData.map((wave, index) => {
-          const position = positionsData?.[0];
+      if (movError) {
+        console.error('❌ Erro ao buscar movimentações:', movError);
+      } else if (movimentacoes && movimentacoes.length > 0) {
+        // Extrair posições das observações
+        for (const mov of movimentacoes) {
+          const observacao = mov.observacoes || "";
+          const posicaoMatch = observacao.match(/Posição:\s*([A-Z0-9\-_]+)/i);
           
-          return {
-            id: `wave-${wave.referencia_id}-${index}`,
-            produto_id: produtoId,
-            produto_nome: productData?.nome || "Produto não encontrado",
-            deposito_id: depositoId,
-            quantidade_atual: wave.quantidade,
-            lote: wave.lote || `WAVE-${wave.referencia_id.substring(0, 8)}`,
-            data_validade: undefined,
-            data_entrada: wave.data_movimentacao.split('T')[0],
-            posicao_codigo: position?.codigo || `WAVE-${wave.referencia_id.substring(0, 8)}`,
-            posicao_id: position?.id,
-            dias_para_vencer: 999,
-            prioridade_fefo: calcularPrioridadeFEFO(undefined, wave.data_movimentacao),
-            status_validade: 'normal' as const,
-            pallet_id: undefined,
-            pallet_numero: undefined
-          };
-        });
-        estoqueFEFO.push(...wavesFEFO);
+          if (posicaoMatch) {
+            const codigoPosicao = posicaoMatch[1];
+            
+            // Buscar a posição pelo código (independente do status ocupado)
+            const { data: posicao } = await supabase
+              .from("storage_positions")
+              .select("*")
+              .eq("codigo", codigoPosicao)
+              .eq("deposito_id", depositoId)
+              .eq("ativo", true)
+              .single();
+
+            if (posicao) {
+              // Calcular quantidade atual para este produto nesta posição
+              const { data: totalMovs } = await supabase
+                .from("movimentacoes")
+                .select("quantidade")
+                .eq("produto_id", produtoId)
+                .eq("deposito_id", depositoId)
+                .ilike("observacoes", `%${codigoPosicao}%`);
+
+              const quantidadeAtual = totalMovs?.reduce((sum, m) => sum + (m.quantidade || 0), 0) || 0;
+
+              if (quantidadeAtual > 0) {
+                // Determinar data de validade
+                let dataValidade: string | null = null;
+                if (mov.referencia_tipo === 'entrada') {
+                  const { data: entradaItem } = await supabase
+                    .from("entrada_itens")
+                    .select("data_validade")
+                    .eq("entrada_id", mov.referencia_id)
+                    .eq("produto_id", produtoId)
+                    .single();
+                  dataValidade = entradaItem?.data_validade || null;
+                }
+
+                const diasParaVencer = dataValidade 
+                  ? Math.ceil((new Date(dataValidade).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                  : 999;
+
+                let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
+                if (diasParaVencer <= 15) {
+                  statusValidade = 'critico';
+                } else if (diasParaVencer <= 30) {
+                  statusValidade = 'atencao';
+                }
+
+                estoqueFEFO.push({
+                  id: `posicao-${posicao.id}-${mov.id}`,
+                  produto_id: produtoId,
+                  produto_nome: mov.produtos?.nome || '',
+                  deposito_id: depositoId,
+                  quantidade_atual: quantidadeAtual,
+                  data_validade: dataValidade,
+                  data_entrada: mov.data_movimentacao?.split('T')[0] || new Date().toISOString().split('T')[0],
+                  lote: mov.lote || `POS-${codigoPosicao}`,
+                  dias_para_vencer: diasParaVencer,
+                  status_validade: statusValidade,
+                  prioridade_fefo: calcularPrioridadeFEFO(dataValidade, mov.data_movimentacao),
+                  posicao_codigo: posicao.codigo,
+                  posicao_id: posicao.id,
+                  pallet_id: undefined,
+                  pallet_numero: undefined
+                });
+                break; // Só precisamos encontrar uma posição válida
+              }
+            }
+          }
+        }
       }
 
-      // 3. Se não encontrou nada, buscar no estoque geral
+      // 3. Se não encontrou posições específicas, buscar posições ocupadas gerais
+      if (estoqueFEFO.length === 0) {
+        const { data: posicoesOcupadas } = await supabase
+          .from("storage_positions")
+          .select("*")
+          .eq("deposito_id", depositoId)
+          .eq("ocupado", true)
+          .eq("ativo", true);
+
+        // Verificar se há estoque real nessas posições
+        for (const posicao of posicoesOcupadas || []) {
+          const { data: estoque } = await supabase
+            .from("estoque")
+            .select(`
+              *,
+              produtos(nome, unidade_medida)
+            `)
+            .eq("produto_id", produtoId)
+            .eq("deposito_id", depositoId)
+            .gt("quantidade_atual", 0)
+            .single();
+
+          if (estoque) {
+            const diasParaVencer = estoque.data_validade 
+              ? Math.ceil((new Date(estoque.data_validade).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+              : 999;
+            
+            let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
+            if (diasParaVencer <= 15) {
+              statusValidade = 'critico';
+            } else if (diasParaVencer <= 30) {
+              statusValidade = 'atencao';
+            }
+            
+            estoqueFEFO.push({
+              id: `estoque-${posicao.id}`,
+              produto_id: produtoId,
+              produto_nome: estoque.produtos?.nome || '',
+              deposito_id: depositoId,
+              quantidade_atual: estoque.quantidade_atual,
+              data_validade: estoque.data_validade,
+              data_entrada: new Date().toISOString().split('T')[0],
+              lote: estoque.lote || `EST-${posicao.codigo}`,
+              dias_para_vencer: diasParaVencer,
+              status_validade: statusValidade,
+              prioridade_fefo: calcularPrioridadeFEFO(estoque.data_validade, new Date().toISOString()),
+              posicao_codigo: posicao.codigo,
+              posicao_id: posicao.id,
+              pallet_id: undefined,
+              pallet_numero: undefined
+            });
+            break; // Só precisamos de uma posição
+          }
+        }
+      }
+
+      // 4. Se ainda não encontrou nada, buscar no estoque geral (fallback)
       if (estoqueFEFO.length === 0) {
         const { data: estoqueData, error: estoqueError } = await supabase
           .from("estoque")
@@ -184,9 +276,7 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
             produto_id,
             deposito_id,
             quantidade_atual,
-            produtos!inner(
-              nome
-            )
+            produtos!inner(nome)
           `)
           .eq("produto_id", produtoId)
           .eq("deposito_id", depositoId)

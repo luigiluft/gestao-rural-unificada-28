@@ -2121,6 +2121,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      fix_position_occupancy_status: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       generate_inventory_number: {
         Args: Record<PropertyKey, never>
         Returns: string
