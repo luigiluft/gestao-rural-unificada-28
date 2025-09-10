@@ -2109,6 +2109,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      clean_orphaned_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       complete_allocation_and_create_stock: {
         Args: {
           p_barcode_posicao: string
@@ -2262,6 +2266,10 @@ export type Database = {
       refresh_estoque: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      refresh_estoque_with_retry: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       reset_wave_positions: {
         Args: { p_wave_id: string }
