@@ -2119,6 +2119,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      franqueado_can_view_producer: {
+        Args: { franqueado_id: string; producer_id: string }
+        Returns: boolean
+      }
       generate_inventory_number: {
         Args: Record<PropertyKey, never>
         Returns: string
