@@ -231,24 +231,14 @@ export default function Separacao() {
                   <div className="flex justify-end">
                     <div className="flex gap-2">
                       {saida.status === 'separacao_pendente' && (
-                        <>
-                          <Button
-                            onClick={() => handleSeparacaoIndividual(saida)}
-                            size="sm"
-                            variant="outline"
-                            className="flex items-center gap-2"
-                          >
-                            <Scan className="h-4 w-4" />
-                            Separação Individual
-                          </Button>
-                          <Button
-                            onClick={() => handleAction(saida)}
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90"
-                          >
-                            Marcar Tudo como Separado
-                          </Button>
-                        </>
+                        <Button
+                          onClick={() => handleSeparacaoIndividual(saida)}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                        >
+                          <Scan className="h-4 w-4" />
+                          Separação Individual
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -259,42 +249,6 @@ export default function Separacao() {
         )}
       </div>
 
-      {/* Dialog de Confirmação */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Separação</DialogTitle>
-            <DialogDescription>
-              {selectedSaida && `Deseja marcar todos os itens da saída SAI${selectedSaida.id.slice(-6).toUpperCase()} como separados?`}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="observacoes">Observações (opcional)</Label>
-              <Textarea
-                id="observacoes"
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Adicione observações sobre a separação..."
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleConfirm}
-              disabled={atualizarStatus.isPending}
-            >
-              {atualizarStatus.isPending ? "Atualizando..." : "Confirmar Separação"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Dialog de Separação Individual */}
       <SeparacaoIndividual
