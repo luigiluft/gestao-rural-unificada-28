@@ -395,7 +395,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         <CardContent className="space-y-4">
           {/* Formulário de novo item */}
           <div className="border rounded-lg p-4 bg-muted/30">
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-3 mb-3">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
               <div className="lg:col-span-3 space-y-1">
                 <Label className="text-xs font-medium">Produto</Label>
                 <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
@@ -412,7 +412,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                 </Select>
               </div>
 
-              <div className="lg:col-span-2 space-y-1">
+              <div className="lg:col-span-4 space-y-1">
                 <Label className="text-xs font-medium">Lote (FEFO)</Label>
                 <Select 
                   value={novoItem.lote_id} 
@@ -422,13 +422,13 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder={novoItem.produto_id ? "Selecione o lote" : "Selecione produto primeiro"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="w-[400px]">
                     {estoqueFEFO?.map((lote) => (
                       <SelectItem key={lote.id} value={lote.id}>
-                        <div className="flex flex-col text-xs">
+                        <div className="flex flex-col text-xs w-full">
                           <span className="font-medium">{lote.lote || 'SEM LOTE'}</span>
                           <div className="flex gap-2 text-muted-foreground">
-                            <span>Disp: {lote.quantidade_atual}</span>
+                            <span>Total: {lote.quantidade_atual}</span>
                             {lote.data_validade && (
                               <span className={
                                 lote.status_validade === 'critico' ? 'text-destructive' :
@@ -437,10 +437,16 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                                 {lote.dias_para_vencer}d
                               </span>
                             )}
-                            {lote.posicao_codigo && (
-                              <span>Pos: {lote.posicao_codigo}</span>
-                            )}
                           </div>
+                          {lote.posicoes.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {lote.posicoes.map((pos, index) => (
+                                <span key={index} className="text-xs bg-muted px-1 rounded">
+                                  {pos.codigo}: {pos.quantidade}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </SelectItem>
                     ))}

@@ -107,8 +107,14 @@ export const PosicoesProduto = ({ produtoId, depositoId, produtoNome }: Posicoes
           
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium">Posição:</span>
-              <p className="text-lg font-mono">{sugestaoFEFO.posicao_codigo || 'N/A'}</p>
+              <span className="font-medium">Posições:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {sugestaoFEFO.posicoes.map((pos, index) => (
+                  <span key={index} className="text-sm font-mono bg-background px-2 py-1 rounded">
+                    {pos.codigo}
+                  </span>
+                ))}
+              </div>
             </div>
             <div>
               <span className="font-medium">Quantidade:</span>
@@ -139,7 +145,13 @@ export const PosicoesProduto = ({ produtoId, depositoId, produtoNome }: Posicoes
                 <div key={item.id} className="border rounded-lg p-3 bg-muted/20">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-medium">{item.posicao_codigo || 'N/A'}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {item.posicoes.map((pos, posIndex) => (
+                          <span key={posIndex} className="text-xs font-mono bg-background px-1 rounded">
+                            {pos.codigo}: {pos.quantidade}
+                          </span>
+                        ))}
+                      </div>
                       {getStatusIcon(item.status_validade)}
                     </div>
                     <Badge variant={getStatusVariant(item.status_validade)}>

@@ -31,7 +31,7 @@ export const ItemSeparacaoCard = ({ item, depositoId, formatCurrency }: ItemSepa
     return null;
   };
 
-  const posicaoSugerida = estoqueFEFO?.[0]?.posicao_codigo;
+  const posicaoSugerida = estoqueFEFO?.[0]?.posicoes?.[0]?.codigo;
 
   return (
     <div className="flex flex-col gap-2">

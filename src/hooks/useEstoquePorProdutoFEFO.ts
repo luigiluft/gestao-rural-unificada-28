@@ -10,8 +10,11 @@ export interface EstoqueFEFO {
   lote?: string;
   data_validade?: string;
   data_entrada: string;
-  posicao_codigo?: string;
-  posicao_id?: string;
+  posicoes: Array<{
+    codigo: string;
+    posicao_id?: string;
+    quantidade: number;
+  }>;
   dias_para_vencer?: number;
   prioridade_fefo: number;
   status_validade: 'critico' | 'atencao' | 'normal';
@@ -75,52 +78,77 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
       if (palletsError) {
         console.error('❌ Erro ao buscar pallets:', palletsError);
       } else if (palletsData && palletsData.length > 0) {
-        // Processar os pallets em dados FEFO
-        const palletsFEFO = palletsData.flatMap((pallet) => {
-          return pallet.entrada_pallet_itens
+        // Agrupar por lote e processar posições
+        const loteGroups = new Map();
+        
+        palletsData.forEach((pallet) => {
+          pallet.entrada_pallet_itens
             .filter(item => item.entrada_itens.produto_id === produtoId)
-            .map((item) => {
+            .forEach((item) => {
               const entrada = pallet.entradas;
-              const position = pallet.pallet_positions[0];
               const entradaItem = item.entrada_itens;
+              const loteKey = entradaItem.lote || `P${pallet.numero_pallet}-${entrada.id.substring(0, 8)}`;
               
-              // Calcular dias para vencer
-              const dataValidade = entradaItem.data_validade ? new Date(entradaItem.data_validade) : null;
-              const hoje = new Date();
-              const diasParaVencer = dataValidade ? 
-                Math.ceil((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)) : 
-                999;
-              
-              let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
-              if (diasParaVencer <= 15) {
-                statusValidade = 'critico';
-              } else if (diasParaVencer <= 30) {
-                statusValidade = 'atencao';
+              if (!loteGroups.has(loteKey)) {
+                // Calcular dias para vencer
+                const dataValidade = entradaItem.data_validade ? new Date(entradaItem.data_validade) : null;
+                const hoje = new Date();
+                const diasParaVencer = dataValidade ? 
+                  Math.ceil((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)) : 
+                  999;
+                
+                let statusValidade: 'critico' | 'atencao' | 'normal' = 'normal';
+                if (diasParaVencer <= 15) {
+                  statusValidade = 'critico';
+                } else if (diasParaVencer <= 30) {
+                  statusValidade = 'atencao';
+                }
+
+                loteGroups.set(loteKey, {
+                  id: `lote-${loteKey}-${entradaItem.produto_id}`,
+                  produto_id: entradaItem.produto_id,
+                  produto_nome: entradaItem.nome_produto,
+                  deposito_id: entrada.deposito_id,
+                  quantidade_atual: 0,
+                  lote: loteKey,
+                  data_validade: entradaItem.data_validade,
+                  data_entrada: entrada.data_entrada,
+                  posicoes: [],
+                  dias_para_vencer: diasParaVencer,
+                  prioridade_fefo: calcularPrioridadeFEFO(entradaItem.data_validade, entrada.data_entrada),
+                  status_validade: statusValidade,
+                  pallet_id: pallet.id,
+                  pallet_numero: pallet.numero_pallet
+                });
               }
-
-              const posicaoCodigo = position?.storage_positions?.codigo || 'SEM POSIÇÃO';
-
-              return {
-                id: `pallet-${pallet.id}-item-${item.id}`,
-                produto_id: entradaItem.produto_id,
-                produto_nome: entradaItem.nome_produto,
-                deposito_id: entrada.deposito_id,
-                quantidade_atual: item.quantidade,
-                lote: entradaItem.lote || `P${pallet.numero_pallet}-${entrada.id.substring(0, 8)}`,
-                data_validade: entradaItem.data_validade,
-                data_entrada: entrada.data_entrada,
-                posicao_codigo: posicaoCodigo,
-                posicao_id: position?.posicao_id,
-                dias_para_vencer: diasParaVencer,
-                prioridade_fefo: calcularPrioridadeFEFO(entradaItem.data_validade, entrada.data_entrada),
-                status_validade: statusValidade,
-                pallet_id: pallet.id,
-                pallet_numero: pallet.numero_pallet
-              };
+              
+              const loteData = loteGroups.get(loteKey);
+              loteData.quantidade_atual += item.quantidade;
+              
+              // Adicionar posições do pallet
+              if (Array.isArray(pallet.pallet_positions)) {
+                pallet.pallet_positions.forEach(position => {
+                  const posicaoCodigo = position?.storage_positions?.codigo || 'SEM POSIÇÃO';
+                  loteData.posicoes.push({
+                    codigo: posicaoCodigo,
+                    posicao_id: position?.posicao_id,
+                    quantidade: item.quantidade
+                  });
+                });
+              } else if (pallet.pallet_positions) {
+                // Caso seja um objeto único ao invés de array
+                const position = pallet.pallet_positions;
+                const posicaoCodigo = position?.storage_positions?.codigo || 'SEM POSIÇÃO';
+                loteData.posicoes.push({
+                  codigo: posicaoCodigo,
+                  posicao_id: position?.posicao_id,
+                  quantidade: item.quantidade
+                });
+              }
             });
         });
         
-        estoqueFEFO.push(...palletsFEFO);
+        estoqueFEFO.push(...Array.from(loteGroups.values()));
       }
 
       // 2. Se não encontrou pallets, buscar no estoque geral via função RPC
@@ -149,8 +177,7 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
               lote: "SEM LOTE",
               data_validade: undefined,
               data_entrada: new Date().toISOString().split('T')[0],
-              posicao_codigo: "SEM POSIÇÃO",
-              posicao_id: undefined,
+              posicoes: [{ codigo: "SEM POSIÇÃO", quantidade: estoque.quantidade_atual }],
               dias_para_vencer: 999,
               prioridade_fefo: calcularPrioridadeFEFO(undefined, new Date().toISOString()),
               status_validade: 'normal' as const,
