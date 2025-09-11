@@ -33,7 +33,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
   } = useSeparacaoItens()
 
   useEffect(() => {
-    if (saida?.saida_itens && open) {
+    if (saida?.saida_itens && saida?.deposito_id && open) {
       inicializarSeparacao(saida.saida_itens, saida.deposito_id)
       setItemAtualIndex(0)
     }
@@ -129,7 +129,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
   }
 
   const handleFinalizarSeparacao = async () => {
-    if (podeFinalizarSeparacao()) {
+    if (podeFinalizarSeparacao() && saida?.id) {
       await finalizarSeparacao.mutateAsync({ saidaId: saida.id })
       onClose()
     }
@@ -295,7 +295,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
             )}
 
             {/* Posições do Produto */}
-            {itemAtual && itemAtual.produto_id && saida.deposito_id && (
+            {itemAtual && itemAtual.produto_id && saida?.deposito_id && (
               <PosicoesProduto 
                 produtoId={itemAtual.produto_id}
                 depositoId={saida.deposito_id}
