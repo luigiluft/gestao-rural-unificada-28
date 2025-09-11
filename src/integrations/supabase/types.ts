@@ -2235,10 +2235,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      refresh_estoque: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       refresh_estoque_with_retry: {
         Args: Record<PropertyKey, never>
         Returns: boolean
