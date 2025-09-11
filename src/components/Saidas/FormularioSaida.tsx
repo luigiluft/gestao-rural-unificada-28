@@ -11,6 +11,7 @@ import { useEstoque } from "@/hooks/useEstoque"
 import { useProdutosFallback } from "@/hooks/useProdutosFallback"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile, useProdutores, useFazendas, useProdutoresComEstoqueNaFranquia } from "@/hooks/useProfile"
+import { useEstoquePorProdutoFEFO } from "@/hooks/useEstoquePorProdutoFEFO"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { usePesoMinimoMopp, useHorariosRetirada, useDiasUteisExpedicao } from "@/hooks/useConfiguracoesSistema"
@@ -26,6 +27,7 @@ interface ItemSaida {
   produto_id: string
   produtoNome: string
   lote?: string
+  lote_id?: string
   quantidade: number
   unidade: string
   valor_unitario?: number
@@ -74,11 +76,18 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     produto_id: "",
     produtoNome: "",
     lote: "",
+    lote_id: "",
     quantidade: 0,
     unidade: "",
     valor_unitario: 0,
     valor_total: 0
   })
+
+  // Hook para buscar lotes FEFO do produto selecionado
+  const { data: estoqueFEFO } = useEstoquePorProdutoFEFO(
+    novoItem.produto_id || undefined, 
+    dadosSaida.deposito_id || undefined
+  )
 
   // Detectar tipo de usuário
   const isProdutor = profile?.role === 'produtor'
@@ -170,8 +179,21 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         produto_id: produtoId,
         produtoNome: produto.nome,
         unidade: produto.unidade_medida,
-        lote: primeiroItem?.lote || "",
+        lote: "", // Limpar lote para forçar seleção manual
+        lote_id: "",
         valor_unitario: primeiroItem?.valor_medio || 0
+      })
+    }
+  }
+
+  const handleLoteChange = (loteId: string) => {
+    const loteItem = estoqueFEFO?.find(lote => lote.id === loteId)
+    if (loteItem) {
+      setNovoItem({
+        ...novoItem,
+        lote: loteItem.lote || "",
+        lote_id: loteId,
+        valor_unitario: 0 // Por enquanto mantém 0, pode ser implementado valor por lote depois
       })
     }
   }
@@ -191,9 +213,14 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
       return
     }
 
+    if (!novoItem.lote_id) {
+      toast.error("Selecione um lote para o produto")
+      return
+    }
+
     // Verificar se já existe item com mesmo produto e lote
     const itemExistente = itens.find(item => 
-      item.produto_id === novoItem.produto_id && item.lote === novoItem.lote
+      item.produto_id === novoItem.produto_id && item.lote_id === novoItem.lote_id
     )
 
     if (itemExistente) {
@@ -201,10 +228,10 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
       return
     }
 
-    // Verificar disponibilidade no estoque
-    const produto = produtosDisponiveis[novoItem.produto_id]
-    if (!produto || produto.quantidade_total < novoItem.quantidade) {
-      toast.error("Quantidade indisponível no estoque")
+    // Verificar disponibilidade específica do lote
+    const loteItem = estoqueFEFO?.find(lote => lote.id === novoItem.lote_id)
+    if (!loteItem || loteItem.quantidade_atual < novoItem.quantidade) {
+      toast.error(`Quantidade indisponível no lote. Disponível: ${loteItem?.quantidade_atual || 0}`)
       return
     }
 
@@ -213,6 +240,7 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
       produto_id: "",
       produtoNome: "",
       lote: "",
+      lote_id: "",
       quantidade: 0,
       unidade: "",
       valor_unitario: 0,
@@ -367,8 +395,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
         <CardContent className="space-y-4">
           {/* Formulário de novo item */}
           <div className="border rounded-lg p-4 bg-muted/30">
-            <div className="grid grid-cols-1 lg:grid-cols-9 gap-3 mb-3">
-              <div className="lg:col-span-4 space-y-1">
+            <div className="grid grid-cols-1 lg:grid-cols-10 gap-3 mb-3">
+              <div className="lg:col-span-3 space-y-1">
                 <Label className="text-xs font-medium">Produto</Label>
                 <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
                   <SelectTrigger className="h-9">
@@ -385,6 +413,50 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
               </div>
 
               <div className="lg:col-span-2 space-y-1">
+                <Label className="text-xs font-medium">Lote (FEFO)</Label>
+                <Select 
+                  value={novoItem.lote_id} 
+                  onValueChange={handleLoteChange}
+                  disabled={!novoItem.produto_id || !estoqueFEFO || estoqueFEFO.length === 0}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder={novoItem.produto_id ? "Selecione o lote" : "Selecione produto primeiro"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estoqueFEFO?.map((lote) => (
+                      <SelectItem key={lote.id} value={lote.id}>
+                        <div className="flex flex-col text-xs">
+                          <span className="font-medium">{lote.lote || 'SEM LOTE'}</span>
+                          <div className="flex gap-2 text-muted-foreground">
+                            <span>Disp: {lote.quantidade_atual}</span>
+                            {lote.data_validade && (
+                              <span className={
+                                lote.status_validade === 'critico' ? 'text-destructive' :
+                                lote.status_validade === 'atencao' ? 'text-warning' : ''
+                              }>
+                                {lote.dias_para_vencer}d
+                              </span>
+                            )}
+                            {lote.posicao_codigo && (
+                              <span>Pos: {lote.posicao_codigo}</span>
+                            )}
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {novoItem.lote_id && estoqueFEFO && (
+                  <div className="text-xs text-muted-foreground">
+                    {(() => {
+                      const loteItem = estoqueFEFO.find(l => l.id === novoItem.lote_id)
+                      return loteItem ? `Disponível: ${loteItem.quantidade_atual} ${novoItem.unidade}` : ''
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:col-span-2 space-y-1">
                 <Label className="text-xs font-medium">Quantidade</Label>
                 <Input
                   type="number"
@@ -394,12 +466,8 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                   onChange={(e) => handleQuantidadeChange(parseFloat(e.target.value) || 0)}
                   placeholder="0"
                   className="h-9"
+                  disabled={!novoItem.lote_id}
                 />
-                {novoItem.produto_id && produtosDisponiveis[novoItem.produto_id] && (
-                  <div className="text-xs text-muted-foreground">
-                    Disponível: {produtosDisponiveis[novoItem.produto_id].quantidade_total} {produtosDisponiveis[novoItem.produto_id].unidade_medida}
-                  </div>
-                )}
               </div>
 
               <div className="lg:col-span-2 space-y-1">
