@@ -289,30 +289,36 @@ export type Database = {
       }
       entrada_pallets: {
         Row: {
+          codigo_barras: string | null
           created_at: string
           descricao: string | null
           entrada_id: string
           id: string
           numero_pallet: number
           peso_total: number | null
+          quantidade_atual: number | null
           updated_at: string
         }
         Insert: {
+          codigo_barras?: string | null
           created_at?: string
           descricao?: string | null
           entrada_id: string
           id?: string
           numero_pallet: number
           peso_total?: number | null
+          quantidade_atual?: number | null
           updated_at?: string
         }
         Update: {
+          codigo_barras?: string | null
           created_at?: string
           descricao?: string | null
           entrada_id?: string
           id?: string
           numero_pallet?: number
           peso_total?: number | null
+          quantidade_atual?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2156,7 +2162,9 @@ export type Database = {
         Returns: string
       }
       generate_pallet_barcode: {
-        Args: { p_entrada_id: string; p_numero_pallet: number }
+        Args:
+          | Record<PropertyKey, never>
+          | { p_entrada_id: string; p_numero_pallet: number }
         Returns: string
       }
       get_current_user_role: {
