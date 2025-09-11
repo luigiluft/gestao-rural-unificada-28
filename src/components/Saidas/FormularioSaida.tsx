@@ -112,7 +112,11 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   
   // Get the target producer ID for farms (current user if producer, selected producer if franchisee)
   const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
-  const { data: fazendas } = useFazendas(targetProdutorId)
+  
+  console.log("targetProdutorId no FormularioSaida:", targetProdutorId)
+  console.log("dadosSaida.produtor_destinatario:", dadosSaida.produtor_destinatario)
+
+  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetProdutorId)
 
   // Filtrar estoque disponível (quantidade > 0) e agrupar por produto
   const estoqueDisponivel = estoque?.filter(item => 
@@ -447,7 +451,15 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
                 <Label htmlFor="fazenda_id">Fazenda de Destino</Label>
                 <Select value={dadosSaida.fazenda_id} onValueChange={(value) => setDadosSaida({ ...dadosSaida, fazenda_id: value })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a fazenda" />
+                    <SelectValue 
+                      placeholder={
+                        loadingFazendas 
+                          ? "Carregando fazendas..." 
+                          : fazendas.length === 0 && targetProdutorId
+                            ? "Nenhuma fazenda cadastrada"
+                            : "Selecione a fazenda"
+                      } 
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {fazendas?.map((fazenda) => (
