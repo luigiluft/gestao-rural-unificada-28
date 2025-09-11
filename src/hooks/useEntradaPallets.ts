@@ -8,6 +8,8 @@ export interface EntradaPallet {
   numero_pallet: number
   descricao?: string
   peso_total?: number
+  codigo_barras?: string
+  quantidade_atual: number
   created_at: string
   updated_at: string
 }

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Trash2, Package, Minus } from "lucide-react"
+import { Plus, Trash2, Package, Minus, Printer } from "lucide-react"
+import { PalletBarcodeLabel } from './PalletBarcodeLabel'
 import { toast } from "@/hooks/use-toast"
 import { 
   useEntradaPallets, 
@@ -50,6 +51,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     codigo?: string
     maxQuantidade: number
   }>>([])
+  const [showPalletLabels, setShowPalletLabels] = useState<{ [key: string]: boolean }>({})
 
   const getNextPalletNumber = () => {
     const existingNumbers = typedPallets.map(p => p.numero_pallet).sort((a, b) => a - b)
@@ -92,6 +94,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       numero_pallet: getNextPalletNumber(),
       descricao: newPallet.descricao || null,
       peso_total: null,
+      quantidade_atual: selectedProductsForNewPallet.reduce((acc, product) => acc + product.quantidade, 0),
     })
 
     // Adicionar todos os produtos selecionados ao pallet recém-criado
@@ -211,11 +214,14 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     }
 
     try {
+      const totalQuantidadeTemplate = templatePallet.entrada_pallet_itens?.reduce((acc, item) => acc + item.quantidade, 0) || 0
+      
       const newPalletData = await createPallet.mutateAsync({
         entrada_id: entradaId,
         numero_pallet: getNextPalletNumber(),
         descricao: templatePallet.descricao,
         peso_total: templatePallet.peso_total,
+        quantidade_atual: totalQuantidadeTemplate,
       })
 
       // Add same products to duplicated pallet
@@ -492,18 +498,32 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         <Minus className="h-3 w-3" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        // Delete all pallets in group
-                        group.pallets.forEach(pallet => deletePallet.mutate(pallet.id))
-                      }}
-                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                      title="Remover todos os pallets deste tipo"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowPalletLabels(prev => ({ 
+                          ...prev, 
+                          [group.template.id]: !prev[group.template.id] 
+                        }))}
+                        className="h-7 w-7 p-0"
+                        title="Visualizar etiquetas"
+                      >
+                        <Printer className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          // Delete all pallets in group
+                          group.pallets.forEach(pallet => deletePallet.mutate(pallet.id))
+                        }}
+                        className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                        title="Remover todos os pallets deste tipo"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 {group.template.descricao && (
@@ -533,6 +553,38 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                   <div className="text-center py-4 text-muted-foreground">
                     <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Pallet vazio</p>
+                  </div>
+                )}
+                
+                {/* Etiquetas dos Pallets */}
+                {showPalletLabels[group.template.id] && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Printer className="h-4 w-4" />
+                      Etiquetas dos Pallets
+                    </h4>
+                    <div className="grid gap-3">
+                      {group.pallets.map((pallet) => (
+                        <PalletBarcodeLabel
+                          key={pallet.id}
+                          pallet={{
+                            ...pallet,
+                            entrada_pallet_itens: pallet.entrada_pallet_itens?.map(item => ({
+                              quantidade: item.quantidade,
+                              entrada_itens: {
+                                nome_produto: item.entrada_itens?.nome_produto || 'Produto',
+                                lote: `P${pallet.numero_pallet}-${new Date().getFullYear()}`,
+                                data_validade: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 90 dias no futuro
+                              }
+                            }))
+                          }}
+                          entradaData={{
+                            data_entrada: new Date().toISOString(),
+                            fornecedor: { nome: 'Fornecedor Exemplo' }
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>

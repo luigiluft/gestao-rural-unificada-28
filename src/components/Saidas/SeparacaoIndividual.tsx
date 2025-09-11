@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Package, Scan, CheckCircle, Minus, Plus, AlertTriangle, Clock } from 'lucide-react'
 import { useSeparacaoItens, ItemSeparacao } from '@/hooks/useSeparacaoItens'
 import { ScannerCodigoBarras } from './ScannerCodigoBarras'
+import { ScannerPalletBarcode } from './ScannerPalletBarcode'
 import { PosicoesProduto } from '@/components/Separacao/PosicoesProduto'
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -22,6 +23,7 @@ interface SeparacaoIndividualProps {
 
 export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividualProps) {
   const [showScanner, setShowScanner] = useState(false)
+  const [showPalletScanner, setShowPalletScanner] = useState(false)
   const [itemAtualIndex, setItemAtualIndex] = useState(0)
   
   const {
@@ -39,12 +41,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
     }
   }, [saida, open, inicializarSeparacao])
 
-  useEffect(() => {
-    // Auto abrir scanner quando abrir o modal e houver itens
-    if (open && itensSeparacao.length > 0) {
-      setShowScanner(true)
-    }
-  }, [open, itensSeparacao.length])
+  // Removido: não abrir scanner automaticamente
 
   const itemAtual = itensSeparacao[itemAtualIndex]
 
@@ -274,14 +271,25 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                       </Button>
                     </div>
 
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowScanner(!showScanner)}
-                      className="flex items-center gap-2"
-                    >
-                      <Scan className="h-4 w-4" />
-                      {showScanner ? 'Parar Scanner' : 'Ativar Scanner'}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowScanner(!showScanner)}
+                        className="flex items-center gap-2"
+                      >
+                        <Scan className="h-4 w-4" />
+                        {showScanner ? 'Parar Scanner' : 'Scanner Produto'}
+                      </Button>
+                      
+                      <Button
+                        variant="default"
+                        onClick={() => setShowPalletScanner(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <Package className="h-4 w-4" />
+                        Scanner Pallet
+                      </Button>
+                    </div>
                   </div>
 
                   {itemAtual.quantidade_separada >= itemAtual.quantidade_total && (
@@ -363,7 +371,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
         </DialogContent>
       </Dialog>
 
-      {/* Scanner de Código de Barras */}
+      {/* Scanner de Código de Barras - Produtos */}
       {showScanner && itemAtual && (
         <ScannerCodigoBarras
           open={showScanner}
@@ -372,6 +380,32 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
           itemId={itemAtual.id}
           produtoNome={itemAtual.produto_nome}
           quantidadeRestante={itemAtual.quantidade_total - itemAtual.quantidade_separada}
+        />
+      )}
+
+      {/* Scanner de Código de Barras - Pallets */}
+      {showPalletScanner && itemAtual && (
+        <ScannerPalletBarcode
+          open={showPalletScanner}
+          onClose={() => setShowPalletScanner(false)}
+          saidaItemId={itemAtual.id}
+          produtoId={itemAtual.produto_id}
+          produtoNome={itemAtual.produto_nome}
+          quantidadeRestante={itemAtual.quantidade_total - itemAtual.quantidade_separada}
+          onSeparacaoSuccess={(quantidade) => {
+            const novaQuantidade = itemAtual.quantidade_separada + quantidade
+            atualizarQuantidadeSeparada(itemAtual.id, novaQuantidade)
+            
+            // Se completou o item atual, ir para o próximo
+            if (novaQuantidade >= itemAtual.quantidade_total) {
+              const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
+                index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
+              )
+              if (proximoIncompleto !== -1) {
+                setItemAtualIndex(proximoIncompleto)
+              }
+            }
+          }}
         />
       )}
     </>
