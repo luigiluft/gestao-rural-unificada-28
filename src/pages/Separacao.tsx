@@ -237,7 +237,7 @@ export default function Separacao() {
                           className="bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
                         >
                           <Scan className="h-4 w-4" />
-                          Separação Individual
+                          Iniciar Separação
                         </Button>
                       )}
                     </div>
