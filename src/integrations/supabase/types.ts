@@ -2033,34 +2033,7 @@ export type Database = {
       }
     }
     Views: {
-      estoque: {
-        Row: {
-          deposito_id: string | null
-          franquia_nome: string | null
-          id: string | null
-          lotes: string | null
-          produto_codigo: string | null
-          produto_id: string | null
-          produto_nome: string | null
-          quantidade_atual: number | null
-          quantidade_disponivel: number | null
-          quantidade_reservada: number | null
-          status_estoque: string | null
-          ultima_movimentacao: string | null
-          unidade_medida: string | null
-          user_id: string | null
-          valor_total_estoque: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "movimentacoes_produto_id_fkey"
-            columns: ["produto_id"]
-            isOneToOne: false
-            referencedRelation: "produtos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       allocate_pallet_to_position: {
