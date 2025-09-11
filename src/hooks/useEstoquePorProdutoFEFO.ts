@@ -22,9 +22,9 @@ export interface EstoqueFEFO {
   pallet_numero?: number;
 }
 
-export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string) => {
+export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string, produtorDestinatarioId?: string) => {
   return useQuery({
-    queryKey: ["estoque-fefo", produtoId, depositoId],
+    queryKey: ["estoque-fefo", produtoId, depositoId, produtorDestinatarioId],
     queryFn: async () => {
       if (!produtoId || !depositoId) return [];
 

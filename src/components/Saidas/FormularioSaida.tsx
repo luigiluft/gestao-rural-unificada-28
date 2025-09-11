@@ -83,15 +83,16 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     valor_total: 0
   })
 
-  // Hook para buscar lotes FEFO do produto selecionado
-  const { data: estoqueFEFO } = useEstoquePorProdutoFEFO(
-    novoItem.produto_id || undefined, 
-    dadosSaida.deposito_id || undefined
-  )
-
   // Detectar tipo de usuário
   const isProdutor = profile?.role === 'produtor'
   const isFranqueado = profile?.role === 'franqueado'
+
+  // Hook para buscar lotes FEFO do produto selecionado
+  const { data: estoqueFEFO } = useEstoquePorProdutoFEFO(
+    novoItem.produto_id || undefined, 
+    dadosSaida.deposito_id || undefined,
+    isProdutor ? user?.id : dadosSaida.produtor_destinatario
+  )
   
   // DEBUG - Console logs para debugging
   console.log('=== FORMULARIO SAIDA DEBUG ===')
@@ -384,118 +385,287 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
 
   return (
     <div className="space-y-6">
-      {/* Seleção de Produtos - PRIMEIRO */}
+      {/* Dados da Saída - PRIMEIRO */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dados da Saída</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Informações gerais sobre a saída
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="data_saida">Data de Saída *</Label>
+              <Input
+                id="data_saida"
+                type="date"
+                value={dadosSaida.data_saida}
+                min={getMinScheduleDate(diasUteisExpedicao)}
+                onChange={(e) => setDadosSaida({ ...dadosSaida, data_saida: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Mínimo: {diasUteisExpedicao} dias úteis ({getMinScheduleDate(diasUteisExpedicao)})
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tipo_saida">Tipo de Saída *</Label>
+              <Select value={dadosSaida.tipo_saida} onValueChange={(value) => setDadosSaida({ ...dadosSaida, tipo_saida: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="retirada_deposito">Retirada no Depósito</SelectItem>
+                  <SelectItem value="entrega_fazenda">Entrega na Fazenda</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Só mostrar seleção de produtor para franqueados */}
+            {isFranqueado && (
+              <div className="space-y-2">
+                <Label htmlFor="produtor_destinatario">Produtor Destinatário *</Label>
+                <Select value={dadosSaida.produtor_destinatario} onValueChange={(value) => setDadosSaida({ ...dadosSaida, produtor_destinatario: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o produtor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {produtoresParaDropdown.map((produtor) => (
+                      <SelectItem key={produtor.user_id} value={produtor.user_id}>
+                        {produtor.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Mostrar seleção de fazenda quando há produtor selecionado */}
+            {(dadosSaida.tipo_saida === 'entrega_fazenda' && (isProdutor || dadosSaida.produtor_destinatario)) && (
+              <div className="space-y-2">
+                <Label htmlFor="fazenda_id">Fazenda de Destino</Label>
+                <Select value={dadosSaida.fazenda_id} onValueChange={(value) => setDadosSaida({ ...dadosSaida, fazenda_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a fazenda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fazendas?.map((fazenda) => (
+                      <SelectItem key={fazenda.id} value={fazenda.id}>
+                        {fazenda.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Seção de transporte para retirada no depósito */}
+          {dadosSaida.tipo_saida === 'retirada_deposito' && (
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="font-medium text-sm">Dados do Transporte</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="placa_veiculo">Placa do Veículo *</Label>
+                  <Input
+                    id="placa_veiculo"
+                    value={dadosSaida.placa_veiculo}
+                    onChange={(e) => setDadosSaida({ ...dadosSaida, placa_veiculo: e.target.value })}
+                    placeholder="ABC-1234"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nome_motorista">Nome do Motorista *</Label>
+                  <Input
+                    id="nome_motorista"
+                    value={dadosSaida.nome_motorista}
+                    onChange={(e) => setDadosSaida({ ...dadosSaida, nome_motorista: e.target.value })}
+                    placeholder="Nome completo"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="telefone_motorista">Telefone do Motorista *</Label>
+                  <Input
+                    id="telefone_motorista"
+                    value={dadosSaida.telefone_motorista}
+                    onChange={(e) => setDadosSaida({ ...dadosSaida, telefone_motorista: e.target.value })}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cpf_motorista">CPF do Motorista</Label>
+                  <Input
+                    id="cpf_motorista"
+                    value={dadosSaida.cpf_motorista}
+                    onChange={(e) => setDadosSaida({ ...dadosSaida, cpf_motorista: e.target.value })}
+                    placeholder="123.456.789-00"
+                  />
+                </div>
+
+                {requiredMopp && (
+                  <div className="space-y-2">
+                    <Label htmlFor="mopp_motorista">MOPP do Motorista *</Label>
+                    <Input
+                      id="mopp_motorista"
+                      value={dadosSaida.mopp_motorista}
+                      onChange={(e) => setDadosSaida({ ...dadosSaida, mopp_motorista: e.target.value })}
+                      placeholder="Número do MOPP"
+                    />
+                    <p className="text-xs text-orange-600">
+                      MOPP obrigatório para cargas acima de {pesoMinimoMopp} Kg/L
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="janela_horario">Janela de Horário *</Label>
+                  <Select value={dadosSaida.janela_horario} onValueChange={(value) => setDadosSaida({ ...dadosSaida, janela_horario: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o horário" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {horariosDisponiveis.map((horario) => (
+                        <SelectItem key={horario} value={horario}>
+                          {horario}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {datasSemHorarios.includes(dadosSaida.data_saida) && (
+                    <p className="text-xs text-orange-600">
+                      Horários limitados nesta data
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="observacoes">Observações</Label>
+            <Textarea
+              id="observacoes"
+              value={dadosSaida.observacoes}
+              onChange={(e) => setDadosSaida({ ...dadosSaida, observacoes: e.target.value })}
+              placeholder="Observações sobre a saída"
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Seleção de Produtos - SEGUNDO */}
       <Card>
         <CardHeader>
           <CardTitle>Itens da Saída</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Selecione os produtos que serão enviados
+            {isFranqueado && !dadosSaida.produtor_destinatario 
+              ? "Selecione o produtor destinatário primeiro"
+              : "Selecione os produtos que serão enviados"
+            }
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Formulário de novo item */}
-          <div className="border rounded-lg p-4 bg-muted/30">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
-              <div className="lg:col-span-3 space-y-1">
-                <Label className="text-xs font-medium">Produto</Label>
-                <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecione o produto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {produtosArray.map((produto) => (
-                      <SelectItem key={produto.id} value={produto.id}>
-                        <span className="font-medium text-sm">{produto.nome}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Formulário de novo item - só mostrar se produtor selecionado (para franqueados) */}
+          {(isProdutor || dadosSaida.produtor_destinatario) && (
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-3">
+                <div className="lg:col-span-3 space-y-1">
+                  <Label className="text-xs font-medium">Produto</Label>
+                  <Select value={novoItem.produto_id} onValueChange={handleProdutoChange}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Selecione o produto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {produtosArray.map((produto) => (
+                        <SelectItem key={produto.id} value={produto.id}>
+                          <span className="font-medium text-sm">{produto.nome}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="lg:col-span-4 space-y-1">
-                <Label className="text-xs font-medium">Lote (FEFO)</Label>
-                <Select 
-                  value={novoItem.lote_id} 
-                  onValueChange={handleLoteChange}
-                  disabled={!novoItem.produto_id || !estoqueFEFO || estoqueFEFO.length === 0}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder={novoItem.produto_id ? "Selecione o lote" : "Selecione produto primeiro"} />
-                  </SelectTrigger>
-                  <SelectContent className="w-[400px]">
-                    {estoqueFEFO?.map((lote) => (
-                      <SelectItem key={lote.id} value={lote.id}>
-                        <div className="flex flex-col text-xs w-full">
-                          <span className="font-medium">{lote.lote || 'SEM LOTE'}</span>
-                          <div className="flex gap-2 text-muted-foreground">
-                            <span>Total: {lote.quantidade_atual}</span>
-                            {lote.data_validade && (
-                              <span className={
-                                lote.status_validade === 'critico' ? 'text-destructive' :
-                                lote.status_validade === 'atencao' ? 'text-warning' : ''
-                              }>
-                                {lote.dias_para_vencer}d
-                              </span>
-                            )}
-                          </div>
-                          {lote.posicoes.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {lote.posicoes.map((pos, index) => (
-                                <span key={index} className="text-xs bg-muted px-1 rounded">
-                                  {pos.codigo}: {pos.quantidade}
+                <div className="lg:col-span-4 space-y-1">
+                  <Label className="text-xs font-medium">Lote (FEFO)</Label>
+                  <Select 
+                    value={novoItem.lote_id} 
+                    onValueChange={handleLoteChange}
+                    disabled={!novoItem.produto_id || !estoqueFEFO || estoqueFEFO.length === 0}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder={novoItem.produto_id ? "Selecione o lote" : "Selecione produto primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent className="w-[400px]">
+                      {estoqueFEFO?.map((lote) => (
+                        <SelectItem key={lote.id} value={lote.id}>
+                          <div className="flex flex-col text-xs w-full">
+                            <span className="font-medium">{lote.lote || 'SEM LOTE'}</span>
+                            <div className="flex gap-2 text-muted-foreground">
+                              <span>Total: {lote.quantidade_atual}</span>
+                              {lote.data_validade && (
+                                <span className={
+                                  lote.status_validade === 'critico' ? 'text-destructive' :
+                                  lote.status_validade === 'atencao' ? 'text-warning' : ''
+                                }>
+                                  {lote.dias_para_vencer}d
                                 </span>
-                              ))}
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {novoItem.lote_id && estoqueFEFO && (
-                  <div className="text-xs text-muted-foreground">
-                    {(() => {
-                      const loteItem = estoqueFEFO.find(l => l.id === novoItem.lote_id)
-                      return loteItem ? `Disponível: ${loteItem.quantidade_atual} ${novoItem.unidade}` : ''
-                    })()}
-                  </div>
-                )}
-              </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {novoItem.lote_id && estoqueFEFO && (
+                    <div className="text-xs text-muted-foreground">
+                      {(() => {
+                        const loteItem = estoqueFEFO.find(l => l.id === novoItem.lote_id)
+                        return loteItem ? `Disponível: ${loteItem.quantidade_atual} ${novoItem.unidade}` : ''
+                      })()}
+                    </div>
+                  )}
+                </div>
 
-              <div className="lg:col-span-2 space-y-1">
-                <Label className="text-xs font-medium">Quantidade</Label>
-                <Input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={novoItem.quantidade || ''}
-                  onChange={(e) => handleQuantidadeChange(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  className="h-9"
-                  disabled={!novoItem.lote_id}
-                />
-              </div>
+                <div className="lg:col-span-2 space-y-1">
+                  <Label className="text-xs font-medium">Quantidade</Label>
+                  <Input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={novoItem.quantidade || ''}
+                    onChange={(e) => handleQuantidadeChange(parseFloat(e.target.value) || 0)}
+                    placeholder="0"
+                    className="h-9"
+                    disabled={!novoItem.lote_id}
+                  />
+                </div>
 
-              <div className="lg:col-span-2 space-y-1">
-                <Label className="text-xs font-medium">Unidade</Label>
-                <Input 
-                  value={novoItem.unidade} 
-                  disabled 
-                  className="h-9 bg-muted"
-                />
-              </div>
+                <div className="lg:col-span-2 space-y-1">
+                  <Label className="text-xs font-medium">Unidade</Label>
+                  <Input 
+                    value={novoItem.unidade} 
+                    disabled 
+                    className="h-9 bg-muted"
+                  />
+                </div>
 
-              <div className="lg:col-span-1 space-y-1">
-                <Label className="text-xs font-medium">Ação</Label>
-                <Button onClick={adicionarItem} size="sm" className="w-full h-9">
-                  <Plus className="w-4 h-4" />
-                </Button>
+                <div className="lg:col-span-1 space-y-1">
+                  <Label className="text-xs font-medium">Ação</Label>
+                  <Button onClick={adicionarItem} size="sm" className="w-full h-9">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Lista de itens adicionados */}
-          {itens.length > 0 && (
+          {(isProdutor || dadosSaida.produtor_destinatario) && itens.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -528,240 +698,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
 
         </CardContent>
       </Card>
-
-      {/* Dados da Saída - SEGUNDO, só aparece se tem itens */}
-      {itens.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Dados da Saída</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Preencha os dados da saída dos produtos
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                <Label htmlFor="data_saida">Data da Saída</Label>
-                <Input
-                  id="data_saida"
-                  type="date"
-                  value={dadosSaida.data_saida}
-                  onChange={(e) => {
-                    const novaData = e.target.value
-                    setDadosSaida(prev => ({ 
-                      ...prev, 
-                      data_saida: novaData,
-                      janela_horario: '' // Limpar horário ao mudar data
-                    }))
-                  }}
-                  min={getMinScheduleDate(diasUteisExpedicao)}
-                />
-                {dadosSaida.tipo_saida === 'retirada_deposito' && datasSemHorarios.includes(dadosSaida.data_saida) && (
-                  <p className="text-sm text-destructive">
-                    Esta data não possui horários disponíveis.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tipo_saida">Tipo de Saída</Label>
-                <Select value={dadosSaida.tipo_saida} onValueChange={(value) => setDadosSaida(prev => ({ ...prev, tipo_saida: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="entrega">Entrega</SelectItem>
-                    <SelectItem value="retirada_terceiros">Retirada com terceiros</SelectItem>
-                    <SelectItem value="retirada_destinatario">Retirada por conta do destinatário</SelectItem>
-                    <SelectItem value="sem_frete">Sem frete</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="produtor_destinatario">
-                  Produtor Destinatário
-                </Label>
-                {isFranqueado ? (
-                  <Select 
-                    value={dadosSaida.produtor_destinatario} 
-                    onValueChange={(value) => {
-                      setDadosSaida(prev => ({ 
-                        ...prev, 
-                        produtor_destinatario: value, 
-                        fazenda_id: "" 
-                      }))
-                    }}
-                    disabled={isFranqueado ? isLoadingProdutoresComEstoque : false}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o produtor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {produtoresParaDropdown?.map((produtor) => (
-                        <SelectItem key={produtor.user_id} value={produtor.user_id}>
-                          {produtor.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    id="produtor_destinatario"
-                    value={profile?.nome || ""}
-                    placeholder="Seu nome"
-                    disabled={true}
-                    className="bg-muted"
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Seleção de Fazenda - aparece quando tipo é entrega_propriedade */}
-            {dadosSaida.tipo_saida === "entrega_propriedade" && (
-              <div className="space-y-2">
-                <Label htmlFor="fazenda_id">Fazenda para Entrega</Label>
-                <Select 
-                  value={dadosSaida.fazenda_id} 
-                  onValueChange={(value) => setDadosSaida(prev => ({ ...prev, fazenda_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a fazenda" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fazendas?.map((fazenda) => (
-                      <SelectItem key={fazenda.id} value={fazenda.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{fazenda.nome}</span>
-                          <span className="text-xs text-muted-foreground">{fazenda.endereco}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Dados do Transporte - Apenas para retirada no depósito */}
-            {dadosSaida.tipo_saida === 'retirada_deposito' && (
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-lg font-semibold">Dados do Transporte</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="placa-veiculo">Placa do Veículo *</Label>
-                    <Input
-                      id="placa-veiculo"
-                      value={dadosSaida.placa_veiculo}
-                      onChange={(e) => setDadosSaida({...dadosSaida, placa_veiculo: e.target.value})}
-                      placeholder="ABC-1234"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="janela-horario">Janela de Horário *</Label>
-                    <Select 
-                      value={dadosSaida.janela_horario} 
-                      onValueChange={(value) => setDadosSaida({...dadosSaida, janela_horario: value})}
-                      disabled={horariosDisponiveis.length === 0}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={
-                          horariosDisponiveis.length === 0 
-                            ? "Nenhum horário disponível" 
-                            : "Selecione o horário"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {horariosDisponiveis.map((horario) => (
-                          <SelectItem key={horario} value={horario}>
-                            {horario}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {dadosSaida.data_saida && horariosDisponiveis.length === 0 && (
-                      <p className="text-sm text-destructive">
-                        Todos os horários estão ocupados para esta data. Selecione uma data diferente.
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="nome-motorista">Nome do Motorista *</Label>
-                    <Input
-                      id="nome-motorista"
-                      value={dadosSaida.nome_motorista}
-                      onChange={(e) => setDadosSaida({...dadosSaida, nome_motorista: e.target.value})}
-                      placeholder="Nome completo"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="telefone-motorista">Telefone do Motorista *</Label>
-                    <Input
-                      id="telefone-motorista"
-                      value={dadosSaida.telefone_motorista}
-                      onChange={(e) => setDadosSaida({...dadosSaida, telefone_motorista: e.target.value})}
-                      placeholder="(00) 00000-0000"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cpf-motorista">CPF do Motorista *</Label>
-                    <Input
-                      id="cpf-motorista"
-                      value={dadosSaida.cpf_motorista}
-                      onChange={(e) => setDadosSaida({...dadosSaida, cpf_motorista: e.target.value})}
-                      placeholder="000.000.000-00"
-                      required
-                    />
-                  </div>
-
-                  {requiredMopp && (
-                    <div className="md:col-span-2">
-                      <Label htmlFor="mopp-motorista">
-                        MOPP do Motorista * 
-                        <span className="text-sm text-muted-foreground ml-2">
-                          (Obrigatório para cargas acima de {pesoMinimoMopp} Kg/L)
-                        </span>
-                      </Label>
-                      <Input
-                        id="mopp-motorista"
-                        value={dadosSaida.mopp_motorista}
-                        onChange={(e) => setDadosSaida({...dadosSaida, mopp_motorista: e.target.value})}
-                        placeholder="Número do MOPP"
-                        required
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {calcularPesoTotal() >= pesoMinimoMopp && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-sm text-amber-800">
-                      ⚠️ Peso total da carga: {calcularPesoTotal().toFixed(2)} Kg/L - MOPP obrigatório
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações</Label>
-              <Textarea
-                id="observacoes"
-                value={dadosSaida.observacoes}
-                onChange={(e) => setDadosSaida(prev => ({ ...prev, observacoes: e.target.value }))}
-                placeholder={isProdutor ? "Instruções especiais..." : "Observações sobre a saída..."}
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Botões de Ação */}
       <div className="flex justify-end gap-3">
