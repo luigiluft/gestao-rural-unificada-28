@@ -234,7 +234,7 @@ export default function Separacao() {
                         <Button
                           onClick={() => handleSeparacaoIndividual(saida)}
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                          className="bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
                         >
                           <Scan className="h-4 w-4" />
                           Separação Individual
