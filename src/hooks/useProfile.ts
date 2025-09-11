@@ -43,8 +43,6 @@ export const useFazendas = (produtorId?: string) => {
   return useQuery({
     queryKey: ["fazendas", produtorId],
     queryFn: async () => {
-      console.log("useFazendas executando com produtorId:", produtorId)
-      
       let query = supabase
         .from("fazendas")
         .select("*")
@@ -56,8 +54,6 @@ export const useFazendas = (produtorId?: string) => {
       }
 
       const { data, error } = await query
-      
-      console.log("Fazendas encontradas:", data)
 
       if (error) throw error
       return data || []

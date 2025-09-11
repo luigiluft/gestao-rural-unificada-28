@@ -112,10 +112,6 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   
   // Get the target producer ID for farms (current user if producer, selected producer if franchisee)
   const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
-  
-  console.log("targetProdutorId no FormularioSaida:", targetProdutorId)
-  console.log("dadosSaida.produtor_destinatario:", dadosSaida.produtor_destinatario)
-
   const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetProdutorId)
 
   // Filtrar estoque disponível (quantidade > 0) e agrupar por produto
