@@ -42,7 +42,13 @@ export const Rastreio = () => {
   };
 
   // Generate chart data
-  const fluxoData = useFluxoData(entradas, estoque, saidas, palletsPendentesItems);
+  // Transform estoque data to expected format
+  const estoqueFormatted = estoque.map(item => ({
+    ...item,
+    produtos: typeof item.produtos === 'string' ? JSON.parse(item.produtos) : item.produtos
+  }))
+  
+  const fluxoData = useFluxoData(entradas, estoqueFormatted, saidas, palletsPendentesItems);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -73,7 +79,7 @@ export const Rastreio = () => {
         {/* No Estoque */}
         <div className="lg:col-span-1">
           <EstoqueAtual 
-            estoque={estoque} 
+            estoque={estoqueFormatted} 
             isLoading={isLoadingEstoque}
           />
         </div>

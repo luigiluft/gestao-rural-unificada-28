@@ -5,10 +5,11 @@ export const useDashboardStats = () => {
   return useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      // Get total stock count
-      const { count: totalEstoque } = await supabase
-        .from("estoque")
-        .select("*", { count: "exact", head: true })
+      // Get stock data from secure function
+      const { data: estoqueData } = await supabase
+        .rpc("get_estoque_seguro")
+      
+      const totalEstoque = estoqueData?.length || 0
 
       // Get active products count
       const { count: produtosAtivos } = await supabase
@@ -16,29 +17,19 @@ export const useDashboardStats = () => {
         .select("*", { count: "exact", head: true })
         .eq("ativo", true)
 
-      // Get total stock value from secure function
-      const { data: estoqueData } = await supabase
-        .rpc("get_estoque_seguro")
-
       const valorTotal = estoqueData?.reduce((acc, item) => {
         return acc + (item.valor_total_estoque || 0)
       }, 0) || 0
 
-      // Get low stock alerts (where current < minimum threshold)
-      const { data: alertas } = await supabase
-        .from("estoque")
-        .select(`
-          *,
-          produtos(nome, unidade_medida)
-        `)
-        .lt("quantidade_atual", 100) // Simple threshold for now
+      // Get low stock alerts from secure function
+      const alertas = estoqueData?.filter(item => item.quantidade_atual < 100) || []
 
       return {
-        totalEstoque: totalEstoque || 0,
+        totalEstoque,
         produtosAtivos: produtosAtivos || 0,
         valorTotal,
-        alertas: alertas?.length || 0,
-        alertasDetalhes: alertas || []
+        alertas: alertas.length,
+        alertasDetalhes: alertas
       }
     },
   })

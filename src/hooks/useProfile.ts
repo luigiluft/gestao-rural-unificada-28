@@ -94,17 +94,17 @@ export const useProdutoresComEstoqueNaFranquia = () => {
       
       const produtorIds = produtoresData.map(p => p.user_id)
       
-      // Verificar quais produtores têm estoque atual > 0
-      const { data: estoqueData, error: estoqueError } = await supabase
-        .from("estoque")
-        .select("user_id")
-        .gt("quantidade_atual", 0)
-        .in("user_id", produtorIds)
-
-      if (estoqueError) throw estoqueError
-      if (!estoqueData || estoqueData.length === 0) return []
+      // Verificar quais produtores têm estoque atual > 0 via função RPC
+      const { data: estoqueSeguro } = await supabase
+        .rpc("get_estoque_seguro")
       
-      const produtoresComEstoque = estoqueData.map(e => e.user_id)
+      if (!estoqueSeguro || estoqueSeguro.length === 0) return []
+      
+      const produtoresComEstoque = [...new Set(
+        estoqueSeguro
+          .filter(item => produtorIds.includes(item.user_id) && item.quantidade_atual > 0)
+          .map(item => item.user_id)
+      )]
       
       // Buscar perfis dos produtores que têm estoque
       const { data: profilesData, error: profilesError } = await supabase

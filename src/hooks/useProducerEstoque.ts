@@ -8,38 +8,21 @@ export const useProducerEstoque = () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
 
-      const { data: estoque, error } = await supabase
-        .from("estoque")
-        .select(`
-          *,
-          produtos(nome, unidade_medida)
-        `)
-        .eq("user_id", user.user.id)
-        .gt("quantidade_atual", 0)
-        .order("quantidade_atual", { ascending: false })
+      const { data: estoqueData, error } = await supabase
+        .rpc("get_estoque_seguro")
 
       if (error) throw error
 
-      // Get franquia names for each estoque item
-      const estoqueWithFranquias = await Promise.all(
-        (estoque || []).map(async (item) => {
-          if (item.deposito_id) {
-            const { data: franquia } = await supabase
-              .from("franquias")
-              .select("nome")
-              .eq("id", item.deposito_id)
-              .single()
-            
-            return {
-              ...item,
-              franquia_nome: franquia?.nome
-            }
-          }
-          return item
-        })
-      )
+      // Filter to only user's products and map the data
+      const estoqueFormatado = (estoqueData || [])
+        .filter((item: any) => item.user_id === user.user.id && item.quantidade_atual > 0)
+        .map((item: any) => ({
+          ...item,
+          produtos: typeof item.produtos === 'string' ? JSON.parse(item.produtos) : item.produtos
+        }))
+        .sort((a, b) => b.quantidade_atual - a.quantidade_atual)
 
-      return estoqueWithFranquias || []
+      return estoqueFormatado
     },
     refetchOnMount: true,
     refetchOnWindowFocus: true,

@@ -110,21 +110,16 @@ export const useRastreamentoEstoque = () => {
 
       const isAdmin = profile?.role === 'admin'
 
-      let query = supabase
-        .from("estoque")
-        .select(`
-          *,
-          produtos(nome, unidade_medida)
-        `)
-        .gt("quantidade_atual", 0)
-        .order("quantidade_atual", { ascending: false })
-
-      // If not admin, filter by user_id
-      if (!isAdmin) {
-        query = query.eq("user_id", user.id)
-      }
-
-      const { data: estoque, error } = await query
+      // Use secure function to get stock data
+      const { data: estoqueSeguro, error } = await supabase
+        .rpc("get_estoque_seguro")
+      
+      if (error) throw error
+      
+      // Filter by user if not admin
+      const estoque = isAdmin 
+        ? estoqueSeguro?.filter(item => item.quantidade_atual > 0) || []
+        : estoqueSeguro?.filter(item => item.user_id === user.id && item.quantidade_atual > 0) || []
 
       if (error) {
         throw error

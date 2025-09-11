@@ -201,9 +201,17 @@ export default function Dashboard() {
                   {stats.alertasDetalhes.slice(0, 3).map((alert) => (
                     <div key={alert.id} className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="font-medium">{alert.produtos?.nome}</span>
+                        <span className="font-medium">
+                          {(() => {
+                            const produtos = typeof alert.produtos === 'string' ? JSON.parse(alert.produtos) : alert.produtos;
+                            return produtos?.nome || 'Produto';
+                          })()}
+                        </span>
                         <span className="text-muted-foreground">
-                          {alert.quantidade_atual} {alert.produtos?.unidade_medida}
+                          {alert.quantidade_atual} {(() => {
+                            const produtos = typeof alert.produtos === 'string' ? JSON.parse(alert.produtos) : alert.produtos;
+                            return produtos?.unidade_medida || 'UN';
+                          })()}
                         </span>
                       </div>
                       <Progress 

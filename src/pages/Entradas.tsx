@@ -535,16 +535,17 @@ export default function Entradas() {
           
         if (produtoIds.length > 0) {
           console.log('STEP 5: Deletando estoque para produtos:', produtoIds)
-          const { data: deletedEstoque, error: estoqueDeleteError } = await supabase
-            .from('estoque')
+          // Remove stock movements instead of estoque records (estoque is calculated automatically)
+          const { data: deletedMovs, error: movDeleteError } = await supabase
+            .from('movimentacoes')
             .delete()
-            .eq('user_id', entradaExists.user_id)  // Adicionar filtro por user_id
-            .in('produto_id', produtoIds)
+            .eq('referencia_id', entradaId)
+            .eq('referencia_tipo', 'entrada')
             .select()
 
-          console.log('Estoque deletado:', deletedEstoque?.length || 0, 'registros')
-          if (estoqueDeleteError) {
-            console.error('Erro ao deletar estoque:', estoqueDeleteError)
+          console.log('Movimentações deletadas:', deletedMovs?.length || 0, 'registros')
+          if (movDeleteError) {
+            console.error('Erro ao deletar movimentações:', movDeleteError)
             // Não tratar como erro crítico - continuar com a deleção
           }
         }

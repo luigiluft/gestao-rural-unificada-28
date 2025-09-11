@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Trash2 } from "lucide-react"
 import { useEstoque } from "@/hooks/useEstoque"
+import { useProdutosFallback } from "@/hooks/useProdutosFallback"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile, useProdutores, useFazendas, useProdutoresComEstoqueNaFranquia } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
@@ -33,7 +34,8 @@ interface ItemSaida {
 
 export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
   const { user } = useAuth()
-  const { data: estoque } = useEstoque()
+  const { data: estoque = [], isLoading: loadingEstoque } = useEstoque()
+  const { data: produtosFallback = [] } = useProdutosFallback()
   const { data: profile } = useProfile()
   const { data: produtores } = useProdutores()
   const { data: produtoresComEstoque, isLoading: isLoadingProdutoresComEstoque } = useProdutoresComEstoqueNaFranquia()
@@ -117,26 +119,44 @@ export function FormularioSaida({ onSubmit, onCancel }: FormularioSaidaProps) {
     }
   }, [estoqueDisponivel, dadosSaida.deposito_id])
 
-  // Agrupar estoque por produto para evitar duplicatas
-  const produtosDisponiveis = estoqueDisponivel.reduce((acc, item) => {
-    const produtoId = item.produto_id
-    const produtoNome = item.produtos?.nome || `Produto ${item.id}`
+  // Processar produtos disponíveis
+  const produtosDisponiveis = (() => {
+    // Se tem estoque, usar estoque
+    if (estoque && estoque.length > 0) {
+      const agrupados = estoque.reduce((acc, item) => {
+        const produtoId = item.produto_id
+        const produtoNome = item.produtos?.nome || `Produto ${item.id}`
+        
+        if (!acc[produtoId]) {
+          acc[produtoId] = {
+            id: produtoId,
+            nome: produtoNome,
+            unidade_medida: item.produtos?.unidade_medida || '',
+            quantidade_total: 0,
+            itens: []
+          }
+        }
+        
+        acc[produtoId].quantidade_total += item.quantidade_atual || 0
+        acc[produtoId].itens.push(item)
+        
+        return acc
+      }, {} as Record<string, any>)
+      return agrupados
+    }
     
-    if (!acc[produtoId]) {
-      acc[produtoId] = {
-        id: produtoId,
-        nome: produtoNome,
-        unidade_medida: item.produtos?.unidade_medida || '',
+    // Fallback: usar lista de produtos
+    return produtosFallback.reduce((acc, produto) => {
+      acc[produto.id] = {
+        id: produto.id,
+        nome: produto.nome,
+        unidade_medida: produto.unidade_medida || 'UN',
         quantidade_total: 0,
         itens: []
       }
-    }
-    
-    acc[produtoId].quantidade_total += item.quantidade_atual || 0
-    acc[produtoId].itens.push(item)
-    
-    return acc
-  }, {} as Record<string, any>)
+      return acc
+    }, {} as Record<string, any>)
+  })()
 
   const produtosArray = Object.values(produtosDisponiveis)
 
