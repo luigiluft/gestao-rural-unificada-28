@@ -66,8 +66,15 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
     atualizarQuantidadeSeparada(itemId, novaQuantidade)
   }
 
-  const handleConfirmarItem = () => {
+  const handleConfirmarItem = async () => {
     if (itemAtual && itemAtual.quantidade_separada > 0) {
+      // Persistir a separação no banco
+      await separarItem.mutateAsync({
+        itemId: itemAtual.id,
+        quantidadeSeparada: itemAtual.quantidade_separada,
+        lote: itemAtual.lote
+      })
+      
       // Navegar automaticamente para próximo item incompleto
       const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
         index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
@@ -271,9 +278,9 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                     <Button
                       variant="default"
                       onClick={() => setShowPalletScanner(true)}
-                      className="flex items-center gap-2"
+                      className="flex items-center justify-center gap-2 py-6 px-8"
                     >
-                      <Package className="h-4 w-4" />
+                      <Package className="h-5 w-5" />
                       Scanner Pallet
                     </Button>
                   </div>
@@ -322,10 +329,10 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                   <div className="text-center">
                     <Button
                       onClick={handleConfirmarItem}
-                      disabled={itemAtual.quantidade_separada === 0}
+                      disabled={itemAtual.quantidade_separada === 0 || separarItem.isPending}
                       className="w-full bg-green-600 hover:bg-green-700"
                     >
-                      Confirmar
+                      {separarItem.isPending ? 'Confirmando...' : 'Confirmar'}
                     </Button>
                   </div>
 
