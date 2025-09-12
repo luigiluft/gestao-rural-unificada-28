@@ -22,7 +22,6 @@ interface SeparacaoIndividualProps {
 }
 
 export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividualProps) {
-  const [showScanner, setShowScanner] = useState(false)
   const [showPalletScanner, setShowPalletScanner] = useState(false)
   const [itemAtualIndex, setItemAtualIndex] = useState(0)
   
@@ -65,33 +64,17 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
 
   const handleQuantidadeChange = (itemId: string, novaQuantidade: number) => {
     atualizarQuantidadeSeparada(itemId, novaQuantidade)
-    
-    const item = itensSeparacao.find(i => i.id === itemId)
-    if (item) {
-      separarItem.mutate({ 
-        itemId, 
-        quantidadeSeparada: novaQuantidade,
-        lote: item.lote,
-        palletId: item.pallet_id,
-        posicaoId: item.sugestao_fefo?.posicao_codigo
-      })
-      
-      // Se completou o item atual, ir para o próximo
-      if (novaQuantidade >= item.quantidade_total) {
-        const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
-          index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
-        )
-        if (proximoIncompleto !== -1) {
-          setItemAtualIndex(proximoIncompleto)
-        }
-      }
-    }
   }
 
-  const handleScanSuccess = () => {
-    if (itemAtual && itemAtual.quantidade_separada < itemAtual.quantidade_total) {
-      const novaQuantidade = itemAtual.quantidade_separada + 1
-      handleQuantidadeChange(itemAtual.id, novaQuantidade)
+  const handleConfirmarItem = () => {
+    if (itemAtual && itemAtual.quantidade_separada > 0) {
+      // Navegar automaticamente para próximo item incompleto
+      const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
+        index > itemAtualIndex && item.quantidade_separada < item.quantidade_total
+      )
+      if (proximoIncompleto !== -1) {
+        setItemAtualIndex(proximoIncompleto)
+      }
     }
   }
 
@@ -283,61 +266,67 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                     </div>
                   )}
 
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {itemAtual.quantidade_separada} / {itemAtual.quantidade_total}
+                  {/* Scanner Pallet - Acima do display de quantidade */}
+                  <div className="text-center mb-4">
+                    <Button
+                      variant="default"
+                      onClick={() => setShowPalletScanner(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Package className="h-4 w-4" />
+                      Scanner Pallet
+                    </Button>
+                  </div>
+
+                  {/* Controles de Quantidade Reorganizados */}
+                  <div className="flex items-center justify-center gap-4 mb-4">
+                    {/* Botão Menos - Esquerda */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleQuantidadeChange(itemAtual.id, Math.max(0, itemAtual.quantidade_separada - 1))}
+                      disabled={itemAtual.quantidade_separada <= 0}
+                      className="h-10 w-10"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+
+                    {/* Display Central */}
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-primary">
+                        {itemAtual.quantidade_separada} / {itemAtual.quantidade_total}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {itemAtual.unidade_medida} separadas
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {itemAtual.unidade_medida} separadas
-                    </div>
+
+                    {/* Botão Mais - Direita (3x maior) */}
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => handleQuantidadeChange(itemAtual.id, Math.min(itemAtual.quantidade_total, itemAtual.quantidade_separada + 1))}
+                      disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total}
+                      className="h-16 w-16"
+                    >
+                      <Plus className="h-6 w-6" />
+                    </Button>
                   </div>
 
                   <Progress 
                     value={(itemAtual.quantidade_separada / itemAtual.quantidade_total) * 100} 
-                    className="h-3" 
+                    className="h-3 mb-4" 
                   />
 
-                  <div className="flex items-center justify-center gap-4">
-                    {/* Separação Manual */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuantidadeChange(itemAtual.id, Math.max(0, itemAtual.quantidade_separada - 1))}
-                        disabled={itemAtual.quantidade_separada <= 0}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleQuantidadeChange(itemAtual.id, Math.min(itemAtual.quantidade_total, itemAtual.quantidade_separada + 1))}
-                        disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={() => setShowScanner(!showScanner)}
-                        className="flex items-center gap-2"
-                      >
-                        <Scan className="h-4 w-4" />
-                        {showScanner ? 'Parar Scanner' : 'Scanner Produto'}
-                      </Button>
-                      
-                      <Button
-                        variant="default"
-                        onClick={() => setShowPalletScanner(true)}
-                        className="flex items-center gap-2"
-                      >
-                        <Package className="h-4 w-4" />
-                        Scanner Pallet
-                      </Button>
-                    </div>
+                  {/* Botão Confirmar */}
+                  <div className="text-center">
+                    <Button
+                      onClick={handleConfirmarItem}
+                      disabled={itemAtual.quantidade_separada === 0}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      Confirmar
+                    </Button>
                   </div>
 
                   {itemAtual.quantidade_separada >= itemAtual.quantidade_total && (
@@ -369,18 +358,6 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Scanner de Código de Barras - Produtos */}
-      {showScanner && itemAtual && (
-        <ScannerCodigoBarras
-          open={showScanner}
-          onClose={() => setShowScanner(false)}
-          onSuccess={handleScanSuccess}
-          itemId={itemAtual.id}
-          produtoNome={itemAtual.produto_nome}
-          quantidadeRestante={itemAtual.quantidade_total - itemAtual.quantidade_separada}
-        />
-      )}
 
       {/* Scanner de Código de Barras - Pallets */}
       {showPalletScanner && itemAtual && (
