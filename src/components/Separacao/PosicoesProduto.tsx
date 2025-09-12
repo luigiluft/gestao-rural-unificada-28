@@ -80,7 +80,6 @@ export const PosicoesProduto = ({ produtoId, depositoId, produtoNome }: Posicoes
 
   // Primeiro item é a sugestão FEFO
   const sugestaoFEFO = estoqueFEFO[0];
-  const outrasPositions = estoqueFEFO.slice(1);
 
   return (
     <Card>
@@ -136,53 +135,6 @@ export const PosicoesProduto = ({ produtoId, depositoId, produtoNome }: Posicoes
           </div>
         </div>
 
-        {/* Outras Posições */}
-        {outrasPositions.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-2 text-muted-foreground">Outras posições disponíveis:</h4>
-            <div className="space-y-2">
-              {outrasPositions.map((item, index) => (
-                <div key={item.id} className="border rounded-lg p-3 bg-muted/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-wrap gap-1">
-                        {item.posicoes.map((pos, posIndex) => (
-                          <span key={posIndex} className="text-xs font-mono bg-background px-1 rounded">
-                            {pos.codigo}: {pos.quantidade}
-                          </span>
-                        ))}
-                      </div>
-                      {getStatusIcon(item.status_validade)}
-                    </div>
-                    <Badge variant={getStatusVariant(item.status_validade)}>
-                      {getStatusText(item)}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                    <div>
-                      <span>Qtd: </span>
-                      <span className="font-medium">{item.quantidade_atual}</span>
-                    </div>
-                    <div>
-                      <span>Lote: </span>
-                      <span className="font-mono">{item.lote || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span>Val: </span>
-                      <span>
-                        {item.data_validade 
-                          ? format(new Date(item.data_validade), "dd/MM/yy", { locale: ptBR })
-                          : 'N/A'
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

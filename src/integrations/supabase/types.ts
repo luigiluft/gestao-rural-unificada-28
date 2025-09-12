@@ -83,6 +83,90 @@ export type Database = {
         }
         Relationships: []
       }
+      divergencias: {
+        Row: {
+          created_at: string
+          data_resolucao: string | null
+          deposito_id: string
+          diferenca: number | null
+          entrada_id: string | null
+          id: string
+          inventario_id: string | null
+          justificativa: string | null
+          lote: string | null
+          observacoes: string | null
+          pallet_id: string | null
+          posicao_id: string | null
+          prioridade: string
+          produto_id: string | null
+          quantidade_encontrada: number
+          quantidade_esperada: number
+          resolucao_aplicada: string | null
+          resolvido_por: string | null
+          saida_id: string | null
+          status: string
+          tipo_divergencia: string
+          tipo_origem: string
+          updated_at: string
+          user_id: string
+          valor_impacto: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_resolucao?: string | null
+          deposito_id: string
+          diferenca?: number | null
+          entrada_id?: string | null
+          id?: string
+          inventario_id?: string | null
+          justificativa?: string | null
+          lote?: string | null
+          observacoes?: string | null
+          pallet_id?: string | null
+          posicao_id?: string | null
+          prioridade?: string
+          produto_id?: string | null
+          quantidade_encontrada?: number
+          quantidade_esperada?: number
+          resolucao_aplicada?: string | null
+          resolvido_por?: string | null
+          saida_id?: string | null
+          status?: string
+          tipo_divergencia: string
+          tipo_origem: string
+          updated_at?: string
+          user_id: string
+          valor_impacto?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_resolucao?: string | null
+          deposito_id?: string
+          diferenca?: number | null
+          entrada_id?: string | null
+          id?: string
+          inventario_id?: string | null
+          justificativa?: string | null
+          lote?: string | null
+          observacoes?: string | null
+          pallet_id?: string | null
+          posicao_id?: string | null
+          prioridade?: string
+          produto_id?: string | null
+          quantidade_encontrada?: number
+          quantidade_esperada?: number
+          resolucao_aplicada?: string | null
+          resolvido_por?: string | null
+          saida_id?: string | null
+          status?: string
+          tipo_divergencia?: string
+          tipo_origem?: string
+          updated_at?: string
+          user_id?: string
+          valor_impacto?: number | null
+        }
+        Relationships: []
+      }
       employee_profiles: {
         Row: {
           created_at: string
