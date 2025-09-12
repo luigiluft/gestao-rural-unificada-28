@@ -45,28 +45,22 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
 
   const itemAtual = itensSeparacao[itemAtualIndex]
 
-  // Função para obter ícone do status de validade
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case 'critico':
-        return <AlertTriangle className="h-4 w-4 text-destructive" />
-      case 'atencao':
-        return <Clock className="h-4 w-4 text-warning" />
-      default:
-        return <CheckCircle className="h-4 w-4 text-success" />
+  // Função para obter ícone do status de separação
+  const getStatusIcon = (item: any) => {
+    const isCompleto = item.quantidade_separada >= item.quantidade_total;
+    if (isCompleto) {
+      return <CheckCircle className="h-4 w-4 text-success" />;
     }
+    return <Clock className="h-4 w-4 text-warning" />;
   }
 
   // Função para obter variante do badge de status
-  const getStatusVariant = (status?: string) => {
-    switch (status) {
-      case 'critico':
-        return 'destructive' as const
-      case 'atencao':
-        return 'secondary' as const
-      default:
-        return 'default' as const
+  const getStatusVariant = (item: any) => {
+    const isCompleto = item.quantidade_separada >= item.quantidade_total;
+    if (isCompleto) {
+      return 'default' as const;
     }
+    return 'secondary' as const;
   }
 
   const handleQuantidadeChange = (itemId: string, novaQuantidade: number) => {
@@ -185,7 +179,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                           <Badge variant={isCompleto ? "default" : "secondary"} className="text-xs">
                             {item.quantidade_separada} / {item.quantidade_total}
                           </Badge>
-                          {item.sugestao_fefo && getStatusIcon(item.sugestao_fefo.status_validade)}
+                          {getStatusIcon(item)}
                         </div>
                       </div>
                     )
@@ -257,7 +251,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Badge variant="default" className="text-xs">SUGERIDO - FEFO</Badge>
-                          {getStatusIcon(itemAtual.sugestao_fefo.status_validade)}
+                          {getStatusIcon(itemAtual)}
                         </div>
                         {itemAtual.sugestao_fefo.dias_para_vencer !== undefined && (
                           <Badge variant={getStatusVariant(itemAtual.sugestao_fefo.status_validade)}>
