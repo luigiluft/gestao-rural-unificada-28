@@ -395,7 +395,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                     <Button
                       onClick={handleConfirmarItem}
                       disabled={itemAtual.quantidade_separada === 0 || separarItem.isPending}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full"
                     >
                       {separarItem.isPending ? 'Confirmando...' : 'Confirmar'}
                     </Button>
@@ -415,7 +415,6 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
               <Button
                 onClick={handleFinalizarSeparacao}
                 disabled={!podeFinalizarSeparacao() || finalizarSeparacao.isPending}
-                className="bg-green-600 hover:bg-green-700"
               >
                 {finalizarSeparacao.isPending ? 'Finalizando...' : 'Finalizar Separação'}
               </Button>
