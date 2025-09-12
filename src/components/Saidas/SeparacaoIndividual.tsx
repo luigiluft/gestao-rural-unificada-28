@@ -11,7 +11,7 @@ import { Package, Scan, CheckCircle, Minus, Plus, AlertTriangle, Clock } from 'l
 import { useSeparacaoItens, ItemSeparacao } from '@/hooks/useSeparacaoItens'
 import { ScannerCodigoBarras } from './ScannerCodigoBarras'
 import { ScannerPalletBarcode } from './ScannerPalletBarcode'
-import { PosicoesProduto } from '@/components/Separacao/PosicoesProduto'
+
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
@@ -302,14 +302,6 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
               </Card>
             )}
 
-            {/* Posições do Produto */}
-            {itemAtual && itemAtual.produto_id && saida?.deposito_id && (
-              <PosicoesProduto 
-                produtoId={itemAtual.produto_id}
-                depositoId={saida.deposito_id}
-                produtoNome={itemAtual.produto_nome}
-              />
-            )}
 
             {/* Lista de Todos os Itens - Resumo */}
             <Card>
