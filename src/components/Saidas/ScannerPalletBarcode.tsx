@@ -36,7 +36,6 @@ export function ScannerPalletBarcode({
   const {
     palletScaneado,
     buscarPalletPorCodigo,
-    separarDoPallet,
     limparPalletScaneado
   } = usePalletBarcodeSeparacao()
 
@@ -88,27 +87,9 @@ export function ScannerPalletBarcode({
       return
     }
 
-    try {
-      await separarDoPallet.mutateAsync({
-        palletId: palletScaneado.id,
-        saidaItemId,
-        quantidadeSeparada: quantidadeASeparar
-      })
-      
-      onSeparacaoSuccess(quantidadeASeparar)
-      
-      // Se separou tudo que precisava ou o pallet ficou vazio, fechar
-      if (quantidadeASeparar >= quantidadeRestante || palletScaneado.quantidade_atual <= quantidadeASeparar) {
-        onClose()
-      } else {
-        // Resetar para próxima separação
-        setCodigoInput('')
-        setQuantidadeASeparar(Math.min(1, quantidadeRestante - quantidadeASeparar))
-        limparPalletScaneado()
-      }
-    } catch (error) {
-      console.error('Erro ao separar:', error)
-    }
+    // Apenas informar quantidade sugerida para separação (sem gravar no banco)
+    onSeparacaoSuccess(quantidadeASeparar)
+    onClose()
   }
 
   const getStatusIcon = (dataValidade?: string) => {
@@ -321,10 +302,10 @@ export function ScannerPalletBarcode({
           {palletScaneado && palletScaneado.produto_id === produtoId && (
             <Button
               onClick={handleSeparar}
-              disabled={separarDoPallet.isPending || quantidadeASeparar <= 0}
+              disabled={quantidadeASeparar <= 0}
               className="bg-green-600 hover:bg-green-700"
             >
-              {separarDoPallet.isPending ? 'Separando...' : `Separar ${quantidadeASeparar} unidades`}
+              {`Adicionar ${quantidadeASeparar} unidades`}
             </Button>
           )}
         </div>

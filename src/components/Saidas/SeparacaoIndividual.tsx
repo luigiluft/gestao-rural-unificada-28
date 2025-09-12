@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,12 +33,21 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
     inicializarSeparacao
   } = useSeparacaoItens()
 
+  // Evitar re-inicializações que resetam quantidades
+  const lastInitSaidaIdRef = useRef<string | null>(null)
+
   useEffect(() => {
-    if (saida?.saida_itens && saida?.deposito_id && open) {
-      inicializarSeparacao(saida.saida_itens, saida.deposito_id)
-      setItemAtualIndex(0)
+    if (open && saida?.id) {
+      if (lastInitSaidaIdRef.current !== saida.id) {
+        inicializarSeparacao(saida.saida_itens || [], saida.deposito_id)
+        setItemAtualIndex(0)
+        lastInitSaidaIdRef.current = saida.id
+      }
+    } else {
+      // Ao fechar, permite inicializar novamente quando abrir outra saída
+      lastInitSaidaIdRef.current = null
     }
-  }, [saida, open, inicializarSeparacao])
+  }, [open, saida?.id])
 
   // Removido: não abrir scanner automaticamente
 

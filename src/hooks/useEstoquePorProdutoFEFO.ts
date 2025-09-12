@@ -151,43 +151,8 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
         estoqueFEFO.push(...Array.from(loteGroups.values()));
       }
 
-      // 2. Se não encontrou pallets, buscar no estoque geral via função RPC
-      if (estoqueFEFO.length === 0) {
-        const { data: estoqueSeguro } = await supabase
-          .rpc("get_estoque_seguro")
-        
-        const estoqueGenerico = estoqueSeguro?.filter(item => 
-          item.produto_id === produtoId && 
-          item.deposito_id === depositoId && 
-          item.quantidade_atual > 0
-        ) || []
-
-        if (estoqueGenerico.length > 0) {
-          const estoqueFinal = estoqueGenerico.map((estoque, index) => {
-            const produtos = typeof estoque.produtos === 'string' 
-              ? JSON.parse(estoque.produtos) 
-              : estoque.produtos
-            
-            return {
-              id: `estoque-${estoque.produto_id}-${index}`,
-              produto_id: estoque.produto_id,
-              produto_nome: produtos?.nome || '',
-              deposito_id: estoque.deposito_id,
-              quantidade_atual: estoque.quantidade_atual,
-              lote: "SEM LOTE",
-              data_validade: undefined,
-              data_entrada: new Date().toISOString().split('T')[0],
-              posicoes: [{ codigo: "SEM POSIÇÃO", quantidade: estoque.quantidade_atual }],
-              dias_para_vencer: 999,
-              prioridade_fefo: calcularPrioridadeFEFO(undefined, new Date().toISOString()),
-              status_validade: 'normal' as const,
-              pallet_id: undefined,
-              pallet_numero: undefined
-            }
-          });
-          estoqueFEFO.push(...estoqueFinal);
-        }
-      }
+      // 2. Sem RPC de fallback para evitar erros 400; retornar vazio se não houver pallets
+      // Mantemos estoqueFEFO como está quando não há pallets alocados
 
       // Ordenar por prioridade FEFO
       const estoqueFEFOOrdenado = estoqueFEFO.sort((a, b) => a.prioridade_fefo - b.prioridade_fefo);
@@ -197,6 +162,7 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
     },
     enabled: !!(produtoId && depositoId),
     refetchOnWindowFocus: false,
+    retry: false,
   });
 };
 
