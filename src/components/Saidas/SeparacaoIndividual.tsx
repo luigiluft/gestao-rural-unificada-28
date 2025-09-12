@@ -144,6 +144,56 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* Lista de Todos os Itens - Resumo */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Resumo dos Itens</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {itensSeparacao.map((item, index) => {
+                    const isCompleto = item.quantidade_separada >= item.quantidade_total
+                    const isCurrent = index === itemAtualIndex
+
+                    return (
+                      <div 
+                        key={item.id} 
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
+                          isCurrent ? 'border-primary bg-primary/10' : 'border-border'
+                        } ${isCompleto ? 'bg-green-50/50' : ''}`}
+                        onClick={() => setItemAtualIndex(index)}
+                      >
+                        <div className="flex items-center gap-3">
+                          {isCompleto ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">{item.produto_nome}</p>
+                            {item.lote && (
+                              <p className="text-xs text-muted-foreground">Lote: {item.lote}</p>
+                            )}
+                            {item.sugestao_fefo && (
+                              <Badge variant="outline" className="text-xs w-fit mt-1">
+                                SUGERIDO - FEFO: {item.sugestao_fefo.posicao_codigo}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={isCompleto ? "default" : "secondary"} className="text-xs">
+                            {item.quantidade_separada} / {item.quantidade_total}
+                          </Badge>
+                          {item.sugestao_fefo && getStatusIcon(item.sugestao_fefo.status_validade)}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Progress Geral */}
             <Card>
               <CardContent className="pt-6">
@@ -155,6 +205,10 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                     </span>
                   </div>
                   <Progress value={getTotalProgress()} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{itensSeparacao.filter(item => item.quantidade_separada >= item.quantidade_total).length} de {itensSeparacao.length} itens</span>
+                    <span>{itensSeparacao.filter(item => item.quantidade_separada >= item.quantidade_total).length === itensSeparacao.length ? 'Concluído' : 'Em andamento'}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -303,47 +357,6 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
             )}
 
 
-            {/* Lista de Todos os Itens - Resumo */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Resumo dos Itens</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {itensSeparacao.map((item, index) => {
-                    const isCompleto = item.quantidade_separada >= item.quantidade_total
-                    const isCurrent = index === itemAtualIndex
-
-                    return (
-                      <div 
-                        key={item.id} 
-                        className={`flex items-center justify-between p-2 rounded-lg border transition-colors cursor-pointer ${
-                          isCurrent ? 'border-primary bg-primary/5' : 'border-border'
-                        } ${isCompleto ? 'bg-green-50/50' : ''}`}
-                        onClick={() => setItemAtualIndex(index)}
-                      >
-                        <div className="flex items-center gap-3">
-                          {isCompleto ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <div className="h-4 w-4 rounded-full border-2 border-muted-foreground" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium">{item.produto_nome}</p>
-                            {item.lote && (
-                              <p className="text-xs text-muted-foreground">{item.lote}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {item.quantidade_separada}/{item.quantidade_total}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Botão Finalizar */}
             <div className="flex items-center justify-between pt-4 border-t">
