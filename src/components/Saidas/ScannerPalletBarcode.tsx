@@ -19,6 +19,7 @@ interface ScannerPalletBarcodeProps {
   produtoNome: string
   quantidadeRestante: number
   onSeparacaoSuccess: (quantidade: number) => void
+  onPalletConfirmado?: () => void
 }
 
 export function ScannerPalletBarcode({ 
@@ -28,7 +29,8 @@ export function ScannerPalletBarcode({
   produtoId,
   produtoNome,
   quantidadeRestante,
-  onSeparacaoSuccess 
+  onSeparacaoSuccess,
+  onPalletConfirmado
 }: ScannerPalletBarcodeProps) {
   const [codigoInput, setCodigoInput] = useState('')
   const [quantidadeASeparar, setQuantidadeASeparar] = useState(1)
@@ -87,6 +89,9 @@ export function ScannerPalletBarcode({
       return
     }
 
+    // Marcar pallet como confirmado
+    onPalletConfirmado?.()
+    
     // Apenas informar quantidade sugerida para separação (sem gravar no banco)
     onSeparacaoSuccess(quantidadeASeparar)
     onClose()

@@ -14,6 +14,7 @@ export interface ItemSeparacao {
   deposito_id?: string
   pallet_id?: string
   pallet_numero?: number
+  pallet_escaneado: boolean
   posicoes_disponiveis?: Array<{
     posicao_codigo: string
     posicao_id: string
@@ -336,6 +337,7 @@ export function useSeparacaoItens() {
           deposito_id: depositoId,
           pallet_id: sugestaoFEFO.pallet_id,
           pallet_numero: sugestaoFEFO.pallet_numero,
+          pallet_escaneado: false,
           sugestao_fefo: sugestaoFEFO
         };
       })
@@ -343,11 +345,22 @@ export function useSeparacaoItens() {
     setItensSeparacao(itensSeparacao);
   }
 
+  const marcarPalletEscaneado = (itemId: string, escaneado: boolean = true) => {
+    setItensSeparacao(prev => 
+      prev.map(item => 
+        item.id === itemId 
+          ? { ...item, pallet_escaneado: escaneado }
+          : item
+      )
+    );
+  };
+
   return {
     itensSeparacao,
     separarItem,
     finalizarSeparacao,
     atualizarQuantidadeSeparada,
-    inicializarSeparacao
+    inicializarSeparacao,
+    marcarPalletEscaneado
   }
 }

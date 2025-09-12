@@ -30,7 +30,8 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
     separarItem,
     finalizarSeparacao,
     atualizarQuantidadeSeparada,
-    inicializarSeparacao
+    inicializarSeparacao,
+    marcarPalletEscaneado
   } = useSeparacaoItens()
 
   // Evitar re-inicializações que resetam quantidades
@@ -72,6 +73,11 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
   }
 
   const handleQuantidadeChange = (itemId: string, novaQuantidade: number) => {
+    const item = itensSeparacao.find(i => i.id === itemId);
+    // Só permite aumentar se o pallet foi escaneado
+    if (item && novaQuantidade > item.quantidade_separada && !item.pallet_escaneado) {
+      return;
+    }
     atualizarQuantidadeSeparada(itemId, novaQuantidade)
   }
 
@@ -125,6 +131,17 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
     }
   }
 
+  const handleSimularEscaneamento = () => {
+    if (!itemAtual) return;
+    marcarPalletEscaneado(itemAtual.id, true);
+  };
+
+  const handlePalletConfirmado = () => {
+    if (!itemAtual) return;
+    marcarPalletEscaneado(itemAtual.id, true);
+    setShowPalletScanner(false);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
@@ -167,11 +184,18 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                             {item.lote && (
                               <p className="text-xs text-muted-foreground">Lote: {item.lote}</p>
                             )}
-                            {item.sugestao_fefo && (
-                              <Badge variant="outline" className="text-xs w-fit mt-1">
-                                SUGERIDO - FEFO: {item.sugestao_fefo.posicao_codigo}
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {item.sugestao_fefo && (
+                                <Badge variant="outline" className="text-xs w-fit mt-1">
+                                  SUGERIDO - FEFO: {item.sugestao_fefo.posicao_codigo}
+                                </Badge>
+                              )}
+                              {item.pallet_escaneado && (
+                                <Badge variant="default" className="text-xs bg-green-600 mt-1">
+                                  ✓ Pallet OK
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -282,15 +306,37 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                     </div>
                   )}
 
+                  {/* Indicador de status do pallet */}
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    {itemAtual.pallet_escaneado && (
+                      <Badge variant="default" className="bg-green-600">
+                        ✓ Pallet Confirmado
+                      </Badge>
+                    )}
+                    {!itemAtual.pallet_escaneado && (
+                      <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                        ⚠️ Pallet não escaneado
+                      </Badge>
+                    )}
+                  </div>
+
                   {/* Scanner Pallet - Acima do display de quantidade */}
-                  <div className="text-center mb-4">
+                  <div className="flex gap-2 justify-center mb-4">
                     <Button
                       variant="default"
                       onClick={() => setShowPalletScanner(true)}
-                      className="flex items-center justify-center gap-2 py-6 px-8"
+                      className="flex items-center justify-center gap-2 py-4 px-6"
                     >
                       <Package className="h-5 w-5" />
                       Scanner Pallet
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handleSimularEscaneamento}
+                      disabled={itemAtual.pallet_escaneado}
+                      className="flex items-center justify-center gap-2 py-4 px-6"
+                    >
+                      🧪 Simular Escaneamento
                     </Button>
                   </div>
 
@@ -322,8 +368,9 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                       size="lg"
                       variant="outline"
                       onClick={() => handleQuantidadeChange(itemAtual.id, Math.min(itemAtual.quantidade_total, itemAtual.quantidade_separada + 1))}
-                      disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total}
-                      className="h-16 w-16"
+                      disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total || !itemAtual.pallet_escaneado}
+                      className={`h-16 w-16 ${!itemAtual.pallet_escaneado ? "opacity-50" : ""}`}
+                      title={!itemAtual.pallet_escaneado ? "Escaneie o pallet primeiro" : ""}
                     >
                       <Plus className="h-6 w-6" />
                     </Button>
@@ -384,6 +431,7 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
           produtoId={itemAtual.produto_id}
           produtoNome={itemAtual.produto_nome}
           quantidadeRestante={itemAtual.quantidade_total - itemAtual.quantidade_separada}
+          onPalletConfirmado={handlePalletConfirmado}
           onSeparacaoSuccess={(quantidade) => {
             const novaQuantidade = itemAtual.quantidade_separada + quantidade
             atualizarQuantidadeSeparada(itemAtual.id, novaQuantidade)
