@@ -19,7 +19,9 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
             *,
             produtos (
               nome,
-              unidade_medida
+              unidade_medida,
+              containers_per_package,
+              package_capacity
             )
           )
         `)

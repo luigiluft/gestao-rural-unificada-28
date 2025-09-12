@@ -15,6 +15,9 @@ export interface ItemSeparacao {
   pallet_id?: string
   pallet_numero?: number
   pallet_escaneado: boolean
+  containers_per_package?: number
+  package_capacity?: number
+  multiplo_incremento: number
   posicoes_disponiveis?: Array<{
     posicao_codigo: string
     posicao_id: string
@@ -326,6 +329,10 @@ export function useSeparacaoItens() {
           };
         }
 
+        const containers = item.produtos?.containers_per_package || 1;
+        const capacity = item.produtos?.package_capacity || 1;
+        const multiplo = containers * capacity;
+
         return {
           id: item.id,
           produto_id: item.produto_id,
@@ -338,6 +345,9 @@ export function useSeparacaoItens() {
           pallet_id: sugestaoFEFO.pallet_id,
           pallet_numero: sugestaoFEFO.pallet_numero,
           pallet_escaneado: false,
+          containers_per_package: containers,
+          package_capacity: capacity,
+          multiplo_incremento: multiplo,
           sugestao_fefo: sugestaoFEFO
         };
       })
