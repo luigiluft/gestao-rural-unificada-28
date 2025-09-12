@@ -382,6 +382,14 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                     className="h-3 mb-4" 
                   />
 
+                  {/* Aviso de Item Completo */}
+                  {itemAtual.quantidade_separada >= itemAtual.quantidade_total && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
+                      <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                      <p className="text-green-700 font-medium">Item Completo!</p>
+                    </div>
+                  )}
+
                   {/* Botão Confirmar */}
                   <div className="text-center">
                     <Button
@@ -392,13 +400,6 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                       {separarItem.isPending ? 'Confirmando...' : 'Confirmar'}
                     </Button>
                   </div>
-
-                  {itemAtual.quantidade_separada >= itemAtual.quantidade_total && (
-                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                      <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <p className="text-green-700 font-medium">Item Completo!</p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             )}
