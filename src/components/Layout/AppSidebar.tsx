@@ -33,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems"
 import { useNotifications } from "@/hooks/useNotifications"
+import { TutorialButton } from "@/components/Tutorial/TutorialButton"
 
 export function AppSidebar() {
   const { state } = useSidebar()
@@ -140,6 +141,13 @@ export function AppSidebar() {
             )}
           </div>
         </div>
+
+        {/* Tutorial Button */}
+        {!collapsed && (
+          <div className="px-4 pb-2">
+            <TutorialButton />
+          </div>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
