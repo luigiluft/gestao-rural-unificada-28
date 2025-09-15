@@ -321,6 +321,11 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       simulateNFUpload()
     }
 
+    // Force next step event (fallback from overlay)
+    const handleForceNext = () => {
+      nextStep()
+    }
+
     // Add click listener to detect clicks on target elements
     const handleDocumentClick = (event: MouseEvent) => {
       const target = event.target as Element
@@ -328,6 +333,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     }
 
     document.addEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
+    document.addEventListener('tutorial-force-next', handleForceNext)
 
     // Add highlight class to target element
     const addHighlight = () => {
@@ -359,6 +365,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     return () => {
       document.removeEventListener('click', handleDocumentClick)
       document.removeEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
+      document.removeEventListener('tutorial-force-next', handleForceNext)
       clearTimeout(timer)
       removeHighlight()
     }

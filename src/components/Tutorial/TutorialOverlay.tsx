@@ -117,6 +117,19 @@ export const TutorialOverlay = () => {
   // Check if we're in a modal
   const isInModal = currentStepData.modalTarget || targetElement && targetElement.closest('[role="dialog"], [data-state="open"]');
   
+  const handleNextClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.stopPropagation();
+    try {
+      if (currentStepData?.id === 'selecionar-arquivo-nf') {
+        const registrarButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement | null;
+        if (registrarButton) {
+          registrarButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    } catch {}
+    nextStep();
+  }
+  
   return <>
       {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
       {shouldShowOverlay() && !isPagePresentation && currentStepData.id !== 'aguardar-modal-entrada' && currentStepData.id !== 'selecionar-arquivo-nf' && (targetElement && currentStepData.action === 'click'
@@ -285,7 +298,7 @@ export const TutorialOverlay = () => {
       )}
 
       {/* Special backdrop for formulario-preenchido step - covers entire form except register button */}
-      {currentStepData.id === 'formulario-preenchido' && (
+      {currentStepData.id === 'formulario-preenchido-com-backdrop' && (
         <>
           {(() => {
             const registerButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]');
@@ -450,7 +463,7 @@ export const TutorialOverlay = () => {
               {currentStepData.action !== 'click' && 
                currentStepData.action !== 'wait_modal' && 
                currentStepData.id !== 'aguardar-modal-entrada' && 
-               <Button size="sm" onClick={nextStep} className="gap-1">
+               <Button size="sm" onClick={handleNextClick} className="gap-1">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />
                 </Button>}
