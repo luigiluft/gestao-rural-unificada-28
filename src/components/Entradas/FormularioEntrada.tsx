@@ -473,6 +473,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         <Button 
           onClick={handleSubmit}
           disabled={itens.length === 0}
+          data-tutorial="registrar-entrada-btn"
         >
           Registrar Entrada
         </Button>

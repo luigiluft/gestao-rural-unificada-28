@@ -72,6 +72,17 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
+    id: 'registrar-entrada',
+    title: 'Registrar a Entrada',
+    description: 'Agora clique no botão "Registrar Entrada" para finalizar o processo e registrar a entrada no sistema.',
+    page: '/demo/entradas',
+    targetElement: '[data-tutorial="registrar-entrada-btn"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
     id: 'preencher-dados-nf',
     title: 'Preencher Dados da NF',
     description: 'Preencha o número da Nota Fiscal. Este é um campo obrigatório.',

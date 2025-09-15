@@ -205,8 +205,75 @@ export const TutorialOverlay = () => {
         </>
       )}
 
+      {/* Special backdrop with cut-out for "Registrar Entrada" button */}
+      {currentStepData.id === 'registrar-entrada' && (
+        <>
+          {(() => {
+            const registrarButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]');
+            if (registrarButton) {
+              const rect = registrarButton.getBoundingClientRect();
+              return (
+                <>
+                  {/* Top backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: rect.top - 4
+                    }}
+                  />
+                  {/* Left backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: 0,
+                      width: rect.left - 4,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Right backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.right + 4,
+                      right: 0,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Bottom backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.bottom + 4,
+                      left: 0,
+                      right: 0,
+                      bottom: 0
+                    }}
+                  />
+                  {/* Blue border around the button */}
+                  <div
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.left - 4,
+                      width: rect.width + 8,
+                      height: rect.height + 8
+                    }}
+                  />
+                </>
+              );
+            }
+            return null;
+          })()}
+        </>
+      )}
+
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
-      {targetElement && !isPagePresentation && !['aguardar-modal-entrada','selecionar-arquivo-nf','formulario-preenchido'].includes(currentStepData.id) && (
+      {targetElement && !isPagePresentation && !['aguardar-modal-entrada','selecionar-arquivo-nf','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
         <div
           className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
           style={{
