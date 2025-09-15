@@ -39,9 +39,43 @@ export const tutorialSteps: TutorialStep[] = [
     autoNavigation: false
   },
   {
+    id: 'aguardar-modal-entrada',
+    title: 'Aguardando Modal de Entrada',
+    description: 'Aguarde o formulário de entrada aparecer.',
+    page: '/entradas',
+    targetElement: '[data-tutorial="formulario-entrada"]',
+    position: 'right',
+    action: 'wait_modal',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
+    id: 'preencher-dados-nf',
+    title: 'Preencher Dados da NF',
+    description: 'Preencha o número da Nota Fiscal. Este é um campo obrigatório.',
+    page: '/entradas',
+    targetElement: '[data-tutorial="numero-nf"]',
+    position: 'bottom',
+    action: 'fill_field',
+    autoNavigation: false,
+    modalTarget: true,
+    fieldValue: 'NF123456'
+  },
+  {
+    id: 'adicionar-item-entrada',
+    title: 'Adicionar Item',
+    description: 'Agora adicione um item à entrada preenchendo produto, lote, quantidade e clicando em "Adicionar".',
+    page: '/entradas',
+    targetElement: '[data-tutorial="adicionar-item-btn"]',
+    position: 'left',
+    action: 'click',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
     id: 'formulario-entrada',
     title: 'Formulário de Entrada',
-    description: 'Preencha os dados da entrada: produtor, produto, quantidade e observações.',
+    description: 'Agora preencha os demais dados da entrada: série, data e outros campos necessários.',
     page: '/entradas',
     targetElement: '[data-tutorial="formulario-entrada"]',
     position: 'right',

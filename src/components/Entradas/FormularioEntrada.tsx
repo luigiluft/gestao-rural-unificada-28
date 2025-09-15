@@ -174,7 +174,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tutorial="formulario-entrada">
       {/* Dados da Entrada */}
       <Card>
         <CardHeader>
@@ -189,6 +189,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
               <Label htmlFor="numeroNF">Número da NF</Label>
               <Input
                 id="numeroNF"
+                data-tutorial="numero-nf"
                 value={dadosEntrada.numeroNF}
                 onChange={(e) => setDadosEntrada({...dadosEntrada, numeroNF: e.target.value})}
                 placeholder="Ex: 123456"
@@ -341,7 +342,12 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Ação</Label>
-                <Button onClick={adicionarItem} size="sm" className="w-full">
+                <Button 
+                  onClick={adicionarItem} 
+                  size="sm" 
+                  className="w-full"
+                  data-tutorial="adicionar-item-btn"
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>

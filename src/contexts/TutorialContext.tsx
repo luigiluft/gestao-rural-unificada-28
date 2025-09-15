@@ -9,11 +9,13 @@ export interface TutorialStep {
   page: string
   targetElement?: string
   position: 'top' | 'bottom' | 'left' | 'right'
-  action?: 'click' | 'navigate' | 'wait_producer' | 'form_fill'
+  action?: 'click' | 'navigate' | 'wait_producer' | 'form_fill' | 'wait_modal' | 'fill_field'
   waitCondition?: string
   dependencies?: string[]
   autoNavigation: boolean
   requiresProducer?: boolean
+  modalTarget?: boolean
+  fieldValue?: string
 }
 
 interface TutorialContextType {
@@ -30,6 +32,7 @@ interface TutorialContextType {
   resumeTutorial: () => void
   isPaused: boolean
   simulateProducerAction: () => void
+  waitingForElement: boolean
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined)
@@ -50,6 +53,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [waitingForElement, setWaitingForElement] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -88,13 +92,6 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     }
   }, [currentStep, isActive, currentStepData, navigate, location.pathname])
 
-  const startTutorial = () => {
-    setIsActive(true)
-    setCurrentStep(0)
-    setIsPaused(false)
-    navigate('/')
-  }
-
   const nextStep = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
@@ -132,6 +129,70 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     nextStep()
   }
 
+  // MutationObserver to detect dynamic content changes
+  useEffect(() => {
+    if (!isActive || !currentStepData) return
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          // Check if target element appeared
+          if (currentStepData.targetElement) {
+            const element = document.querySelector(currentStepData.targetElement)
+            if (element && waitingForElement) {
+              setWaitingForElement(false)
+              
+              // Auto-advance for certain actions
+              if (currentStepData.action === 'wait_modal') {
+                setTimeout(() => nextStep(), 1000)
+              }
+            }
+          }
+          
+          // Detect modal openings
+          const modals = document.querySelectorAll('[role="dialog"], .modal, [data-state="open"]')
+          if (modals.length > 0 && currentStepData.action === 'click') {
+            setTimeout(() => nextStep(), 500)
+          }
+        }
+      })
+    })
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-state', 'aria-hidden']
+    })
+
+    return () => observer.disconnect()
+  }, [isActive, currentStepData, waitingForElement, nextStep])
+
+  // Wait for elements to appear
+  useEffect(() => {
+    if (!isActive || !currentStepData?.targetElement) return
+
+    const checkElement = () => {
+      const element = document.querySelector(currentStepData.targetElement!)
+      if (!element) {
+        setWaitingForElement(true)
+        // Retry after delay
+        setTimeout(checkElement, 500)
+      } else {
+        setWaitingForElement(false)
+      }
+    }
+
+    checkElement()
+  }, [isActive, currentStepData])
+
+  const startTutorial = () => {
+    setIsActive(true)
+    setCurrentStep(0)
+    setIsPaused(false)
+    navigate('/')
+  }
+
   return (
     <TutorialContext.Provider value={{
       isActive,
@@ -146,7 +207,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       pauseTutorial,
       resumeTutorial,
       isPaused,
-      simulateProducerAction
+      simulateProducerAction,
+      waitingForElement
     }}>
       {children}
     </TutorialContext.Provider>

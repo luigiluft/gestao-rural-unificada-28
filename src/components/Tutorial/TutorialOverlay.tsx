@@ -8,19 +8,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useTutorial } from '@/contexts/TutorialContext'
 
 export const TutorialOverlay = () => {
-  const {
-    isActive,
-    currentStepData,
-    currentStep,
-    totalSteps,
+  const { 
+    isActive, 
+    currentStepData, 
+    currentStep, 
+    totalSteps, 
     progress,
-    nextStep,
-    previousStep,
+    nextStep, 
+    previousStep, 
     endTutorial,
     pauseTutorial,
     resumeTutorial,
     isPaused,
-    simulateProducerAction
+    simulateProducerAction,
+    waitingForElement
   } = useTutorial()
 
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null)
@@ -84,15 +85,18 @@ export const TutorialOverlay = () => {
 
   if (!isActive || !currentStepData) return null
 
+  // Check if we're in a modal
+  const isInModal = currentStepData.modalTarget || (targetElement && targetElement.closest('[role="dialog"], [data-state="open"]'))
+
   return (
     <>
-      {/* Dark overlay */}
-      <div className="fixed inset-0 bg-black/50 z-40" />
+      {/* Dark overlay - higher z-index if in modal */}
+      <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />
       
       {/* Spotlight effect on target element */}
       {targetElement && (
         <div
-          className="fixed z-50 pointer-events-none"
+          className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
           style={{
             top: targetElement.getBoundingClientRect().top - 4,
             left: targetElement.getBoundingClientRect().left - 4,
@@ -106,7 +110,7 @@ export const TutorialOverlay = () => {
       
       {/* Tutorial modal */}
       <Card
-        className="fixed z-50 w-96 shadow-xl border-primary/20"
+        className={`fixed w-96 shadow-xl border-primary/20 ${isInModal ? 'z-[20001]' : 'z-50'}`}
         style={{
           top: targetElement ? modalPosition.top : '50%',
           left: targetElement ? modalPosition.left : '50%',
@@ -151,12 +155,24 @@ export const TutorialOverlay = () => {
             </Alert>
           )}
           
+          {/* Waiting for element */}
+          {waitingForElement && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertTriangle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                Aguardando o elemento aparecer na tela...
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {/* Current step badge */}
           <div className="flex items-center gap-2">
             <Badge variant="secondary">
               {currentStepData.action === 'wait_producer' ? 'Aguardando Produtor' : 
                currentStepData.action === 'click' ? 'Clique Necessário' :
                currentStepData.action === 'form_fill' ? 'Preencher Formulário' :
+               currentStepData.action === 'wait_modal' ? 'Aguardando Modal' :
+               currentStepData.action === 'fill_field' ? 'Preencher Campo' :
                'Informativo'}
             </Badge>
             {isPaused && (
