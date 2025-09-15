@@ -207,4 +207,30 @@
       transform: translateY(-3px);
     }
   }
+
+  /* Page highlight for tutorial */
+  .tutorial-page-highlight {
+    position: relative;
+    animation: page-glow 3s infinite alternate;
+    border: 2px solid hsl(var(--primary));
+    border-radius: 8px;
+    box-shadow: 
+      0 0 20px hsl(var(--primary) / 0.3),
+      inset 0 0 20px hsl(var(--primary) / 0.1);
+  }
+
+  @keyframes page-glow {
+    0% { 
+      border-color: hsl(var(--primary));
+      box-shadow: 
+        0 0 20px hsl(var(--primary) / 0.3),
+        inset 0 0 20px hsl(var(--primary) / 0.1);
+    }
+    100% { 
+      border-color: hsl(var(--primary) / 0.7);
+      box-shadow: 
+        0 0 30px hsl(var(--primary) / 0.5),
+        inset 0 0 30px hsl(var(--primary) / 0.2);
+    }
+  }
 }
