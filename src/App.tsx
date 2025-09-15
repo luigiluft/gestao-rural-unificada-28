@@ -45,7 +45,6 @@ import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
 import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { TutorialProvider } from "@/contexts/TutorialContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,11 +60,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <BrowserRouter>
-        <TutorialProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
@@ -116,7 +114,6 @@ const App = () => (
             </Route>
           </Routes>
         </TooltipProvider>
-        </TutorialProvider>
       </BrowserRouter>
     </AuthProvider>
   </QueryClientProvider>
