@@ -12,6 +12,8 @@ function AppLayoutContent({ children }: { children?: ReactNode }) {
   
   // Check if current step is about presenting the current page
   const isPagePresentation = isActive && currentStepData && (
+    // Welcome step (first step)
+    currentStepData.id === 'welcome' ||
     // Dashboard overview step
     currentStepData.id === 'dashboard-overview' ||
     // Steps that are about page navigation/introduction
@@ -20,10 +22,19 @@ function AppLayoutContent({ children }: { children?: ReactNode }) {
     currentStepData.id === 'navigate-separacao' ||
     currentStepData.id === 'navigate-transporte' ||
     // Steps that show general page info without specific targets
-    (!currentStepData.targetElement && !currentStepData.action) ||
-    // Welcome step on dashboard
-    (currentStepData.id === 'welcome' && window.location.pathname.includes('dashboard'))
+    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation)
   )
+
+  // Debug log
+  if (isActive && currentStepData) {
+    console.log('Tutorial Debug:', {
+      stepId: currentStepData.id,
+      isPagePresentation,
+      hasTargetElement: !!currentStepData.targetElement,
+      action: currentStepData.action,
+      autoNavigation: currentStepData.autoNavigation
+    })
+  }
   
   return (
     <div className="min-h-screen flex w-full bg-background">
