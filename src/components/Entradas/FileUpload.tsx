@@ -65,6 +65,13 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
     e.preventDefault();
     setIsDragOver(false);
     
+    // During tutorial, trigger mock data loading instead of file processing
+    if (isActive) {
+      const event = new CustomEvent('tutorial-trigger-nf-upload');
+      document.dispatchEvent(event);
+      return;
+    }
+    
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -82,6 +89,13 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // During tutorial, trigger mock data loading instead of file processing
+    if (isActive) {
+      const event = new CustomEvent('tutorial-trigger-nf-upload');
+      document.dispatchEvent(event);
+      return;
+    }
+    
     const files = e.target.files;
     if (files && files.length > 0) {
       handleFileSelect(files[0]);
@@ -90,7 +104,7 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
 
   const openFileDialog = () => {
     // During tutorial, trigger mock data loading instead of file dialog
-    if (isActive && currentStepData?.id === 'selecionar-arquivo-nf') {
+    if (isActive) {
       const event = new CustomEvent('tutorial-trigger-nf-upload');
       document.dispatchEvent(event);
       return;
@@ -164,6 +178,7 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
               </p>
               
               <Button 
+                type="button"
                 onClick={openFileDialog}
                 disabled={isProcessing}
                 variant="outline"

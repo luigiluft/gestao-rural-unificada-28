@@ -283,9 +283,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
 
     // Listen for tutorial trigger event
     const handleTutorialTrigger = () => {
-      if (currentStepData.id === 'selecionar-arquivo-nf') {
-        simulateNFUpload()
-      }
+      // Always simulate NF upload when tutorial is active
+      simulateNFUpload()
     }
 
     // Add click listener to detect clicks on target elements
