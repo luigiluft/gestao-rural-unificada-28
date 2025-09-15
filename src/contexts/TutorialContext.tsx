@@ -92,7 +92,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     setIsActive(true)
     setCurrentStep(0)
     setIsPaused(false)
-    navigate('/dashboard')
+    navigate('/')
   }
 
   const nextStep = () => {

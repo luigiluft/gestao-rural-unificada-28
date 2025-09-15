@@ -5,7 +5,7 @@ export const tutorialSteps: TutorialStep[] = [
     id: 'welcome',
     title: 'Bem-vindo ao Tutorial do AgroHub',
     description: 'Este tutorial irá guiá-lo através do processo completo do sistema, desde o recebimento até o transporte.',
-    page: '/dashboard',
+    page: '/',
     position: 'bottom',
     autoNavigation: true
   },
@@ -13,7 +13,7 @@ export const tutorialSteps: TutorialStep[] = [
     id: 'dashboard-overview',
     title: 'Dashboard - Visão Geral',
     description: 'Este é o painel principal onde você pode ver o resumo das operações do sistema.',
-    page: '/dashboard',
+    page: '/',
     targetElement: '.dashboard-stats',
     position: 'bottom',
     autoNavigation: false
@@ -197,7 +197,7 @@ export const tutorialSteps: TutorialStep[] = [
     id: 'tutorial-complete',
     title: 'Tutorial Concluído!',
     description: 'Parabéns! Você concluiu o tutorial completo do sistema AgroHub. Agora você conhece todo o fluxo operacional.',
-    page: '/dashboard',
+    page: '/',
     autoNavigation: true,
     position: 'bottom'
   }
