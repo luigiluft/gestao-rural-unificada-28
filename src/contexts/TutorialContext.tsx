@@ -158,12 +158,58 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     if (currentStepData.targetElement) {
       const targetElement = document.querySelector(currentStepData.targetElement)
       if (targetElement && (element === targetElement || targetElement.contains(element))) {
+        
+        // Special handling for file upload simulation
+        if (currentStepData.id === 'selecionar-arquivo-nf') {
+          // Simulate file upload with mock NF data
+          simulateNFUpload()
+          setTimeout(() => nextStep(), 2000) // Wait for simulation to complete
+          return
+        }
+        
         // Only advance for click actions
         if (currentStepData.action === 'click') {
           setTimeout(() => nextStep(), 300) // Small delay for visual feedback
         }
       }
     }
+  }
+
+  const simulateNFUpload = () => {
+    // Create a mock file upload event with demo NF data
+    const mockNFData = {
+      numeroNF: 'NF001245',
+      cnpjEmitente: '12.345.678/0001-90',
+      nomeEmitente: 'Fazenda Demo Ltda',
+      produtos: [
+        {
+          codigo: 'SOJ001',
+          descricao: 'Soja em Grão',
+          quantidade: 1000,
+          unidade: 'KG',
+          valorUnitario: 1.50
+        },
+        {
+          codigo: 'MIL002', 
+          descricao: 'Milho em Grão',
+          quantidade: 500,
+          unidade: 'KG',
+          valorUnitario: 1.20
+        }
+      ],
+      valorTotal: 2100.00,
+      dataEmissao: new Date().toISOString().split('T')[0],
+      xmlContent: '<nfeProc><!-- Mock XML content --></nfeProc>'
+    }
+
+    // Trigger the file upload simulation
+    setTimeout(() => {
+      // Find any file upload component and trigger its onNFDataParsed callback
+      const event = new CustomEvent('tutorial-nf-upload', {
+        detail: mockNFData
+      })
+      document.dispatchEvent(event)
+    }, 500)
   }
 
   // Click detection and visual highlighting system

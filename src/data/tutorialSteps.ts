@@ -50,6 +50,17 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
+    id: 'selecionar-arquivo-nf',
+    title: 'Selecionar Arquivo da NF',
+    description: 'Clique no botão "Selecionar Arquivo" para fazer upload da Nota Fiscal. No tutorial, simularemos o upload de uma NF de exemplo.',
+    page: '/entradas',
+    targetElement: '[data-tutorial="selecionar-arquivo-btn"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
     id: 'preencher-dados-nf',
     title: 'Preencher Dados da NF',
     description: 'Preencha o número da Nota Fiscal. Este é um campo obrigatório.',

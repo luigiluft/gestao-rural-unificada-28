@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, FileText, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,6 +90,27 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
     fileInputRef.current?.click();
   };
 
+  // Listen for tutorial NF upload simulation
+  useEffect(() => {
+    const handleTutorialUpload = (event: CustomEvent) => {
+      const mockData = event.detail;
+      setIsProcessing(true);
+      
+      // Simulate processing time
+      setTimeout(() => {
+        onNFDataParsed(mockData);
+        setUploadStatus('success');
+        setIsProcessing(false);
+      }, 1500);
+    };
+
+    document.addEventListener('tutorial-nf-upload', handleTutorialUpload as EventListener);
+    
+    return () => {
+      document.removeEventListener('tutorial-nf-upload', handleTutorialUpload as EventListener);
+    };
+  }, [onNFDataParsed]);
+
   return (
     <div className="space-y-4">
       <Card 
@@ -133,6 +154,7 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
                 disabled={isProcessing}
                 variant="outline"
                 className="mb-4"
+                data-tutorial="selecionar-arquivo-btn"
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Selecionar Arquivo

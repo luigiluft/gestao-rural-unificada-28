@@ -107,7 +107,7 @@ export const TutorialOverlay = () => {
   
   return <>
       {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
-      {!isPagePresentation && currentStepData.id !== 'aguardar-modal-entrada' && (targetElement && currentStepData.action === 'click'
+      {!isPagePresentation && currentStepData.id !== 'aguardar-modal-entrada' && currentStepData.id !== 'selecionar-arquivo-nf' && (targetElement && currentStepData.action === 'click'
         ? <>
             {/* Mask the whole screen except the target to keep it clickable */}
             {(() => {
