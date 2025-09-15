@@ -83,10 +83,27 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   }, [isActive, currentStep])
 
   // Auto-navigate when step changes
+  // Navigation based on current step with demo route handling
   useEffect(() => {
-    if (isActive && currentStepData && currentStepData.autoNavigation) {
-      const targetPage = currentStepData.page
-      if (location.pathname !== targetPage) {
+    if (!isActive || !currentStepData) return
+
+    // Determine the target page - use demo version during tutorial
+    let targetPage = currentStepData.page
+    if (targetPage && isActive) {
+      // Convert regular routes to demo routes during tutorial
+      const demoRoutes = {
+        '/dashboard': '/demo/dashboard',
+        '/entradas': '/demo/entradas', 
+        '/estoque': '/demo/estoque',
+        '/saidas': '/demo/saidas'
+      }
+      
+      targetPage = demoRoutes[targetPage as keyof typeof demoRoutes] || targetPage
+    }
+
+    // Only navigate if we're not already on the target page
+    if (targetPage && location.pathname !== targetPage) {
+      if (currentStepData.autoNavigation !== false) {
         navigate(targetPage)
       }
     }

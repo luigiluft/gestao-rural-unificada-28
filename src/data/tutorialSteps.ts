@@ -4,8 +4,8 @@ export const tutorialSteps: TutorialStep[] = [
   {
     id: 'welcome',
     title: 'Bem-vindo ao Tutorial do AgroHub',
-    description: 'Este tutorial irá guiá-lo através do processo completo do sistema, desde o recebimento até o transporte.',
-    page: '/',
+    description: 'Este tutorial irá guiá-lo através do processo completo do sistema, desde o recebimento até o transporte. Durante o tutorial, você verá dados de demonstração para entender melhor o funcionamento.',
+    page: '/dashboard',
     position: 'bottom',
     autoNavigation: true
   },

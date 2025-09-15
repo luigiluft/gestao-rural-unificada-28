@@ -36,11 +36,16 @@ import Instrucoes from "./pages/Instrucoes";
 import InstrucoesAdmin from "./pages/InstrucoesAdmin";
 import InstrucoesFranqueado from "./pages/InstrucoesFranqueado";
 import InstrucoesProdutor from "./pages/InstrucoesProdutor";
+import DemoDashboard from "./pages/Demo/DemoDashboard";
+import DemoEntradas from "./pages/Demo/DemoEntradas";
+import DemoEstoque from "./pages/Demo/DemoEstoque";
+import DemoSaidas from "./pages/Demo/DemoSaidas";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
 import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { TutorialProvider } from "@/contexts/TutorialContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,11 +60,12 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
+      <TutorialProvider>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
             <Route path="/auth" element={<AuthPage />} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
@@ -100,11 +106,18 @@ const App = () => (
               <Route path="instrucoes/franqueado" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesFranqueado /></RequirePageAccess>} />
               <Route path="instrucoes/produtor" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesProdutor /></RequirePageAccess>} />
               
+              {/* Demo Routes for Tutorial */}
+              <Route path="demo/dashboard" element={<RequirePageAccess pageKey="dashboard"><DemoDashboard /></RequirePageAccess>} />
+              <Route path="demo/entradas" element={<RequirePageAccess pageKey="entradas"><DemoEntradas /></RequirePageAccess>} />
+              <Route path="demo/estoque" element={<RequirePageAccess pageKey="estoque"><DemoEstoque /></RequirePageAccess>} />
+              <Route path="demo/saidas" element={<RequirePageAccess pageKey="saidas"><DemoSaidas /></RequirePageAccess>} />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </TooltipProvider>
       </BrowserRouter>
+      </TutorialProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
