@@ -34,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems"
 import { useNotifications } from "@/hooks/useNotifications"
 import { TutorialButton } from "@/components/Tutorial/TutorialButton"
+import { useTutorial } from "@/contexts/TutorialContext"
 
 export function AppSidebar() {
   const { state } = useSidebar()
@@ -47,6 +48,7 @@ export function AppSidebar() {
   
   const { data: notifications } = useNotifications()
   const { menuItems, isLoading: menuLoading } = useDynamicMenuItems()
+  const { isActive: isTutorialActive } = useTutorial()
 
   const initials = (displayName || user?.email || "U")
     .split(" ")
@@ -121,6 +123,21 @@ export function AppSidebar() {
     }
   }
 
+  // Convert regular paths to demo paths during tutorial
+  const convertToTutorialPath = (path: string) => {
+    if (!isTutorialActive) return path
+    
+    const demoRoutes = {
+      '/': '/demo/dashboard',
+      '/dashboard': '/demo/dashboard',
+      '/entradas': '/demo/entradas',
+      '/estoque': '/demo/estoque', 
+      '/saidas': '/demo/saidas'
+    }
+    
+    return demoRoutes[path as keyof typeof demoRoutes] || path
+  }
+
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
       <SidebarContent className="bg-gradient-card">
@@ -159,7 +176,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton asChild>
                      <NavLink 
-                       to={item.path} 
+                       to={convertToTutorialPath(item.path)} 
                        end={item.path === "/"}
                        data-tutorial={item.label === "Entradas" ? "entradas-link" : undefined}
                        className={({ isActive }) => 
