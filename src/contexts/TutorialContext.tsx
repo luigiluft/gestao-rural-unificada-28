@@ -9,7 +9,7 @@ export interface TutorialStep {
   page: string
   targetElement?: string
   position: 'top' | 'bottom' | 'left' | 'right'
-  action?: 'click' | 'navigate' | 'wait_producer' | 'form_fill' | 'wait_modal' | 'fill_field'
+  action?: 'click' | 'navigate' | 'wait_producer' | 'form_fill' | 'wait_modal' | 'fill_field' | 'none'
   waitCondition?: string
   dependencies?: string[]
   autoNavigation: boolean
@@ -163,7 +163,6 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         if (currentStepData.id === 'selecionar-arquivo-nf') {
           // Simulate file upload with mock NF data
           simulateNFUpload()
-          setTimeout(() => nextStep(), 2000) // Wait for simulation to complete
           return
         }
         
@@ -209,6 +208,11 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         detail: mockNFData
       })
       document.dispatchEvent(event)
+      
+      // Auto-advance to show the filled form after a delay
+      setTimeout(() => {
+        nextStep()
+      }, 1500)
     }, 500)
   }
 

@@ -61,6 +61,17 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
+    id: 'formulario-preenchido',
+    title: 'Dados da NF Carregados',
+    description: 'Perfeito! Os dados da Nota Fiscal foram carregados automaticamente no formulário. Agora você pode revisar e confirmar as informações.',
+    page: '/entradas',
+    targetElement: '[data-tutorial="entrada-modal"]',
+    position: 'right',
+    action: 'none',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
     id: 'preencher-dados-nf',
     title: 'Preencher Dados da NF',
     description: 'Preencha o número da Nota Fiscal. Este é um campo obrigatório.',
