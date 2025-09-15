@@ -62,17 +62,17 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const currentStepData = isActive ? tutorialSteps[currentStep] : null
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0
 
-  // Load tutorial state from localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('tutorial-state')
-    if (savedState) {
-      const { isActive: savedActive, currentStep: savedStep } = JSON.parse(savedState)
-      if (savedActive) {
-        setIsActive(true)
-        setCurrentStep(savedStep)
-      }
-    }
-  }, [])
+  // Load tutorial state from localStorage - DISABLED for manual start only
+  // useEffect(() => {
+  //   const savedState = localStorage.getItem('tutorial-state')
+  //   if (savedState) {
+  //     const { isActive: savedActive, currentStep: savedStep } = JSON.parse(savedState)
+  //     if (savedActive) {
+  //       setIsActive(true)
+  //       setCurrentStep(savedStep)
+  //     }
+  //   }
+  // }, [])
 
   // Save tutorial state to localStorage
   useEffect(() => {
