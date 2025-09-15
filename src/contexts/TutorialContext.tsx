@@ -179,8 +179,10 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         
         // Special handling for file upload simulation
         if (currentStepData.id === 'selecionar-arquivo-nf') {
-          // Simulate file upload with mock NF data
+          // Simula o upload e preenche o formulário
           simulateNFUpload()
+          // Avança UMA etapa após o preenchimento simulado, aguardando o usuário nas próximas
+          setTimeout(() => nextStep(), 800)
           return
         }
         
@@ -246,11 +248,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
             detail: mockNFData
           })
           document.dispatchEvent(event)
-          
-          // Auto-advance to show the filled form without backdrop
-          if (currentStepData?.id === 'selecionar-arquivo-nf') {
-            setTimeout(() => nextStep(), 800)
-          }
+          // Formulário preenchido: aguardar o usuário clicar em "Próximo"
         }, 500)
       
     } catch (error) {
@@ -287,11 +285,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
           detail: mockNFData
         })
         document.dispatchEvent(event)
-        
-        // Auto-advance to show the filled form without backdrop
-        if (currentStepData?.id === 'selecionar-arquivo-nf') {
-          setTimeout(() => nextStep(), 800)
-        }
+        // Formulário preenchido: aguardar o usuário clicar em "Próximo"
       }, 500)
     }
   }
