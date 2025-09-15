@@ -362,16 +362,16 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
             if (element && waitingForElement) {
               setWaitingForElement(false)
               
-              // Auto-advance for certain actions (but not clicks)
-              if (currentStepData.action === 'wait_modal') {
-                if (waitModalAdvanceRef.current) {
-                  clearTimeout(waitModalAdvanceRef.current)
-                }
-                waitModalAdvanceRef.current = window.setTimeout(() => {
-                  nextStep()
-                  waitModalAdvanceRef.current = null
-                }, 1000)
-              }
+               // Auto-advance for certain actions (but not clicks)
+               if (currentStepData.action === 'wait_modal' && currentStepData.id === 'aguardar-modal-entrada') {
+                 if (waitModalAdvanceRef.current) {
+                   clearTimeout(waitModalAdvanceRef.current)
+                 }
+                 waitModalAdvanceRef.current = window.setTimeout(() => {
+                   nextStep()
+                   waitModalAdvanceRef.current = null
+                 }, 500)
+               }
             }
           }
         }
