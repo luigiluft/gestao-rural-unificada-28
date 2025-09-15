@@ -84,14 +84,30 @@ export const TutorialOverlay = () => {
   }, [isActive, currentStepData]);
   if (!isActive || !currentStepData) return null;
 
+  // Check if current step is a page presentation (no specific target needed)
+  const isPagePresentation = (
+    // Welcome step or steps that introduce pages without specific actions
+    currentStepData.id === 'welcome' ||
+    currentStepData.id === 'dashboard-overview' ||
+    currentStepData.id === 'verificar-estoque' ||
+    currentStepData.id === 'navigate-saidas' ||
+    currentStepData.id === 'navigate-separacao' ||
+    currentStepData.id === 'navigate-transporte' ||
+    // Steps that show general page info without specific targets
+    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation) ||
+    // Steps that introduce a page (no action, just presenting the page)
+    (!currentStepData.action && currentStepData.autoNavigation === false && currentStepData.targetElement)
+  );
+
   // Check if we're in a modal
   const isInModal = currentStepData.modalTarget || targetElement && targetElement.closest('[role="dialog"], [data-state="open"]');
+  
   return <>
-      {/* Dark overlay - higher z-index if in modal */}
-      <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />
+      {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
+      {!isPagePresentation && <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />}
       
-      {/* Spotlight effect on target element */}
-      {targetElement && <div className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`} style={{
+      {/* Spotlight effect on target element - only for non-page-presentation steps */}
+      {targetElement && !isPagePresentation && <div className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`} style={{
       top: targetElement.getBoundingClientRect().top - 4,
       left: targetElement.getBoundingClientRect().left - 4,
       width: targetElement.getBoundingClientRect().width + 8,
