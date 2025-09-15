@@ -8,20 +8,21 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useTutorial } from '@/contexts/TutorialContext'
 
 export const TutorialOverlay = () => {
-  const { 
-    isActive, 
-    currentStepData, 
-    currentStep, 
-    totalSteps, 
+  const {
+    isActive,
+    currentStepData,
+    currentStep,
+    totalSteps,
     progress,
-    nextStep, 
-    previousStep, 
+    nextStep,
+    previousStep,
     endTutorial,
     pauseTutorial,
     resumeTutorial,
     isPaused,
     simulateProducerAction,
-    waitingForElement
+    waitingForElement,
+    handleTargetClick
   } = useTutorial()
 
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null)
@@ -164,6 +165,18 @@ export const TutorialOverlay = () => {
               </AlertDescription>
             </Alert>
           )}
+
+          {/* Interactive feedback for click actions */}
+          {currentStepData.action === 'click' && !waitingForElement && (
+            <Alert className="border-primary/20 bg-primary/5">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                <AlertDescription className="text-primary font-medium">
+                  Clique no elemento destacado para continuar
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
           
           {/* Current step badge */}
           <div className="flex items-center gap-2">
@@ -229,14 +242,17 @@ export const TutorialOverlay = () => {
                 </Button>
               )}
               
-              <Button
-                size="sm"
-                onClick={nextStep}
-                className="gap-1"
-              >
-                {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
-                <ChevronRight className="h-3 w-3" />
-              </Button>
+              {/* Only show Next button for non-click actions or when waiting for elements */}
+              {(currentStepData.action !== 'click' || waitingForElement) && (
+                <Button
+                  size="sm"
+                  onClick={nextStep}
+                  className="gap-1"
+                >
+                  {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>

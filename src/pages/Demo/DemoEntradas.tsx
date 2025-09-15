@@ -143,7 +143,7 @@ export default function DemoEntradas() {
           
           <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-primary hover:bg-primary/90" id="nova-entrada-btn">
+              <Button className="bg-gradient-primary hover:bg-primary/90" id="nova-entrada-btn" data-tutorial="nova-entrada-btn">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Entrada
               </Button>

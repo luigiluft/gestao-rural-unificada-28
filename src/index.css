@@ -124,4 +124,87 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Tutorial highlight system */
+  .tutorial-highlight {
+    position: relative;
+    z-index: 9998;
+    animation: tutorial-pulse 2s infinite;
+  }
+
+  .tutorial-spotlight {
+    position: relative;
+    z-index: 9999;
+    border-radius: var(--radius);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 20px hsl(var(--primary));
+  }
+
+  @keyframes tutorial-pulse {
+    0% { 
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
+    70% { 
+      box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+    }
+    100% { 
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    }
+  }
+
+  .tutorial-pointer {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    z-index: 10000;
+    animation: tutorial-bounce 1s infinite;
+  }
+
+  .tutorial-pointer.top {
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 15px solid hsl(var(--primary));
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .tutorial-pointer.bottom {
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 15px solid hsl(var(--primary));
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .tutorial-pointer.left {
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 15px solid hsl(var(--primary));
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .tutorial-pointer.right {
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 15px solid hsl(var(--primary));
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  @keyframes tutorial-bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-5px);
+    }
+    60% {
+      transform: translateY(-3px);
+    }
+  }
 }

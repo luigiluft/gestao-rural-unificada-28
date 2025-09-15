@@ -33,6 +33,7 @@ interface TutorialContextType {
   isPaused: boolean
   simulateProducerAction: () => void
   waitingForElement: boolean
+  handleTargetClick: (element: Element) => void
 }
 
 const TutorialContext = createContext<TutorialContextType | undefined>(undefined)
@@ -150,6 +151,65 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     nextStep()
   }
 
+  const handleTargetClick = (element: Element) => {
+    if (!isActive || !currentStepData) return
+    
+    // Check if clicked element matches target
+    if (currentStepData.targetElement) {
+      const targetElement = document.querySelector(currentStepData.targetElement)
+      if (targetElement && (element === targetElement || targetElement.contains(element))) {
+        // Only advance for click actions
+        if (currentStepData.action === 'click') {
+          setTimeout(() => nextStep(), 300) // Small delay for visual feedback
+        }
+      }
+    }
+  }
+
+  // Click detection and visual highlighting system
+  useEffect(() => {
+    if (!isActive || !currentStepData) return
+
+    // Add click listener to detect clicks on target elements
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Element
+      handleTargetClick(target)
+    }
+
+    // Add highlight class to target element
+    const addHighlight = () => {
+      if (currentStepData.targetElement) {
+        const element = document.querySelector(currentStepData.targetElement)
+        if (element) {
+          element.classList.add('tutorial-highlight')
+          
+          // Add spotlight effect for click actions
+          if (currentStepData.action === 'click') {
+            element.classList.add('tutorial-spotlight')
+          }
+        }
+      }
+    }
+
+    // Remove highlight class from all elements
+    const removeHighlight = () => {
+      document.querySelectorAll('.tutorial-highlight').forEach(el => {
+        el.classList.remove('tutorial-highlight', 'tutorial-spotlight')
+      })
+    }
+
+    document.addEventListener('click', handleDocumentClick)
+    
+    // Add highlight after a brief delay to ensure element exists
+    const timer = setTimeout(addHighlight, 100)
+    
+    return () => {
+      document.removeEventListener('click', handleDocumentClick)
+      clearTimeout(timer)
+      removeHighlight()
+    }
+  }, [isActive, currentStepData])
+
   // MutationObserver to detect dynamic content changes
   useEffect(() => {
     if (!isActive || !currentStepData) return
@@ -163,17 +223,11 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
             if (element && waitingForElement) {
               setWaitingForElement(false)
               
-              // Auto-advance for certain actions
+              // Auto-advance for certain actions (but not clicks)
               if (currentStepData.action === 'wait_modal') {
                 setTimeout(() => nextStep(), 1000)
               }
             }
-          }
-          
-          // Detect modal openings
-          const modals = document.querySelectorAll('[role="dialog"], .modal, [data-state="open"]')
-          if (modals.length > 0 && currentStepData.action === 'click') {
-            setTimeout(() => nextStep(), 500)
           }
         }
       })
@@ -229,7 +283,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       resumeTutorial,
       isPaused,
       simulateProducerAction,
-      waitingForElement
+      waitingForElement,
+      handleTargetClick
     }}>
       {children}
     </TutorialContext.Provider>
