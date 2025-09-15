@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { NFParser, NFData } from "./NFParser";
+import { useTutorial } from "@/contexts/TutorialContext";
 
 interface FileUploadProps {
   onNFDataParsed: (data: NFData) => void;
@@ -15,6 +16,7 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isActive, currentStepData } = useTutorial();
 
   const handleFileSelect = async (file: File) => {
     if (!file) return;
@@ -87,6 +89,13 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
   };
 
   const openFileDialog = () => {
+    // During tutorial, trigger mock data loading instead of file dialog
+    if (isActive && currentStepData?.id === 'selecionar-arquivo-nf') {
+      const event = new CustomEvent('tutorial-trigger-nf-upload');
+      document.dispatchEvent(event);
+      return;
+    }
+    
     fileInputRef.current?.click();
   };
 

@@ -281,11 +281,20 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   useEffect(() => {
     if (!isActive || !currentStepData) return
 
+    // Listen for tutorial trigger event
+    const handleTutorialTrigger = () => {
+      if (currentStepData.id === 'selecionar-arquivo-nf') {
+        simulateNFUpload()
+      }
+    }
+
     // Add click listener to detect clicks on target elements
     const handleDocumentClick = (event: MouseEvent) => {
       const target = event.target as Element
       handleTargetClick(target)
     }
+
+    document.addEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
 
     // Add highlight class to target element
     const addHighlight = () => {
@@ -316,6 +325,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     
     return () => {
       document.removeEventListener('click', handleDocumentClick)
+      document.removeEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
       clearTimeout(timer)
       removeHighlight()
     }
