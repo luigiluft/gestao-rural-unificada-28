@@ -61,9 +61,20 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
-    id: 'formulario-preenchido',
-    title: 'Formulário Preenchido',
-    description: 'Perfeito! O formulário foi preenchido automaticamente com os dados da Nota Fiscal. Agora você pode revisar as informações e registrar a entrada.',
+    id: 'formulario-preenchido-sem-backdrop',
+    title: 'Formulário Preenchido Automaticamente',
+    description: 'Veja como o formulário foi preenchido automaticamente com os dados da Nota Fiscal. Revise as informações e clique em "Próximo" para continuar.',
+    page: '/demo/entradas',
+    targetElement: '[data-tutorial="formulario-entrada"]',
+    position: 'right',
+    action: 'none',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
+    id: 'formulario-preenchido-com-backdrop',
+    title: 'Pronto para Registrar',
+    description: 'Agora clique no botão "Registrar Entrada" para finalizar o processo de entrada.',
     page: '/demo/entradas',
     targetElement: '[data-tutorial="registrar-entrada-btn"]',
     position: 'top',

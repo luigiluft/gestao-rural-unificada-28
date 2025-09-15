@@ -112,7 +112,25 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
 
   function nextStep() {
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(prev => prev + 1)
+      setCurrentStep(prev => {
+        const nextStepNumber = prev + 1
+        const nextStepData = tutorialSteps[nextStepNumber]
+        
+        // Special handling for transition from formulario-preenchido-sem-backdrop to formulario-preenchido-com-backdrop
+        if (nextStepData.id === 'formulario-preenchido-com-backdrop') {
+          setTimeout(() => {
+            const registrarBtn = document.querySelector('[data-tutorial="registrar-entrada-btn"]')
+            if (registrarBtn) {
+              registrarBtn.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+              })
+            }
+          }, 500)
+        }
+        
+        return nextStepNumber
+      })
       setIsPaused(false)
     } else {
       // Inline endTutorial to avoid TDZ issues
@@ -229,22 +247,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         })
         document.dispatchEvent(event)
         
-        // Auto-advance to show the filled form after a delay
-        setTimeout(() => {
-          nextStep()
-          
-          // Auto scroll to the register button after advancing
-          setTimeout(() => {
-            const registerButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]')
-            if (registerButton) {
-              registerButton.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center',
-                inline: 'center'
-              })
-            }
-          }, 1000)
-        }, 1500)
+        console.log('Formulário preenchido, aguardando usuário continuar')
       }, 500)
       
     } catch (error) {
@@ -282,9 +285,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         })
         document.dispatchEvent(event)
         
-        setTimeout(() => {
-          nextStep()
-        }, 1500)
+        console.log('Formulário preenchido, aguardando usuário continuar')
       }, 500)
     }
   }
