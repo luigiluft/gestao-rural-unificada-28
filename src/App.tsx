@@ -32,6 +32,10 @@ import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
 import Transporte from "./pages/Transporte";
 import PlanejamentoPalletsPage from "./pages/PlanejamentoPallets";
+import Instrucoes from "./pages/Instrucoes";
+import InstrucoesAdmin from "./pages/InstrucoesAdmin";
+import InstrucoesFranqueado from "./pages/InstrucoesFranqueado";
+import InstrucoesProdutor from "./pages/InstrucoesProdutor";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -89,6 +93,13 @@ const App = () => (
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               <Route path="transporte" element={<RequirePageAccess pageKey="transporte"><Transporte /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />
+              
+              {/* Rotas de Instruções */}
+              <Route path="instrucoes" element={<RequirePageAccess pageKey="instrucoes"><Instrucoes /></RequirePageAccess>} />
+              <Route path="instrucoes/admin" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesAdmin /></RequirePageAccess>} />
+              <Route path="instrucoes/franqueado" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesFranqueado /></RequirePageAccess>} />
+              <Route path="instrucoes/produtor" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesProdutor /></RequirePageAccess>} />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

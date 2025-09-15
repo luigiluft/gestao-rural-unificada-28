@@ -23,7 +23,8 @@ import {
   Waves,
   Grid3X3,
   Clipboard,
-  Package2
+  Package2,
+  BookOpen
 } from "lucide-react"
 
 export interface MenuItem {
@@ -60,7 +61,8 @@ const iconMap = {
   separacao: Clipboard,
   inventario: Package2,
   transporte: Truck,
-  "perfis-funcionarios": Users
+  "perfis-funcionarios": Users,
+  instrucoes: BookOpen
 }
 
 const menuLabels = {
@@ -89,7 +91,8 @@ const menuLabels = {
   separacao: "Separação",
   inventario: "Inventário",
   transporte: "Transporte",
-  "perfis-funcionarios": "Perfis de Funcionários"
+  "perfis-funcionarios": "Perfis de Funcionários",
+  instrucoes: "Instruções"
 }
 
 export const useDynamicMenuItems = () => {
@@ -121,6 +124,7 @@ export const useDynamicMenuItems = () => {
       'perfil',
       'subcontas',
       'perfis-funcionarios',
+      'instrucoes',
       'suporte'
     ]
 
