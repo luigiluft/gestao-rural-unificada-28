@@ -92,12 +92,16 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     }
   }, [currentStep, isActive, currentStepData, navigate, location.pathname])
 
-  const nextStep = () => {
+  function nextStep() {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
       setIsPaused(false)
     } else {
-      endTutorial()
+      // Inline endTutorial to avoid TDZ issues
+      setIsActive(false)
+      setCurrentStep(0)
+      setIsPaused(false)
+      localStorage.removeItem('tutorial-state')
     }
   }
 
@@ -166,7 +170,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     })
 
     return () => observer.disconnect()
-  }, [isActive, currentStepData, waitingForElement, nextStep])
+  }, [isActive, currentStepData, waitingForElement])
 
   // Wait for elements to appear
   useEffect(() => {
