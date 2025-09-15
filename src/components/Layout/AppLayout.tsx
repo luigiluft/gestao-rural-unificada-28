@@ -12,7 +12,7 @@ function AppLayoutContent({ children }: { children?: ReactNode }) {
   
   // Check if current step is about presenting the current page
   const isPagePresentation = isActive && currentStepData && (
-    // Welcome step (first step)
+    // Welcome step (first step) 
     currentStepData.id === 'welcome' ||
     // Dashboard overview step
     currentStepData.id === 'dashboard-overview' ||
@@ -21,18 +21,23 @@ function AppLayoutContent({ children }: { children?: ReactNode }) {
     currentStepData.id === 'navigate-saidas' ||
     currentStepData.id === 'navigate-separacao' ||
     currentStepData.id === 'navigate-transporte' ||
-    // Steps that show general page info without specific targets
-    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation)
+    // Steps that show general page info without specific targets or have autoNavigation
+    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation) ||
+    // Steps that introduce a page (no action, just presenting the page)
+    (!currentStepData.action && currentStepData.autoNavigation === false && currentStepData.targetElement)
   )
 
   // Debug log
   if (isActive && currentStepData) {
     console.log('Tutorial Debug:', {
       stepId: currentStepData.id,
+      currentPage: window.location.pathname,
+      stepPage: currentStepData.page,
       isPagePresentation,
       hasTargetElement: !!currentStepData.targetElement,
       action: currentStepData.action,
-      autoNavigation: currentStepData.autoNavigation
+      autoNavigation: currentStepData.autoNavigation,
+      highlightClass: isPagePresentation ? 'tutorial-page-highlight' : 'none'
     })
   }
   

@@ -13,7 +13,7 @@ export const tutorialSteps: TutorialStep[] = [
     id: 'dashboard-overview',
     title: 'Dashboard - Visão Geral',
     description: 'Este é o painel principal onde você pode ver o resumo das operações do sistema.',
-    page: '/',
+    page: '/dashboard',
     targetElement: '.dashboard-stats',
     position: 'bottom',
     autoNavigation: false
