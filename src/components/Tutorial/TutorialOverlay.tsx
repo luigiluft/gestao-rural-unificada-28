@@ -447,10 +447,11 @@ export const TutorialOverlay = () => {
                   Pausar
                 </Button>}
               
-              {currentStepData.action !== 'click' && currentStepData.id !== 'formulario-preenchido-com-backdrop' && <Button size="sm" onClick={nextStep} className="gap-1">
+              {!(currentStepData.action === 'click' || currentStepData.action === 'wait_modal' || ['formulario-preenchido-com-backdrop','aguardar-modal-entrada'].includes(currentStepData.id)) && <Button size="sm" onClick={nextStep} className="gap-1">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />
                 </Button>}
+
             </div>
           </div>
         </CardContent>
