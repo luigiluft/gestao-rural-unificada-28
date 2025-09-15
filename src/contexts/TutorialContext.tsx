@@ -173,6 +173,15 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const handleTargetClick = (element: Element) => {
     if (!isActive || !currentStepData) return
     
+    // Special handling: detect "Selecionar Arquivo" click in step 5 to advance to step 6
+    if (currentStepData.id === 'aguardar-modal-entrada') {
+      const selecionarArquivoBtn = document.querySelector('[data-tutorial="selecionar-arquivo-btn"]')
+      if (selecionarArquivoBtn && (element === selecionarArquivoBtn || selecionarArquivoBtn.contains(element))) {
+        setTimeout(() => nextStep(), 300) // Advance to step 6
+        return
+      }
+    }
+    
     // Check if clicked element matches target
     if (currentStepData.targetElement) {
       const targetElement = document.querySelector(currentStepData.targetElement)
