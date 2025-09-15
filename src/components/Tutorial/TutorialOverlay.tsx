@@ -138,14 +138,19 @@ export const TutorialOverlay = () => {
       {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-40" />}
       
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
-      {targetElement && !isPagePresentation && <div className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`} style={{
-      top: targetElement.getBoundingClientRect().top - 4,
-      left: targetElement.getBoundingClientRect().left - 4,
-      width: targetElement.getBoundingClientRect().width + 8,
-      height: targetElement.getBoundingClientRect().height + 8,
-      boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 0 9999px rgba(0, 0, 0, 0.5)',
-      borderRadius: '4px'
-    }} />}
+      {targetElement && !isPagePresentation && !['aguardar-modal-entrada','selecionar-arquivo-nf'].includes(currentStepData.id) && (
+        <div
+          className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
+          style={{
+            top: targetElement.getBoundingClientRect().top - 4,
+            left: targetElement.getBoundingClientRect().left - 4,
+            width: targetElement.getBoundingClientRect().width + 8,
+            height: targetElement.getBoundingClientRect().height + 8,
+            boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 0 9999px rgba(0, 0, 0, 0.5)',
+            borderRadius: '4px'
+          }}
+        />
+      )}
       
       {/* Tutorial modal */}
       <Card className={`fixed w-96 shadow-xl border-primary/20 ${isInModal ? 'z-[20001]' : 'z-50'}`} style={{
