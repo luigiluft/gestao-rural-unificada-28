@@ -25,6 +25,8 @@ import { Plus, Trash2 } from "lucide-react";
 import { SeletorDeposito } from "./SeletorDeposito";
 import { useFranquiaByCnpj } from "@/hooks/useFranquiaByCnpj";
 import { useToast } from "@/hooks/use-toast";
+import { useTutorial } from "@/contexts/TutorialContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FormularioEntradaProps {
   nfData?: NFData | null;
@@ -50,6 +52,7 @@ interface ItemEntrada {
 
 export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntradaProps) {
   const { toast } = useToast();
+  const { isActive: isTutorialActive } = useTutorial();
   
   // Buscar franquia através dos dados de entrega da NFe
   const entregaCnpj = nfData?.entrega?.cnpj;
@@ -78,9 +81,65 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
     valorTotal: 0
   });
 
-  // Preencher dados quando NFe é carregada
+  // Carregar dados de tutorial se estiver ativo
   useEffect(() => {
-    if (nfData) {
+    const loadTutorialData = async () => {
+      if (isTutorialActive) {
+        try {
+          // Buscar dados da entrada de tutorial
+          const { data: tutorialEntrada } = await supabase
+            .from('tutorial_entradas')
+            .select('*')
+            .limit(1)
+            .single();
+
+          // Buscar itens da entrada de tutorial
+          const { data: tutorialItens } = await supabase
+            .from('tutorial_entrada_itens')
+            .select('*')
+            .eq('tutorial_entrada_id', tutorialEntrada?.id);
+
+          if (tutorialEntrada) {
+            setDadosEntrada({
+              numeroNF: tutorialEntrada.numero_nfe || '',
+              serie: tutorialEntrada.serie || '',
+              chaveNFe: tutorialEntrada.chave_nfe || '',
+              naturezaOperacao: tutorialEntrada.natureza_operacao || '',
+              dataEntrada: tutorialEntrada.data_entrada || '',
+              dataEmissao: tutorialEntrada.data_emissao || '',
+              origem: tutorialEntrada.emitente_nome || '',
+              observacoes: tutorialEntrada.observacoes || '',
+              depositoId: ''
+            });
+          }
+
+          if (tutorialItens) {
+            const itensConvertidos: ItemEntrada[] = tutorialItens.map((item) => ({
+              produto: item.nome_produto,
+              lote: item.lote || '',
+              codigo: item.codigo_produto,
+              codigoEAN: item.codigo_ean,
+              quantidade: item.quantidade,
+              unidade: item.unidade_comercial || 'SC',
+              deposito: 'Armazém A',
+              valorUnitario: item.valor_unitario || 0,
+              valorTotal: item.valor_total || 0,
+              dataValidade: item.data_validade
+            }));
+            setItens(itensConvertidos);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados do tutorial:', error);
+        }
+      }
+    };
+
+    loadTutorialData();
+  }, [isTutorialActive]);
+
+  // Preencher dados quando NFe é carregada (apenas se não estiver no tutorial)
+  useEffect(() => {
+    if (nfData && !isTutorialActive) {
       setDadosEntrada({
         numeroNF: nfData.numeroNF,
         serie: nfData.serie,
@@ -125,7 +184,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
         });
       }
     }
-  }, [nfData, franquiaData, franquiaLoading, entregaCnpj, entregaIe, toast]);
+  }, [nfData, franquiaData, franquiaLoading, entregaCnpj, entregaIe, toast, isTutorialActive]);
 
   const adicionarItem = () => {
     if (novoItem.produto && novoItem.quantidade > 0) {
@@ -181,6 +240,7 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
           <CardTitle className="flex items-center gap-2">
             Dados da Entrada
             {nfData && <Badge variant="secondary">Importado da NFe</Badge>}
+            {isTutorialActive && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Tutorial - Dados de Exemplo</Badge>}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -272,7 +332,10 @@ export function FormularioEntrada({ nfData, onSubmit, onCancel }: FormularioEntr
       {/* Itens da Entrada */}
       <Card>
         <CardHeader>
-          <CardTitle>Itens da Entrada</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Itens da Entrada
+            {isTutorialActive && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Produtos de Exemplo</Badge>}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Adicionar Novo Item */}
