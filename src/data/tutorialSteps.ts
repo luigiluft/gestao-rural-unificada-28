@@ -52,9 +52,9 @@ export const tutorialSteps: TutorialStep[] = [
   {
     id: 'selecionar-arquivo-nf',
     title: 'Selecionar Arquivo da NF',
-    description: 'Clique no botão "Próximo" para avançar. No tutorial, simularemos o processamento da Nota Fiscal.',
+    description: 'Clique no botão "Selecionar Arquivo" para carregar os dados da Nota Fiscal (simulado no tutorial).',
     page: '/entradas',
-    targetElement: '[data-tutorial="proximo-btn"]',
+    targetElement: '[data-tutorial="selecionar-arquivo-btn"]',
     position: 'top',
     action: 'click',
     autoNavigation: false,
@@ -92,57 +92,6 @@ export const tutorialSteps: TutorialStep[] = [
     action: 'click',
     autoNavigation: false,
     modalTarget: true
-  },
-  {
-    id: 'preencher-dados-nf',
-    title: 'Preencher Dados da NF',
-    description: 'Preencha o número da Nota Fiscal. Este é um campo obrigatório.',
-    page: '/entradas',
-    targetElement: '[data-tutorial="numero-nf"]',
-    position: 'bottom',
-    action: 'fill_field',
-    autoNavigation: false,
-    modalTarget: true,
-    fieldValue: 'NF123456'
-  },
-  {
-    id: 'adicionar-item-entrada',
-    title: 'Adicionar Item',
-    description: 'Agora adicione um item à entrada preenchendo produto, lote, quantidade e clicando em "Adicionar".',
-    page: '/entradas',
-    targetElement: '[data-tutorial="adicionar-item-btn"]',
-    position: 'left',
-    action: 'click',
-    autoNavigation: false,
-    modalTarget: true
-  },
-  {
-    id: 'formulario-entrada',
-    title: 'Formulário de Entrada',
-    description: 'Agora preencha os demais dados da entrada: série, data e outros campos necessários.',
-    page: '/entradas',
-    targetElement: '[data-tutorial="formulario-entrada"]',
-    position: 'right',
-    action: 'form_fill',
-    autoNavigation: false
-  },
-  {
-    id: 'upload-nf',
-    title: 'Upload da Nota Fiscal',
-    description: 'Faça o upload da nota fiscal correspondente à entrada para validação automática.',
-    page: '/entradas',
-    targetElement: '[data-tutorial="upload-nf"]',
-    position: 'top',
-    autoNavigation: false
-  },
-  {
-    id: 'planejamento-pallets',
-    title: 'Planejamento de Pallets',
-    description: 'Defina como a mercadoria será organizada em pallets para armazenamento.',
-    page: '/entradas',
-    targetElement: '[data-tutorial="planejamento-pallets"]',
-    position: 'left',
-    autoNavigation: false
   },
   {
     id: 'navigate-alocacao',

@@ -218,8 +218,8 @@ export const TutorialOverlay = () => {
         </>
       )}
 
-      {/* Special backdrop with cut-out for "Registrar Entrada" button */}
-      {currentStepData.id === 'registrar-entrada' && (
+      {(['registrar-entrada','formulario-preenchido-com-backdrop'].includes(currentStepData.id)) && (
+
         <>
           {(() => {
             const registrarButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]');
@@ -448,8 +448,7 @@ export const TutorialOverlay = () => {
                   Pausar
                 </Button>}
               
-              {/* Only show Next button for non-click actions or when waiting for elements */}
-              {currentStepData.action !== 'click' && <Button size="sm" onClick={nextStep} className="gap-1">
+              {currentStepData.action !== 'click' && currentStepData.id !== 'formulario-preenchido-com-backdrop' && <Button size="sm" onClick={nextStep} className="gap-1">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />
                 </Button>}

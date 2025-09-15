@@ -241,14 +241,17 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       }
 
       // Trigger the file upload simulation with the tutorial data
-      setTimeout(() => {
-        const event = new CustomEvent('tutorial-nf-upload', {
-          detail: mockNFData
-        })
-        document.dispatchEvent(event)
-        
-        console.log('Formulário preenchido, aguardando usuário continuar')
-      }, 500)
+        setTimeout(() => {
+          const event = new CustomEvent('tutorial-nf-upload', {
+            detail: mockNFData
+          })
+          document.dispatchEvent(event)
+          
+          // Auto-advance to show the filled form without backdrop
+          if (currentStepData?.id === 'selecionar-arquivo-nf') {
+            setTimeout(() => nextStep(), 800)
+          }
+        }, 500)
       
     } catch (error) {
       console.error('Erro ao simular upload da NF:', error)
@@ -285,7 +288,10 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         })
         document.dispatchEvent(event)
         
-        console.log('Formulário preenchido, aguardando usuário continuar')
+        // Auto-advance to show the filled form without backdrop
+        if (currentStepData?.id === 'selecionar-arquivo-nf') {
+          setTimeout(() => nextStep(), 800)
+        }
       }, 500)
     }
   }
