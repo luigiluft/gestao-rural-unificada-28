@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { tutorialSteps } from '@/data/tutorialSteps'
 
@@ -55,8 +55,10 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [waitingForElement, setWaitingForElement] = useState(false)
+  const waitModalAdvanceRef = useRef<number | null>(null)
   const navigate = useNavigate()
   const location = useLocation()
+
 
   const totalSteps = tutorialSteps.length
   const currentStepData = isActive ? tutorialSteps[currentStep] : null
@@ -88,6 +90,12 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   useEffect(() => {
     if (!isActive || !currentStepData) return
 
+    // Cancelar qualquer avanço automático pendente do passo de espera de modal
+    if (waitModalAdvanceRef.current && currentStepData.action !== 'wait_modal') {
+      clearTimeout(waitModalAdvanceRef.current)
+      waitModalAdvanceRef.current = null
+    }
+
     // Determine the target page - use demo version during tutorial
     let targetPage = currentStepData.page
     if (targetPage && isActive) {
@@ -110,25 +118,17 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     }
   }, [currentStep, isActive, currentStepData, navigate, location.pathname])
 
+
   function nextStep() {
+    // Debounce/guard to avoid accidental multiple advances
+    if ((nextStep as any)._advancing) return
+    ;(nextStep as any)._advancing = true
+    setTimeout(() => { (nextStep as any)._advancing = false }, 400)
+
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => {
         const nextStepNumber = prev + 1
-        const nextStepData = tutorialSteps[nextStepNumber]
-        
-        // Special handling for transition from formulario-preenchido-sem-backdrop to formulario-preenchido-com-backdrop
-        if (nextStepData.id === 'formulario-preenchido-com-backdrop') {
-          setTimeout(() => {
-            const registrarBtn = document.querySelector('[data-tutorial="registrar-entrada-btn"]')
-            if (registrarBtn) {
-              registrarBtn.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-              })
-            }
-          }, 500)
-        }
-        
+        // Removido: qualquer scroll automático aqui
         return nextStepNumber
       })
       setIsPaused(false)
@@ -140,6 +140,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       localStorage.removeItem('tutorial-state')
     }
   }
+
 
   const previousStep = () => {
     if (currentStep > 0) {
@@ -180,10 +181,15 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         // Special handling for file upload simulation
         if (currentStepData.id === 'selecionar-arquivo-nf') {
           // Simula o upload e preenche o formulário
+          if (waitModalAdvanceRef.current) {
+            clearTimeout(waitModalAdvanceRef.current)
+            waitModalAdvanceRef.current = null
+          }
           simulateNFUpload()
           // Avança UMA etapa após o preenchimento simulado, aguardando o usuário nas próximas
           setTimeout(() => nextStep(), 800)
           return
+
         }
         
         // Only advance for click actions
@@ -358,7 +364,13 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
               
               // Auto-advance for certain actions (but not clicks)
               if (currentStepData.action === 'wait_modal') {
-                setTimeout(() => nextStep(), 1000)
+                if (waitModalAdvanceRef.current) {
+                  clearTimeout(waitModalAdvanceRef.current)
+                }
+                waitModalAdvanceRef.current = window.setTimeout(() => {
+                  nextStep()
+                  waitModalAdvanceRef.current = null
+                }, 1000)
               }
             }
           }
@@ -373,7 +385,13 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       attributeFilter: ['data-state', 'aria-hidden']
     })
 
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      if (waitModalAdvanceRef.current) {
+        clearTimeout(waitModalAdvanceRef.current)
+        waitModalAdvanceRef.current = null
+      }
+    }
   }, [isActive, currentStepData, waitingForElement])
 
   // Wait for elements to appear

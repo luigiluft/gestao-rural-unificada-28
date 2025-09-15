@@ -92,8 +92,7 @@ export const TutorialOverlay = () => {
     if (currentStepData.id === 'aguardar-modal-entrada') return false
     if (currentStepData.id === 'registrar-entrada' && !targetElement) return false
     if (currentStepData.id === 'formulario-preenchido-sem-backdrop') return false
-    if (currentStepData.id === 'formulario-preenchido-com-backdrop' && targetElement) return false
-    
+    // No passo "formulario-preenchido-com-backdrop" mostramos overlay para bloquear cliques
     return true
   }
 
@@ -218,7 +217,7 @@ export const TutorialOverlay = () => {
         </>
       )}
 
-      {(['registrar-entrada','formulario-preenchido-com-backdrop'].includes(currentStepData.id)) && (
+      {(['registrar-entrada'].includes(currentStepData.id)) && (
 
         <>
           {(() => {
