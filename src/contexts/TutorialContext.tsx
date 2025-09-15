@@ -120,19 +120,25 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
 
 
   function nextStep() {
+    console.log('nextStep called, currentStep:', currentStep, 'totalSteps:', totalSteps)
+    
     // Debounce/guard to avoid accidental multiple advances
-    if ((nextStep as any)._advancing) return
+    if ((nextStep as any)._advancing) {
+      console.log('nextStep blocked by debounce')
+      return
+    }
     ;(nextStep as any)._advancing = true
     setTimeout(() => { (nextStep as any)._advancing = false }, 400)
 
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => {
         const nextStepNumber = prev + 1
-        // Removido: qualquer scroll automático aqui
+        console.log('Advancing to step:', nextStepNumber)
         return nextStepNumber
       })
       setIsPaused(false)
     } else {
+      console.log('Tutorial finished')
       // Inline endTutorial to avoid TDZ issues
       setIsActive(false)
       setCurrentStep(0)
