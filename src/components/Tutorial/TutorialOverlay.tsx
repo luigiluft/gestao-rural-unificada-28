@@ -449,7 +449,6 @@ export const TutorialOverlay = () => {
               
               {currentStepData.action !== 'click' && 
                currentStepData.action !== 'wait_modal' && 
-               currentStepData.id !== 'formulario-preenchido-com-backdrop' && 
                currentStepData.id !== 'aguardar-modal-entrada' && 
                <Button size="sm" onClick={nextStep} className="gap-1">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}

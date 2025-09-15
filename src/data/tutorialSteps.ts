@@ -56,7 +56,7 @@ export const tutorialSteps: TutorialStep[] = [
     page: '/entradas',
     targetElement: '[data-tutorial="selecionar-arquivo-btn"]',
     position: 'top',
-    action: 'click',
+    action: 'none',
     autoNavigation: false,
     modalTarget: true
   },
