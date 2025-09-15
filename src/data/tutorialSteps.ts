@@ -52,9 +52,9 @@ export const tutorialSteps: TutorialStep[] = [
   {
     id: 'selecionar-arquivo-nf',
     title: 'Selecionar Arquivo da NF',
-    description: 'Clique no botão "Selecionar Arquivo" para fazer upload da Nota Fiscal. No tutorial, simularemos o upload de uma NF de exemplo.',
+    description: 'Clique no botão "Próximo" para avançar. No tutorial, simularemos o processamento da Nota Fiscal.',
     page: '/entradas',
-    targetElement: '[data-tutorial="selecionar-arquivo-btn"]',
+    targetElement: '[data-tutorial="proximo-btn"]',
     position: 'top',
     action: 'click',
     autoNavigation: false,
@@ -62,11 +62,11 @@ export const tutorialSteps: TutorialStep[] = [
   },
   {
     id: 'formulario-preenchido',
-    title: 'Entrada Criada e Carregada',
-    description: 'Perfeito! Uma entrada foi criada no banco de dados e os dados foram carregados automaticamente no formulário. No sistema real, isso aconteceria após processar o XML da Nota Fiscal.',
-    page: '/entradas',
-    targetElement: '[data-tutorial="entrada-modal"]',
-    position: 'right',
+    title: 'Formulário Preenchido',
+    description: 'Perfeito! O formulário foi preenchido automaticamente com os dados da Nota Fiscal. Agora você pode revisar as informações e registrar a entrada.',
+    page: '/demo/entradas',
+    targetElement: '[data-tutorial="registrar-entrada-btn"]',
+    position: 'top',
     action: 'none',
     autoNavigation: false,
     modalTarget: true

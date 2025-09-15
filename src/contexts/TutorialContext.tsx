@@ -232,6 +232,18 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         // Auto-advance to show the filled form after a delay
         setTimeout(() => {
           nextStep()
+          
+          // Auto scroll to the register button after advancing
+          setTimeout(() => {
+            const registerButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]')
+            if (registerButton) {
+              registerButton.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'center'
+              })
+            }
+          }, 1000)
         }, 1500)
       }, 500)
       

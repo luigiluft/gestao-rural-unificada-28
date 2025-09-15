@@ -272,6 +272,74 @@ export const TutorialOverlay = () => {
         </>
       )}
 
+      {/* Special backdrop for formulario-preenchido step - covers entire form except register button */}
+      {currentStepData.id === 'formulario-preenchido' && (
+        <>
+          {(() => {
+            const registerButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]');
+            if (registerButton) {
+              const rect = registerButton.getBoundingClientRect();
+              return (
+                <>
+                  {/* Top backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: rect.top - 4
+                    }}
+                  />
+                  {/* Left backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: 0,
+                      width: rect.left - 4,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Right backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.right + 4,
+                      right: 0,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Bottom backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.bottom + 4,
+                      left: 0,
+                      right: 0,
+                      bottom: 0
+                    }}
+                  />
+                  {/* Blue border around the button */}
+                  <div
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.left - 4,
+                      width: rect.width + 8,
+                      height: rect.height + 8,
+                      boxShadow: '0 0 20px hsl(var(--primary) / 0.5)'
+                    }}
+                  />
+                </>
+              );
+            }
+            return null;
+          })()}
+        </>
+      )}
+
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
       {targetElement && !isPagePresentation && !['aguardar-modal-entrada','selecionar-arquivo-nf','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
         <div
