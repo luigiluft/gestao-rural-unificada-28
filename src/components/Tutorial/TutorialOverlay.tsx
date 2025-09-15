@@ -107,7 +107,32 @@ export const TutorialOverlay = () => {
   
   return <>
       {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
-      {!isPagePresentation && <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />}
+      {!isPagePresentation && (targetElement && currentStepData.action === 'click'
+        ? <>
+            {/* Mask the whole screen except the target to keep it clickable */}
+            {(() => {
+              const r = targetElement.getBoundingClientRect();
+              const topH = Math.max(0, r.top);
+              const leftW = Math.max(0, r.left);
+              const rightW = Math.max(0, window.innerWidth - r.right);
+              const bottomH = Math.max(0, window.innerHeight - r.bottom);
+              const z = isInModal ? 'z-[19999]' : 'z-40';
+              return (
+                <>
+                  {/* Top strip */}
+                  <div className={`fixed ${z} bg-black/50`} style={{ top: 0, left: 0, right: 0, height: topH }} />
+                  {/* Left strip */}
+                  <div className={`fixed ${z} bg-black/50`} style={{ top: r.top, left: 0, width: leftW, height: r.height }} />
+                  {/* Right strip */}
+                  <div className={`fixed ${z} bg-black/50`} style={{ top: r.top, left: r.right, width: rightW, height: r.height }} />
+                  {/* Bottom strip */}
+                  <div className={`fixed ${z} bg-black/50`} style={{ top: r.bottom, left: 0, right: 0, height: bottomH }} />
+                </>
+              );
+            })()}
+          </>
+        : <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />
+      )}
       
       {/* Partial overlay for sidebar only during page presentations (excluding welcome step) */}
       {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-40" />}
