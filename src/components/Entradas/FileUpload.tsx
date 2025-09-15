@@ -177,7 +177,7 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            Entrada criada e dados preenchidos no formulário! No tutorial, uma entrada real foi criada no banco de dados.
+            Dados carregados e preenchidos no formulário! No tutorial, utilizamos dados de demonstração pré-configurados.
           </AlertDescription>
         </Alert>
       )}

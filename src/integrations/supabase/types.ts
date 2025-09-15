@@ -2002,6 +2002,116 @@ export type Database = {
         }
         Relationships: []
       }
+      tutorial_entrada_itens: {
+        Row: {
+          codigo_ean: string | null
+          codigo_produto: string | null
+          created_at: string
+          data_validade: string | null
+          descricao_produto: string | null
+          id: string
+          lote: string | null
+          nome_produto: string
+          quantidade: number
+          tutorial_entrada_id: string
+          unidade_comercial: string | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          codigo_ean?: string | null
+          codigo_produto?: string | null
+          created_at?: string
+          data_validade?: string | null
+          descricao_produto?: string | null
+          id?: string
+          lote?: string | null
+          nome_produto: string
+          quantidade: number
+          tutorial_entrada_id: string
+          unidade_comercial?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          codigo_ean?: string | null
+          codigo_produto?: string | null
+          created_at?: string
+          data_validade?: string | null
+          descricao_produto?: string | null
+          id?: string
+          lote?: string | null
+          nome_produto?: string
+          quantidade?: number
+          tutorial_entrada_id?: string
+          unidade_comercial?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutorial_entrada_itens_tutorial_entrada_id_fkey"
+            columns: ["tutorial_entrada_id"]
+            isOneToOne: false
+            referencedRelation: "tutorial_entradas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tutorial_entradas: {
+        Row: {
+          chave_nfe: string | null
+          created_at: string
+          data_emissao: string | null
+          data_entrada: string
+          destinatario_cpf_cnpj: string | null
+          destinatario_nome: string | null
+          emitente_cnpj: string | null
+          emitente_nome: string | null
+          id: string
+          natureza_operacao: string | null
+          numero_nfe: string
+          observacoes: string | null
+          serie: string | null
+          valor_produtos: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          chave_nfe?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_entrada: string
+          destinatario_cpf_cnpj?: string | null
+          destinatario_nome?: string | null
+          emitente_cnpj?: string | null
+          emitente_nome?: string | null
+          id?: string
+          natureza_operacao?: string | null
+          numero_nfe: string
+          observacoes?: string | null
+          serie?: string | null
+          valor_produtos?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          chave_nfe?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_entrada?: string
+          destinatario_cpf_cnpj?: string | null
+          destinatario_nome?: string | null
+          emitente_cnpj?: string | null
+          emitente_nome?: string | null
+          id?: string
+          natureza_operacao?: string | null
+          numero_nfe?: string
+          observacoes?: string | null
+          serie?: string | null
+          valor_produtos?: number | null
+          valor_total?: number | null
+        }
+        Relationships: []
+      }
       user_employee_profiles: {
         Row: {
           assigned_at: string | null

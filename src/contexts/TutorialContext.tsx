@@ -176,87 +176,43 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
 
   const simulateNFUpload = async () => {
     try {
-      // Create mock entry data directly in the database
+      // Fetch tutorial data from the dedicated tutorial tables
       const { supabase } = await import('@/integrations/supabase/client')
-      const { data: { user } } = await supabase.auth.getUser()
       
-      if (!user) return
-      
-      // First, create the main entry
-      const entryData = {
-        user_id: user.id,
-        numero_nfe: 'NF001245',
-        serie: '001',
-        data_entrada: new Date().toISOString().split('T')[0],
-        data_emissao: new Date().toISOString().split('T')[0],
-        emitente_nome: 'Fazenda Demo Ltda',
-        emitente_cnpj: '12.345.678/0001-90',
-        valor_total: 2100.00,
-        natureza_operacao: 'Venda de produtos agrícolas',
-        status_aprovacao: 'planejamento' as const,
-        xml_content: '<nfeProc><!-- Mock XML content --></nfeProc>'
-      }
-      
-      const { data: entrada, error: entryError } = await supabase
-        .from('entradas')
-        .insert(entryData)
-        .select()
+      const { data: tutorialEntrada, error: entradaError } = await supabase
+        .from('tutorial_entradas')
+        .select('*')
+        .eq('numero_nfe', '000123456')
         .single()
-      
-      if (entryError) {
-        console.error('Erro ao criar entrada:', entryError)
-        return
-      }
-      
-      // Then create the entry items
-      const itemsData = [
-        {
-          user_id: user.id,
-          entrada_id: entrada.id,
-          nome_produto: 'Soja em Grão',
-          codigo_produto: 'SOJ001',
-          descricao_produto: 'Soja em grão tipo exportação',
-          quantidade: 1000,
-          unidade_comercial: 'KG',
-          valor_unitario: 1.50,
-          valor_total: 1500.00,
-          lote: 'LOTE001'
-        },
-        {
-          user_id: user.id,
-          entrada_id: entrada.id,
-          nome_produto: 'Milho em Grão',
-          codigo_produto: 'MIL002',
-          descricao_produto: 'Milho em grão amarelo',
-          quantidade: 500,
-          unidade_comercial: 'KG',
-          valor_unitario: 1.20,
-          valor_total: 600.00,
-          lote: 'LOTE002'
-        }
-      ]
-      
-      const { error: itemsError } = await supabase
-        .from('entrada_itens')
-        .insert(itemsData)
-      
-      if (itemsError) {
-        console.error('Erro ao criar itens da entrada:', itemsError)
+
+      if (entradaError) {
+        console.error('Erro ao buscar entrada tutorial:', entradaError)
         return
       }
 
+      const { data: tutorialItens, error: itensError } = await supabase
+        .from('tutorial_entrada_itens')
+        .select('*')
+        .eq('tutorial_entrada_id', tutorialEntrada.id)
+
+      if (itensError) {
+        console.error('Erro ao buscar itens tutorial:', itensError)
+        return
+      }
+
+      console.log('Dados tutorial carregados:', { tutorialEntrada, tutorialItens })
+
       // Create the mock NF data object that will be used to fill the form
       const mockNFData = {
-        numeroNF: entryData.numero_nfe,
-        serie: entryData.serie,
-        cnpjEmitente: entryData.emitente_cnpj,
-        nomeEmitente: entryData.emitente_nome,
-        dataEmissao: entryData.data_emissao,
-        naturezaOperacao: entryData.natureza_operacao,
-        valorTotal: entryData.valor_total,
-        xmlContent: entryData.xml_content,
-        entradaId: entrada.id, // Include the created entry ID
-        produtos: itemsData.map(item => ({
+        numeroNF: tutorialEntrada.numero_nfe,
+        serie: tutorialEntrada.serie,
+        cnpjEmitente: tutorialEntrada.emitente_cnpj,
+        nomeEmitente: tutorialEntrada.emitente_nome,
+        dataEmissao: tutorialEntrada.data_emissao,
+        naturezaOperacao: tutorialEntrada.natureza_operacao,
+        valorTotal: tutorialEntrada.valor_total,
+        xmlContent: '<nfeProc><!-- Tutorial Mock XML content --></nfeProc>',
+        produtos: tutorialItens.map(item => ({
           codigo: item.codigo_produto,
           descricao: item.descricao_produto,
           quantidade: item.quantidade,
@@ -266,7 +222,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
         }))
       }
 
-      // Trigger the file upload simulation with the database entry
+      // Trigger the file upload simulation with the tutorial data
       setTimeout(() => {
         const event = new CustomEvent('tutorial-nf-upload', {
           detail: mockNFData
