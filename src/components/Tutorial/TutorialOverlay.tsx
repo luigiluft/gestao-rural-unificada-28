@@ -106,6 +106,9 @@ export const TutorialOverlay = () => {
       {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
       {!isPagePresentation && <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />}
       
+      {/* Partial overlay for sidebar only during page presentations */}
+      {isPagePresentation && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-40" />}
+      
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
       {targetElement && !isPagePresentation && <div className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`} style={{
       top: targetElement.getBoundingClientRect().top - 4,
