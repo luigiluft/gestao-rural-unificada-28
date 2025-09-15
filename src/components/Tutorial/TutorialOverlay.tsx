@@ -436,7 +436,7 @@ export const TutorialOverlay = () => {
                 </Button>}
               
               {/* Only show Next button for non-click actions or when waiting for elements */}
-              {(currentStepData.action !== 'click' || waitingForElement) && <Button size="sm" onClick={nextStep} className="gap-1">
+              {currentStepData.action !== 'click' && <Button size="sm" onClick={nextStep} className="gap-1">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />
                 </Button>}
