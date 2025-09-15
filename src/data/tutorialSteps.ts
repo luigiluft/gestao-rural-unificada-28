@@ -21,12 +21,12 @@ export const tutorialSteps: TutorialStep[] = [
   {
     id: 'navigate-entradas',
     title: 'Acessar Entradas',
-    description: 'Vamos começar o processo acessando a seção de Entradas para registrar mercadorias.',
-    page: '/entradas',
+    description: 'Clique no menu "Entradas" na barra lateral para acessar a seção de registro de mercadorias.',
+    page: '/dashboard',
     targetElement: '[data-tutorial="entradas-link"]',
     position: 'right',
-    action: 'navigate',
-    autoNavigation: true
+    action: 'click',
+    autoNavigation: false
   },
   {
     id: 'criar-entrada',
