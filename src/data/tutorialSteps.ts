@@ -62,8 +62,8 @@ export const tutorialSteps: TutorialStep[] = [
   },
   {
     id: 'formulario-preenchido',
-    title: 'Dados da NF Carregados',
-    description: 'Perfeito! Os dados da Nota Fiscal foram carregados automaticamente no formulário. Agora você pode revisar e confirmar as informações.',
+    title: 'Entrada Criada e Carregada',
+    description: 'Perfeito! Uma entrada foi criada no banco de dados e os dados foram carregados automaticamente no formulário. No sistema real, isso aconteceria após processar o XML da Nota Fiscal.',
     page: '/entradas',
     targetElement: '[data-tutorial="entrada-modal"]',
     position: 'right',

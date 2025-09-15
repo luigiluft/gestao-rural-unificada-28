@@ -174,46 +174,151 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     }
   }
 
-  const simulateNFUpload = () => {
-    // Create a mock file upload event with demo NF data
-    const mockNFData = {
-      numeroNF: 'NF001245',
-      cnpjEmitente: '12.345.678/0001-90',
-      nomeEmitente: 'Fazenda Demo Ltda',
-      produtos: [
+  const simulateNFUpload = async () => {
+    try {
+      // Create mock entry data directly in the database
+      const { supabase } = await import('@/integrations/supabase/client')
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) return
+      
+      // First, create the main entry
+      const entryData = {
+        user_id: user.id,
+        numero_nfe: 'NF001245',
+        serie: '001',
+        data_entrada: new Date().toISOString().split('T')[0],
+        data_emissao: new Date().toISOString().split('T')[0],
+        emitente_nome: 'Fazenda Demo Ltda',
+        emitente_cnpj: '12.345.678/0001-90',
+        valor_total: 2100.00,
+        natureza_operacao: 'Venda de produtos agrícolas',
+        status_aprovacao: 'planejamento' as const,
+        xml_content: '<nfeProc><!-- Mock XML content --></nfeProc>'
+      }
+      
+      const { data: entrada, error: entryError } = await supabase
+        .from('entradas')
+        .insert(entryData)
+        .select()
+        .single()
+      
+      if (entryError) {
+        console.error('Erro ao criar entrada:', entryError)
+        return
+      }
+      
+      // Then create the entry items
+      const itemsData = [
         {
-          codigo: 'SOJ001',
-          descricao: 'Soja em Grão',
+          user_id: user.id,
+          entrada_id: entrada.id,
+          nome_produto: 'Soja em Grão',
+          codigo_produto: 'SOJ001',
+          descricao_produto: 'Soja em grão tipo exportação',
           quantidade: 1000,
-          unidade: 'KG',
-          valorUnitario: 1.50
+          unidade_comercial: 'KG',
+          valor_unitario: 1.50,
+          valor_total: 1500.00,
+          lote: 'LOTE001'
         },
         {
-          codigo: 'MIL002', 
-          descricao: 'Milho em Grão',
+          user_id: user.id,
+          entrada_id: entrada.id,
+          nome_produto: 'Milho em Grão',
+          codigo_produto: 'MIL002',
+          descricao_produto: 'Milho em grão amarelo',
           quantidade: 500,
-          unidade: 'KG',
-          valorUnitario: 1.20
+          unidade_comercial: 'KG',
+          valor_unitario: 1.20,
+          valor_total: 600.00,
+          lote: 'LOTE002'
         }
-      ],
-      valorTotal: 2100.00,
-      dataEmissao: new Date().toISOString().split('T')[0],
-      xmlContent: '<nfeProc><!-- Mock XML content --></nfeProc>'
-    }
-
-    // Trigger the file upload simulation
-    setTimeout(() => {
-      // Find any file upload component and trigger its onNFDataParsed callback
-      const event = new CustomEvent('tutorial-nf-upload', {
-        detail: mockNFData
-      })
-      document.dispatchEvent(event)
+      ]
       
-      // Auto-advance to show the filled form after a delay
+      const { error: itemsError } = await supabase
+        .from('entrada_itens')
+        .insert(itemsData)
+      
+      if (itemsError) {
+        console.error('Erro ao criar itens da entrada:', itemsError)
+        return
+      }
+
+      // Create the mock NF data object that will be used to fill the form
+      const mockNFData = {
+        numeroNF: entryData.numero_nfe,
+        serie: entryData.serie,
+        cnpjEmitente: entryData.emitente_cnpj,
+        nomeEmitente: entryData.emitente_nome,
+        dataEmissao: entryData.data_emissao,
+        naturezaOperacao: entryData.natureza_operacao,
+        valorTotal: entryData.valor_total,
+        xmlContent: entryData.xml_content,
+        entradaId: entrada.id, // Include the created entry ID
+        produtos: itemsData.map(item => ({
+          codigo: item.codigo_produto,
+          descricao: item.descricao_produto,
+          quantidade: item.quantidade,
+          unidade: item.unidade_comercial,
+          valorUnitario: item.valor_unitario,
+          lote: item.lote
+        }))
+      }
+
+      // Trigger the file upload simulation with the database entry
       setTimeout(() => {
-        nextStep()
-      }, 1500)
-    }, 500)
+        const event = new CustomEvent('tutorial-nf-upload', {
+          detail: mockNFData
+        })
+        document.dispatchEvent(event)
+        
+        // Auto-advance to show the filled form after a delay
+        setTimeout(() => {
+          nextStep()
+        }, 1500)
+      }, 500)
+      
+    } catch (error) {
+      console.error('Erro ao simular upload da NF:', error)
+      // Fallback to the old simulation method if database fails
+      const mockNFData = {
+        numeroNF: 'NF001245',
+        serie: '001',
+        cnpjEmitente: '12.345.678/0001-90',
+        nomeEmitente: 'Fazenda Demo Ltda',
+        dataEmissao: new Date().toISOString().split('T')[0],
+        valorTotal: 2100.00,
+        xmlContent: '<nfeProc><!-- Mock XML content --></nfeProc>',
+        produtos: [
+          {
+            codigo: 'SOJ001',
+            descricao: 'Soja em Grão',
+            quantidade: 1000,
+            unidade: 'KG',
+            valorUnitario: 1.50
+          },
+          {
+            codigo: 'MIL002', 
+            descricao: 'Milho em Grão',
+            quantidade: 500,
+            unidade: 'KG',
+            valorUnitario: 1.20
+          }
+        ]
+      }
+
+      setTimeout(() => {
+        const event = new CustomEvent('tutorial-nf-upload', {
+          detail: mockNFData
+        })
+        document.dispatchEvent(event)
+        
+        setTimeout(() => {
+          nextStep()
+        }, 1500)
+      }, 500)
+    }
   }
 
   // Click detection and visual highlighting system

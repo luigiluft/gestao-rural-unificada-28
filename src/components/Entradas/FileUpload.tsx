@@ -96,11 +96,16 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
       const mockData = event.detail;
       setIsProcessing(true);
       
-      // Simulate processing time
+      // Show specific message for tutorial mode with database entry
       setTimeout(() => {
         onNFDataParsed(mockData);
         setUploadStatus('success');
         setIsProcessing(false);
+        
+        // Show additional feedback if it's from the database
+        if (mockData.entradaId) {
+          console.log('Entrada criada no banco de dados com ID:', mockData.entradaId);
+        }
       }, 1500);
     };
 
@@ -172,7 +177,7 @@ export function FileUpload({ onNFDataParsed, onError }: FileUploadProps) {
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
-            Nota fiscal processada com sucesso! Os dados foram preenchidos no formulário.
+            Entrada criada e dados preenchidos no formulário! No tutorial, uma entrada real foi criada no banco de dados.
           </AlertDescription>
         </Alert>
       )}
