@@ -39,17 +39,6 @@ export const tutorialSteps: TutorialStep[] = [
     autoNavigation: false
   },
   {
-    id: 'aguardar-modal-entrada',
-    title: 'Aguardando Modal de Entrada',
-    description: 'Aguarde o formulário de entrada aparecer.',
-    page: '/entradas',
-    targetElement: '[data-tutorial="formulario-entrada"]',
-    position: 'right',
-    action: 'wait_modal',
-    autoNavigation: false,
-    modalTarget: true
-  },
-  {
     id: 'selecionar-arquivo-nf',
     title: 'Selecionar Arquivo da NF',
     description: 'Clique no botão "Selecionar Arquivo" para carregar os dados da Nota Fiscal (simulado no tutorial).',

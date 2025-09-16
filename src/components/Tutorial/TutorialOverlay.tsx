@@ -89,7 +89,6 @@ export const TutorialOverlay = () => {
     if (!isActive || !currentStepData) return false
     
     // Special cases where we don't want overlay
-    if (currentStepData.id === 'aguardar-modal-entrada') return false
     if (currentStepData.id === 'registrar-entrada' && !targetElement) return false
     if (currentStepData.id === 'formulario-preenchido-sem-backdrop') return false
     // No passo "formulario-preenchido-com-backdrop" mostramos overlay para bloquear cliques
@@ -120,20 +119,19 @@ export const TutorialOverlay = () => {
   const handleNextClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
     try {
-      if (currentStepData?.id === 'selecionar-arquivo-nf') {
+      if (currentStepData?.id === 'formulario-preenchido-sem-backdrop') {
         const registrarButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement | null;
         if (registrarButton) {
           registrarButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
     } catch {}
-    // Fallback: also trigger a global event to advance in case something blocks this click
     nextStep();
   }
   
   return <>
       {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
-      {shouldShowOverlay() && !isPagePresentation && currentStepData.id !== 'aguardar-modal-entrada' && currentStepData.id !== 'selecionar-arquivo-nf' && (targetElement && currentStepData.action === 'click'
+      {shouldShowOverlay() && !isPagePresentation && currentStepData.id !== 'selecionar-arquivo-nf' && (targetElement && currentStepData.action === 'click'
         ? <>
             {/* Mask the whole screen except the target to keep it clickable */}
             {(() => {
@@ -163,8 +161,8 @@ export const TutorialOverlay = () => {
       {/* Partial overlay for sidebar only during page presentations (excluding welcome step) */}
       {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-40" />}
       
-      {/* Special backdrop with cut-out for "Selecionar Arquivo" button in aguardar-modal-entrada step */}
-      {currentStepData.id === 'aguardar-modal-entrada' && (
+      {/* Special backdrop with cut-out for "Selecionar Arquivo" button in selecionar-arquivo-nf step */}
+      {currentStepData.id === 'selecionar-arquivo-nf' && (
         <>
           {/* Find the file upload button and create cut-out backdrop */}
           {(() => {
@@ -367,7 +365,7 @@ export const TutorialOverlay = () => {
       )}
 
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
-      {targetElement && !isPagePresentation && !['aguardar-modal-entrada','selecionar-arquivo-nf','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
+      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
         <div
           className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
           style={{
