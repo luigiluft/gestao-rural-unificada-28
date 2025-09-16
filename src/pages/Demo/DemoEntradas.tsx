@@ -203,7 +203,7 @@ export default function DemoEntradas() {
       </div>
 
       {/* Entradas Table */}
-      <Card className="shadow-card">
+      <Card className="shadow-card" data-tutorial="tabela-entradas">
         <CardHeader>
           <CardTitle>Entradas Registradas</CardTitle>
           <CardDescription>
@@ -317,6 +317,30 @@ export default function DemoEntradas() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Botão para continuar tutorial - mostrar após registrar entrada */}
+      {isActive && currentStepData?.id === 'entrada-registrada' && (
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <Package className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-medium">Entrada Registrada com Sucesso!</h3>
+              <p className="text-muted-foreground">
+                A entrada foi registrada. Agora vamos acompanhar o processo de recebimento da mercadoria.
+              </p>
+              <Button 
+                onClick={() => navigate('/demo/recebimento')}
+                data-tutorial="proximo-recebimento-btn"
+                className="bg-gradient-primary hover:bg-primary/90"
+              >
+                Ir para Recebimento
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

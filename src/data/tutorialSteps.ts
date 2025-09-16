@@ -83,6 +83,85 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
+    id: 'entrada-registrada',
+    title: 'Entrada Registrada com Sucesso',
+    description: 'A entrada foi registrada! Veja a tabela com todas as entradas registradas. Agora vamos para o recebimento para acompanhar o processo.',
+    page: '/demo/entradas',
+    targetElement: '[data-tutorial="tabela-entradas"]',
+    position: 'top',
+    action: 'none',
+    autoNavigation: false
+  },
+  {
+    id: 'navigate-recebimento',
+    title: 'Ir para Recebimento',
+    description: 'Clique em "Próximo" para ir para a página de recebimento onde você acompanhará o processo de chegada da mercadoria.',
+    page: '/demo/entradas',
+    targetElement: '[data-tutorial="proximo-recebimento-btn"]',
+    position: 'bottom',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'recebimento-overview',
+    title: 'Acompanhar Recebimento',
+    description: 'Esta é a página de recebimento onde você acompanha o status da mercadoria desde o transporte até o armazenamento.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="fluxo-status"]',
+    position: 'top',
+    autoNavigation: false
+  },
+  {
+    id: 'status-em-transito',
+    title: 'Status: Em Trânsito',
+    description: 'A mercadoria está em trânsito. Clique em "Avançar Status" para simular a chegada ao depósito.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="proximo-status-btn"]',
+    position: 'left',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'status-chegou-deposito',
+    title: 'Chegou ao Depósito',
+    description: 'O caminhão chegou ao depósito. Continue avançando o status para simular o processo de descarga.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="proximo-status-btn"]',
+    position: 'left',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'status-em-descarga',
+    title: 'Em Descarga',
+    description: 'A mercadoria está sendo descarregada. Avance para a etapa de conferência.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="proximo-status-btn"]',
+    position: 'left',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'status-conferencia',
+    title: 'Em Conferência',
+    description: 'Os itens estão sendo conferidos. Finalize o processo clicando em "Avançar Status".',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="proximo-status-btn"]',
+    position: 'left',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'recebimento-concluido',
+    title: 'Recebimento Concluído',
+    description: 'Perfeito! A mercadoria foi recebida e está pronta para ser armazenada. Clique em "Continuar Tutorial" para prosseguir.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="continuar-tutorial-btn"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
     id: 'navigate-alocacao',
     title: 'Alocação de Pallets',
     description: 'Agora vamos alocar os pallets nas posições do depósito.',
