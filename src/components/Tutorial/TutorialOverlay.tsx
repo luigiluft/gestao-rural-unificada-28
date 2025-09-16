@@ -82,6 +82,22 @@ export const TutorialOverlay = () => {
     const timeout = setTimeout(findElement, 100);
     return () => clearTimeout(timeout);
   }, [isActive, currentStepData]);
+
+  // Auto-scroll effect for step 7 (formulario-preenchido-com-backdrop)
+  useEffect(() => {
+    if (currentStepData?.id === 'formulario-preenchido-com-backdrop') {
+      const scrollToButton = () => {
+        const registrarButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement;
+        if (registrarButton) {
+          registrarButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      };
+      
+      // Scroll after a short delay to ensure the step transition is complete
+      const timeout = setTimeout(scrollToButton, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentStepData?.id]);
   if (!isActive || !currentStepData) return null;
 
   // Special overlay handling for certain steps
@@ -445,6 +461,7 @@ export const TutorialOverlay = () => {
               
               {currentStepData.action !== 'click' && 
                currentStepData.id !== 'selecionar-arquivo-nf' &&
+               currentStepData.id !== 'formulario-preenchido-com-backdrop' &&
                <Button size="sm" onClick={handleNextClick} className="gap-1 cursor-pointer pointer-events-auto">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />
