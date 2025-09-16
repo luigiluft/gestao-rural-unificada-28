@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { 
   Plus, 
   Search, 
@@ -72,7 +72,22 @@ export default function DemoEntradas() {
   const [activeTab, setActiveTab] = useState("upload")
   const { toast } = useToast()
   const navigate = useNavigate()
-  const { isActive, nextStep } = useTutorial()
+  const { isActive, nextStep, currentStepData } = useTutorial()
+  
+  useEffect(() => {
+    if (!isActive) return;
+    const id = currentStepData?.id;
+    const shouldOpen = id === 'formulario-preenchido-sem-backdrop' || id === 'formulario-preenchido-com-backdrop' || id === 'registrar-entrada';
+    if (shouldOpen) {
+      if (!isNewEntryOpen) setIsNewEntryOpen(true);
+      if (activeTab !== 'manual') setActiveTab('manual');
+      const t = setTimeout(() => {
+        const btn = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement | null;
+        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [isActive, currentStepData?.id, isNewEntryOpen, activeTab]);
   
   const entradas = mockData.entradas
 
