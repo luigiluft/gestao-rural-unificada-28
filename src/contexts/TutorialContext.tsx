@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, ReactNode, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { tutorialSteps } from '@/data/tutorialSteps'
 
@@ -61,8 +61,9 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const location = useLocation()
 
 
-  const totalSteps = tutorialSteps.length
-  const currentStepData = isActive ? tutorialSteps[currentStep] : null
+  const steps = useMemo(() => tutorialSteps.filter(s => s.id !== 'aguardar-modal-entrada'), [])
+  const totalSteps = steps.length
+  const currentStepData = isActive ? steps[currentStep] : null
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0
 
   // Load tutorial state from localStorage - DISABLED for manual start only
@@ -169,14 +170,6 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const handleTargetClick = (element: Element) => {
     if (!isActive || !currentStepData) return
     
-    // Special handling: detect "Selecionar Arquivo" click in step 5 to advance to step 6
-    if (currentStepData.id === 'aguardar-modal-entrada') {
-      const selecionarArquivoBtn = document.querySelector('[data-tutorial="selecionar-arquivo-btn"]')
-      if (selecionarArquivoBtn && (element === selecionarArquivoBtn || selecionarArquivoBtn.contains(element))) {
-        setTimeout(() => nextStep(), 300) // Advance to step 6
-        return
-      }
-    }
     
     // Check if clicked element matches target
     if (currentStepData.targetElement) {
@@ -368,16 +361,6 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
             if (element && waitingForElement) {
               setWaitingForElement(false)
               
-               // Auto-advance for certain actions (but not clicks)
-               if (currentStepData.action === 'wait_modal' && currentStepData.id === 'aguardar-modal-entrada') {
-                 if (waitModalAdvanceRef.current) {
-                   clearTimeout(waitModalAdvanceRef.current)
-                 }
-                 waitModalAdvanceRef.current = window.setTimeout(() => {
-                   nextStep()
-                   waitModalAdvanceRef.current = null
-                 }, 500)
-               }
             }
           }
         }

@@ -444,8 +444,6 @@ export const TutorialOverlay = () => {
               
               
               {currentStepData.action !== 'click' && 
-               currentStepData.action !== 'wait_modal' && 
-               currentStepData.id !== 'aguardar-modal-entrada' && 
                <Button size="sm" onClick={handleNextClick} className="gap-1 cursor-pointer pointer-events-auto">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />
