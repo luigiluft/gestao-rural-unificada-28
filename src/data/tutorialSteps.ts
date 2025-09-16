@@ -83,21 +83,11 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
-    id: 'entrada-registrada',
-    title: 'Entrada Registrada com Sucesso',
-    description: 'A entrada foi registrada! Veja a tabela com todas as entradas registradas. Agora vamos para o recebimento para acompanhar o processo.',
-    page: '/demo/entradas',
-    targetElement: '[data-tutorial="tabela-entradas"]',
-    position: 'top',
-    action: 'none',
-    autoNavigation: false
-  },
-  {
     id: 'navigate-recebimento',
     title: 'Ir para Recebimento',
-    description: 'Clique em "Próximo" para ir para a página de recebimento onde você acompanhará o processo de chegada da mercadoria.',
+    description: 'Agora clique em "Recebimento" no menu lateral para acompanhar o processo de chegada da mercadoria.',
     page: '/demo/entradas',
-    targetElement: '[data-tutorial="proximo-recebimento-btn"]',
+    targetElement: '[data-tutorial="menu-recebimento"]',
     position: 'bottom',
     action: 'click',
     autoNavigation: false

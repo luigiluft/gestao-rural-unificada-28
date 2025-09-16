@@ -78,8 +78,8 @@ export default function DemoEntradas() {
     if (!isActive) return;
     const id = currentStepData?.id;
     
-    // Fechar modal no passo de entrada-registrada (passo 8)
-    if (id === 'entrada-registrada') {
+    // Fechar modal após registrar entrada ou no passo navigate-recebimento
+    if (id === 'navigate-recebimento') {
       setIsNewEntryOpen(false);
       return;
     }
@@ -325,29 +325,6 @@ export default function DemoEntradas() {
         </CardContent>
       </Card>
 
-      {/* Botão Próximo para ir ao recebimento - mostrar no passo navigate-recebimento */}
-      {isActive && currentStepData?.id === 'navigate-recebimento' && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <Package className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium">Vamos para o Recebimento!</h3>
-              <p className="text-muted-foreground">
-                Agora vamos acompanhar o processo de recebimento da mercadoria desde o transporte até o armazenamento.
-              </p>
-              <Button 
-                onClick={() => navigate('/demo/recebimento')}
-                data-tutorial="proximo-recebimento-btn"
-                className="bg-gradient-primary hover:bg-primary/90"
-              >
-                Próximo
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
