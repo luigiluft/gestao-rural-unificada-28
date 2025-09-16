@@ -107,7 +107,7 @@ export const TutorialOverlay = () => {
     // Special cases where we don't want overlay
     if (currentStepData.id === 'registrar-entrada' && !targetElement) return false
     if (currentStepData.id === 'formulario-preenchido-sem-backdrop') return false
-    // No passo "formulario-preenchido-com-backdrop" mostramos overlay para bloquear cliques
+    if (currentStepData.id === 'formulario-preenchido-com-backdrop') return false
     return true
   }
 
@@ -134,14 +134,6 @@ export const TutorialOverlay = () => {
   
   const handleNextClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
-    try {
-      if (currentStepData?.id === 'formulario-preenchido-sem-backdrop') {
-        const registrarButton = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement | null;
-        if (registrarButton) {
-          registrarButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
-    } catch {}
     nextStep();
   }
   
@@ -265,15 +257,15 @@ export const TutorialOverlay = () => {
                     }}
                   />
                   {/* Left backdrop */}
-                  <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
-                    style={{
-                      top: rect.top - 4,
-                      left: 0,
-                      width: rect.left - 4,
-                      height: rect.height + 8
-                    }}
-                  />
+                   <div
+                     className={`fixed pointer-events-none bg-black/40 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                     style={{
+                       top: rect.top - 4,
+                       left: 0,
+                       width: rect.left - 4,
+                       height: rect.height + 8
+                     }}
+                   />
                   {/* Right backdrop */}
                   <div
                     className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
@@ -323,7 +315,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -333,7 +325,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
                     style={{
                       top: rect.top - 4,
                       left: 0,
@@ -343,7 +335,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -353,7 +345,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/60 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -381,7 +373,7 @@ export const TutorialOverlay = () => {
       )}
 
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
-      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
+      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido-sem-backdrop','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
         <div
           className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
           style={{
@@ -396,7 +388,7 @@ export const TutorialOverlay = () => {
       )}
       
       {/* Tutorial modal */}
-      <Card className={`fixed w-96 shadow-xl border-primary/20 ${isInModal ? 'z-[20001]' : 'z-50'}`} style={{
+      <Card className={`fixed w-96 shadow-xl border-primary/20 pointer-events-auto ${isInModal ? 'z-[20001]' : 'z-50'}`} style={{
       top: targetElement ? modalPosition.top : '50%',
       left: targetElement ? modalPosition.left : '50%',
       transform: targetElement ? 'none' : 'translate(-50%, -50%)'

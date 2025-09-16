@@ -81,11 +81,6 @@ export default function DemoEntradas() {
     if (shouldOpen) {
       if (!isNewEntryOpen) setIsNewEntryOpen(true);
       if (activeTab !== 'manual') setActiveTab('manual');
-      const t = setTimeout(() => {
-        const btn = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement | null;
-        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
-      return () => clearTimeout(t);
     }
   }, [isActive, currentStepData?.id, isNewEntryOpen, activeTab]);
   
