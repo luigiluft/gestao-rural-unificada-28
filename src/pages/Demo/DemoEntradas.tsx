@@ -77,6 +77,13 @@ export default function DemoEntradas() {
   useEffect(() => {
     if (!isActive) return;
     const id = currentStepData?.id;
+    
+    // Fechar modal no passo de entrada-registrada (passo 8)
+    if (id === 'entrada-registrada') {
+      setIsNewEntryOpen(false);
+      return;
+    }
+    
     const shouldOpen = id === 'formulario-preenchido-sem-backdrop' || id === 'formulario-preenchido-com-backdrop' || id === 'registrar-entrada';
     if (shouldOpen) {
       if (!isNewEntryOpen) setIsNewEntryOpen(true);
@@ -318,24 +325,24 @@ export default function DemoEntradas() {
         </CardContent>
       </Card>
 
-      {/* Botão para continuar tutorial - mostrar após registrar entrada */}
-      {isActive && currentStepData?.id === 'entrada-registrada' && (
+      {/* Botão Próximo para ir ao recebimento - mostrar no passo navigate-recebimento */}
+      {isActive && currentStepData?.id === 'navigate-recebimento' && (
         <Card className="border-primary bg-primary/5">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
                 <Package className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-medium">Entrada Registrada com Sucesso!</h3>
+              <h3 className="text-lg font-medium">Vamos para o Recebimento!</h3>
               <p className="text-muted-foreground">
-                A entrada foi registrada. Agora vamos acompanhar o processo de recebimento da mercadoria.
+                Agora vamos acompanhar o processo de recebimento da mercadoria desde o transporte até o armazenamento.
               </p>
               <Button 
                 onClick={() => navigate('/demo/recebimento')}
                 data-tutorial="proximo-recebimento-btn"
                 className="bg-gradient-primary hover:bg-primary/90"
               >
-                Ir para Recebimento
+                Próximo
               </Button>
             </div>
           </CardContent>
