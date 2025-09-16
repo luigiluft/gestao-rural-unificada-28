@@ -98,6 +98,39 @@ export const TutorialOverlay = () => {
       return () => clearTimeout(timeout);
     }
   }, [currentStepData?.id]);
+
+  // Position modal slightly above the "Registrar Entrada" button on step 7
+  useEffect(() => {
+    if (currentStepData?.id !== 'formulario-preenchido-com-backdrop') return;
+
+    const updatePosition = () => {
+      const btn = document.querySelector('[data-tutorial="registrar-entrada-btn"]') as HTMLElement | null;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      const modalWidth = 400;
+      const modalHeight = 300;
+      let top = rect.top - modalHeight - 16; // place a bit above the button
+      let left = rect.left + rect.width / 2 - modalWidth / 2;
+      // keep within viewport
+      top = Math.max(20, Math.min(top, window.innerHeight - modalHeight - 20));
+      left = Math.max(20, Math.min(left, window.innerWidth - modalWidth - 20));
+      setModalPosition({ top, left });
+    };
+
+    // Initial position + keep synced on scroll/resize
+    const timeout = setTimeout(updatePosition, 50);
+    const onScroll = () => updatePosition();
+    const onResize = () => updatePosition();
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [currentStepData?.id]);
+
   if (!isActive || !currentStepData) return null;
 
   // Special overlay handling for certain steps
