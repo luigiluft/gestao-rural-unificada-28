@@ -56,6 +56,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const [isPaused, setIsPaused] = useState(false)
   const [waitingForElement, setWaitingForElement] = useState(false)
   const waitModalAdvanceRef = useRef<number | null>(null)
+  const advancingRef = useRef(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -120,32 +121,21 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
 
 
   function nextStep() {
-    console.log('nextStep called, currentStep:', currentStep, 'totalSteps:', totalSteps)
-    
-    // Debounce/guard to avoid accidental multiple advances
-    if ((nextStep as any)._advancing) {
-      console.log('nextStep blocked by debounce')
-      return
-    }
-    ;(nextStep as any)._advancing = true
-    setTimeout(() => { (nextStep as any)._advancing = false }, 400)
+    if (advancingRef.current) return
+    advancingRef.current = true
+    setTimeout(() => { advancingRef.current = false }, 500)
 
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(prev => {
-        const nextStepNumber = prev + 1
-        console.log('Advancing to step:', nextStepNumber)
-        return nextStepNumber
-      })
+      setCurrentStep(prev => prev + 1)
       setIsPaused(false)
     } else {
-      console.log('Tutorial finished')
-      // Inline endTutorial to avoid TDZ issues
       setIsActive(false)
       setCurrentStep(0)
       setIsPaused(false)
       localStorage.removeItem('tutorial-state')
     }
   }
+
 
 
   const previousStep = () => {
@@ -321,11 +311,6 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       simulateNFUpload()
     }
 
-    // Force next step event (fallback from overlay)
-    const handleForceNext = () => {
-      nextStep()
-    }
-
     // Add click listener to detect clicks on target elements
     const handleDocumentClick = (event: MouseEvent) => {
       const target = event.target as Element
@@ -333,7 +318,6 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     }
 
     document.addEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
-    document.addEventListener('tutorial-force-next', handleForceNext)
 
     // Add highlight class to target element
     const addHighlight = () => {
@@ -365,10 +349,10 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     return () => {
       document.removeEventListener('click', handleDocumentClick)
       document.removeEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
-      document.removeEventListener('tutorial-force-next', handleForceNext)
       clearTimeout(timer)
       removeHighlight()
     }
+
   }, [isActive, currentStepData])
 
   // MutationObserver to detect dynamic content changes

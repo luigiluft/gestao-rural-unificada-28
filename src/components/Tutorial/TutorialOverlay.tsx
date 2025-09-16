@@ -128,9 +128,6 @@ export const TutorialOverlay = () => {
       }
     } catch {}
     // Fallback: also trigger a global event to advance in case something blocks this click
-    requestAnimationFrame(() => {
-      document.dispatchEvent(new Event('tutorial-force-next'));
-    });
     nextStep();
   }
   
