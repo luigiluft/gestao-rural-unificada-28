@@ -424,15 +424,6 @@ export const TutorialOverlay = () => {
           {/* Waiting for element */}
           {waitingForElement}
 
-          {/* Interactive feedback for click actions */}
-          {currentStepData.action === 'click' && !waitingForElement && <Alert className="border-primary/20 bg-primary/5">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                <AlertDescription className="text-primary font-medium">
-                  Clique no elemento destacado para continuar
-                </AlertDescription>
-              </div>
-            </Alert>}
           
           {/* Current step badge */}
           <div className="flex items-center gap-2">
@@ -456,13 +447,6 @@ export const TutorialOverlay = () => {
                   Simular Ação
                 </Button>}
               
-              {isPaused ? <Button variant="outline" size="sm" onClick={resumeTutorial} className="gap-1">
-                  <Play className="h-3 w-3" />
-                  Continuar
-                </Button> : <Button variant="outline" size="sm" onClick={pauseTutorial} className="gap-1">
-                  <Pause className="h-3 w-3" />
-                  Pausar
-                </Button>}
               
               {currentStepData.action !== 'click' && 
                currentStepData.action !== 'wait_modal' && 
