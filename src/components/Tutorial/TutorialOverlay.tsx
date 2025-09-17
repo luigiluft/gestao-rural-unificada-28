@@ -172,7 +172,7 @@ export const TutorialOverlay = () => {
   
   return <>
       {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
-      {shouldShowOverlay() && !isPagePresentation && currentStepData.id !== 'selecionar-arquivo-nf' && currentStepData.id !== 'formulario-preenchido-com-backdrop' && (targetElement && currentStepData.action === 'click'
+      {shouldShowOverlay() && !isPagePresentation && !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entradas-tabela'].includes(currentStepData.id) && (targetElement && currentStepData.action === 'click'
         ? <>
             {/* Mask the whole screen except the target to keep it clickable */}
             {(() => {
