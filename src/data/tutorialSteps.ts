@@ -122,6 +122,16 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
+    id: 'card-em-transferencia',
+    title: 'Em Transferência - Card',
+    description: 'A entrada foi movida para "Em Transferência". Veja o card e clique em Próximo para continuar.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    position: 'top',
+    action: 'none',
+    autoNavigation: false
+  },
+  {
     id: 'entrada-em-transferencia',
     title: 'Em Transferência',
     description: 'Agora a entrada está em transferência. Clique para marcar como "Aguardando Conferência".',
@@ -143,6 +153,16 @@ export const tutorialSteps: TutorialStep[] = [
     modalTarget: true
   },
   {
+    id: 'card-aguardando-conferencia',
+    title: 'Aguardando Conferência - Card',
+    description: 'A entrada está "Aguardando Conferência". Confira o card e clique em Próximo para ver as opções.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    position: 'top',
+    action: 'none',
+    autoNavigation: false
+  },
+  {
     id: 'conferencia-opcoes',
     title: 'Opções de Conferência',
     description: 'Agora você pode fazer a conferência manual ou por código de barras. Vamos fazer a conferência manual.',
@@ -162,6 +182,16 @@ export const tutorialSteps: TutorialStep[] = [
     action: 'click',
     autoNavigation: false,
     modalTarget: true
+  },
+  {
+    id: 'card-planejamento',
+    title: 'Planejamento - Card',
+    description: 'A entrada avançou para "Planejamento". Veja o card e clique em Próximo para alocar os pallets.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    position: 'top',
+    action: 'none',
+    autoNavigation: false
   },
   {
     id: 'navigate-alocacao',

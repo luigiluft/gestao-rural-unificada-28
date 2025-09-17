@@ -40,43 +40,66 @@ export const TutorialOverlay = () => {
       if (element) {
         setTargetElement(element);
 
-        // Calculate modal position based on element position and step position
+        // Calculate modal position based on element position with smart collision avoidance
         const rect = element.getBoundingClientRect();
         const modalWidth = 400;
         const modalHeight = 300;
-        let top = 0;
-        let left = 0;
-        switch (currentStepData.position) {
-          case 'top':
-            top = rect.top - modalHeight - 20;
-            left = rect.left + rect.width / 2 - modalWidth / 2;
-            break;
-          case 'bottom':
-            top = rect.bottom + 20;
-            left = rect.left + rect.width / 2 - modalWidth / 2;
-            break;
-          case 'left':
-            top = rect.top + rect.height / 2 - modalHeight / 2;
-            left = rect.left - modalWidth - 20;
-            break;
-          case 'right':
-            top = rect.top + rect.height / 2 - modalHeight / 2;
-            left = rect.right + 20;
-            break;
+
+        const computePos = (placement: 'top' | 'bottom' | 'left' | 'right') => {
+          switch (placement) {
+            case 'top':
+              return { top: rect.top - modalHeight - 20, left: rect.left + rect.width / 2 - modalWidth / 2 };
+            case 'bottom':
+              return { top: rect.bottom + 20, left: rect.left + rect.width / 2 - modalWidth / 2 };
+            case 'left':
+              return { top: rect.top + rect.height / 2 - modalHeight / 2, left: rect.left - modalWidth - 20 };
+            case 'right':
+            default:
+              return { top: rect.top + rect.height / 2 - modalHeight / 2, left: rect.right + 20 };
+          }
+        };
+
+        const placements: Array<'top' | 'bottom' | 'left' | 'right'> = (() => {
+          const p = currentStepData.position as 'top' | 'bottom' | 'left' | 'right' | undefined;
+          const base: Array<'top' | 'bottom' | 'left' | 'right'> = ['right', 'left', 'bottom', 'top'];
+          return p ? [p, ...base.filter(x => x !== p)] : base;
+        })();
+
+        const overlaps = (pos: { top: number; left: number }) => {
+          const m = { top: pos.top, left: pos.left, right: pos.left + modalWidth, bottom: pos.top + modalHeight };
+          return !(m.right < rect.left || m.left > rect.right || m.bottom < rect.top || m.top > rect.bottom);
+        };
+
+        const inViewport = (pos: { top: number; left: number }) =>
+          pos.left >= 20 && pos.top >= 20 &&
+          pos.left + modalWidth <= window.innerWidth - 20 &&
+          pos.top + modalHeight <= window.innerHeight - 20;
+
+        let chosen = computePos(placements[0]);
+        if (overlaps(chosen) || !inViewport(chosen)) {
+          for (const p of placements.slice(1)) {
+            const candidate = computePos(p);
+            if (!overlaps(candidate) && inViewport(candidate)) {
+              chosen = candidate;
+              break;
+            }
+          }
         }
 
-        // Specific adjustments for certain steps
-        if (currentStepData.id === 'entrada-aguardando-transporte') {
-          top = Math.max(top - 120, 20);
+        // If still overlapping, nudge away from target
+        if (overlaps(chosen)) {
+          // Prefer pushing below if overlapping vertically
+          if (chosen.top + modalHeight > rect.top && chosen.top < rect.bottom) {
+            chosen.top = rect.bottom + 16;
+          } else if (chosen.left + modalWidth > rect.left && chosen.left < rect.right) {
+            chosen.left = rect.right + 16;
+          }
         }
 
         // Ensure modal stays within viewport
-        top = Math.max(20, Math.min(top, window.innerHeight - modalHeight - 20));
-        left = Math.max(20, Math.min(left, window.innerWidth - modalWidth - 20));
-        setModalPosition({
-          top,
-          left
-        });
+        let top = Math.max(20, Math.min(chosen.top, window.innerHeight - modalHeight - 20));
+        let left = Math.max(20, Math.min(chosen.left, window.innerWidth - modalWidth - 20));
+        setModalPosition({ top, left });
       }
     };
 
