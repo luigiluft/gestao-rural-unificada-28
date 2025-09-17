@@ -1107,54 +1107,6 @@ export type Database = {
         }
         Relationships: []
       }
-      inventario_divergencias: {
-        Row: {
-          created_at: string
-          diferenca: number
-          id: string
-          inventario_id: string
-          justificativa: string | null
-          lote: string | null
-          posicao_id: string
-          produto_id: string | null
-          quantidade_encontrada: number
-          quantidade_sistema: number
-          status: string
-          tipo_divergencia: string
-          valor_impacto: number | null
-        }
-        Insert: {
-          created_at?: string
-          diferenca: number
-          id?: string
-          inventario_id: string
-          justificativa?: string | null
-          lote?: string | null
-          posicao_id: string
-          produto_id?: string | null
-          quantidade_encontrada: number
-          quantidade_sistema: number
-          status?: string
-          tipo_divergencia: string
-          valor_impacto?: number | null
-        }
-        Update: {
-          created_at?: string
-          diferenca?: number
-          id?: string
-          inventario_id?: string
-          justificativa?: string | null
-          lote?: string | null
-          posicao_id?: string
-          produto_id?: string | null
-          quantidade_encontrada?: number
-          quantidade_sistema?: number
-          status?: string
-          tipo_divergencia?: string
-          valor_impacto?: number | null
-        }
-        Relationships: []
-      }
       inventario_itens: {
         Row: {
           codigo_barras: string | null
