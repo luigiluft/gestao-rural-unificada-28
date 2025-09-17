@@ -47,7 +47,7 @@ interface Divergencia {
 }
 
 export default function DemoRecebimento() {
-  const { handleTargetClick, nextStep } = useTutorial()
+  const { handleTargetClick, nextStep, currentStepData } = useTutorial()
   const [activeTab, setActiveTab] = useState('aguardando_transporte')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<'status' | 'conferencia' | 'conferencia_barras' | 'planejamento' | 'planejar_pallets'>('status')
@@ -602,13 +602,14 @@ export default function DemoRecebimento() {
                         className="border rounded-lg p-4 bg-green-50 cursor-pointer hover:bg-green-100 transition-colors" 
                         data-tutorial="pallet-individual"
                         onClick={() => {
-                          // Simulate pallet configuration change
+                          // Simulate pallet configuration change only when on the correct tutorial step
+                          if (currentStepData?.id !== 'pallet-individual') return;
                           const palletCard = document.querySelector('[data-tutorial="pallet-individual"]');
                           if (palletCard) {
                             palletCard.classList.add('bg-blue-100', 'border-blue-300');
                             palletCard.querySelector('.badge')?.classList.add('bg-blue-100');
                             setTimeout(() => {
-                              if (nextStep) nextStep();
+                              nextStep();
                             }, 500);
                           }
                         }}

@@ -212,8 +212,9 @@ export const tutorialSteps: TutorialStep[] = [
     targetElement: '[data-tutorial="modal-planejamento"]',
     position: 'bottom',
     action: 'none',
-    autoNavigation: true,
-    modalTarget: true
+    autoNavigation: false,
+    modalTarget: true,
+    showNextButton: true
   },
   {
     id: 'produtos-entrada-secao',
@@ -223,8 +224,9 @@ export const tutorialSteps: TutorialStep[] = [
     targetElement: '[data-tutorial="produtos-entrada-secao"]',
     position: 'right',
     action: 'none',
-    autoNavigation: true,
-    modalTarget: true
+    autoNavigation: false,
+    modalTarget: true,
+    showNextButton: true
   },
   {
     id: 'configuracao-pallets-secao',
