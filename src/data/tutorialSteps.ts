@@ -96,6 +96,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Página de Recebimento',
     description: 'Esta é a página de recebimento onde você gerencia as entradas por status: desde aguardando transporte até o planejamento de pallets.',
     page: '/demo/recebimento',
+    targetElement: '[data-tutorial="entrada-card-000123456"]',
     position: 'top',
     autoNavigation: false
   },

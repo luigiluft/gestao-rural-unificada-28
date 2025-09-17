@@ -288,7 +288,7 @@ export default function DemoRecebimento() {
               ) : (
                 <div className="grid gap-4">
                   {statusEntradas.map((entrada) => (
-                    <Card key={entrada.id} data-tutorial={status === activeTab ? "entrada-card" : undefined}>
+                    <Card key={entrada.id} data-tutorial={status === activeTab ? `entrada-card-${entrada.numero_nfe}` : undefined}>
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <div className="space-y-1">

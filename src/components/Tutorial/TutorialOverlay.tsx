@@ -65,6 +65,11 @@ export const TutorialOverlay = () => {
             break;
         }
 
+        // Specific adjustments for certain steps
+        if (currentStepData.id === 'entrada-aguardando-transporte') {
+          top = Math.max(top - 120, 20);
+        }
+
         // Ensure modal stays within viewport
         top = Math.max(20, Math.min(top, window.innerHeight - modalHeight - 20));
         left = Math.max(20, Math.min(left, window.innerWidth - modalWidth - 20));
