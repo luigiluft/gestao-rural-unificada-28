@@ -181,7 +181,7 @@ export const TutorialOverlay = () => {
               const leftW = Math.max(0, r.left);
               const rightW = Math.max(0, window.innerWidth - r.right);
               const bottomH = Math.max(0, window.innerHeight - r.bottom);
-              const z = isInModal ? 'z-[19999]' : 'z-40';
+              const z = isInModal ? 'z-[19999]' : 'z-[9998]';
               return (
                 <>
                   {/* Top strip */}
@@ -196,11 +196,11 @@ export const TutorialOverlay = () => {
               );
             })()}
           </>
-        : <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />
+        : <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-[9998]'}`} />
       )}
       
       {/* Partial overlay for sidebar only during page presentations (excluding welcome step) */}
-      {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-40" />}
+      {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-[9990]" />}
       
       {/* Special backdrop with cut-out for "Selecionar Arquivo" button in selecionar-arquivo-nf step */}
       {currentStepData.id === 'selecionar-arquivo-nf' && (
@@ -214,7 +214,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -224,7 +224,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: 0,
@@ -234,7 +234,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -244,7 +244,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -254,7 +254,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Blue border around the button */}
                   <div
-                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.left - 4,
@@ -281,7 +281,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -291,7 +291,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                    <div
-                     className={`fixed pointer-events-none bg-black/40 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                     className={`fixed pointer-events-none bg-black/40 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                      style={{
                        top: rect.top - 4,
                        left: 0,
@@ -301,7 +301,7 @@ export const TutorialOverlay = () => {
                    />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -311,7 +311,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -321,7 +321,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Blue border around the button */}
                   <div
-                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.left - 4,
@@ -348,7 +348,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -358,7 +358,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: 0,
@@ -368,7 +368,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -378,7 +378,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -388,7 +388,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Blue border around the button */}
                   <div
-                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.left - 4,
@@ -408,7 +408,7 @@ export const TutorialOverlay = () => {
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
       {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido-sem-backdrop','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
         <div
-          className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
+          className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
           style={{
             top: targetElement.getBoundingClientRect().top - 4,
             left: targetElement.getBoundingClientRect().left - 4,
@@ -421,7 +421,7 @@ export const TutorialOverlay = () => {
       )}
       
       {/* Tutorial modal */}
-      <Card className={`fixed w-96 shadow-xl border-primary/20 pointer-events-auto ${isInModal ? 'z-[20001]' : 'z-50'}`} style={{
+      <Card className={`fixed w-96 shadow-xl border-primary/20 pointer-events-auto ${isInModal ? 'z-[20001]' : 'z-[9999]'}`} style={{
       top: targetElement ? modalPosition.top : '50%',
       left: targetElement ? modalPosition.left : '50%',
       transform: targetElement ? 'none' : 'translate(-50%, -50%)'
