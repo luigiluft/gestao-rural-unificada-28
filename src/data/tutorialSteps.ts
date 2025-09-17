@@ -209,11 +209,12 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Modal de Planejamento',
     description: 'Este modal permite planejar a distribuição dos pallets. Veja os dados e clique em "Finalizar Planejamento".',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="modal-planejamento"]',
+    targetElement: '[data-tutorial="finalizar-planejamento-btn"]',
     position: 'bottom',
-    action: 'none',
+    action: 'click',
     autoNavigation: false,
-    modalTarget: true
+    modalTarget: true,
+    showNextButton: false
   },
   {
     id: 'navigate-alocacao',

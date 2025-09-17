@@ -202,13 +202,6 @@ export default function DemoRecebimento() {
     setObservacoes('')
     setDivergencias([])
     setDialogOpen(true)
-    
-    // Auto advance tutorial when opening planejar pallets modal
-    if (type === 'planejar_pallets' && nextStep) {
-      setTimeout(() => {
-        nextStep()
-      }, 300)
-    }
   }
 
   const handleConfirm = () => {
@@ -671,7 +664,10 @@ export default function DemoRecebimento() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleConfirm} data-tutorial="confirmar-acao">
+            <Button 
+              onClick={handleConfirm} 
+              data-tutorial={actionType === 'planejar_pallets' ? 'finalizar-planejamento-btn' : 'confirmar-acao'}
+            >
               {actionType === 'status' && 'Confirmar'}
               {actionType === 'conferencia' && 'Finalizar Conferência'}
               {actionType === 'conferencia_barras' && 'Finalizar Conferência'}
