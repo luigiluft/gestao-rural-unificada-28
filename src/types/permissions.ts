@@ -11,16 +11,22 @@ export type PermissionCode =
   | 'gerenciar-posicoes.view' | 'fazendas.view' | 'produtores.view'
   | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view';
 
-export interface EmployeeProfile {
+// Template de permissões para criar perfis de funcionários/subcontas
+export interface PermissionTemplate {
   id: string;
   user_id: string;
   nome: string;
   descricao?: string;
-  role: UserRole;
+  target_role: UserRole; // Role alvo para este template
   permissions: PermissionCode[];
   is_template: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Backward compatibility - será removido após migração completa
+export interface EmployeeProfile extends PermissionTemplate {
+  role: UserRole; // Alias para target_role
 }
 
 export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [

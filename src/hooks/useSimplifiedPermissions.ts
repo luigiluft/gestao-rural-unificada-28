@@ -31,19 +31,19 @@ export const useSimplifiedPermissions = (): UserPermissions => {
       const isSubaccount = !!hierarchyData?.parent_user_id
 
       if (isSubaccount) {
-        // É subconta - buscar permissões via employee_profiles
-        const { data: profileAssignment } = await supabase
-          .from("user_employee_profiles")
+        // É subconta - buscar permissões via permission_templates
+        const { data: templateAssignment } = await supabase
+          .from("user_permission_templates")
           .select(`
-            profile_id,
-            employee_profiles(permissions)
+            template_id,
+            permission_templates(permissions)
           `)
           .eq("user_id", user.id)
           .maybeSingle()
 
-        if (profileAssignment?.employee_profiles) {
+        if (templateAssignment?.permission_templates) {
           return {
-            permissions: profileAssignment.employee_profiles.permissions as PermissionCode[],
+            permissions: templateAssignment.permission_templates.permissions as PermissionCode[],
             isSubaccount: true
           }
         }

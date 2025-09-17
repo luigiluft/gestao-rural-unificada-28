@@ -167,42 +167,6 @@ export type Database = {
         }
         Relationships: []
       }
-      employee_profiles: {
-        Row: {
-          created_at: string
-          descricao: string | null
-          id: string
-          is_template: boolean
-          nome: string
-          permissions: Database["public"]["Enums"]["permission_code"][]
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          descricao?: string | null
-          id?: string
-          is_template?: boolean
-          nome: string
-          permissions?: Database["public"]["Enums"]["permission_code"][]
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          descricao?: string | null
-          id?: string
-          is_template?: boolean
-          nome?: string
-          permissions?: Database["public"]["Enums"]["permission_code"][]
-          role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       entrada_itens: {
         Row: {
           cest: string | null
@@ -1507,6 +1471,42 @@ export type Database = {
           },
         ]
       }
+      permission_templates: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          is_template: boolean
+          nome: string
+          permissions: Database["public"]["Enums"]["permission_code"][]
+          target_role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_template?: boolean
+          nome: string
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          target_role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_template?: boolean
+          nome?: string
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          target_role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       produtores: {
         Row: {
           ativo: boolean
@@ -2112,35 +2112,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_employee_profiles: {
-        Row: {
-          assigned_at: string | null
-          assigned_by: string | null
-          profile_id: string | null
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          profile_id?: string | null
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          profile_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_employee_profiles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "employee_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_hierarchy: {
         Row: {
           child_user_id: string
@@ -2188,6 +2159,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_permission_templates: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_employee_profiles_profile_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_permissions: {
         Row: {
