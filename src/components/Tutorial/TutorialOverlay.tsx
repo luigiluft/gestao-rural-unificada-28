@@ -182,9 +182,15 @@ export const TutorialOverlay = () => {
     currentStepData.id === 'navigate-separacao' ||
     currentStepData.id === 'navigate-transporte' ||
     // Steps that show general page info without specific targets
-    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation) ||
-    // Steps that introduce a page (no action, just presenting the page)
-    (!currentStepData.action && currentStepData.autoNavigation === false && currentStepData.targetElement)
+    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation)
+  );
+
+  // Check if current step is a card spotlight step
+  const isCardSpotlight = (
+    currentStepData.id === 'recebimento-overview' ||
+    currentStepData.id === 'card-em-transferencia' ||
+    currentStepData.id === 'card-aguardando-conferencia' ||
+    currentStepData.id === 'card-planejamento'
   );
 
   // Check if we should show sidebar backdrop (from step 2 onwards, excluding welcome)
@@ -199,8 +205,8 @@ export const TutorialOverlay = () => {
   }
   
   return <>
-      {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
-      {shouldShowOverlay() && !isPagePresentation && !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entradas-tabela'].includes(currentStepData.id) && (targetElement && currentStepData.action === 'click'
+      {/* Dark overlay - only show for steps with specific targets, not for page presentations or card spotlights */}
+      {shouldShowOverlay() && !isPagePresentation && !isCardSpotlight && !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entradas-tabela'].includes(currentStepData.id) && (targetElement && currentStepData.action === 'click'
         ? <>
             {/* Mask the whole screen except the target to keep it clickable */}
             {(() => {
@@ -225,6 +231,40 @@ export const TutorialOverlay = () => {
             })()}
           </>
         : <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-[9998]'}`} />
+      )}
+
+      {/* Card spotlight effect - preserve card colors with subtle highlight */}
+      {isCardSpotlight && targetElement && (
+        <>
+          {(() => {
+            const r = targetElement.getBoundingClientRect();
+            const topH = Math.max(0, r.top);
+            const leftW = Math.max(0, r.left);
+            const rightW = Math.max(0, window.innerWidth - r.right);
+            const bottomH = Math.max(0, window.innerHeight - r.bottom);
+            const z = isInModal ? 'z-[19999]' : 'z-[9998]';
+            return (
+              <>
+                {/* Dark overlay around the card */}
+                <div className={`fixed ${z} bg-black/30`} style={{ top: 0, left: 0, right: 0, height: topH }} />
+                <div className={`fixed ${z} bg-black/30`} style={{ top: r.top, left: 0, width: leftW, height: r.height }} />
+                <div className={`fixed ${z} bg-black/30`} style={{ top: r.top, left: r.right, width: rightW, height: r.height }} />
+                <div className={`fixed ${z} bg-black/30`} style={{ top: r.bottom, left: 0, right: 0, height: bottomH }} />
+                {/* Subtle highlight border around the card */}
+                <div
+                  className={`fixed pointer-events-none border-2 border-primary/80 rounded-lg ${z}`}
+                  style={{
+                    top: r.top - 2,
+                    left: r.left - 2,
+                    width: r.width + 4,
+                    height: r.height + 4,
+                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)'
+                  }}
+                />
+              </>
+            );
+          })()}
+        </>
       )}
       
       {/* Partial overlay for sidebar only during page presentations (excluding welcome step) */}
