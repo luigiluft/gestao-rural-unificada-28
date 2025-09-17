@@ -200,7 +200,7 @@ export const tutorialSteps: TutorialStep[] = [
     page: '/demo/recebimento',
     targetElement: '[data-tutorial="planejar-pallets-btn"]',
     position: 'left',
-    action: 'click',
+    action: 'none',
     autoNavigation: false
   },
   {

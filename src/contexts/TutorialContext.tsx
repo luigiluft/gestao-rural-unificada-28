@@ -190,6 +190,18 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
           return
 
         }
+
+        // Special handling for planejar pallets button
+        if (currentStepData.id === 'planejar-pallets-button') {
+          // Wait for modal to appear, then advance to next step
+          setTimeout(() => {
+            const modal = document.querySelector('[data-tutorial="modal-planejamento"]')
+            if (modal) {
+              nextStep()
+            }
+          }, 500)
+          return
+        }
         
         // Only advance for click actions
         if (currentStepData.action === 'click') {

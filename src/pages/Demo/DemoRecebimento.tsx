@@ -207,6 +207,16 @@ export default function DemoRecebimento() {
   const handleConfirm = () => {
     if (!selectedEntrada) return
 
+    // Handle different action types
+    if (actionType === 'planejar_pallets') {
+      // For pallet planning, close modal and advance tutorial step
+      setDialogOpen(false)
+      setTimeout(() => {
+        if (nextStep) nextStep()
+      }, 500)
+      return
+    }
+
     const nextStatus = getNextStatus(selectedEntrada.status_aprovacao)
     if (!nextStatus) return
 
@@ -347,7 +357,6 @@ export default function DemoRecebimento() {
                                 onClick={() => handleAction(entrada, 'planejar_pallets')}
                                 size="sm"
                                 data-tutorial="planejar-pallets-btn"
-                                className="bg-green-600 hover:bg-green-700 text-white"
                               >
                                 <Package className="h-4 w-4 mr-2" />
                                 Planejar Pallets
