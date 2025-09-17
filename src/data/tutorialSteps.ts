@@ -157,7 +157,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Aguardando Conferência - Card',
     description: 'A entrada está "Aguardando Conferência". Confira o card e clique em Próximo para ver as opções.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="entrada-card-000123457"]',
+    targetElement: '[data-tutorial="entrada-card-000123458"]',
     position: 'top',
     action: 'none',
     autoNavigation: false
