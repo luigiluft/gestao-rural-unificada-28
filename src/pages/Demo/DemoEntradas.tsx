@@ -122,7 +122,11 @@ export default function DemoEntradas() {
 
     setIsNewEntryOpen(false)
     setActiveTab("upload")
-    // Avanço de passo ocorre pelo listener global no clique do botão
+
+    // Avança explicitamente o tutorial para o passo da tabela
+    if (isActive) {
+      nextStep()
+    }
   }
 
   const handleFormCancel = () => {
