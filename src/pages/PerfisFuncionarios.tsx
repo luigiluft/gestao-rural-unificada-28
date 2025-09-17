@@ -12,7 +12,7 @@ import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { type EmployeeProfile, type PermissionCode, type UserRole } from "@/types/permissions"
+import { type PermissionTemplate, type PermissionCode, type UserRole } from "@/types/permissions"
 
 const AVAILABLE_PERMISSIONS = {
   franqueado: [
@@ -44,7 +44,7 @@ export default function PerfisFuncionarios() {
   const userRole = profile?.role as 'franqueado' | 'produtor'
   const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole, true)
   
-  const [editingProfile, setEditingProfile] = useState<EmployeeProfile | null>(null)
+  const [editingProfile, setEditingProfile] = useState<PermissionTemplate | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
@@ -58,7 +58,7 @@ export default function PerfisFuncionarios() {
     setIsDialogOpen(true)
   }
 
-  const handleEditProfile = (profile: EmployeeProfile) => {
+  const handleEditProfile = (profile: PermissionTemplate) => {
     setEditingProfile(profile)
     setFormData({
       nome: profile.nome,
@@ -72,10 +72,11 @@ export default function PerfisFuncionarios() {
     if (!formData.nome.trim()) return
 
     const profileData = {
+      user_id: profile!.user_id,
       nome: formData.nome,
       descricao: formData.descricao,
       permissions: formData.permissions,
-      role: userRole,
+      target_role: userRole,
       is_template: true,
     }
 
@@ -117,8 +118,8 @@ export default function PerfisFuncionarios() {
   }
 
   // Separate profiles by role for better organization
-  const myProfiles = profiles.filter(p => p.role === userRole)
-  const producerProfiles = userRole === 'franqueado' ? profiles.filter(p => p.role === 'produtor') : []
+  const myProfiles = profiles.filter(p => p.target_role === userRole)
+  const producerProfiles = userRole === 'franqueado' ? profiles.filter(p => p.target_role === 'produtor') : []
 
   return (
     <div className="space-y-6">

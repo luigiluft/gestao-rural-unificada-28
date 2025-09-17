@@ -14,16 +14,16 @@ import { toast } from "sonner"
 import { UserPlus, Settings, Users, Trash2 } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
-import { useUserEmployeeProfiles } from "@/hooks/useUserEmployeeProfiles"
+import { useUserPermissionTemplates } from "@/hooks/useUserPermissionTemplates"
 import { useCleanupPermissions } from "@/hooks/useCleanupPermissions"
 import { EmptyState } from "@/components/ui/empty-state"
-import { EmployeeProfile } from "@/types/permissions"
+import { PermissionTemplate } from "@/types/permissions"
 
 interface SubaccountProfile {
   user_id: string
   nome: string | null
   email: string | null
-  employee_profile?: EmployeeProfile
+  employee_profile?: PermissionTemplate
 }
 
 export default function Subcontas() {
@@ -45,7 +45,7 @@ export default function Subcontas() {
   
   // Hooks para perfis de funcionários
   const { profiles, isLoading: isLoadingProfiles } = useEmployeeProfiles(profile?.role)
-  const { assignProfile, removeProfile } = useUserEmployeeProfiles()
+  const { assignTemplate, removeTemplate } = useUserPermissionTemplates()
   const { cleanupSubaccountPermissions } = useCleanupPermissions()
 
   // Buscar subcontas do usuário
@@ -69,21 +69,20 @@ export default function Subcontas() {
         email: item.profiles.email,
       }))
 
-      // Buscar perfis de funcionário para cada subconta
-      const { data: profileAssignments } = await supabase
-        .from("user_employee_profiles")
+      // Buscar templates de permissões para cada subconta
+      const { data: templateAssignments } = await supabase
+        .from("user_permission_templates")
         .select(`
           user_id,
-          employee_profiles(*)
+          permission_templates(*)
         `)
         .in("user_id", subaccountProfiles.map(s => s.user_id))
 
-      // Combinar dados
       return subaccountProfiles.map(subaccount => ({
         ...subaccount,
-        employee_profile: profileAssignments?.find(
-          (pa: any) => pa.user_id === subaccount.user_id
-        )?.employee_profiles || undefined
+        employee_profile: templateAssignments?.find(
+          (ta: any) => ta.user_id === subaccount.user_id
+        )?.permission_templates || undefined
       }))
     },
   })
@@ -124,7 +123,7 @@ export default function Subcontas() {
       let parentUserId = user?.id
       let franquiaId = null
 
-      if (profile?.role === 'admin' && selectedProfile.role === 'produtor') {
+      if (profile?.role === 'admin' && selectedProfile.target_role === 'produtor') {
         if (!createFranquia) {
           throw new Error("Selecione uma franquia para o produtor")
         }
@@ -139,7 +138,7 @@ export default function Subcontas() {
         email: createEmail,
         inviter_user_id: user?.id,
         parent_user_id: parentUserId,
-        role: selectedProfile.role,
+        role: selectedProfile.target_role,
         permissions: selectedProfile.permissions,
         ...(franquiaId && { franquia_id: franquiaId })
       }
@@ -200,14 +199,14 @@ export default function Subcontas() {
     }
   })
 
-  const handleAssignProfile = (profileId: string) => {
-    assignProfile({ userId: selectedUserId, profileId })
+  const handleAssignProfile = (templateId: string) => {
+    assignTemplate({ userId: selectedUserId, templateId })
     setProfileManageOpen(false)
     refetchSubaccounts()
   }
 
   const handleRemoveProfile = () => {
-    removeProfile(selectedUserId)
+    removeTemplate(selectedUserId)
     setProfileManageOpen(false)
     refetchSubaccounts()
   }
@@ -292,13 +291,13 @@ export default function Subcontas() {
                         <SelectContent>
                           {profiles?.map((profile) => (
                             <SelectItem key={profile.id} value={profile.id}>
-                              {profile.nome} ({profile.role})
+                              {profile.nome} ({profile.target_role})
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.role === 'produtor' && (
+                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.target_role === 'produtor' && (
                       <div className="grid gap-2">
                         <Label htmlFor="franquia">Franquia</Label>
                         <Select value={createFranquia} onValueChange={setCreateFranquia}>
@@ -429,7 +428,7 @@ export default function Subcontas() {
                 <SelectContent>
                   {profiles?.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
-                      {profile.nome} ({profile.role})
+                      {profile.nome} ({profile.target_role})
                     </SelectItem>
                   ))}
                 </SelectContent>
