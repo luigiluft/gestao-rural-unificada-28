@@ -78,8 +78,8 @@ export default function DemoEntradas() {
     if (!isActive) return;
     const id = currentStepData?.id;
     
-    // Fechar modal após registrar entrada ou no passo navigate-recebimento
-    if (id === 'navigate-recebimento') {
+    // Fechar modal nos passos entradas-tabela e navigate-recebimento
+    if (id === 'entradas-tabela' || id === 'navigate-recebimento') {
       setIsNewEntryOpen(false);
       return;
     }
