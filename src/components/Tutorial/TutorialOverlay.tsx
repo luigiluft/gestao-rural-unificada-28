@@ -405,8 +405,75 @@ export const TutorialOverlay = () => {
         </>
       )}
 
+      {/* Special backdrop for entradas-tabela step - covers entire page except the table */}
+      {currentStepData.id === 'entradas-tabela' && (
+        <>
+          {(() => {
+            const table = document.querySelector('[data-tutorial="tabela-entradas"]');
+            if (table) {
+              const rect = table.getBoundingClientRect();
+              return (
+                <>
+                  {/* Top backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: rect.top - 4
+                    }}
+                  />
+                  {/* Left backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: 0,
+                      width: rect.left - 4,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Right backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.right + 4,
+                      right: 0,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Bottom backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.bottom + 4,
+                      left: 0,
+                      right: 0,
+                      bottom: 0
+                    }}
+                  />
+                  {/* Subtle blue border around the table */}
+                  <div
+                    className={`fixed pointer-events-none border-2 border-primary/30 rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.left - 4,
+                      width: rect.width + 8,
+                      height: rect.height + 8
+                    }}
+                  />
+                </>
+              );
+            }
+            return null;
+          })()}
+        </>
+      )}
+
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
-      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido-sem-backdrop','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
+      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido-sem-backdrop','formulario-preenchido','registrar-entrada','entradas-tabela'].includes(currentStepData.id) && (
         <div
           className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
           style={{
