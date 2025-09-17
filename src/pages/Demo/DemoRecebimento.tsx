@@ -173,6 +173,26 @@ export default function DemoRecebimento() {
           produtos: { nome: 'Feijão Carioca', codigo: 'FEI001' }
         }
       ]
+    },
+    {
+      id: 'entrada-demo-4',
+      numero_nfe: '000123459',
+      status_aprovacao: 'planejamento',
+      data_entrada: '2024-09-14',
+      valor_total: 12000.00,
+      profiles: { nome: 'Produtor Demo 4' },
+      fornecedores: { nome: 'Fornecedor Premium Ltda' },
+      entrada_itens: [
+        { 
+          id: 'item-5',
+          nome_produto: 'Arroz Tipo 1', 
+          quantidade: 600, 
+          unidade_comercial: 'SC',
+          valor_unitario: 20.00,
+          valor_total: 12000.00,
+          produtos: { nome: 'Arroz Tipo 1', codigo: 'ARR001' }
+        }
+      ]
     }
   ]
 

@@ -188,7 +188,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Planejamento - Card',
     description: 'A entrada avançou para "Planejamento". Veja o card e clique em Próximo para alocar os pallets.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="entrada-card-000123457"]',
+    targetElement: '[data-tutorial="entrada-card-000123459"]',
     position: 'top',
     action: 'none',
     autoNavigation: false
