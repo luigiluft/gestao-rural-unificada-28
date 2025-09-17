@@ -578,7 +578,7 @@ export default function DemoRecebimento() {
             {actionType === 'planejar_pallets' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div data-tutorial="produtos-entrada-secao">
                     <h4 className="font-medium mb-3">Produtos da Entrada</h4>
                     <div className="space-y-2">
                       {selectedEntrada?.entrada_itens?.map((item: any) => (
@@ -595,18 +595,35 @@ export default function DemoRecebimento() {
                     </div>
                   </div>
                   
-                  <div>
+                  <div data-tutorial="configuracao-pallets-secao">
                     <h4 className="font-medium mb-3">Configuração de Pallets</h4>
                     <div className="space-y-4">
-                      <div className="border rounded-lg p-4 bg-green-50">
+                      <div 
+                        className="border rounded-lg p-4 bg-green-50 cursor-pointer hover:bg-green-100 transition-colors" 
+                        data-tutorial="pallet-individual"
+                        onClick={() => {
+                          // Simulate pallet configuration change
+                          const palletCard = document.querySelector('[data-tutorial="pallet-individual"]');
+                          if (palletCard) {
+                            palletCard.classList.add('bg-blue-100', 'border-blue-300');
+                            palletCard.querySelector('.badge')?.classList.add('bg-blue-100');
+                            setTimeout(() => {
+                              if (nextStep) nextStep();
+                            }, 500);
+                          }
+                        }}
+                      >
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-sm">Pallet #001</span>
-                          <Badge variant="outline" className="text-xs">Configurado</Badge>
+                          <Badge variant="outline" className="text-xs badge">Configurado</Badge>
                         </div>
                         <div className="text-xs text-muted-foreground space-y-1">
                           <div>• Arroz Tipo 1: 300 SC</div>
                           <div>• Capacidade: 80% utilizada</div>
                           <div>• Posição sugerida: A1-001</div>
+                        </div>
+                        <div className="mt-2 text-xs text-blue-600 opacity-75">
+                          💡 Clique para simular ajuste
                         </div>
                       </div>
                       
@@ -625,7 +642,8 @@ export default function DemoRecebimento() {
                   </div>
                 </div>
                 
-                <div className="border-t pt-4">
+                <div className="border-t pt-4" data-tutorial="resumo-planejamento">
+                  <h4 className="font-medium mb-3">Resumo do Planejamento</h4>
                   <div className="text-sm space-y-2">
                     <div className="flex justify-between">
                       <span>Total de Pallets:</span>
@@ -638,6 +656,10 @@ export default function DemoRecebimento() {
                     <div className="flex justify-between">
                       <span>Status:</span>
                       <Badge variant="default" className="text-xs">Pronto para Alocação</Badge>
+                    </div>
+                    <div className="flex justify-between text-green-600">
+                      <span>Eficiência de Espaço:</span>
+                      <span className="font-medium">Ótima (80%)</span>
                     </div>
                   </div>
                 </div>
