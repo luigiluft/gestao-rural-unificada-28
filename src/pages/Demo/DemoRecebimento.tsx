@@ -50,7 +50,7 @@ export default function DemoRecebimento() {
   const { handleTargetClick, nextStep } = useTutorial()
   const [activeTab, setActiveTab] = useState('aguardando_transporte')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [actionType, setActionType] = useState<'status' | 'conferencia' | 'conferencia_barras' | 'planejamento'>('status')
+  const [actionType, setActionType] = useState<'status' | 'conferencia' | 'conferencia_barras' | 'planejamento' | 'planejar_pallets'>('status')
   const [observacoes, setObservacoes] = useState('')
   const [divergencias, setDivergencias] = useState<Divergencia[]>([])
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
@@ -196,7 +196,7 @@ export default function DemoRecebimento() {
     }
   ]
 
-  const handleAction = (entrada: any, type: 'status' | 'conferencia' | 'conferencia_barras' | 'planejamento') => {
+  const handleAction = (entrada: any, type: 'status' | 'conferencia' | 'conferencia_barras' | 'planejamento' | 'planejar_pallets') => {
     setSelectedEntrada(entrada)
     setActionType(type)
     setObservacoes('')
@@ -344,9 +344,10 @@ export default function DemoRecebimento() {
                             )}
                             {entrada.status_aprovacao === 'planejamento' && (
                               <Button
-                                onClick={() => handleAction(entrada, 'planejamento')}
+                                onClick={() => handleAction(entrada, 'planejar_pallets')}
                                 size="sm"
-                                data-tutorial="planejamento-btn"
+                                data-tutorial="planejar-pallets-btn"
+                                className="bg-green-600 hover:bg-green-700 text-white"
                               >
                                 <Package className="h-4 w-4 mr-2" />
                                 Planejar Pallets
@@ -409,18 +410,20 @@ export default function DemoRecebimento() {
 
       {/* Dialog for Actions */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-tutorial="modal-planejamento">
           <DialogHeader>
             <DialogTitle>
               {actionType === 'conferencia' && 'Conferência Manual'}
               {actionType === 'conferencia_barras' && 'Conferência por Código de Barras'}
               {actionType === 'planejamento' && 'Planejamento de Pallets'}
+              {actionType === 'planejar_pallets' && 'Planejamento de Pallets'}
               {actionType === 'status' && `Atualizar Status - ${getNextStatusLabel(selectedEntrada?.status_aprovacao || '')}`}
             </DialogTitle>
             <DialogDescription>
               {actionType === 'conferencia' && 'Confira manualmente os produtos recebidos e registre divergências se necessário.'}
               {actionType === 'conferencia_barras' && 'Use o leitor de código de barras para conferir os produtos.'}
               {actionType === 'planejamento' && 'Organize os produtos em pallets para armazenamento.'}
+              {actionType === 'planejar_pallets' && 'Configure a distribuição dos produtos em pallets para otimizar o armazenamento.'}
               {actionType === 'status' && 'Confirme a mudança de status da entrada.'}
             </DialogDescription>
           </DialogHeader>
@@ -562,6 +565,76 @@ export default function DemoRecebimento() {
               </div>
             )}
 
+            {/* New Pallet Planning Modal */}
+            {actionType === 'planejar_pallets' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-3">Produtos da Entrada</h4>
+                    <div className="space-y-2">
+                      {selectedEntrada?.entrada_itens?.map((item: any) => (
+                        <div key={item.id} className="border rounded-lg p-3 bg-muted/20">
+                          <div className="font-medium text-sm">{item.nome_produto}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Quantidade: {item.quantidade} {item.unidade_comercial}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Código: {item.produtos?.codigo}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-3">Configuração de Pallets</h4>
+                    <div className="space-y-4">
+                      <div className="border rounded-lg p-4 bg-green-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">Pallet #001</span>
+                          <Badge variant="outline" className="text-xs">Configurado</Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>• Arroz Tipo 1: 300 SC</div>
+                          <div>• Capacidade: 80% utilizada</div>
+                          <div>• Posição sugerida: A1-001</div>
+                        </div>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4 bg-green-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">Pallet #002</span>
+                          <Badge variant="outline" className="text-xs">Configurado</Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>• Arroz Tipo 1: 300 SC</div>
+                          <div>• Capacidade: 80% utilizada</div>
+                          <div>• Posição sugerida: A1-002</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <div className="text-sm space-y-2">
+                    <div className="flex justify-between">
+                      <span>Total de Pallets:</span>
+                      <span className="font-medium">2 pallets</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Produtos Alocados:</span>
+                      <span className="font-medium">600/600 SC (100%)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <Badge variant="default" className="text-xs">Pronto para Alocação</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Status Update */}
             {actionType === 'status' && (
               <div className="space-y-4">
@@ -587,6 +660,7 @@ export default function DemoRecebimento() {
               {actionType === 'conferencia' && 'Finalizar Conferência'}
               {actionType === 'conferencia_barras' && 'Finalizar Conferência'}
               {actionType === 'planejamento' && 'Finalizar Planejamento'}
+              {actionType === 'planejar_pallets' && 'Finalizar Planejamento'}
             </Button>
           </DialogFooter>
         </DialogContent>

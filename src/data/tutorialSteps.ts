@@ -194,6 +194,27 @@ export const tutorialSteps: TutorialStep[] = [
     autoNavigation: false
   },
   {
+    id: 'planejar-pallets-button',
+    title: 'Botão Planejar Pallets',
+    description: 'Clique no botão "Planejar Pallets" para abrir o modal de planejamento.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="planejar-pallets-btn"]',
+    position: 'left',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'modal-planejamento',
+    title: 'Modal de Planejamento',
+    description: 'Este modal permite planejar a distribuição dos pallets. Veja os dados e clique em "Finalizar Planejamento".',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="modal-planejamento"]',
+    position: 'bottom',
+    action: 'none',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
     id: 'navigate-alocacao',
     title: 'Alocação de Pallets',
     description: 'Agora vamos alocar os pallets nas posições do depósito.',
