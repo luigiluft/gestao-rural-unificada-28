@@ -67,20 +67,19 @@ export const tutorialSteps: TutorialStep[] = [
     page: '/demo/entradas',
     targetElement: '[data-tutorial="registrar-entrada-btn"]',
     position: 'top',
-    action: 'none',
+    action: 'click',
     autoNavigation: false,
     modalTarget: true
   },
   {
-    id: 'registrar-entrada',
-    title: 'Registrar a Entrada',
-    description: 'Agora clique no botão "Registrar Entrada" para finalizar o processo e registrar a entrada no sistema.',
+    id: 'entradas-tabela',
+    title: 'Entrada Registrada com Sucesso',
+    description: 'Perfeito! A entrada foi registrada e agora aparece na tabela abaixo. Você pode ver todas as informações da mercadoria registrada.',
     page: '/demo/entradas',
-    targetElement: '[data-tutorial="registrar-entrada-btn"]',
+    targetElement: '[data-tutorial="tabela-entradas"]',
     position: 'top',
-    action: 'click',
-    autoNavigation: false,
-    modalTarget: true
+    action: 'none',
+    autoNavigation: false
   },
   {
     id: 'entradas-tabela',

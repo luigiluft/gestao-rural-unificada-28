@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { 
   Plus, 
   Search, 
@@ -73,25 +73,24 @@ export default function DemoEntradas() {
   const { toast } = useToast()
   const navigate = useNavigate()
   const { isActive, nextStep, currentStepData } = useTutorial()
-  const justSubmittedRef = useRef(false)
+  
   
   useEffect(() => {
     if (!isActive) return;
     const id = currentStepData?.id;
 
-    // Resetar a proteção assim que sair do passo de registro
-    if (id !== 'registrar-entrada' && justSubmittedRef.current) {
-      justSubmittedRef.current = false;
-    }
-    
     // Fechar modal nos passos pós-registro
     if (id === 'entradas-tabela' || id === 'navigate-recebimento') {
       if (isNewEntryOpen) setIsNewEntryOpen(false);
       return;
     }
-    
-    const shouldOpen = id === 'formulario-preenchido-sem-backdrop' || id === 'formulario-preenchido-com-backdrop' || id === 'registrar-entrada';
-    if (shouldOpen && !justSubmittedRef.current) {
+
+    // Abrir modal nos passos de formulário
+    const shouldOpen =
+      id === 'formulario-preenchido-sem-backdrop' ||
+      id === 'formulario-preenchido-com-backdrop';
+
+    if (shouldOpen) {
       if (!isNewEntryOpen) setIsNewEntryOpen(true);
       if (activeTab !== 'manual') setActiveTab('manual');
     }
@@ -120,14 +119,10 @@ export default function DemoEntradas() {
       title: "Entrada registrada",
       description: "A entrada foi registrada com sucesso no sistema de demonstração.",
     })
-    
-    // Evita reabrir o modal no mesmo passo do tutorial
-    justSubmittedRef.current = true
 
     setIsNewEntryOpen(false)
     setActiveTab("upload")
-
-    // Não chamamos nextStep aqui para evitar avançar 2 passos (o clique já avança)
+    // Avanço de passo ocorre pelo listener global no clique do botão
   }
 
   const handleFormCancel = () => {
