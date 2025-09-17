@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { tutorialSteps } from '@/data/tutorialSteps'
+import { tutorialsByPage, getTutorialByPageKey, PageTutorial } from '@/data/tutorialsByPage'
 
 export interface TutorialStep {
   id: string
@@ -24,8 +25,10 @@ interface TutorialContextType {
   currentStep: number
   totalSteps: number
   currentStepData: TutorialStep | null
+  currentTutorial: PageTutorial | null
   progress: number
   startTutorial: () => void
+  startPageTutorial: (tutorialId: string) => void
   nextStep: () => void
   previousStep: () => void
   endTutorial: () => void
@@ -54,6 +57,7 @@ interface TutorialProviderProps {
 export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [currentTutorialId, setCurrentTutorialId] = useState<string | null>(null)
   const [isPaused, setIsPaused] = useState(false)
   const [waitingForElement, setWaitingForElement] = useState(false)
   const waitModalAdvanceRef = useRef<number | null>(null)
@@ -61,10 +65,18 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const navigate = useNavigate()
   const location = useLocation()
 
-
-  const steps = useMemo(() => tutorialSteps.filter(s => s.id !== 'aguardar-modal-entrada'), [])
+  // Get current tutorial and steps
+  const currentTutorial = currentTutorialId ? getTutorialByPageKey(currentTutorialId) : null
+  const steps = useMemo(() => {
+    if (currentTutorial) {
+      return currentTutorial.steps
+    }
+    // Fallback to legacy tutorial for backward compatibility
+    return tutorialSteps.filter(s => s.id !== 'aguardar-modal-entrada')
+  }, [currentTutorial])
+  
   const totalSteps = steps.length
-  const currentStepData = isActive ? steps[currentStep] : null
+  const currentStepData = isActive && steps[currentStep] ? steps[currentStep] : null
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0
 
   // Load tutorial state from localStorage - DISABLED for manual start only
@@ -82,11 +94,15 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   // Save tutorial state to localStorage
   useEffect(() => {
     if (isActive) {
-      localStorage.setItem('tutorial-state', JSON.stringify({ isActive, currentStep }))
+      localStorage.setItem('tutorial-state', JSON.stringify({ 
+        isActive, 
+        currentStep, 
+        currentTutorialId 
+      }))
     } else {
       localStorage.removeItem('tutorial-state')
     }
-  }, [isActive, currentStep])
+  }, [isActive, currentStep, currentTutorialId])
 
   // Auto-navigate when step changes
   // Navigation based on current step with demo route handling
@@ -152,6 +168,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const endTutorial = () => {
     setIsActive(false)
     setCurrentStep(0)
+    setCurrentTutorialId(null)
     setIsPaused(false)
     localStorage.removeItem('tutorial-state')
   }
@@ -416,10 +433,42 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   }, [isActive, currentStepData])
 
   const startTutorial = () => {
+    // Start legacy full tutorial (backward compatibility)
     setIsActive(true)
     setCurrentStep(0)
+    setCurrentTutorialId(null)
     setIsPaused(false)
     navigate('/')
+  }
+
+  const startPageTutorial = (tutorialId: string) => {
+    const tutorial = getTutorialByPageKey(tutorialId)
+    if (!tutorial) {
+      console.error(`Tutorial not found: ${tutorialId}`)
+      return
+    }
+
+    setIsActive(true)
+    setCurrentStep(0)
+    setCurrentTutorialId(tutorialId)
+    setIsPaused(false)
+    
+    // Navigate to the first step's page if it exists
+    if (tutorial.steps.length > 0 && tutorial.steps[0].page) {
+      let targetPage = tutorial.steps[0].page
+      
+      // Convert to demo route if needed
+      const demoRoutes = {
+        '/dashboard': '/demo/dashboard',
+        '/entradas': '/demo/entradas',
+        '/recebimento': '/demo/recebimento',
+        '/estoque': '/demo/estoque',
+        '/saidas': '/demo/saidas'
+      }
+      
+      targetPage = demoRoutes[targetPage as keyof typeof demoRoutes] || targetPage
+      navigate(targetPage)
+    }
   }
 
   // Advance step automatically after NF upload is simulated via tutorial event
@@ -454,8 +503,10 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       currentStep,
       totalSteps,
       currentStepData,
+      currentTutorial,
       progress,
       startTutorial,
+      startPageTutorial,
       nextStep,
       previousStep,
       endTutorial,
