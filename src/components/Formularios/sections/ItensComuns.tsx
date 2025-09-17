@@ -1,0 +1,291 @@
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Plus, Trash2 } from "lucide-react"
+import { ItemGenerico, FormularioTipo } from "../types/formulario.types"
+
+interface ItensComunsProps {
+  tipo: FormularioTipo
+  itens: ItemGenerico[]
+  novoItem: ItemGenerico
+  onNovoItemChange: (campo: keyof ItemGenerico, valor: any) => void
+  onAdicionarItem: () => void
+  onRemoverItem: (index: number) => void
+  calcularValorTotal: () => number
+  // Props específicas por tipo
+  estoque?: any[]
+  produtosFallback?: any[]
+  estoqueFEFO?: any[]
+  isTutorialActive?: boolean
+}
+
+export function ItensComunsSection({ 
+  tipo, 
+  itens, 
+  novoItem, 
+  onNovoItemChange, 
+  onAdicionarItem, 
+  onRemoverItem, 
+  calcularValorTotal,
+  estoque = [],
+  produtosFallback = [],
+  estoqueFEFO = [],
+  isTutorialActive 
+}: ItensComunsProps) {
+
+  // Processar produtos disponíveis baseado no tipo
+  const produtosDisponiveis = (() => {
+    if (tipo === 'saida') {
+      // Para saída, usar estoque
+      if (estoque && estoque.length > 0) {
+        const agrupados = estoque.reduce((acc, item) => {
+          const produtoId = item.produto_id
+          const produtoNome = item.produtos?.nome || `Produto ${item.id}`
+          
+          if (!acc[produtoId]) {
+            acc[produtoId] = {
+              id: produtoId,
+              nome: produtoNome,
+              unidade_medida: item.produtos?.unidade_medida || '',
+              quantidade_total: 0,
+              itens: []
+            }
+          }
+          
+          acc[produtoId].quantidade_total += item.quantidade_atual || 0
+          acc[produtoId].itens.push(item)
+          
+          return acc
+        }, {} as Record<string, any>)
+        return Object.values(agrupados)
+      }
+      
+      // Fallback para produtos sem estoque
+      return produtosFallback.map(produto => ({
+        id: produto.id,
+        nome: produto.nome,
+        unidade_medida: produto.unidade_medida || 'UN'
+      }))
+    } else {
+      // Para entrada, usar produtos fallback ou permitir entrada manual
+      return produtosFallback
+    }
+  })()
+
+  const handleProdutoChange = (valor: string) => {
+    if (tipo === 'saida') {
+      const produto = produtosDisponiveis.find(p => p.id === valor)
+      if (produto) {
+        onNovoItemChange('produto_id', valor)
+        onNovoItemChange('produtoNome', produto.nome)
+        onNovoItemChange('unidade', produto.unidade_medida)
+        // Limpar lote para forçar seleção manual
+        onNovoItemChange('lote', '')
+        onNovoItemChange('lote_id', '')
+      }
+    } else {
+      onNovoItemChange('produto', valor)
+    }
+  }
+
+  const handleLoteChange = (loteId: string) => {
+    if (tipo === 'saida') {
+      const loteItem = estoqueFEFO?.find(lote => lote.id === loteId)
+      if (loteItem) {
+        onNovoItemChange('lote', loteItem.lote || "")
+        onNovoItemChange('lote_id', loteId)
+      }
+    } else {
+      onNovoItemChange('lote', loteId)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          Itens da {tipo === 'entrada' ? 'Entrada' : 'Saída'}
+          {isTutorialActive && tipo === 'entrada' && (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              Produtos de Exemplo
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Adicionar Novo Item */}
+        <div className="border rounded-lg p-4 bg-muted/30">
+          <div className="grid grid-cols-7 gap-3 mb-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Produto</Label>
+              {tipo === 'saida' ? (
+                <Select 
+                  value={novoItem.produto_id || ''} 
+                  onValueChange={handleProdutoChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {produtosDisponiveis.map((produto) => (
+                      <SelectItem key={produto.id} value={produto.id}>
+                        {produto.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  placeholder="Nome do produto"
+                  value={novoItem.produto}
+                  onChange={(e) => onNovoItemChange('produto', e.target.value)}
+                />
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Lote</Label>
+              {tipo === 'saida' && novoItem.produto_id ? (
+                <Select 
+                  value={novoItem.lote_id || ''} 
+                  onValueChange={handleLoteChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione lote" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estoqueFEFO?.map((lote) => (
+                      <SelectItem key={lote.id} value={lote.id}>
+                        {lote.lote || 'Sem lote'} (Disp: {lote.quantidade_atual})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  placeholder="Lote"
+                  value={novoItem.lote}
+                  onChange={(e) => handleLoteChange(e.target.value)}
+                />
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Qtd</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={novoItem.quantidade || ''}
+                onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Unidade</Label>
+              <Select value={novoItem.unidade} onValueChange={(value) => onNovoItemChange('unidade', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Un" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sacas">Sacas</SelectItem>
+                  <SelectItem value="kg">Kg</SelectItem>
+                  <SelectItem value="litros">Litros</SelectItem>
+                  <SelectItem value="unidades">Unidades</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {tipo === 'entrada' && (
+              <div className="space-y-1">
+                <Label className="text-xs">Depósito</Label>
+                <Select value={novoItem.deposito || ''} onValueChange={(value) => onNovoItemChange('deposito', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Depósito" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Armazém A">Armazém A</SelectItem>
+                    <SelectItem value="Armazém B">Armazém B</SelectItem>
+                    <SelectItem value="Depósito Campo">Depósito Campo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <Label className="text-xs">Valor Unit.</Label>
+              <Input
+                type="number"
+                placeholder="0,00"
+                step="0.01"
+                value={novoItem.valorUnitario || ''}
+                onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Ação</Label>
+              <Button 
+                onClick={onAdicionarItem} 
+                size="sm" 
+                className="w-full"
+                data-tutorial="adicionar-item-btn"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Lista de Itens */}
+        {itens.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Produto</TableHead>
+                <TableHead>Lote</TableHead>
+                <TableHead>Quantidade</TableHead>
+                {tipo === 'entrada' && <TableHead>Depósito</TableHead>}
+                <TableHead>Valor Unit.</TableHead>
+                <TableHead>Valor Total</TableHead>
+                <TableHead className="w-[50px]">Ação</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {itens.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>{item.produto || item.produtoNome}</TableCell>
+                  <TableCell>{item.lote}</TableCell>
+                  <TableCell>{item.quantidade} {item.unidade}</TableCell>
+                  {tipo === 'entrada' && <TableCell>{item.deposito}</TableCell>}
+                  <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>
+                  <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onRemoverItem(index)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        {itens.length > 0 && (
+          <div className="flex justify-end">
+            <div className="text-lg font-semibold">
+              Total: R$ {calcularValorTotal().toFixed(2)}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
