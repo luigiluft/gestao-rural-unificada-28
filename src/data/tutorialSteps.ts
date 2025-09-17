@@ -200,8 +200,9 @@ export const tutorialSteps: TutorialStep[] = [
     page: '/demo/recebimento',
     targetElement: '[data-tutorial="planejar-pallets-btn"]',
     position: 'left',
-    action: 'none',
-    autoNavigation: false
+    action: 'click',
+    autoNavigation: false,
+    showNextButton: false
   },
   {
     id: 'modal-planejamento',

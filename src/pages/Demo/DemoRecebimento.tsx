@@ -202,6 +202,13 @@ export default function DemoRecebimento() {
     setObservacoes('')
     setDivergencias([])
     setDialogOpen(true)
+    
+    // Auto advance tutorial when opening planejar pallets modal
+    if (type === 'planejar_pallets' && nextStep) {
+      setTimeout(() => {
+        nextStep()
+      }, 300)
+    }
   }
 
   const handleConfirm = () => {

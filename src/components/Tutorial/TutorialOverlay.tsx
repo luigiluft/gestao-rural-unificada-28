@@ -620,6 +620,7 @@ export const TutorialOverlay = () => {
               
               
               {currentStepData.action !== 'click' && 
+               currentStepData.showNextButton !== false &&
                !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entrada-aguardando-transporte', 'confirmar-em-transferencia', 'entrada-em-transferencia', 'confirmar-aguardando-conferencia', 'conferencia-opcoes', 'finalizar-conferencia'].includes(currentStepData.id) &&
                <Button size="sm" onClick={handleNextClick} className="gap-1 cursor-pointer pointer-events-auto">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
