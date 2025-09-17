@@ -100,10 +100,13 @@ export default function DemoEntradas() {
 
   const handleNFDataParsed = (data: any) => {
     setActiveTab("manual")
-    toast({
-      title: "NFe processada com sucesso",
-      description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens?.length || 0} itens.`,
-    })
+    // Não mostrar toast durante o tutorial
+    if (!isActive) {
+      toast({
+        title: "NFe processada com sucesso",
+        description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens?.length || 0} itens.`,
+      })
+    }
   }
 
   const handleUploadError = (message: string) => {
