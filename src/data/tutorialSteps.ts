@@ -82,16 +82,6 @@ export const tutorialSteps: TutorialStep[] = [
     autoNavigation: false
   },
   {
-    id: 'entradas-tabela',
-    title: 'Entrada Registrada com Sucesso',
-    description: 'Perfeito! A entrada foi registrada e agora aparece na tabela abaixo. Você pode ver todas as informações da mercadoria registrada.',
-    page: '/demo/entradas',
-    targetElement: '[data-tutorial="tabela-entradas"]',
-    position: 'top',
-    action: 'none',
-    autoNavigation: false
-  },
-  {
     id: 'navigate-recebimento',
     title: 'Ir para Recebimento',
     description: 'Agora clique em "Recebimento" no menu lateral para acompanhar o processo de chegada da mercadoria.',
