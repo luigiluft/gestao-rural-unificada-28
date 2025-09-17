@@ -1,228 +1,576 @@
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Truck, Package, CheckCircle, Clock, MapPin } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { EmptyState } from "@/components/ui/empty-state"
+import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Package } from "lucide-react"
+import { format } from "date-fns"
 import { useTutorial } from "@/contexts/TutorialContext"
 
 const StatusBadge = ({ status }: { status: string }) => {
   const getVariant = (status: string) => {
-    switch (status) {
-      case 'em_transito':
-        return 'secondary'
-      case 'chegou_deposito':
-        return 'outline'
-      case 'em_descarga':
-        return 'default'
-      case 'conferencia':
-        return 'secondary'
-      case 'armazenado':
-        return 'default'
-      default:
-        return 'outline'
+    const statusConfig = {
+      'aguardando_transporte': 'secondary' as const,
+      'em_transferencia': 'default' as const,
+      'aguardando_conferencia': 'outline' as const,
+      'planejamento': 'default' as const,
     }
+    return statusConfig[status as keyof typeof statusConfig] || 'outline'
   }
 
   const getLabel = (status: string) => {
-    switch (status) {
-      case 'em_transito':
-        return 'Em Trânsito'
-      case 'chegou_deposito':
-        return 'Chegou ao Depósito'
-      case 'em_descarga':
-        return 'Em Descarga'
-      case 'conferencia':
-        return 'Em Conferência'
-      case 'armazenado':
-        return 'Armazenado'
-      default:
-        return status
+    const statusLabels = {
+      'aguardando_transporte': 'Aguardando Transporte',
+      'em_transferencia': 'Em Transferência',
+      'aguardando_conferencia': 'Aguardando Conferência',
+      'planejamento': 'Planejamento',
     }
+    return statusLabels[status as keyof typeof statusLabels] || status
   }
 
   return <Badge variant={getVariant(status)}>{getLabel(status)}</Badge>
 }
 
-export default function DemoRecebimento() {
-  const { handleTargetClick } = useTutorial()
-  const [currentStatus, setCurrentStatus] = useState('em_transito')
+interface Divergencia {
+  produto: string
+  quantidade_esperada: number
+  quantidade_recebida: number
+  motivo: string
+  acao_tomada: string
+}
 
-  const statusFlow = [
-    { id: 'em_transito', label: 'Em Trânsito', icon: Truck, description: 'Mercadoria saiu do fornecedor' },
-    { id: 'chegou_deposito', label: 'Chegou ao Depósito', icon: MapPin, description: 'Caminhão chegou ao depósito' },
-    { id: 'em_descarga', label: 'Em Descarga', icon: Package, description: 'Mercadoria sendo descarregada' },
-    { id: 'conferencia', label: 'Em Conferência', icon: Clock, description: 'Conferindo itens recebidos' },
-    { id: 'armazenado', label: 'Armazenado', icon: CheckCircle, description: 'Mercadoria armazenada com sucesso' }
+export default function DemoRecebimento() {
+  const { handleTargetClick, nextStep } = useTutorial()
+  const [activeTab, setActiveTab] = useState('aguardando_transporte')
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [actionType, setActionType] = useState<'status' | 'conferencia' | 'conferencia_barras' | 'planejamento'>('status')
+  const [observacoes, setObservacoes] = useState('')
+  const [divergencias, setDivergencias] = useState<Divergencia[]>([])
+  const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
+
+  useEffect(() => {
+    document.title = "Recebimento - AgroHub"
+    const metaDescription = document.querySelector('meta[name="description"]')
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 'Gerencie o recebimento de produtos no AgroHub - Demo')
+    }
+  }, [])
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      'aguardando_transporte': { label: 'Aguardando Transporte', variant: 'secondary' as const, icon: Clock },
+      'em_transferencia': { label: 'Em Transferência', variant: 'default' as const, icon: Truck },
+      'aguardando_conferencia': { label: 'Aguardando Conferência', variant: 'outline' as const, icon: Eye },
+      'planejamento': { label: 'Planejamento', variant: 'default' as const, icon: Package },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig]
+    if (!config) return null
+
+    const Icon = config.icon
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const getNextStatus = (currentStatus: string) => {
+    const statusFlow = {
+      'aguardando_transporte': 'em_transferencia',
+      'em_transferencia': 'aguardando_conferencia',
+      'aguardando_conferencia': 'planejamento',
+      'planejamento': 'confirmado'
+    }
+    return statusFlow[currentStatus as keyof typeof statusFlow]
+  }
+
+  const getNextStatusLabel = (currentStatus: string) => {
+    const statusLabels = {
+      'aguardando_transporte': 'Marcar como Em Transferência',
+      'em_transferencia': 'Marcar como Aguardando Conferência',
+      'aguardando_conferencia': 'Realizar Conferência',
+      'planejamento': 'Finalizar Planejamento e Enviar para Alocação'
+    }
+    return statusLabels[currentStatus as keyof typeof statusLabels] || null
+  }
+
+  // Mock data with entries in different statuses
+  const mockEntradas = [
+    {
+      id: 'entrada-demo-1',
+      numero_nfe: '000123456',
+      status_aprovacao: 'aguardando_transporte',
+      data_entrada: '2024-09-17',
+      valor_total: 15250.00,
+      profiles: { nome: 'Produtor Demo' },
+      fornecedores: { nome: 'Fornecedor ABC Ltda' },
+      entrada_itens: [
+        { 
+          id: 'item-1',
+          nome_produto: 'Soja em Grãos Premium', 
+          quantidade: 500, 
+          unidade_comercial: 'SC',
+          valor_unitario: 25.50,
+          valor_total: 12750.00,
+          produtos: { nome: 'Soja em Grãos Premium', codigo: 'SOJ001' }
+        },
+        { 
+          id: 'item-2',
+          nome_produto: 'Fertilizante NPK', 
+          quantidade: 100, 
+          unidade_comercial: 'KG',
+          valor_unitario: 25.00,
+          valor_total: 2500.00,
+          produtos: { nome: 'Fertilizante NPK', codigo: 'FERT001' }
+        }
+      ]
+    },
+    {
+      id: 'entrada-demo-2',
+      numero_nfe: '000123457',
+      status_aprovacao: 'em_transferencia',
+      data_entrada: '2024-09-16',
+      valor_total: 8500.00,
+      profiles: { nome: 'Produtor Demo 2' },
+      fornecedores: { nome: 'Fornecedor XYZ Ltda' },
+      entrada_itens: [
+        { 
+          id: 'item-3',
+          nome_produto: 'Milho Amarelo', 
+          quantidade: 800, 
+          unidade_comercial: 'SC',
+          valor_unitario: 10.50,
+          valor_total: 8400.00,
+          produtos: { nome: 'Milho Amarelo', codigo: 'MIL001' }
+        }
+      ]
+    },
+    {
+      id: 'entrada-demo-3',
+      numero_nfe: '000123458',
+      status_aprovacao: 'aguardando_conferencia',
+      data_entrada: '2024-09-15',
+      valor_total: 3750.00,
+      profiles: { nome: 'Produtor Demo 3' },
+      fornecedores: { nome: 'Fornecedor 123 Ltda' },
+      entrada_itens: [
+        { 
+          id: 'item-4',
+          nome_produto: 'Feijão Carioca', 
+          quantidade: 250, 
+          unidade_comercial: 'SC',
+          valor_unitario: 15.00,
+          valor_total: 3750.00,
+          produtos: { nome: 'Feijão Carioca', codigo: 'FEI001' }
+        }
+      ]
+    }
   ]
 
-  const currentIndex = statusFlow.findIndex(s => s.id === currentStatus)
+  const handleAction = (entrada: any, type: 'status' | 'conferencia' | 'conferencia_barras' | 'planejamento') => {
+    setSelectedEntrada(entrada)
+    setActionType(type)
+    setObservacoes('')
+    setDivergencias([])
+    setDialogOpen(true)
+  }
 
-  const handleNextStatus = () => {
-    if (currentIndex < statusFlow.length - 1) {
-      setCurrentStatus(statusFlow[currentIndex + 1].id)
+  const handleConfirm = () => {
+    if (!selectedEntrada) return
+
+    const nextStatus = getNextStatus(selectedEntrada.status_aprovacao)
+    if (!nextStatus) return
+
+    // Update the entrada status
+    const updatedEntradas = mockEntradas.map(entrada => 
+      entrada.id === selectedEntrada.id 
+        ? { ...entrada, status_aprovacao: nextStatus }
+        : entrada
+    )
+
+    // Move to appropriate tab
+    setActiveTab(nextStatus)
+    setDialogOpen(false)
+    
+    // Trigger tutorial step advancement
+    setTimeout(() => {
+      if (nextStep) nextStep()
+    }, 500)
+  }
+
+  const addDivergencia = (item?: any) => {
+    const novaDivergencia = {
+      produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
+      quantidade_esperada: item ? item.quantidade || 0 : 0,
+      quantidade_recebida: item ? item.quantidade || 0 : 0,
+      motivo: '',
+      acao_tomada: ''
     }
+    setDivergencias([...divergencias, novaDivergencia])
   }
 
-  const mockRecebimento = {
-    id: 'REC001',
-    nfe: '12345',
-    fornecedor: 'Fornecedor ABC Ltda',
-    data_prevista: '2024-09-16',
-    data_chegada: '2024-09-16 14:30',
-    motorista: 'João Silva',
-    placa: 'ABC-1234',
-    valor_total: 'R$ 15.250,00',
-    produtos: [
-      { nome: 'Soja em Grãos Premium', quantidade: 500, unidade: 'SC' },
-      { nome: 'Milho Amarelo', quantidade: 800, unidade: 'SC' },
-      { nome: 'Feijão Carioca', quantidade: 250, unidade: 'SC' },
-      { nome: 'Fertilizante NPK', quantidade: 100, unidade: 'KG' },
-      { nome: 'Defensivo Herbicida', quantidade: 20, unidade: 'L' }
-    ]
+  const removeDivergencia = (index: number) => {
+    setDivergencias(divergencias.filter((_, i) => i !== index))
   }
+
+  const updateDivergencia = (index: number, field: keyof Divergencia, value: any) => {
+    const updated = [...divergencias]
+    updated[index] = { ...updated[index], [field]: value }
+    setDivergencias(updated)
+  }
+
+  // Helper functions for empty states
+  const getEmptyStateDescription = (status: string) => {
+    const descriptions = {
+      'aguardando_transporte': 'Não há produtos aguardando transporte no momento. Novos pedidos aparecerão aqui quando criados.',
+      'em_transferencia': 'Nenhum produto está em transferência. Os pedidos aparecerão aqui quando estiverem a caminho do depósito.',
+      'aguardando_conferencia': 'Não há produtos aguardando conferência. Produtos em transferência aparecerão aqui quando chegarem.',
+      'planejamento': 'Não há produtos em planejamento. Produtos conferidos aparecerão aqui para planejamento de pallets.'
+    }
+    return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
+  }
+
+  // Group entries by status
+  const entradasPorStatus = mockEntradas.reduce((acc, entrada) => {
+    const status = entrada.status_aprovacao
+    if (!acc[status]) acc[status] = []
+    acc[status].push(entrada)
+    return acc
+  }, {} as Record<string, any[]>)
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Recebimento - {mockRecebimento.id}</h1>
-        <StatusBadge status={currentStatus} />
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Recebimento</h1>
+        <p className="text-muted-foreground">
+          Gerencie o recebimento de produtos dos produtores - Demo Tutorial
+        </p>
       </div>
 
-      {/* Informações do Recebimento */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações da Entrega</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <span className="text-sm text-muted-foreground">NFe</span>
-            <p className="font-medium">{mockRecebimento.nfe}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Fornecedor</span>
-            <p className="font-medium">{mockRecebimento.fornecedor}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Motorista</span>
-            <p className="font-medium">{mockRecebimento.motorista}</p>
-          </div>
-          <div>
-            <span className="text-sm text-muted-foreground">Placa</span>
-            <p className="font-medium">{mockRecebimento.placa}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="aguardando_transporte" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Aguardando Transporte ({entradasPorStatus.aguardando_transporte?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="em_transferencia" className="flex items-center gap-2">
+            <Truck className="h-4 w-4" />
+            Em Transferência ({entradasPorStatus.em_transferencia?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="aguardando_conferencia" className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Aguardando Conferência ({entradasPorStatus.aguardando_conferencia?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="planejamento" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Planejamento ({entradasPorStatus.planejamento?.length || 0})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Fluxo de Status */}
-      <Card data-tutorial="fluxo-status">
-        <CardHeader>
-          <CardTitle>Fluxo de Recebimento</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'planejamento'].map((status) => {
+          const statusEntradas = entradasPorStatus[status] || []
+          return (
+            <TabsContent key={status} value={status} className="space-y-4">
+              {statusEntradas.length === 0 ? (
+                <EmptyState 
+                  title="Nenhum pedido de recebimento"
+                  description={getEmptyStateDescription(status)}
+                />
+              ) : (
+                <div className="grid gap-4">
+                  {statusEntradas.map((entrada) => (
+                    <Card key={entrada.id} data-tutorial={status === activeTab ? "entrada-card" : undefined}>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1">
+                            <CardTitle className="flex items-center gap-2">
+                              NFe {entrada.numero_nfe || 'S/N'}
+                              {getStatusBadge(entrada.status_aprovacao)}
+                            </CardTitle>
+                            <CardDescription>
+                              Produtor: {entrada.profiles?.nome} • Fornecedor: {entrada.fornecedores?.nome}
+                            </CardDescription>
+                          </div>
+                          <div className="flex gap-2">
+                            {entrada.status_aprovacao === 'aguardando_conferencia' && (
+                              <>
+                                <Button
+                                  onClick={() => handleAction(entrada, 'conferencia_barras')}
+                                  size="sm"
+                                  variant="outline"
+                                  data-tutorial="conferencia-barras-btn"
+                                >
+                                  <Scan className="h-4 w-4 mr-2" />
+                                  Conferência por Código de Barras
+                                </Button>
+                                <Button
+                                  onClick={() => handleAction(entrada, 'conferencia')}
+                                  size="sm"
+                                  data-tutorial="conferencia-manual-btn"
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Conferência Manual
+                                </Button>
+                              </>
+                            )}
+                            {entrada.status_aprovacao === 'planejamento' && (
+                              <Button
+                                onClick={() => handleAction(entrada, 'planejamento')}
+                                size="sm"
+                                data-tutorial="planejamento-btn"
+                              >
+                                <Package className="h-4 w-4 mr-2" />
+                                Planejar Pallets
+                              </Button>
+                            )}
+                            {['aguardando_transporte', 'em_transferencia'].includes(entrada.status_aprovacao) && (
+                              <Button
+                                onClick={() => handleAction(entrada, 'status')}
+                                size="sm"
+                                data-tutorial={`avancar-status-${entrada.status_aprovacao}`}
+                              >
+                                {getNextStatusLabel(entrada.status_aprovacao)}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Data de Entrada:</span>
+                              <p className="font-medium">{format(new Date(entrada.data_entrada), "dd/MM/yyyy")}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Valor Total:</span>
+                              <p className="font-medium">R$ {entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Itens:</span>
+                              <p className="font-medium">{entrada.entrada_itens?.length || 0} produto(s)</p>
+                            </div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div>
+                            <h4 className="font-medium mb-2">Produtos:</h4>
+                            <div className="space-y-2">
+                              {entrada.entrada_itens?.map((item: any) => (
+                                <div key={item.id} className="flex justify-between items-center text-sm bg-muted/50 p-2 rounded">
+                                  <span>{item.nome_produto} - {item.quantidade} {item.unidade_comercial}</span>
+                                  <span className="text-muted-foreground">
+                                    R$ {item.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          )
+        })}
+      </Tabs>
+
+      {/* Dialog for Actions */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'conferencia' && 'Conferência Manual'}
+              {actionType === 'conferencia_barras' && 'Conferência por Código de Barras'}
+              {actionType === 'planejamento' && 'Planejamento de Pallets'}
+              {actionType === 'status' && `Atualizar Status - ${getNextStatusLabel(selectedEntrada?.status_aprovacao || '')}`}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'conferencia' && 'Confira manualmente os produtos recebidos e registre divergências se necessário.'}
+              {actionType === 'conferencia_barras' && 'Use o leitor de código de barras para conferir os produtos.'}
+              {actionType === 'planejamento' && 'Organize os produtos em pallets para armazenamento.'}
+              {actionType === 'status' && 'Confirme a mudança de status da entrada.'}
+            </DialogDescription>
+          </DialogHeader>
+
           <div className="space-y-4">
-            {statusFlow.map((status, index) => {
-              const Icon = status.icon
-              const isActive = index === currentIndex
-              const isCompleted = index < currentIndex
-              const isNext = index === currentIndex + 1
-
-              return (
-                <div 
-                  key={status.id}
-                  className={`flex items-center space-x-4 p-4 rounded-lg border transition-all ${
-                    isActive 
-                      ? 'border-primary bg-primary/5 shadow-sm' 
-                      : isCompleted 
-                      ? 'border-green-300 bg-green-50' 
-                      : 'border-muted bg-muted/20'
-                  }`}
-                >
-                  <Icon 
-                    className={`h-6 w-6 ${
-                      isActive 
-                        ? 'text-primary' 
-                        : isCompleted 
-                        ? 'text-green-600' 
-                        : 'text-muted-foreground'
-                    }`} 
-                  />
-                  <div className="flex-1">
-                    <h3 className={`font-medium ${
-                      isActive ? 'text-primary' : isCompleted ? 'text-green-700' : 'text-foreground'
-                    }`}>
-                      {status.label}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{status.description}</p>
-                  </div>
-                  {isNext && (
-                    <Button 
-                      onClick={handleNextStatus}
-                      data-tutorial="proximo-status-btn"
-                      size="sm"
-                      className="ml-auto"
-                    >
-                      Avançar Status
-                    </Button>
-                  )}
-                  {isActive && index === currentIndex && index > 0 && (
-                    <Badge variant="outline" className="ml-auto">Em Andamento</Badge>
-                  )}
-                  {isCompleted && (
-                    <CheckCircle className="h-5 w-5 text-green-600 ml-auto" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de Produtos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Produtos da Entrada</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {mockRecebimento.produtos.map((produto, index) => (
-              <div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+            {/* Manual Conference */}
+            {actionType === 'conferencia' && (
+              <div className="space-y-4">
                 <div>
-                  <span className="font-medium">{produto.nome}</span>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    {produto.quantidade} {produto.unidade}
-                  </span>
+                  <h4 className="font-medium mb-2">Produtos Esperados:</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Quantidade</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedEntrada?.entrada_itens?.map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.nome_produto}</TableCell>
+                          <TableCell>{item.quantidade} {item.unidade_comercial}</TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => addDivergencia(item)}
+                            >
+                              <AlertTriangle className="h-4 w-4 mr-1" />
+                              Registrar Divergência
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
-                <Badge variant="outline">A conferir</Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Botão de conclusão do tutorial */}
-      {currentStatus === 'armazenado' && (
-        <Card className="border-green-300 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <CheckCircle className="h-12 w-12 text-green-600 mx-auto" />
-              <h3 className="text-lg font-medium text-green-800">Recebimento Concluído!</h3>
-              <p className="text-green-700">
-                A mercadoria foi recebida e armazenada com sucesso. Agora você pode prosseguir para a próxima etapa do tutorial.
-              </p>
-              <Button 
-                onClick={() => {
-                  const btn = document.querySelector('[data-tutorial="continuar-tutorial-btn"]')
-                  if (btn) handleTargetClick(btn as Element)
-                }}
-                data-tutorial="continuar-tutorial-btn"
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Continuar Tutorial
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                {divergencias.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Divergências:</h4>
+                    <div className="space-y-2">
+                      {divergencias.map((div, index) => (
+                        <div key={index} className="border rounded p-3 space-y-2">
+                          <div className="flex justify-between items-start">
+                            <span className="font-medium">{div.produto}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeDivergencia(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label htmlFor={`esperada-${index}`}>Quantidade Esperada</Label>
+                              <Input
+                                id={`esperada-${index}`}
+                                type="number"
+                                value={div.quantidade_esperada}
+                                onChange={(e) => updateDivergencia(index, 'quantidade_esperada', Number(e.target.value))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`recebida-${index}`}>Quantidade Recebida</Label>
+                              <Input
+                                id={`recebida-${index}`}
+                                type="number"
+                                value={div.quantidade_recebida}
+                                onChange={(e) => updateDivergencia(index, 'quantidade_recebida', Number(e.target.value))}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor={`motivo-${index}`}>Motivo</Label>
+                            <Textarea
+                              id={`motivo-${index}`}
+                              value={div.motivo}
+                              onChange={(e) => updateDivergencia(index, 'motivo', e.target.value)}
+                              placeholder="Descreva o motivo da divergência"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`acao-${index}`}>Ação Tomada</Label>
+                            <Textarea
+                              id={`acao-${index}`}
+                              value={div.acao_tomada}
+                              onChange={(e) => updateDivergencia(index, 'acao_tomada', e.target.value)}
+                              placeholder="Descreva a ação tomada"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Barcode Conference - Simplified for demo */}
+            {actionType === 'conferencia_barras' && (
+              <div className="space-y-4">
+                <div className="text-center p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                  <Scan className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">Escaneando Produtos...</h3>
+                  <p className="text-muted-foreground">Esta é uma simulação da conferência por código de barras</p>
+                  <Button className="mt-4" onClick={() => {
+                    // Simulate barcode scanning completion
+                    setTimeout(() => {
+                      setDialogOpen(false)
+                      nextStep && nextStep()
+                    }, 1000)
+                  }}>
+                    Simular Conferência Completa
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Pallet Planning - Simplified for demo */}
+            {actionType === 'planejamento' && (
+              <div className="space-y-4">
+                <div className="text-center p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">Planejando Pallets...</h3>
+                  <p className="text-muted-foreground">Esta é uma simulação do planejamento de pallets</p>
+                  <Button className="mt-4" onClick={() => {
+                    // Simulate pallet planning completion
+                    setTimeout(() => {
+                      setDialogOpen(false)
+                      nextStep && nextStep()
+                    }, 1000)
+                  }}>
+                    Simular Planejamento Completo
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Status Update */}
+            {actionType === 'status' && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="observacoes">Observações (opcional)</Label>
+                  <Textarea
+                    id="observacoes"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Adicione observações sobre esta atualização..."
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirm} data-tutorial="confirmar-acao">
+              {actionType === 'status' && 'Confirmar'}
+              {actionType === 'conferencia' && 'Finalizar Conferência'}
+              {actionType === 'conferencia_barras' && 'Finalizar Conferência'}
+              {actionType === 'planejamento' && 'Finalizar Planejamento'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

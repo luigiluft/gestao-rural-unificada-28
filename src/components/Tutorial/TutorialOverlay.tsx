@@ -552,8 +552,7 @@ export const TutorialOverlay = () => {
               
               
               {currentStepData.action !== 'click' && 
-               currentStepData.id !== 'selecionar-arquivo-nf' &&
-               currentStepData.id !== 'formulario-preenchido-com-backdrop' &&
+               !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entrada-aguardando-transporte', 'confirmar-em-transferencia', 'entrada-em-transferencia', 'confirmar-aguardando-conferencia', 'conferencia-opcoes', 'finalizar-conferencia'].includes(currentStepData.id) &&
                <Button size="sm" onClick={handleNextClick} className="gap-1 cursor-pointer pointer-events-auto">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />

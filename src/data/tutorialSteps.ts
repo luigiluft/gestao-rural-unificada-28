@@ -93,62 +93,74 @@ export const tutorialSteps: TutorialStep[] = [
   },
   {
     id: 'recebimento-overview',
-    title: 'Acompanhar Recebimento',
-    description: 'Esta é a página de recebimento onde você acompanha o status da mercadoria desde o transporte até o armazenamento.',
+    title: 'Página de Recebimento',
+    description: 'Esta é a página de recebimento onde você gerencia as entradas por status: desde aguardando transporte até o planejamento de pallets.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="fluxo-status"]',
     position: 'top',
     autoNavigation: false
   },
   {
-    id: 'status-em-transito',
-    title: 'Status: Em Trânsito',
-    description: 'A mercadoria está em trânsito. Clique em "Avançar Status" para simular a chegada ao depósito.',
+    id: 'entrada-aguardando-transporte',
+    title: 'Entrada Aguardando Transporte',
+    description: 'Aqui você vê as entradas que estão aguardando transporte. Clique no botão para marcar como "Em Transferência".',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="proximo-status-btn"]',
-    position: 'left',
-    action: 'click',
-    autoNavigation: false
-  },
-  {
-    id: 'status-chegou-deposito',
-    title: 'Chegou ao Depósito',
-    description: 'O caminhão chegou ao depósito. Continue avançando o status para simular o processo de descarga.',
-    page: '/demo/recebimento',
-    targetElement: '[data-tutorial="proximo-status-btn"]',
-    position: 'left',
-    action: 'click',
-    autoNavigation: false
-  },
-  {
-    id: 'status-em-descarga',
-    title: 'Em Descarga',
-    description: 'A mercadoria está sendo descarregada. Avance para a etapa de conferência.',
-    page: '/demo/recebimento',
-    targetElement: '[data-tutorial="proximo-status-btn"]',
-    position: 'left',
-    action: 'click',
-    autoNavigation: false
-  },
-  {
-    id: 'status-conferencia',
-    title: 'Em Conferência',
-    description: 'Os itens estão sendo conferidos. Finalize o processo clicando em "Avançar Status".',
-    page: '/demo/recebimento',
-    targetElement: '[data-tutorial="proximo-status-btn"]',
-    position: 'left',
-    action: 'click',
-    autoNavigation: false
-  },
-  {
-    id: 'recebimento-concluido',
-    title: 'Recebimento Concluído',
-    description: 'Perfeito! A mercadoria foi recebida e está pronta para ser armazenada. Clique em "Continuar Tutorial" para prosseguir.',
-    page: '/demo/recebimento',
-    targetElement: '[data-tutorial="continuar-tutorial-btn"]',
+    targetElement: '[data-tutorial="avancar-status-aguardando_transporte"]',
     position: 'top',
     action: 'click',
     autoNavigation: false
+  },
+  {
+    id: 'confirmar-em-transferencia',
+    title: 'Confirmar Status',
+    description: 'Confirme a mudança de status para "Em Transferência".',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="confirmar-acao"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
+    id: 'entrada-em-transferencia',
+    title: 'Em Transferência',
+    description: 'Agora a entrada está em transferência. Clique para marcar como "Aguardando Conferência".',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="avancar-status-em_transferencia"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'confirmar-aguardando-conferencia',
+    title: 'Confirmar Status',
+    description: 'Confirme a mudança de status para "Aguardando Conferência".',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="confirmar-acao"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false,
+    modalTarget: true
+  },
+  {
+    id: 'conferencia-opcoes',
+    title: 'Opções de Conferência',
+    description: 'Agora você pode fazer a conferência manual ou por código de barras. Vamos fazer a conferência manual.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="conferencia-manual-btn"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false
+  },
+  {
+    id: 'finalizar-conferencia',
+    title: 'Finalizar Conferência',
+    description: 'Clique em "Finalizar Conferência" para completar o processo.',
+    page: '/demo/recebimento',
+    targetElement: '[data-tutorial="confirmar-acao"]',
+    position: 'top',
+    action: 'click',
+    autoNavigation: false,
+    modalTarget: true
   },
   {
     id: 'navigate-alocacao',

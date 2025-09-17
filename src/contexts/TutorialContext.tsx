@@ -104,7 +104,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       // Convert regular routes to demo routes during tutorial
       const demoRoutes = {
         '/dashboard': '/demo/dashboard',
-        '/entradas': '/demo/entradas', 
+        '/entradas': '/demo/entradas',
+        '/recebimento': '/demo/recebimento',
         '/estoque': '/demo/estoque',
         '/saidas': '/demo/saidas'
       }
