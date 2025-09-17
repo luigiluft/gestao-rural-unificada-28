@@ -2185,7 +2185,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      estoque: {
+        Row: {
+          deposito_id: string | null
+          id: string | null
+          lotes: string[] | null
+          produto_id: string | null
+          quantidade_atual: number | null
+          quantidade_disponivel: number | null
+          quantidade_reservada: number | null
+          ultima_movimentacao: string | null
+          user_id: string | null
+          valor_medio: number | null
+          valor_total_estoque: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       allocate_pallet_to_position: {
