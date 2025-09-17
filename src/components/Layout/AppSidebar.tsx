@@ -132,7 +132,8 @@ export function AppSidebar() {
       '/dashboard': '/demo/dashboard',
       '/entradas': '/demo/entradas',
       '/estoque': '/demo/estoque', 
-      '/saidas': '/demo/saidas'
+      '/saidas': '/demo/saidas',
+      '/recebimento': '/demo/recebimento'
     }
     
     return demoRoutes[path as keyof typeof demoRoutes] || path
