@@ -126,7 +126,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   function nextStep() {
     if (advancingRef.current) return
     advancingRef.current = true
-    setTimeout(() => { advancingRef.current = false }, 500)
+    setTimeout(() => { advancingRef.current = false }, 200)
 
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
@@ -307,8 +307,13 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       simulateNFUpload()
     }
 
-    // Add click listener to detect clicks on target elements
+    // Add click listener to detect clicks on target elements - DISABLED for modal steps
     const handleDocumentClick = (event: MouseEvent) => {
+      // Skip global click handling for modal interactions to prevent conflicts
+      if (currentStepData.modalTarget) {
+        return
+      }
+      
       const target = event.target as Element
       handleTargetClick(target)
     }
@@ -337,13 +342,18 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       })
     }
 
-    document.addEventListener('click', handleDocumentClick)
+    // Only add document click listener for non-modal steps
+    if (!currentStepData.modalTarget) {
+      document.addEventListener('click', handleDocumentClick)
+    }
     
     // Add highlight after a brief delay to ensure element exists
     const timer = setTimeout(addHighlight, 100)
     
     return () => {
-      document.removeEventListener('click', handleDocumentClick)
+      if (!currentStepData.modalTarget) {
+        document.removeEventListener('click', handleDocumentClick)
+      }
       document.removeEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
       clearTimeout(timer)
       removeHighlight()

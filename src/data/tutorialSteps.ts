@@ -236,8 +236,9 @@ export const tutorialSteps: TutorialStep[] = [
     targetElement: '[data-tutorial="configuracao-pallets-secao"]',
     position: 'left',
     action: 'none',
-    autoNavigation: true,
-    modalTarget: true
+    autoNavigation: false,
+    modalTarget: true,
+    showNextButton: true
   },
   {
     id: 'pallet-individual',
@@ -259,8 +260,9 @@ export const tutorialSteps: TutorialStep[] = [
     targetElement: '[data-tutorial="resumo-planejamento"]',
     position: 'top',
     action: 'none',
-    autoNavigation: true,
-    modalTarget: true
+    autoNavigation: false,
+    modalTarget: true,
+    showNextButton: true
   },
   {
     id: 'finalizar-planejamento',

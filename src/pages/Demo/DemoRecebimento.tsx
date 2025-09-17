@@ -601,7 +601,8 @@ export default function DemoRecebimento() {
                       <div 
                         className="border rounded-lg p-4 bg-green-50 cursor-pointer hover:bg-green-100 transition-colors" 
                         data-tutorial="pallet-individual"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           // Simulate pallet configuration change only when on the correct tutorial step
                           if (currentStepData?.id !== 'pallet-individual') return;
                           const palletCard = document.querySelector('[data-tutorial="pallet-individual"]');
@@ -688,7 +689,10 @@ export default function DemoRecebimento() {
               Cancelar
             </Button>
             <Button 
-              onClick={handleConfirm} 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConfirm();
+              }} 
               data-tutorial={actionType === 'planejar_pallets' ? 'finalizar-planejamento-btn' : 'confirmar-acao'}
             >
               {actionType === 'status' && 'Confirmar'}
