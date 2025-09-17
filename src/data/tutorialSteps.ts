@@ -96,7 +96,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Página de Recebimento',
     description: 'Esta é a página de recebimento onde você gerencia as entradas por status: desde aguardando transporte até o planejamento de pallets.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    targetElement: '[data-tutorial="entrada-card-000123457"]',
     position: 'top',
     autoNavigation: false
   },
@@ -126,7 +126,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Em Transferência - Card',
     description: 'A entrada foi movida para "Em Transferência". Veja o card e clique em Próximo para continuar.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    targetElement: '[data-tutorial="entrada-card-000123457"]',
     position: 'top',
     action: 'none',
     autoNavigation: false
@@ -157,7 +157,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Aguardando Conferência - Card',
     description: 'A entrada está "Aguardando Conferência". Confira o card e clique em Próximo para ver as opções.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    targetElement: '[data-tutorial="entrada-card-000123457"]',
     position: 'top',
     action: 'none',
     autoNavigation: false
@@ -188,7 +188,7 @@ export const tutorialSteps: TutorialStep[] = [
     title: 'Planejamento - Card',
     description: 'A entrada avançou para "Planejamento". Veja o card e clique em Próximo para alocar os pallets.',
     page: '/demo/recebimento',
-    targetElement: '[data-tutorial="entrada-card-000123456"]',
+    targetElement: '[data-tutorial="entrada-card-000123457"]',
     position: 'top',
     action: 'none',
     autoNavigation: false
