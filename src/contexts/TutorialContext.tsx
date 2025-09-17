@@ -126,7 +126,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   function nextStep() {
     if (advancingRef.current) return
     advancingRef.current = true
-    setTimeout(() => { advancingRef.current = false }, 200)
+    const delay = currentStepData?.modalTarget ? 800 : 200
+    setTimeout(() => { advancingRef.current = false }, delay)
 
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
@@ -420,6 +421,32 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
     setIsPaused(false)
     navigate('/')
   }
+
+  // Advance step automatically after NF upload is simulated via tutorial event
+  // This ensures step 5 (selecionar-arquivo-nf) progresses even when inside a modal
+  useEffect(() => {
+    if (!isActive || currentStepData?.id !== 'selecionar-arquivo-nf') return
+
+    const advanceOnUpload = () => {
+      if (waitModalAdvanceRef.current) {
+        clearTimeout(waitModalAdvanceRef.current)
+        waitModalAdvanceRef.current = null
+      }
+      waitModalAdvanceRef.current = window.setTimeout(() => {
+        nextStep()
+        waitModalAdvanceRef.current = null
+      }, 800)
+    }
+
+    document.addEventListener('tutorial-trigger-nf-upload', advanceOnUpload)
+    return () => {
+      document.removeEventListener('tutorial-trigger-nf-upload', advanceOnUpload)
+      if (waitModalAdvanceRef.current) {
+        clearTimeout(waitModalAdvanceRef.current)
+        waitModalAdvanceRef.current = null
+      }
+    }
+  }, [isActive, currentStepData])
 
   return (
     <TutorialContext.Provider value={{
