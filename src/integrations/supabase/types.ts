@@ -2337,6 +2337,10 @@ export type Database = {
           valor_total_estoque: number
         }[]
       }
+      get_invite_email: {
+        Args: { _invite_token: string }
+        Returns: string
+      }
       get_producer_available_deposits: {
         Args: { _producer_id: string }
         Returns: {

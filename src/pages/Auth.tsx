@@ -50,19 +50,16 @@ export default function AuthPage() {
       setIsInviteFlow(true);
       setActiveTab("signup"); // Open signup tab for invited users
       
-      // Get email from pending_invites using the token
+      // Get email from pending_invites using the token (with expiration check)
       const getEmailFromInviteToken = async () => {
         try {
-          const { data, error } = await supabase
-            .from('pending_invites')
-            .select('email')
-            .eq('invite_token', inviteToken)
-            .is('used_at', null)
-            .single();
+          const { data: email, error } = await supabase.rpc('get_invite_email', {
+            _invite_token: inviteToken
+          });
           
-          if (data && !error) {
-            setInviteEmail(data.email);
-            setEmail(data.email);
+          if (email && !error) {
+            setInviteEmail(email);
+            setEmail(email);
           } else {
             console.log('Invalid or expired invite token');
             toast.error('Convite inválido ou expirado');
@@ -71,6 +68,7 @@ export default function AuthPage() {
           }
         } catch (error) {
           console.log('Could not get email from invite token:', error);
+          toast.error('Convite inválido ou expirado');
           setIsInviteFlow(false);
         }
       };
@@ -239,13 +237,14 @@ export default function AuthPage() {
           const inviteToken = urlParams.get('invite_token');
           
           if (inviteToken) {
-            // Validate and process invite using the token
+            // Validate and process invite using the token (with expiration check)
             const { data: inviteData, error: inviteError } = await supabase
               .from('pending_invites')
               .select('*')
               .eq('invite_token', inviteToken)
               .eq('email', email.toLowerCase())
-              .eq('used_at', null)
+              .is('used_at', null)
+              .or('expires_at.is.null,expires_at.gt.now()')
               .single();
             
             if (inviteData && !inviteError) {

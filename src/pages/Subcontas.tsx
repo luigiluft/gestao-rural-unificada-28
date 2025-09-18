@@ -156,6 +156,7 @@ export default function Subcontas() {
           parent_user_id: parentUserId,
           role: selectedProfile.target_role,
           permissions: selectedProfile.permissions as any,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
           ...(franquiaId && { franquia_id: franquiaId })
         })
         .select()
