@@ -2389,6 +2389,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_estoque_simple: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       reset_wave_positions: {
         Args: { p_wave_id: string }
         Returns: boolean

@@ -104,12 +104,12 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             .eq("id", reservaId)
         }
 
-        // 4. Criar os itens da saída
-        console.log("=== DEBUG SAÍDA ITENS ===")
-        console.log("Itens originais:", itens)
-        console.log("User ID:", user?.id)
-        console.log("Saída ID:", saida.id)
-        
+        // 4. Validar que existe pelo menos um item
+        if (itens.length === 0) {
+          throw new Error("Uma saída deve ter pelo menos um item")
+        }
+
+        // 5. Criar os itens da saída
         const itensComSaidaId = itens.map(item => ({
           user_id: user?.id,
           saida_id: saida.id,
@@ -120,33 +120,20 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           valor_total: (item.quantidade || 0) * (item.valorUnitario || 0)
         }))
 
-        console.log("Itens para inserção:", itensComSaidaId)
-        
         // Validar se todos os itens têm produto_id
         const itensInvalidos = itensComSaidaId.filter(item => !item.produto_id)
         if (itensInvalidos.length > 0) {
-          console.error("Itens sem produto_id:", itensInvalidos)
-          throw new Error(`${itensInvalidos.length} itens sem produto_id válido`)
+          throw new Error(`${itensInvalidos.length} itens sem produto válido`)
         }
 
-        if (itensComSaidaId.length === 0) {
-          throw new Error("Nenhum item para inserir na saída")
-        }
-
-        const { data: itensInseridos, error: itensError } = await supabase
+        const { error: itensError } = await supabase
           .from("saida_itens")
           .insert(itensComSaidaId)
-          .select()
-
-        console.log("Resultado inserção itens:", { itensInseridos, itensError })
 
         if (itensError) {
           console.error("Erro ao inserir itens:", itensError)
           throw itensError
         }
-
-        console.log(`${itensInseridos?.length || 0} itens inseridos com sucesso`)
-        console.log("=== FIM DEBUG SAÍDA ITENS ===")
 
         toast.success("Saída registrada com sucesso!")
         onSubmit(saida)
