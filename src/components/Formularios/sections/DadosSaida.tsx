@@ -9,7 +9,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { getMinScheduleDate } from "@/lib/business-days"
 import { useDiasUteisExpedicao, useHorariosRetirada } from "@/hooks/useConfiguracoesSistema"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
-import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
+import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
+import { useMemo } from "react"
 
 interface DadosSaidaProps {
   dados: DadosSaida
@@ -24,7 +25,33 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const { data: produtoresComEstoque } = useProdutoresComEstoqueNaFranquia()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
-  const { data: depositos = [] } = useDepositosDisponiveis()
+
+  // Hooks condicionais baseados no papel do usuário
+  const { data: depositosProdutor = [] } = useDepositosDisponiveis(
+    profile?.role === 'produtor' ? user?.id : undefined
+  )
+  const { data: franquiasFranqueado = [] } = useDepositosFranqueado()
+  const { data: todasFranquias = [] } = useTodasFranquias()
+
+  // Normalizar dados para formato consistente
+  const depositos = useMemo(() => {
+    if (profile?.role === 'admin') {
+      return todasFranquias.map(franquia => ({
+        deposito_id: franquia.id,
+        deposito_nome: franquia.nome,
+        franqueado_nome: 'Admin'
+      }))
+    } else if (profile?.role === 'franqueado') {
+      return franquiasFranqueado.map(franquia => ({
+        deposito_id: franquia.id,
+        deposito_nome: franquia.nome,
+        franqueado_nome: franquia.nome
+      }))
+    } else if (profile?.role === 'produtor') {
+      return depositosProdutor || []
+    }
+    return []
+  }, [profile?.role, todasFranquias, franquiasFranqueado, depositosProdutor])
 
   const isProdutor = profile?.role === 'produtor'
   const isFranqueado = profile?.role === 'franqueado'
