@@ -59,8 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // If registration is complete, no additional processing needed
-        // The invite processing is now handled by the trigger and/or Auth.tsx
+        // Sistema agora é 100% automático - invite processing acontece no backend via trigger
         console.log('✅ Profile check completed successfully');
         
       } catch (e) {

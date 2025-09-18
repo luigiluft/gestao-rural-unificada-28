@@ -133,10 +133,7 @@ export default function AuthPage() {
       
       console.log('✅ Login successful for user:', data.user?.email, 'ID:', data.user?.id);
       
-      // Process any pending invites with retry logic
-      if (data.user) {
-        await processInviteWithRetry(data.user.id, email, 3);
-      }
+      // Sistema agora é 100% automático - processamento de convite acontece no backend
       
       // Check if user needs to change password on first login
       const mustChangePassword = data.user?.user_metadata?.must_change_password;
@@ -156,39 +153,8 @@ export default function AuthPage() {
     }
   };
 
-  const processInviteWithRetry = async (userId: string, userEmail: string, retries: number) => {
-    try {
-      console.log('🔍 Checking for pending invites for:', userEmail, 'retries left:', retries);
-      
-      const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
-        _user_id: userId,
-        _email: userEmail
-      });
-      
-      if (rpcError) {
-        console.error('❌ Error processing invite:', rpcError);
-        if (retries > 0) {
-          console.log('🔄 Retrying invite processing...');
-          setTimeout(() => processInviteWithRetry(userId, userEmail, retries - 1), 1000);
-        }
-        return;
-      }
-      
-      if (rpcResult) {
-        console.log('✅ Invite processed successfully');
-        toast.success("Convite processado com sucesso! Redirecionando...");
-        // Force page reload to update role
-        setTimeout(() => window.location.reload(), 500);
-      } else {
-        console.log('ℹ️ No pending invites found for this email');
-      }
-    } catch (error) {
-      console.error('❌ Error in invite processing:', error);
-      if (retries > 0) {
-        setTimeout(() => processInviteWithRetry(userId, userEmail, retries - 1), 1000);
-      }
-    }
-  };
+  // Sistema agora é 100% automático - processamento de convite acontece no backend
+  // Esta função não é mais necessária pois o handle_new_user trigger processa tudo automaticamente
 
   const handleSignup = async () => {
     try {
@@ -217,15 +183,16 @@ export default function AuthPage() {
       if (error) throw error;
       console.log('✅ Signup successful for user:', data.user?.email);
       
-      // Success messages and flow handling
+      // Sistema agora é 100% automático - o trigger handle_new_user 
+      // processa convites, hierarquia e permissões automaticamente
       if (isInviteFlow) {
-        toast.success("Cadastro concluído! Verifique seu e-mail para confirmar o acesso.");
+        toast.success("Cadastro concluído! Sistema processando convite automaticamente...");
         // After successful signup in invite flow, go to login tab
         setActiveTab("login");
         setPassword("");
         setConfirmPassword("");
       } else {
-        toast.success("Conta criada! Verifique seu e-mail para confirmar o acesso.");
+        toast.success("Conta criada! Sistema configurando perfil automaticamente...");
       }
       
     } catch (err: any) {
