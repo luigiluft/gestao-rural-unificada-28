@@ -2252,7 +2252,7 @@ export type Database = {
       }
       complete_invite_signup: {
         Args: { _email: string; _user_id: string }
-        Returns: Json
+        Returns: boolean
       }
       complete_pallet_allocation_and_create_stock: {
         Args: {
@@ -2275,7 +2275,7 @@ export type Database = {
       }
       diagnose_user_signup: {
         Args: { _email: string }
-        Returns: Json
+        Returns: string
       }
       find_or_create_produto: {
         Args: {
