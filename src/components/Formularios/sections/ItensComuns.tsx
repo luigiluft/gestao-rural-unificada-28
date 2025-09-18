@@ -66,6 +66,13 @@ export function ItensComunsSection({
     }
   }, [latestPrice, novoItem.produto_id, tipo, onNovoItemChange, novoItem.valorUnitario])
 
+  // Função para calcular quantidade já usada no carrinho por produto
+  const calcularQuantidadeUsadaNoCarrinho = (produtoId: string) => {
+    return itens
+      .filter(item => item.produto_id === produtoId)
+      .reduce((total, item) => total + (item.quantidade || 0), 0)
+  }
+
   // Processar produtos disponíveis baseado no tipo
   const produtosDisponiveis = (() => {
     if (tipo === 'saida') {
@@ -90,8 +97,22 @@ export function ItensComunsSection({
           
           return acc
         }, {} as Record<string, any>)
-        console.log('Produtos disponíveis para saída:', Object.values(agrupados))
-        return Object.values(agrupados)
+        
+        // Calcular quantidade disponível descontando o que já está no carrinho
+        const produtosComQuantidadeAtualizada = Object.values(agrupados).map((produto: any) => {
+          const quantidadeUsadaNoCarrinho = calcularQuantidadeUsadaNoCarrinho(produto.id)
+          const quantidadeDisponivel = Math.max(0, produto.quantidade_total - quantidadeUsadaNoCarrinho)
+          
+          return {
+            ...produto,
+            quantidade_total: quantidadeDisponivel,
+            quantidade_original: produto.quantidade_total,
+            quantidade_carrinho: quantidadeUsadaNoCarrinho
+          }
+        }).filter((produto: any) => produto.quantidade_total > 0) // Ocultar produtos sem estoque disponível
+        
+        console.log('Produtos disponíveis para saída (atualizado):', produtosComQuantidadeAtualizada)
+        return produtosComQuantidadeAtualizada
       }
       
       // Fallback para produtos sem estoque
