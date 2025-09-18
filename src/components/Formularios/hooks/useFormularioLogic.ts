@@ -196,11 +196,6 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
       return
     }
 
-    // Validações específicas por tipo
-    if (tipo === 'saida' && !novoItem.lote_id) {
-      toast({ title: "Erro", description: "Selecione um lote para o produto", variant: "destructive" })
-      return
-    }
 
     // Verificar item duplicado
     const itemExistente = itens.find(item => {
@@ -216,18 +211,6 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
       return
     }
 
-    // Verificar disponibilidade para saída
-    if (tipo === 'saida') {
-      const loteItem = estoqueFEFO?.find(lote => lote.id === novoItem.lote_id)
-      if (!loteItem || loteItem.quantidade_atual < novoItem.quantidade) {
-        toast({ 
-          title: "Erro", 
-          description: `Quantidade indisponível no lote. Disponível: ${loteItem?.quantidade_atual || 0}`, 
-          variant: "destructive" 
-        })
-        return
-      }
-    }
 
     const valorTotal = novoItem.quantidade * novoItem.valorUnitario
     setItens([...itens, { ...novoItem, valorTotal }])
@@ -257,14 +240,14 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
   }
 
   const handleNovoItemChange = (campo: keyof ItemGenerico, valor: any) => {
-    const novoItemAtualizado = { ...novoItem, [campo]: valor }
-    
-    // Recalcular valor total quando quantidade ou valor unitário mudam
-    if (campo === 'quantidade' || campo === 'valorUnitario') {
-      novoItemAtualizado.valorTotal = novoItemAtualizado.quantidade * novoItemAtualizado.valorUnitario
-    }
-    
-    setNovoItem(novoItemAtualizado)
+    setNovoItem((prev) => {
+      const atualizado = { ...prev, [campo]: valor }
+      // Recalcular valor total quando quantidade ou valor unitário mudam
+      if (campo === 'quantidade' || campo === 'valorUnitario') {
+        atualizado.valorTotal = (atualizado.quantidade || 0) * (atualizado.valorUnitario || 0)
+      }
+      return atualizado
+    })
   }
 
   return {

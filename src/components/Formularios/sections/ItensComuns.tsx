@@ -193,7 +193,7 @@ export function ItensComunsSection({
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o produto" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     {produtosDisponiveis.map((produto) => (
                       <SelectItem key={produto.id} value={produto.id}>
                         <div className="flex justify-between items-center w-full">
@@ -217,32 +217,16 @@ export function ItensComunsSection({
               )}
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Lote</Label>
-              {tipo === 'saida' && novoItem.produto_id ? (
-                <Select 
-                  value={novoItem.lote_id || ''} 
-                  onValueChange={handleLoteChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione lote" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {estoqueFEFO?.map((lote) => (
-                      <SelectItem key={lote.id} value={lote.id}>
-                        {lote.lote || 'Sem lote'} (Disp: {lote.quantidade_atual})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
+            {tipo === 'entrada' && (
+              <div className="space-y-1">
+                <Label className="text-xs">Lote</Label>
                 <Input
                   placeholder="Lote"
                   value={novoItem.lote}
                   onChange={(e) => handleLoteChange(e.target.value)}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="space-y-1">
               <Label className="text-xs">Qtd</Label>
@@ -293,6 +277,7 @@ export function ItensComunsSection({
                 step="0.01"
                 value={novoItem.valorUnitario || ''}
                 onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
+                disabled={tipo === 'saida'}
               />
             </div>
 
