@@ -11,11 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { UserPlus, Settings, Users, Trash2 } from "lucide-react"
+import { UserPlus, Settings, Users, Trash2, Clock, Send, X, AlertTriangle } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { useUserPermissionTemplates } from "@/hooks/useUserPermissionTemplates"
 import { useCleanupPermissions } from "@/hooks/useCleanupPermissions"
+import { usePendingInvites } from "@/hooks/usePendingInvites"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PermissionTemplate } from "@/types/permissions"
 
@@ -43,10 +44,19 @@ export default function Subcontas() {
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [selectedUserName, setSelectedUserName] = useState<string>("")
   
-  // Hooks para perfis de funcionários
+  // Hooks para perfis de funcionários e convites
   const { profiles, isLoading: isLoadingProfiles } = useEmployeeProfiles(profile?.role)
   const { assignTemplate, removeTemplate } = useUserPermissionTemplates()
   const { cleanupSubaccountPermissions } = useCleanupPermissions()
+  const { 
+    pendingInvites, 
+    isLoading: loadingInvites, 
+    cancelInvite, 
+    isCanceling,
+    resendInvite,
+    isResending,
+    refetch: refetchInvites 
+  } = usePendingInvites()
 
   // Buscar subcontas do usuário
   const { data: subaccounts = [], refetch: refetchSubaccounts, isLoading: loadingSubaccounts } = useQuery({
@@ -167,8 +177,9 @@ export default function Subcontas() {
         email: createEmail,
         password: data.default_password
       })
-      toast.success("Usuário criado com sucesso!")
+      toast.success("Convite enviado com sucesso!")
       refetchSubaccounts()
+      refetchInvites()
       setCreateEmail("")
       setSelectedProfileId("")
       setCreateFranquia("")
@@ -403,6 +414,105 @@ export default function Subcontas() {
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Card de Convites Pendentes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Convites Pendentes
+            {pendingInvites.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {pendingInvites.length}
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Convites enviados que ainda não foram aceitos pelos usuários
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingInvites ? (
+            <div className="text-center py-4">Carregando...</div>
+          ) : pendingInvites.length === 0 ? (
+            <EmptyState
+              icon={<Clock className="h-8 w-8" />}
+              title="Nenhum convite pendente"
+              description="Todos os convites foram aceitos ou não há convites ativos"
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead>Franquia</TableHead>
+                  <TableHead>Enviado em</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingInvites.map((invite) => {
+                  const isExpired = new Date(invite.created_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days
+                  return (
+                    <TableRow key={invite.id}>
+                      <TableCell className="font-medium">
+                        {invite.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {invite.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {invite.franquia_nome || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(invite.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell>
+                        {isExpired ? (
+                          <Badge variant="destructive" className="flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Expirado
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">
+                            Pendente
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInvite(invite)}
+                            disabled={isResending}
+                            title="Reenviar convite"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => cancelInvite(invite.id)}
+                            disabled={isCanceling}
+                            title="Cancelar convite"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}

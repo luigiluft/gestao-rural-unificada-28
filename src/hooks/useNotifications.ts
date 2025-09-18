@@ -204,12 +204,15 @@ export const useNotifications = () => {
 
         suporte = suporteCount || 0
 
-        // SUBCONTAS: For admins and franqueados - pending invites
+        // SUBCONTAS: For admins and franqueados - recent pending invites (last 30 days)
         if (isAdmin || isFranqueado) {
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+          
           let subcountQuery = supabase
             .from("pending_invites")
             .select("id", { count: "exact" })
             .is("used_at", null)
+            .gte("created_at", thirtyDaysAgo) // Only count recent invites
 
           if (!isAdmin) {
             subcountQuery = subcountQuery.eq("inviter_user_id", user.id)
