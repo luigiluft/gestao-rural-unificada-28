@@ -128,7 +128,6 @@ serve(async (req) => {
     }
 
     let inviteData: any = null
-    let shouldCreateUser = true
 
     // Se é reenvio, buscar convite existente
     if (resend) {
@@ -145,17 +144,6 @@ serve(async (req) => {
 
       inviteData = existingInvite
       console.log('Reusing existing invite token:', inviteData.invite_token)
-      
-      // Verificar se usuário já foi criado para este convite
-      const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers()
-      const userExists = existingUser.users.some(user => 
-        user.email === email && user.user_metadata?.invite_token === inviteData.invite_token
-      )
-      
-      if (userExists) {
-        shouldCreateUser = false
-        console.log('User already exists for this invite, skipping user creation')
-      }
     } else {
       // Save pending invite first (generates unique token automatically)
       const { data: newInviteData, error: inviteError } = await supabaseAdmin
@@ -180,94 +168,78 @@ serve(async (req) => {
       console.log('Pending invite saved with token:', inviteData.invite_token)
     }
 
-    // Create invite URL
+    // Create invite URL that will be used as redirect URL
     const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
     console.log('Invite URL:', inviteUrl)
 
-    let defaultPassword = null
-
-    // Create user only if needed
-    if (shouldCreateUser) {
-      // Generate a default password for the new user
-      defaultPassword = `Agro${Math.random().toString(36).slice(2)}!`
-      console.log('Generated default password:', defaultPassword)
-
-      // Create user directly with password and confirmed email
-      try {
-        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password: defaultPassword,
-          email_confirm: true, // Email already confirmed, no confirmation needed
-          user_metadata: {
+    // Use Supabase native invite system
+    try {
+      const { data: inviteResponse, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        email,
+        {
+          redirectTo: inviteUrl,
+          data: {
             invite_token: inviteData.invite_token,
-            role: role || 'franqueado',
-            must_change_password: true // Flag to force password change on first login
-          }
-        })
-
-        if (createUserError) {
-          console.error('Supabase create user error:', createUserError)
-          
-          // Rollback: delete the pending invite if user creation failed
-          if (!resend) {
-            console.log('Rolling back pending invite due to user creation error')
-            await supabaseAdmin
-              .from('pending_invites')
-              .delete()
-              .eq('id', inviteData.id)
-          }
-          
-          // Provide more specific error messages
-          if (createUserError.message.includes('User already registered')) {
-            throw new Error('Este email já está registrado no sistema')
-          } else if (createUserError.message.includes('password')) {
-            throw new Error('Erro na definição da senha do usuário')
-          } else if (createUserError.message.includes('email')) {
-            throw new Error('Erro com o email fornecido')
-          } else {
-            throw new Error('Erro ao criar usuário: ' + createUserError.message)
+            role: role || 'franqueado'
           }
         }
+      )
 
-        console.log('User created successfully:', newUser.user?.email)
-        console.log('Default password set, user can login immediately')
-      } catch (userError) {
-        console.error('User creation error:', userError)
+      if (inviteError) {
+        console.error('Supabase invite error:', inviteError)
         
-        // Rollback: delete the pending invite if user creation failed
+        // Rollback: delete the pending invite if invitation failed
         if (!resend) {
-          console.log('Rolling back pending invite due to user creation error')
-          try {
-            await supabaseAdmin
-              .from('pending_invites')
-              .delete()
-              .eq('id', inviteData.id)
-          } catch (rollbackError) {
-            console.error('Failed to rollback pending invite:', rollbackError)
-          }
+          console.log('Rolling back pending invite due to invitation error')
+          await supabaseAdmin
+            .from('pending_invites')
+            .delete()
+            .eq('id', inviteData.id)
         }
         
-        throw new Error('Erro ao criar usuário: ' + (userError as Error).message)
+        // Provide more specific error messages
+        if (inviteError.message.includes('User already registered')) {
+          throw new Error('Este email já está registrado no sistema')
+        } else if (inviteError.message.includes('rate limit')) {
+          throw new Error('Muitos convites enviados. Tente novamente em alguns minutos.')
+        } else {
+          throw new Error('Erro ao enviar convite: ' + inviteError.message)
+        }
       }
-    } else {
-      console.log('Skipping user creation - user already exists')
+
+      console.log('Invite sent successfully to:', email)
+      console.log('User will receive email with confirmation link')
+    } catch (inviteError) {
+      console.error('Invitation error:', inviteError)
+      
+      // Rollback: delete the pending invite if invitation failed
+      if (!resend) {
+        console.log('Rolling back pending invite due to invitation error')
+        try {
+          await supabaseAdmin
+            .from('pending_invites')
+            .delete()
+            .eq('id', inviteData.id)
+        } catch (rollbackError) {
+          console.error('Failed to rollback pending invite:', rollbackError)
+        }
+      }
+      
+      throw new Error('Erro ao enviar convite: ' + (inviteError as Error).message)
     }
 
     console.log('Invitation process completed')
 
     const responseMessage = resend 
-      ? 'Convite reenviado com sucesso' 
-      : shouldCreateUser 
-        ? 'Usuário criado com sucesso' 
-        : 'Convite processado com sucesso'
+      ? 'Convite reenviado com sucesso! Email de confirmação enviado.' 
+      : 'Convite enviado com sucesso! O usuário receberá um email para completar o cadastro.'
 
     return new Response(JSON.stringify({ 
       success: true, 
       invite_token: inviteData.invite_token,
       invite_url: inviteUrl,
-      default_password: defaultPassword,
       message: responseMessage,
-      user_created: shouldCreateUser
+      email_sent: true
     }), {
       headers: { "Content-Type": "application/json", ...corsHeaders },
       status: 200,

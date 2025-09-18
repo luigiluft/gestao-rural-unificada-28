@@ -37,7 +37,7 @@ export default function Subcontas() {
   const [createEmail, setCreateEmail] = useState("")
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [createFranquia, setCreateFranquia] = useState("")
-  const [createdCredentials, setCreatedCredentials] = useState<{email: string, password: string} | null>(null)
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string} | null>(null)
   
   // Estados para gerenciar perfil de subconta
   const [profileManageOpen, setProfileManageOpen] = useState(false)
@@ -174,8 +174,7 @@ export default function Subcontas() {
     },
     onSuccess: (data) => {
       setCreatedCredentials({
-        email: createEmail,
-        password: data.default_password
+        email: createEmail
       })
       toast.success("Convite enviado com sucesso!")
       refetchSubaccounts()
@@ -251,24 +250,21 @@ export default function Subcontas() {
               <DialogHeader>
                 <DialogTitle>Criar Nova Subconta</DialogTitle>
                 <DialogDescription>
-                  O usuário será criado com uma senha temporária
+                  O usuário receberá um email para completar o cadastro
                 </DialogDescription>
               </DialogHeader>
               
               {createdCredentials ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Usuário criado com sucesso!</h3>
+                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Convite enviado com sucesso!</h3>
                     <div className="space-y-2 text-sm">
                       <div>
                         <span className="font-medium">Email:</span> {createdCredentials.email}
                       </div>
-                      <div>
-                        <span className="font-medium">Senha temporária:</span> {createdCredentials.password}
-                      </div>
                     </div>
                     <p className="text-xs text-green-700 dark:text-green-300 mt-2">
-                      O usuário deverá alterar a senha no primeiro login.
+                      O usuário receberá um email com instruções para completar o cadastro e definir sua senha.
                     </p>
                   </div>
                   <div className="flex justify-end">
