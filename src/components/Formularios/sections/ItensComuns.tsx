@@ -359,7 +359,7 @@ export function ItensComunsSection({
           </Table>
         )}
 
-        {itens.length > 0 && (
+        {itens.length > 0 && tipo === 'entrada' && (
           <div className="flex justify-end">
             <div className="text-lg font-semibold">
               Total: R$ {calcularValorTotal().toFixed(2)}
