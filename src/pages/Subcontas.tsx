@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { UserPlus, Settings, Users, Trash2, Clock, Send, X, AlertTriangle } from "lucide-react"
+import { UserPlus, Settings, Users, Trash2, Clock, Send, X, AlertTriangle, Copy } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { useUserPermissionTemplates } from "@/hooks/useUserPermissionTemplates"
@@ -38,7 +38,7 @@ export default function Subcontas() {
   const [createEmail, setCreateEmail] = useState("")
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [createFranquia, setCreateFranquia] = useState("")
-  const [createdCredentials, setCreatedCredentials] = useState<{email: string} | null>(null)
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string, inviteLink?: string} | null>(null)
   
   // Estados para gerenciar perfil de subconta
   const [profileManageOpen, setProfileManageOpen] = useState(false)
@@ -172,14 +172,19 @@ export default function Subcontas() {
       return { 
         success: true, 
         message: 'Convite criado com sucesso!',
-        invite_id: inviteData.id 
+        invite_id: inviteData.id,
+        invite_token: inviteData.invite_token
       }
     },
     onSuccess: (data) => {
+      // Gerar link do convite
+      const inviteLink = `${window.location.origin}/auth?invite_token=${data.invite_token || ''}`
+      
       setCreatedCredentials({
-        email: createEmail
+        email: createEmail,
+        inviteLink: inviteLink
       })
-      toast.success("Convite criado! O usuário receberá um link para completar o cadastro.")
+      toast.success("Convite criado! Link disponível para compartilhamento.")
       refetchSubaccounts()
       refetchInvites()
       setCreateEmail("")
@@ -253,21 +258,43 @@ export default function Subcontas() {
               <DialogHeader>
                 <DialogTitle>Criar Nova Subconta</DialogTitle>
                 <DialogDescription>
-                  O usuário receberá um email para completar o cadastro
+                  Crie um convite para que o usuário complete o cadastro
                 </DialogDescription>
               </DialogHeader>
               
               {createdCredentials ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Convite enviado com sucesso!</h3>
-                    <div className="space-y-2 text-sm">
+                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Convite criado com sucesso!</h3>
+                    <div className="space-y-3 text-sm">
                       <div>
                         <span className="font-medium">Email:</span> {createdCredentials.email}
                       </div>
+                      {createdCredentials.inviteLink && (
+                        <div className="space-y-2">
+                          <span className="font-medium">Link do convite:</span>
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              value={createdCredentials.inviteLink}
+                              readOnly
+                              className="text-xs"
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                navigator.clipboard.writeText(createdCredentials.inviteLink!)
+                                toast.success("Link copiado!")
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-green-700 dark:text-green-300 mt-2">
-                      O usuário receberá um email com instruções para completar o cadastro e definir sua senha.
+                    <p className="text-xs text-green-700 dark:text-green-300 mt-3">
+                      Compartilhe este link com o usuário para que ele possa completar o cadastro e definir sua senha.
                     </p>
                   </div>
                   <div className="flex justify-end">
