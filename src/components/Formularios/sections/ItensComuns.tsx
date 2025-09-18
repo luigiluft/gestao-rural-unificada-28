@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Trash2 } from "lucide-react"
 import { ItemGenerico, FormularioTipo } from "../types/formulario.types"
+import { useProductLatestPrice } from "@/hooks/useProductLatestPrice"
+import { useEffect } from "react"
 
 interface ItensComunsProps {
   tipo: FormularioTipo
@@ -36,6 +38,18 @@ export function ItensComunsSection({
   estoqueFEFO = [],
   isTutorialActive 
 }: ItensComunsProps) {
+  // Buscar preço mais recente quando produto estiver selecionado
+  const { data: latestPrice } = useProductLatestPrice(
+    novoItem.produto_id, 
+    tipo === 'saida' ? estoque[0]?.deposito_id : undefined
+  )
+
+  // Aplicar preço automático quando disponível
+  useEffect(() => {
+    if (tipo === 'saida' && latestPrice && novoItem.produto_id && !novoItem.valorUnitario) {
+      onNovoItemChange('valorUnitario', latestPrice)
+    }
+  }, [latestPrice, novoItem.produto_id, tipo, onNovoItemChange])
 
   // Processar produtos disponíveis baseado no tipo
   const produtosDisponiveis = (() => {
@@ -95,6 +109,12 @@ export function ItensComunsSection({
     if (produto?.nome) onNovoItemChange('produtoNome', produto.nome)
     if (unidadeNormalizada) onNovoItemChange('unidade', unidadeNormalizada)
 
+    // Para saídas, buscar o preço unitário mais recente do produto
+    if (tipo === 'saida') {
+      // Trigger fetch do preço mais recente - será aplicado pelo useEffect
+      onNovoItemChange('produto_id', valor)
+    }
+
     // Limpar lote para forçar seleção manual após escolher o produto
     onNovoItemChange('lote', '')
     onNovoItemChange('lote_id', '')
@@ -138,13 +158,20 @@ export function ItensComunsSection({
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {produtosDisponiveis.map((produto) => (
-                      <SelectItem key={produto.id} value={produto.id}>
-                        {produto.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                   <SelectContent>
+                     {produtosDisponiveis.map((produto) => (
+                       <SelectItem key={produto.id} value={produto.id}>
+                         <div className="flex justify-between items-center w-full">
+                           <span>{produto.nome}</span>
+                           {tipo === 'saida' && produto.quantidade_total && (
+                             <span className="text-muted-foreground text-xs ml-2">
+                               Disp: {produto.quantidade_total} {produto.unidade_medida || 'UN'}
+                             </span>
+                           )}
+                         </div>
+                       </SelectItem>
+                     ))}
+                   </SelectContent>
                 </Select>
               ) : (
                 <Input
