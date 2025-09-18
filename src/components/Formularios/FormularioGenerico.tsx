@@ -106,34 +106,45 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
 
         // 4. Validar que existe pelo menos um item
         if (itens.length === 0) {
+          // Deletar a saída criada se não há itens
+          await supabase.from("saidas").delete().eq("id", saida.id)
           throw new Error("Uma saída deve ter pelo menos um item")
         }
 
-        // 5. Criar os itens da saída
+        // 5. Validar itens antes de inserir
+        const itensInvalidos = itens.filter(item => !item.produto_id || !item.quantidade || item.quantidade <= 0)
+        if (itensInvalidos.length > 0) {
+          // Deletar a saída criada se há itens inválidos
+          await supabase.from("saidas").delete().eq("id", saida.id)
+          throw new Error(`${itensInvalidos.length} itens têm dados inválidos (produto ou quantidade)`)
+        }
+
+        // 6. Criar os itens da saída com validação adicional
         const itensComSaidaId = itens.map(item => ({
           user_id: user?.id,
           saida_id: saida.id,
           produto_id: item.produto_id,
           quantidade: item.quantidade,
-          lote: item.lote,
+          lote: item.lote || null,
           valor_unitario: item.valorUnitario || 0,
           valor_total: (item.quantidade || 0) * (item.valorUnitario || 0)
         }))
 
-        // Validar se todos os itens têm produto_id
-        const itensInvalidos = itensComSaidaId.filter(item => !item.produto_id)
-        if (itensInvalidos.length > 0) {
-          throw new Error(`${itensInvalidos.length} itens sem produto válido`)
-        }
+        console.log("Inserindo itens:", itensComSaidaId)
 
-        const { error: itensError } = await supabase
+        const { data: itensInseridos, error: itensError } = await supabase
           .from("saida_itens")
           .insert(itensComSaidaId)
+          .select()
 
         if (itensError) {
           console.error("Erro ao inserir itens:", itensError)
-          throw itensError
+          // Deletar a saída criada se falhou ao inserir itens
+          await supabase.from("saidas").delete().eq("id", saida.id)
+          throw new Error(`Erro ao inserir itens: ${itensError.message}`)
         }
+
+        console.log(`${itensInseridos?.length || 0} itens inseridos com sucesso`)
 
         toast.success("Saída registrada com sucesso!")
         onSubmit(saida)
