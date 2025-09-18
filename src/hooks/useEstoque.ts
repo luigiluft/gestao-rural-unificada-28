@@ -26,9 +26,9 @@ export const useEstoque = () => {
   return useQuery({
     queryKey: ["estoque"],
     queryFn: async (): Promise<EstoqueItem[]> => {
-      // Use função segura que aplica RLS baseado no role do usuário
+      // Use nova função que calcula estoque diretamente das movimentações
       const { data: estoque, error } = await supabase
-        .rpc("get_estoque_seguro")
+        .rpc("get_estoque_from_movimentacoes")
 
       if (error) throw error
 

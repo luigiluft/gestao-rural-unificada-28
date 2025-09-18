@@ -110,9 +110,9 @@ export const useRastreamentoEstoque = () => {
 
       const isAdmin = profile?.role === 'admin'
 
-      // Use secure function to get stock data
+      // Use new function to calculate stock from movimentacoes
       const { data: estoqueSeguro, error } = await supabase
-        .rpc("get_estoque_seguro")
+        .rpc("get_estoque_from_movimentacoes")
       
       if (error) throw error
       
