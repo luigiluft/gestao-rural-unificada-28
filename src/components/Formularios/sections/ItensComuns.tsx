@@ -182,8 +182,8 @@ export function ItensComunsSection({
       <CardContent className="space-y-4">
         {/* Adicionar Novo Item */}
         <div className="border rounded-lg p-4 bg-muted/30">
-          <div className="grid grid-cols-7 gap-3 mb-3">
-            <div className="space-y-1">
+          <div className={`grid gap-3 mb-3 ${tipo === 'entrada' ? 'grid-cols-7' : 'grid-cols-6'}`}>
+            <div className="space-y-1 col-span-2">
               <Label className="text-xs">Produto</Label>
               {tipo === 'saida' ? (
                 <Select 
@@ -197,9 +197,9 @@ export function ItensComunsSection({
                     {produtosDisponiveis.map((produto) => (
                       <SelectItem key={produto.id} value={produto.id}>
                         <div className="flex justify-between items-center w-full">
-                          <span>{produto.nome}</span>
+                          <span className="truncate max-w-[200px]" title={produto.nome}>{produto.nome}</span>
                           {tipo === 'saida' && produto.quantidade_total && (
-                            <span className="text-muted-foreground text-xs ml-2">
+                            <span className="text-muted-foreground text-xs ml-2 flex-shrink-0">
                               Disp: {produto.quantidade_total} {produto.unidade_medida || 'UN'}
                             </span>
                           )}
@@ -269,17 +269,18 @@ export function ItensComunsSection({
               </div>
             )}
 
-            <div className="space-y-1">
-              <Label className="text-xs">Valor Unit.</Label>
-              <Input
-                type="number"
-                placeholder="0,00"
-                step="0.01"
-                value={novoItem.valorUnitario || ''}
-                onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
-                disabled={tipo === 'saida'}
-              />
-            </div>
+            {tipo === 'entrada' && (
+              <div className="space-y-1">
+                <Label className="text-xs">Valor Unit.</Label>
+                <Input
+                  type="number"
+                  placeholder="0,00"
+                  step="0.01"
+                  value={novoItem.valorUnitario || ''}
+                  onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
+                />
+              </div>
+            )}
 
             <div className="space-y-1">
               <Label className="text-xs">Ação</Label>
@@ -297,14 +298,14 @@ export function ItensComunsSection({
 
         {/* Lista de Itens */}
         {itens.length > 0 && (
-          <Table>
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Produto</TableHead>
                 <TableHead>Lote</TableHead>
                 <TableHead>Quantidade</TableHead>
                 {tipo === 'entrada' && <TableHead>Depósito</TableHead>}
-                <TableHead>Valor Unit.</TableHead>
+                {tipo === 'entrada' && <TableHead>Valor Unit.</TableHead>}
                 <TableHead>Valor Total</TableHead>
                 <TableHead className="w-[50px]">Ação</TableHead>
               </TableRow>
@@ -312,11 +313,15 @@ export function ItensComunsSection({
             <TableBody>
               {itens.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell>{item.produto || item.produtoNome}</TableCell>
+                  <TableCell>
+                    <span className="truncate max-w-[200px] block" title={item.produto || item.produtoNome}>
+                      {item.produto || item.produtoNome}
+                    </span>
+                  </TableCell>
                   <TableCell>{item.lote}</TableCell>
                   <TableCell>{item.quantidade} {item.unidade}</TableCell>
                   {tipo === 'entrada' && <TableCell>{item.deposito}</TableCell>}
-                  <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>
+                  {tipo === 'entrada' && <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>}
                   <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>
                   <TableCell>
                     <Button
