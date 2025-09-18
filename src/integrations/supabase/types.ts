@@ -1380,6 +1380,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          expires_at: string | null
           franquia_id: string | null
           id: string
           invite_token: string | null
@@ -1392,6 +1393,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          expires_at?: string | null
           franquia_id?: string | null
           id?: string
           invite_token?: string | null
@@ -1404,6 +1406,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          expires_at?: string | null
           franquia_id?: string | null
           id?: string
           invite_token?: string | null
