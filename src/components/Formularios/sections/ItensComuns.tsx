@@ -77,19 +77,27 @@ export function ItensComunsSection({
   })()
 
   const handleProdutoChange = (valor: string) => {
-    if (tipo === 'saida') {
-      const produto = produtosDisponiveis.find(p => p.id === valor)
-      if (produto) {
-        onNovoItemChange('produto_id', valor)
-        onNovoItemChange('produtoNome', produto.nome)
-        onNovoItemChange('unidade', produto.unidade_medida)
-        // Limpar lote para forçar seleção manual
-        onNovoItemChange('lote', '')
-        onNovoItemChange('lote_id', '')
-      }
-    } else {
-      onNovoItemChange('produto', valor)
+    // Sempre setar o produto_id para refletir a seleção no UI
+    onNovoItemChange('produto_id', valor)
+
+    // Tentar obter metadados do produto (nome e unidade)
+    const produto = (produtosDisponiveis as any[]).find(p => String(p.id) === String(valor))
+
+    // Normalizar unidade para os valores existentes no Select de unidade
+    const unidadeMap: Record<string, string> = {
+      'KG': 'kg', 'KGS': 'kg',
+      'L': 'litros', 'LT': 'litros',
+      'UN': 'unidades', 'UND': 'unidades',
+      'SC': 'sacas', 'SACAS': 'sacas'
     }
+    const unidadeNormalizada = unidadeMap[(produto?.unidade_medida || '').toUpperCase()] || ''
+
+    if (produto?.nome) onNovoItemChange('produtoNome', produto.nome)
+    if (unidadeNormalizada) onNovoItemChange('unidade', unidadeNormalizada)
+
+    // Limpar lote para forçar seleção manual após escolher o produto
+    onNovoItemChange('lote', '')
+    onNovoItemChange('lote_id', '')
   }
 
   const handleLoteChange = (loteId: string) => {
