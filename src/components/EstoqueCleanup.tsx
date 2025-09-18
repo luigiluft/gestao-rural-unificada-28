@@ -47,28 +47,21 @@ export default function EstoqueCleanup() {
   const handleForceRefresh = async () => {
     try {
       setIsLoading(true)
-      console.log('Forçando refresh do estoque...')
+      console.log('Estoque agora é calculado em tempo real das movimentações...')
 
-      const { data, error } = await supabase.rpc('refresh_estoque_with_retry')
-      
-      if (error) {
-        console.error('Erro no refresh:', error)
-        throw error
-      }
-
-      console.log('Resultado do refresh:', data)
-
+      // Não há mais necessidade de refresh - o estoque é calculado dinamicamente
       toast({
-        title: "Refresh concluído",
-        description: data ? "Estoque atualizado com sucesso" : "Falha no refresh do estoque",
-        variant: data ? "default" : "destructive"
+        title: "Sistema atualizado",
+        description: "O estoque agora é calculado em tempo real das movimentações. Não é mais necessário refresh manual.",
+        variant: "default"
       })
+
     } catch (error) {
-      console.error('Erro durante refresh:', error)
+      console.error('Erro:', error)
       toast({
-        title: "Erro no refresh",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
-        variant: "destructive",
+        title: "Informação",
+        description: "O sistema de estoque foi migrado para cálculo em tempo real.",
+        variant: "default"
       })
     } finally {
       setIsLoading(false)

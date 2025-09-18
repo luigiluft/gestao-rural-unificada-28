@@ -605,15 +605,8 @@ export default function Entradas() {
 
       console.log('=== DELEÇÃO CONCLUÍDA COM SUCESSO ===')
       
-      // Force refresh of estoque materialized view
-      try {
-        console.log('STEP 8: Forçando refresh do estoque...')
-        const { data: refreshResult } = await supabase.rpc('refresh_estoque_with_retry')
-        console.log('Refresh do estoque:', refreshResult ? 'Sucesso' : 'Falhou')
-      } catch (refreshError) {
-        console.error('Erro no refresh do estoque:', refreshError)
-        // Don't fail the entire operation for this
-      }
+      // Estoque agora é calculado em tempo real - não precisa de refresh manual
+      console.log('STEP 8: Estoque é calculado automaticamente das movimentações')
 
       toast({
         title: "Entrada deletada",

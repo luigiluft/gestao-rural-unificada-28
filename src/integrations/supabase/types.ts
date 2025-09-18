@@ -2185,30 +2185,7 @@ export type Database = {
       }
     }
     Views: {
-      estoque: {
-        Row: {
-          deposito_id: string | null
-          id: string | null
-          lotes: string[] | null
-          produto_id: string | null
-          quantidade_atual: number | null
-          quantidade_disponivel: number | null
-          quantidade_reservada: number | null
-          ultima_movimentacao: string | null
-          user_id: string | null
-          valor_medio: number | null
-          valor_total_estoque: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "movimentacoes_produto_id_fkey"
-            columns: ["produto_id"]
-            isOneToOne: false
-            referencedRelation: "produtos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       allocate_pallet_to_position: {
@@ -2357,23 +2334,6 @@ export type Database = {
           valor_total_estoque: number
         }[]
       }
-      get_estoque_seguro: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          deposito_id: string
-          franquia_nome: string
-          id: string
-          lotes: string[]
-          produto_id: string
-          produtos: Json
-          quantidade_atual: number
-          quantidade_disponivel: number
-          quantidade_reservada: number
-          ultima_movimentacao: string
-          user_id: string
-          valor_total_estoque: number
-        }[]
-      }
       get_producer_available_deposits: {
         Args: { _producer_id: string }
         Returns: {
@@ -2427,10 +2387,6 @@ export type Database = {
           p_produto_id: string
           p_quantidade?: number
         }
-        Returns: boolean
-      }
-      refresh_estoque_with_retry: {
-        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       reset_wave_positions: {

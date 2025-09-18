@@ -94,11 +94,11 @@ export const useProdutoresComEstoqueNaFranquia = () => {
       
       const produtorIds = produtoresData.map(p => p.user_id)
       
-      // Verificar quais produtores têm estoque atual > 0 via função RPC
+      // Verificar quais produtores têm estoque atual > 0 via nova função RPC
       const { data: estoqueSeguro } = await supabase
-        .rpc("get_estoque_seguro")
+        .rpc("get_estoque_from_movimentacoes")
       
-      if (!estoqueSeguro || estoqueSeguro.length === 0) return []
+      if (!Array.isArray(estoqueSeguro) || estoqueSeguro.length === 0) return []
       
       const produtoresComEstoque = [...new Set(
         estoqueSeguro
