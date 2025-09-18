@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { getMinScheduleDate } from "@/lib/business-days"
 import { useDiasUteisExpedicao, useHorariosRetirada } from "@/hooks/useConfiguracoesSistema"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
+import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
 
 interface DadosSaidaProps {
   dados: DadosSaida
@@ -23,6 +24,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const { data: produtoresComEstoque } = useProdutoresComEstoqueNaFranquia()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
+  const { data: depositos = [] } = useDepositosDisponiveis()
 
   const isProdutor = profile?.role === 'produtor'
   const isFranqueado = profile?.role === 'franqueado'
@@ -51,7 +53,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label htmlFor="data_saida">Data de Saída *</Label>
             <Input
@@ -75,6 +77,22 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
               <SelectContent>
                 <SelectItem value="retirada_deposito">Retirada no Depósito</SelectItem>
                 <SelectItem value="entrega_fazenda">Entrega na Fazenda</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="deposito_id">Depósito *</Label>
+            <Select value={dados.depositoId} onValueChange={(value) => handleChange('depositoId', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o depósito" />
+              </SelectTrigger>
+              <SelectContent>
+                {depositos.map((deposito) => (
+                  <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
+                    {deposito.deposito_nome}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
