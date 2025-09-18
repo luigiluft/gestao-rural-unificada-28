@@ -126,76 +126,22 @@ export default function AuthPage() {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      console.log('Starting login process for email:', email);
+      console.log('🔐 Starting login process for email:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       
-      console.log('Login successful for user:', data.user?.email, 'User ID:', data.user?.id);
+      console.log('✅ Login successful for user:', data.user?.email, 'ID:', data.user?.id);
       
-      // Check if there's a pending invite for this user
-      try {
-        console.log('Checking for pending invites for email:', email);
-        const { data: pendingInvites, error: inviteError } = await supabase
-          .from('pending_invites')
-          .select('*')
-          .eq('email', email.toLowerCase())
-          .is('used_at', null)
-          .order('created_at', { ascending: false });
-        
-        console.log('All pending invites for email:', pendingInvites);
-        console.log('Pending invite query error:', inviteError);
-        
-        if (pendingInvites && pendingInvites.length > 0 && data.user) {
-          const pendingInvite = pendingInvites[0]; // Get the most recent one
-          console.log('Processing pending invite:', pendingInvite);
-          console.log('Calling complete_invite_signup with:', {
-            _user_id: data.user.id,
-            _email: email
-          });
-          
-          // Process the pending invite
-          const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
-            _user_id: data.user.id,
-            _email: email
-          });
-          
-          console.log('RPC complete_invite_signup result:', { rpcResult, rpcError });
-          
-          if (!rpcError && rpcResult) {
-            console.log('Invite processed successfully, result:', rpcResult);
-            
-            // Verify the role was actually assigned
-            const { data: profile, error: rolesError } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('user_id', data.user.id)
-              .single();
-            
-            console.log('User profile after processing invite:', profile, 'Error:', rolesError);
-            
-            toast.success("Convite processado com sucesso! Redirecionando...");
-            // Force page reload to update role
-            window.location.reload();
-          } else if (rpcError) {
-            console.error('Error processing invite:', rpcError);
-            toast.error("Erro ao processar convite: " + rpcError.message);
-          } else {
-            console.log('RPC returned false, invite not processed');
-          }
-        } else {
-          console.log('No pending invites found for this email');
-        }
-      } catch (inviteError) {
-        console.error('Error checking/processing invite:', inviteError);
+      // Process any pending invites with retry logic
+      if (data.user) {
+        await processInviteWithRetry(data.user.id, email, 3);
       }
       
       // Check if user needs to change password on first login
       const mustChangePassword = data.user?.user_metadata?.must_change_password;
-      console.log('Must change password:', mustChangePassword);
       
       if (mustChangePassword) {
-        // Redirect to profile security tab for first-time password change
         toast.success("Login realizado! Redirecionando para alterar sua senha padrão.");
         navigate("/perfil?tab=security", { replace: true });
       } else {
@@ -203,10 +149,44 @@ export default function AuthPage() {
         afterLoginRedirect();
       }
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
       toast.error(err.message || "Não foi possível fazer login");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const processInviteWithRetry = async (userId: string, userEmail: string, retries: number) => {
+    try {
+      console.log('🔍 Checking for pending invites for:', userEmail, 'retries left:', retries);
+      
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
+        _user_id: userId,
+        _email: userEmail
+      });
+      
+      if (rpcError) {
+        console.error('❌ Error processing invite:', rpcError);
+        if (retries > 0) {
+          console.log('🔄 Retrying invite processing...');
+          setTimeout(() => processInviteWithRetry(userId, userEmail, retries - 1), 1000);
+        }
+        return;
+      }
+      
+      if (rpcResult) {
+        console.log('✅ Invite processed successfully');
+        toast.success("Convite processado com sucesso! Redirecionando...");
+        // Force page reload to update role
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        console.log('ℹ️ No pending invites found for this email');
+      }
+    } catch (error) {
+      console.error('❌ Error in invite processing:', error);
+      if (retries > 0) {
+        setTimeout(() => processInviteWithRetry(userId, userEmail, retries - 1), 1000);
+      }
     }
   };
 
@@ -220,67 +200,26 @@ export default function AuthPage() {
         toast.error("As senhas não coincidem.");
         return;
       }
+      
       setLoading(true);
+      console.log('🔐 Starting signup process for:', email, 'invite flow:', isInviteFlow);
+      
       const redirectUrl = `${window.location.origin}/`;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: redirectUrl, data: { nome: name } },
+        options: { 
+          emailRedirectTo: redirectUrl, 
+          data: { nome: name }
+        },
       });
-      if (error) throw error;
       
-      // If this is an invite flow and signup was successful, process the invite
-      if (isInviteFlow && data.user) {
-        try {
-          // Get the invite token from URL to validate it's the correct invite
-          const urlParams = new URLSearchParams(window.location.search);
-          const inviteToken = urlParams.get('invite_token');
-          
-          if (inviteToken) {
-            // Validate and process invite using the token (with expiration check)
-            const { data: inviteData, error: inviteError } = await supabase
-              .from('pending_invites')
-              .select('*')
-              .eq('invite_token', inviteToken)
-              .eq('email', email.toLowerCase())
-              .is('used_at', null)
-              .or('expires_at.is.null,expires_at.gt.now()')
-              .single();
-            
-            if (inviteData && !inviteError) {
-              // Call the function to complete invite processing
-              const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
-                _user_id: data.user.id,
-                _email: email
-              });
-              
-              if (rpcError) {
-                console.error('Error processing invite:', rpcError);
-                toast.error('Erro ao processar convite');
-              } else {
-                toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");
-              }
-            } else {
-              toast.error('Convite inválido ou já utilizado');
-            }
-          } else {
-            // Legacy invite flow without token
-            const { error: rpcError } = await supabase.rpc('complete_invite_signup', {
-              _user_id: data.user.id,
-              _email: email
-            });
-            
-            if (rpcError) {
-              console.error('Error processing invite:', rpcError);
-            }
-            
-            toast.success("Cadastro de franqueado concluído! Verifique seu e-mail para confirmar o acesso.");
-          }
-        } catch (inviteError) {
-          console.log('Could not process invite:', inviteError);
-          toast.error('Erro ao processar convite');
-        }
-        
+      if (error) throw error;
+      console.log('✅ Signup successful for user:', data.user?.email);
+      
+      // Success messages and flow handling
+      if (isInviteFlow) {
+        toast.success("Cadastro concluído! Verifique seu e-mail para confirmar o acesso.");
         // After successful signup in invite flow, go to login tab
         setActiveTab("login");
         setPassword("");
@@ -288,7 +227,9 @@ export default function AuthPage() {
       } else {
         toast.success("Conta criada! Verifique seu e-mail para confirmar o acesso.");
       }
+      
     } catch (err: any) {
+      console.error('❌ Signup error:', err);
       toast.error(err.message || "Não foi possível criar a conta");
     } finally {
       setLoading(false);
