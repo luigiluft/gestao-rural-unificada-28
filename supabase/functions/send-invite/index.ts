@@ -168,8 +168,9 @@ serve(async (req) => {
       console.log('Pending invite saved with token:', inviteData.invite_token)
     }
 
-    // Create invite URL that will be used as redirect URL
-    const inviteUrl = `https://c7f9907d-3f79-439d-a9fa-b804ed28066c.lovableproject.com/auth?invite_token=${inviteData.invite_token}`
+    // Create invite URL using the Supabase project URL instead of Lovable
+    const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '') || 'https://fejvckhuhflndcjuoppy.supabase.co'
+    const inviteUrl = `${baseUrl}/auth?invite_token=${inviteData.invite_token}`
     console.log('Invite URL:', inviteUrl)
 
     // Use Supabase native invite system
