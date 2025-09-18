@@ -2300,7 +2300,7 @@ export type Database = {
         Returns: number
       }
       franqueado_can_view_producer: {
-        Args: { franqueado_id: string; producer_id: string }
+        Args: { _franqueado_id: string; _produtor_id: string }
         Returns: boolean
       }
       generate_inventory_number: {
