@@ -323,11 +323,11 @@ export function ItensComunsSection({
             <TableHeader>
               <TableRow>
                 <TableHead>Produto</TableHead>
-                <TableHead>Lote</TableHead>
+                {tipo === 'entrada' && <TableHead>Lote</TableHead>}
                 <TableHead>Quantidade</TableHead>
                 {tipo === 'entrada' && <TableHead>Depósito</TableHead>}
                 {tipo === 'entrada' && <TableHead>Valor Unit.</TableHead>}
-                <TableHead>Valor Total</TableHead>
+                {tipo === 'entrada' && <TableHead>Valor Total</TableHead>}
                 <TableHead className="w-[50px]">Ação</TableHead>
               </TableRow>
             </TableHeader>
@@ -339,11 +339,11 @@ export function ItensComunsSection({
                       {item.produto || item.produtoNome}
                     </span>
                   </TableCell>
-                  <TableCell>{item.lote}</TableCell>
+                  {tipo === 'entrada' && <TableCell>{item.lote}</TableCell>}
                   <TableCell>{item.quantidade} {item.unidade}</TableCell>
                   {tipo === 'entrada' && <TableCell>{item.deposito}</TableCell>}
                   {tipo === 'entrada' && <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>}
-                  <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>
+                  {tipo === 'entrada' && <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>}
                   <TableCell>
                     <Button
                       variant="ghost"
