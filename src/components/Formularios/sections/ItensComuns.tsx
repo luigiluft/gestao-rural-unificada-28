@@ -23,6 +23,7 @@ interface ItensComunsProps {
   produtosFallback?: any[]
   estoqueFEFO?: any[]
   isTutorialActive?: boolean
+  depositoId?: string
 }
 
 export function ItensComunsSection({ 
@@ -36,20 +37,22 @@ export function ItensComunsSection({
   estoque = [],
   produtosFallback = [],
   estoqueFEFO = [],
-  isTutorialActive 
+  isTutorialActive,
+  depositoId
 }: ItensComunsProps) {
   // Buscar preço mais recente quando produto estiver selecionado
-  const { data: latestPrice } = useProductLatestPrice(
+  const { data: latestPrice, isLoading: loadingPrice } = useProductLatestPrice(
     novoItem.produto_id, 
-    tipo === 'saida' ? estoque[0]?.deposito_id : undefined
+    depositoId
   )
 
   // Aplicar preço automático quando disponível
   useEffect(() => {
     if (tipo === 'saida' && latestPrice && novoItem.produto_id && !novoItem.valorUnitario) {
+      console.log('Aplicando preço automático:', latestPrice, 'para produto:', novoItem.produto_id)
       onNovoItemChange('valorUnitario', latestPrice)
     }
-  }, [latestPrice, novoItem.produto_id, tipo, onNovoItemChange])
+  }, [latestPrice, novoItem.produto_id, tipo, onNovoItemChange, novoItem.valorUnitario])
 
   // Processar produtos disponíveis baseado no tipo
   const produtosDisponiveis = (() => {
@@ -91,33 +94,33 @@ export function ItensComunsSection({
   })()
 
   const handleProdutoChange = (valor: string) => {
-    // Sempre setar o produto_id para refletir a seleção no UI
-    onNovoItemChange('produto_id', valor)
-
-    // Tentar obter metadados do produto (nome e unidade)
-    const produto = (produtosDisponiveis as any[]).find(p => String(p.id) === String(valor))
-
-    // Normalizar unidade para os valores existentes no Select de unidade
+    console.log('Produto selecionado:', valor)
+    const produto = produtosDisponiveis.find(p => p.id === valor)
+    console.log('Dados do produto encontrado:', produto)
+    
+    // Mapear unidades para formato padrão
     const unidadeMap: Record<string, string> = {
-      'KG': 'kg', 'KGS': 'kg',
-      'L': 'litros', 'LT': 'litros',
-      'UN': 'unidades', 'UND': 'unidades',
-      'SC': 'sacas', 'SACAS': 'sacas'
+      'KG': 'kg', 'KGS': 'kg', 'QUILOGRAMA': 'kg', 'QUILOGRAMAS': 'kg',
+      'L': 'litros', 'LT': 'litros', 'LITRO': 'litros', 'LITROS': 'litros',
+      'UN': 'unidades', 'UND': 'unidades', 'UNIDADE': 'unidades', 'UNIDADES': 'unidades',
+      'SC': 'sacas', 'SACAS': 'sacas', 'SACO': 'sacas', 'SACOS': 'sacas'
     }
-    const unidadeNormalizada = unidadeMap[(produto?.unidade_medida || '').toUpperCase()] || ''
-
+    const unidadeNormalizada = unidadeMap[(produto?.unidade_medida || '').toUpperCase()] || 'unidades'
+    console.log('Unidade normalizada:', unidadeNormalizada)
+    
+    // Aplicar mudanças
+    onNovoItemChange('produto_id', valor)
     if (produto?.nome) onNovoItemChange('produtoNome', produto.nome)
     if (unidadeNormalizada) onNovoItemChange('unidade', unidadeNormalizada)
 
-    // Para saídas, buscar o preço unitário mais recente do produto
-    if (tipo === 'saida') {
-      // Trigger fetch do preço mais recente - será aplicado pelo useEffect
-      onNovoItemChange('produto_id', valor)
-    }
-
-    // Limpar lote para forçar seleção manual após escolher o produto
+    // Limpar campos dependentes
     onNovoItemChange('lote', '')
     onNovoItemChange('lote_id', '')
+    
+    // Para entradas, limpar valor unitário para permitir inserção manual
+    if (tipo === 'entrada') {
+      onNovoItemChange('valorUnitario', '')
+    }
   }
 
   const handleLoteChange = (loteId: string) => {

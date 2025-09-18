@@ -160,6 +160,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         produtosFallback={produtosFallback}
         estoqueFEFO={estoqueFEFO}
         isTutorialActive={isTutorialActive}
+        depositoId={dados.depositoId}
       />
 
       {/* Botões de Ação */}
