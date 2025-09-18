@@ -40,11 +40,23 @@ export function ItensComunsSection({
   isTutorialActive,
   depositoId
 }: ItensComunsProps) {
+  // Debug inicial
+  console.log('=== RENDER ItensComunsSection ===')
+  console.log('tipo:', tipo)
+  console.log('novoItem no render:', novoItem)
+  console.log('depositoId:', depositoId)
+  
   // Buscar preço mais recente quando produto estiver selecionado
   const { data: latestPrice, isLoading: loadingPrice } = useProductLatestPrice(
     novoItem.produto_id, 
     depositoId
   )
+
+  useEffect(() => {
+    console.log('=== EFFECT novoItem.produto_id mudou ===')
+    console.log('novoItem.produto_id:', novoItem.produto_id)
+    console.log('novoItem completo:', novoItem)
+  }, [novoItem.produto_id])
 
   // Aplicar preço automático quando disponível
   useEffect(() => {
@@ -78,10 +90,12 @@ export function ItensComunsSection({
           
           return acc
         }, {} as Record<string, any>)
+        console.log('Produtos disponíveis para saída:', Object.values(agrupados))
         return Object.values(agrupados)
       }
       
       // Fallback para produtos sem estoque
+      console.log('Usando produtos fallback para saída:', produtosFallback)
       return produtosFallback.map(produto => ({
         id: produto.id,
         nome: produto.nome,
@@ -89,14 +103,19 @@ export function ItensComunsSection({
       }))
     } else {
       // Para entrada, usar produtos fallback ou permitir entrada manual
+      console.log('Produtos disponíveis para entrada:', produtosFallback)
       return produtosFallback
     }
   })()
 
   const handleProdutoChange = (valor: string) => {
-    console.log('Produto selecionado:', valor)
+    console.log('=== INÍCIO handleProdutoChange ===')
+    console.log('Valor recebido:', valor)
+    console.log('produtosDisponiveis:', produtosDisponiveis)
+    console.log('novoItem.produto_id antes:', novoItem.produto_id)
+    
     const produto = produtosDisponiveis.find(p => p.id === valor)
-    console.log('Dados do produto encontrado:', produto)
+    console.log('Produto encontrado:', produto)
     
     // Mapear unidades para formato padrão
     const unidadeMap: Record<string, string> = {
@@ -108,19 +127,32 @@ export function ItensComunsSection({
     const unidadeNormalizada = unidadeMap[(produto?.unidade_medida || '').toUpperCase()] || 'unidades'
     console.log('Unidade normalizada:', unidadeNormalizada)
     
-    // Aplicar mudanças
+    // Aplicar mudanças sequencialmente
+    console.log('Aplicando produto_id:', valor)
     onNovoItemChange('produto_id', valor)
-    if (produto?.nome) onNovoItemChange('produtoNome', produto.nome)
-    if (unidadeNormalizada) onNovoItemChange('unidade', unidadeNormalizada)
+    
+    if (produto?.nome) {
+      console.log('Aplicando produtoNome:', produto.nome)
+      onNovoItemChange('produtoNome', produto.nome)
+    }
+    
+    if (unidadeNormalizada) {
+      console.log('Aplicando unidade:', unidadeNormalizada)
+      onNovoItemChange('unidade', unidadeNormalizada)
+    }
 
     // Limpar campos dependentes
+    console.log('Limpando lote e lote_id')
     onNovoItemChange('lote', '')
     onNovoItemChange('lote_id', '')
     
     // Para entradas, limpar valor unitário para permitir inserção manual
     if (tipo === 'entrada') {
+      console.log('Limpando valorUnitario para entrada')
       onNovoItemChange('valorUnitario', '')
     }
+    
+    console.log('=== FIM handleProdutoChange ===')
   }
 
   const handleLoteChange = (loteId: string) => {
@@ -159,22 +191,22 @@ export function ItensComunsSection({
                   onValueChange={handleProdutoChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder="Selecione o produto" />
                   </SelectTrigger>
-                   <SelectContent>
-                     {produtosDisponiveis.map((produto) => (
-                       <SelectItem key={produto.id} value={produto.id}>
-                         <div className="flex justify-between items-center w-full">
-                           <span>{produto.nome}</span>
-                           {tipo === 'saida' && produto.quantidade_total && (
-                             <span className="text-muted-foreground text-xs ml-2">
-                               Disp: {produto.quantidade_total} {produto.unidade_medida || 'UN'}
-                             </span>
-                           )}
-                         </div>
-                       </SelectItem>
-                     ))}
-                   </SelectContent>
+                  <SelectContent>
+                    {produtosDisponiveis.map((produto) => (
+                      <SelectItem key={produto.id} value={produto.id}>
+                        <div className="flex justify-between items-center w-full">
+                          <span>{produto.nome}</span>
+                          {tipo === 'saida' && produto.quantidade_total && (
+                            <span className="text-muted-foreground text-xs ml-2">
+                              Disp: {produto.quantidade_total} {produto.unidade_medida || 'UN'}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               ) : (
                 <Input
