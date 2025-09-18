@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: existing, error } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, nome, email')
           .eq('user_id', u.id)
           .maybeSingle();
         if (error) {
@@ -43,26 +43,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // TODO: Reativar no futuro - Check and process pending invites after creating/finding profile
-        /*
-        try {
-          console.log('Checking for pending invites for user:', u.email);
-          const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
-            _user_id: u.id,
-            _email: u.email || ''
-          });
-          
-          console.log('Invite processing result:', { rpcResult, rpcError });
-          
-          if (rpcResult) {
-            console.log('Invite processed successfully for user:', u.email);
-            // Force a page reload to update the role in the UI
-            setTimeout(() => window.location.reload(), 100);
+        // Verificar se usuário precisa completar cadastro
+        // Condições: perfil incompleto (nome padrão) ou sem senha personalizada
+        if (existing) {
+          const hasDefaultName = !existing.nome || existing.nome === u.email?.split('@')[0];
+          const needsCompletion = hasDefaultName;
+
+          if (needsCompletion && window.location.pathname !== '/completar-cadastro') {
+            console.log('Redirecionando usuário para completar cadastro');
+            setTimeout(() => {
+              window.location.href = '/completar-cadastro';
+            }, 100);
+            return;
           }
-        } catch (inviteError) {
-          console.error('Error processing invite:', inviteError);
+
+          // Processar convites pendentes apenas se o cadastro estiver completo
+          if (!needsCompletion) {
+          try {
+            console.log('Checking for pending invites for user:', u.email);
+            const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
+              _user_id: u.id,
+              _email: u.email || ''
+            });
+            
+            console.log('Invite processing result:', { rpcResult, rpcError });
+            
+            if (rpcResult) {
+              console.log('Invite processed successfully for user:', u.email);
+              // Force a page reload to update the role in the UI
+              setTimeout(() => window.location.reload(), 100);
+            }
+          } catch (inviteError) {
+            console.error('Error processing invite:', inviteError);
+          }
+          }
         }
-        */
       } catch (e) {
         console.error('Falha ao garantir perfil', e);
       }

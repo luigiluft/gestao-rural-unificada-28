@@ -15,6 +15,7 @@ import Suporte from "./pages/Suporte";
 import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
+import CompletarCadastro from "./pages/CompletarCadastro";
 import Franqueados from "./pages/Franqueados";
 import AprovacaoEntradas from "./pages/AprovacaoEntradas";
 import Separacao from "./pages/Separacao";
@@ -66,6 +67,7 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastro /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
               <Route path="catalogo" element={<RequirePageAccess pageKey="catalogo"><Catalogo /></RequirePageAccess>} />

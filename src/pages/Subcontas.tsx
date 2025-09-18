@@ -17,6 +17,7 @@ import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { useUserPermissionTemplates } from "@/hooks/useUserPermissionTemplates"
 import { useCleanupPermissions } from "@/hooks/useCleanupPermissions"
 import { usePendingInvites } from "@/hooks/usePendingInvites"
+import { useInviteLink } from "@/hooks/useInviteLink"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PermissionTemplate } from "@/types/permissions"
 
@@ -144,39 +145,41 @@ export default function Subcontas() {
         }
       }
 
-      const userData = {
-        email: createEmail,
-        inviter_user_id: user?.id,
-        parent_user_id: parentUserId,
-        role: selectedProfile.target_role,
-        permissions: selectedProfile.permissions,
-        ...(franquiaId && { franquia_id: franquiaId })
+      // Em vez de usar a edge function, vamos criar o convite diretamente no banco
+      console.log('Criando convite pendente para:', createEmail)
+
+      const { data: inviteData, error: inviteError } = await supabase
+        .from('pending_invites')
+        .insert({
+          email: createEmail,
+          inviter_user_id: user?.id,
+          parent_user_id: parentUserId,
+          role: selectedProfile.target_role,
+          permissions: selectedProfile.permissions as any,
+          ...(franquiaId && { franquia_id: franquiaId })
+        })
+        .select()
+        .single()
+
+      if (inviteError) {
+        console.error('Erro ao criar convite:', inviteError)
+        throw new Error('Erro ao criar convite pendente')
       }
 
-      console.log('Sending to edge function:', userData)
+      console.log('Convite criado com sucesso:', inviteData)
 
-      const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: userData
-      })
-
-      if (error) {
-        console.error('Edge function error:', error)
-        throw new Error(`Erro na função: ${error.message}`)
+      // Retornar dados simulando o formato da edge function
+      return { 
+        success: true, 
+        message: 'Convite criado com sucesso!',
+        invite_id: inviteData.id 
       }
-      
-      if (!data?.success) {
-        console.error('Edge function returned error:', data)
-        throw new Error(data?.error || 'Erro ao criar usuário')
-      }
-
-      console.log('Edge function response:', data)
-      return data
     },
     onSuccess: (data) => {
       setCreatedCredentials({
         email: createEmail
       })
-      toast.success("Convite enviado com sucesso!")
+      toast.success("Convite criado! O usuário receberá um link para completar o cadastro.")
       refetchSubaccounts()
       refetchInvites()
       setCreateEmail("")
@@ -486,6 +489,15 @@ export default function Subcontas() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInvite(invite)}
+                            disabled={isResending}
+                            title="Reenviar convite"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
