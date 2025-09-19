@@ -26,7 +26,11 @@ import {
   Package2,
   BookOpen,
   Warehouse,
-  Navigation
+  Navigation,
+  Route,
+  Calendar as CalendarIcon,
+  AlertTriangle,
+  Calculator
 } from "lucide-react"
 
 export interface MenuItem {
@@ -65,7 +69,15 @@ const iconMap = {
   "perfis-funcionarios": Users,
   instrucoes: BookOpen,
   wms: Warehouse,
-  tms: Navigation
+  tms: Navigation,
+  remessas: Package,
+  planejamento: Route,
+  viagens: Truck,
+  agenda: CalendarIcon,
+  tracking: MapPin,
+  "proof-of-delivery": FileText,
+  ocorrencias: AlertTriangle,
+  "tabelas-frete": Calculator
 }
 
 const menuLabels = {
@@ -96,7 +108,15 @@ const menuLabels = {
   "perfis-funcionarios": "Perfis de Funcionários",
   instrucoes: "Instruções",
   wms: "WMS",
-  tms: "TMS"
+  tms: "TMS",
+  remessas: "Remessas",
+  planejamento: "Planejamento",
+  viagens: "Viagens",
+  agenda: "Agenda",
+  tracking: "Tracking",
+  "proof-of-delivery": "Proof of Delivery",
+  ocorrencias: "Ocorrências",
+  "tabelas-frete": "Tabelas de Frete"
 }
 
 export const useDynamicMenuItems = () => {
@@ -137,6 +157,14 @@ export const useDynamicMenuItems = () => {
 
     // Páginas do TMS
     const tmsPages = [
+      'remessas',
+      'planejamento',
+      'viagens', 
+      'agenda',
+      'tracking',
+      'proof-of-delivery',
+      'ocorrencias',
+      'tabelas-frete',
       'transporte'
     ]
 
