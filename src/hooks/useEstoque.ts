@@ -48,26 +48,74 @@ export const useEstoque = () => {
         return estoqueFormatado
       }
 
-      // Verificar se é subconta e obter o franqueado master
+      // Verificar se é subconta e obter o usuário pai
       const { data: hierarchy } = await supabase
         .from("user_hierarchy")
         .select("parent_user_id")
         .eq("child_user_id", uid)
         .maybeSingle()
 
-      const candidateOwners: string[] = hierarchy?.parent_user_id
-        ? [hierarchy.parent_user_id, uid]
-        : [uid]
+      let allowedDepositos: string[] = []
 
-      // Buscar todos os depósitos (franquias) pertencentes ao(s) franqueado(s) candidatos
-      const { data: franquias } = await supabase
-        .from("franquias")
-        .select("id")
-        .in("master_franqueado_id", candidateOwners)
+      if (hierarchy?.parent_user_id) {
+        // Buscar role do usuário pai
+        const { data: parentProfile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("user_id", hierarchy.parent_user_id)
+          .single()
 
-      const allowedDepositos = (franquias || []).map((f) => f.id)
+        const parentRole = parentProfile?.role
+        
+        if (parentRole === 'franqueado') {
+          // Para subcontas de franqueados: buscar franquias onde o pai é master
+          const { data: franquias } = await supabase
+            .from("franquias")
+            .select("id")
+            .eq("master_franqueado_id", hierarchy.parent_user_id)
+          
+          allowedDepositos = (franquias || []).map((f) => f.id)
+        } else if (parentRole === 'produtor') {
+          // Para subcontas de produtores: buscar franquia do produtor pai
+          const { data: produtor } = await supabase
+            .from("produtores")
+            .select("franquia_id")
+            .eq("user_id", hierarchy.parent_user_id)
+            .maybeSingle()
+          
+          if (produtor?.franquia_id) {
+            allowedDepositos = [produtor.franquia_id]
+          }
+        }
+      } else {
+        // Para contas master: verificar se é franqueado ou produtor
+        const { data: userProfile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("user_id", uid)
+          .single()
 
-      // Se encontrou depósitos, filtrar o estoque por eles (herdando visibilidade do master)
+        if (userProfile?.role === 'franqueado') {
+          const { data: franquias } = await supabase
+            .from("franquias")
+            .select("id")
+            .eq("master_franqueado_id", uid)
+          
+          allowedDepositos = (franquias || []).map((f) => f.id)
+        } else if (userProfile?.role === 'produtor') {
+          const { data: produtor } = await supabase
+            .from("produtores")
+            .select("franquia_id")
+            .eq("user_id", uid)
+            .maybeSingle()
+          
+          if (produtor?.franquia_id) {
+            allowedDepositos = [produtor.franquia_id]
+          }
+        }
+      }
+
+      // Se encontrou depósitos permitidos, filtrar o estoque
       if (allowedDepositos.length > 0) {
         return estoqueFormatado.filter((item: any) => allowedDepositos.includes(item.deposito_id))
       }
