@@ -342,16 +342,16 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
 
                   {/* Controles de Quantidade Reorganizados */}
                   <div className="flex items-center justify-center gap-4 mb-4">
-                    {/* Botão Menos - Esquerda */}
+                    {/* Botão Mais - Esquerda (3x maior) */}
                     <Button
-                      size="sm"
+                      size="lg"
                       variant="outline"
-                      onClick={() => handleQuantidadeChange(itemAtual.id, Math.max(0, itemAtual.quantidade_separada - itemAtual.multiplo_incremento))}
-                      disabled={itemAtual.quantidade_separada <= 0}
-                      className="h-10 w-10"
-                      title={`Remover ${itemAtual.multiplo_incremento} ${itemAtual.unidade_medida}`}
+                      onClick={() => handleQuantidadeChange(itemAtual.id, Math.min(itemAtual.quantidade_total, itemAtual.quantidade_separada + itemAtual.multiplo_incremento))}
+                      disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total || !itemAtual.pallet_escaneado}
+                      className={`h-16 w-16 ${!itemAtual.pallet_escaneado ? "opacity-50" : ""}`}
+                      title={!itemAtual.pallet_escaneado ? "Escaneie o pallet primeiro" : `Adicionar ${itemAtual.multiplo_incremento} ${itemAtual.unidade_medida}`}
                     >
-                      <Minus className="h-4 w-4" />
+                      <Plus className="h-6 w-6" />
                     </Button>
 
                     {/* Display Central */}
@@ -364,16 +364,16 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
                       </div>
                     </div>
 
-                    {/* Botão Mais - Direita (3x maior) */}
+                    {/* Botão Menos - Direita */}
                     <Button
-                      size="lg"
+                      size="sm"
                       variant="outline"
-                      onClick={() => handleQuantidadeChange(itemAtual.id, Math.min(itemAtual.quantidade_total, itemAtual.quantidade_separada + itemAtual.multiplo_incremento))}
-                      disabled={itemAtual.quantidade_separada >= itemAtual.quantidade_total || !itemAtual.pallet_escaneado}
-                      className={`h-16 w-16 ${!itemAtual.pallet_escaneado ? "opacity-50" : ""}`}
-                      title={!itemAtual.pallet_escaneado ? "Escaneie o pallet primeiro" : `Adicionar ${itemAtual.multiplo_incremento} ${itemAtual.unidade_medida}`}
+                      onClick={() => handleQuantidadeChange(itemAtual.id, Math.max(0, itemAtual.quantidade_separada - itemAtual.multiplo_incremento))}
+                      disabled={itemAtual.quantidade_separada <= 0}
+                      className="h-10 w-10"
+                      title={`Remover ${itemAtual.multiplo_incremento} ${itemAtual.unidade_medida}`}
                     >
-                      <Plus className="h-6 w-6" />
+                      <Minus className="h-4 w-4" />
                     </Button>
                   </div>
 
