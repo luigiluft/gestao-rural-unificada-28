@@ -3027,6 +3027,33 @@ export type Database = {
         }
         Relationships: []
       }
+      viagem_remessas: {
+        Row: {
+          created_at: string
+          id: string
+          ordem_entrega: number | null
+          remessa_id: string
+          updated_at: string
+          viagem_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordem_entrega?: number | null
+          remessa_id: string
+          updated_at?: string
+          viagem_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordem_entrega?: number | null
+          remessa_id?: string
+          updated_at?: string
+          viagem_id?: string
+        }
+        Relationships: []
+      }
       viagens: {
         Row: {
           combustivel_fim: number | null

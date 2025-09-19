@@ -3,66 +3,100 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Calendar, Truck, Package, MapPin, Plus, Route, Clock, Users } from 'lucide-react';
+import { Plus, Truck, Package, MapPin, Clock } from 'lucide-react';
+import { useViagens } from '@/hooks/useViagens';
+import { useRemessasDisponiveis } from '@/hooks/useRemessas';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useAlocarRemessa, useDesalocarRemessa } from '@/hooks/useViagemRemessas';
 
 const Planejamento = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedViagem, setSelectedViagem] = useState<string | null>(null);
+  
+  const { data: viagens = [], isLoading: loadingViagens } = useViagens();
+  const { data: remessasDisponiveis = [], isLoading: loadingRemessas } = useRemessasDisponiveis();
+  const alocarRemessa = useAlocarRemessa();
+  const desalocarRemessa = useDesalocarRemessa();
+
+  const viagensPlanejadas = viagens.filter(v => v.status === 'planejada');
+  const viagensEmAndamento = viagens.filter(v => v.status === 'em_andamento');
+  
+  const totalRemessasAlocadas = viagens.reduce((total, viagem) => 
+    total + (viagem.viagem_remessas?.length || 0), 0
+  );
+
+  const handleAlocarRemessa = (viagemId: string, remessaId: string) => {
+    alocarRemessa.mutate({ viagemId, remessaId });
+  };
+
+  const handleDesalocarRemessa = (viagemId: string, remessaId: string) => {
+    desalocarRemessa.mutate({ viagemId, remessaId });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'planejada': { variant: 'secondary' as const, label: 'Planejada' },
+      'em_andamento': { variant: 'default' as const, label: 'Em Andamento' },
+      'concluida': { variant: 'outline' as const, label: 'Concluída' },
+    };
+    return statusMap[status] || { variant: 'secondary' as const, label: status };
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Planejamento de Rotas</h1>
+          <h1 className="text-3xl font-bold">Planejamento de Viagens</h1>
           <p className="text-muted-foreground">
-            Planeje e otimize rotas de entrega e coleta
+            Aloque remessas às viagens e otimize a logística de entrega
           </p>
         </div>
         
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Nova Rota
+          Nova Viagem
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rotas Ativas</CardTitle>
+            <CardTitle className="text-sm font-medium">Viagens Ativas</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{viagensEmAndamento.length}</div>
             <p className="text-xs text-muted-foreground">Em execução</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Planejadas</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">Para hoje</p>
+            <div className="text-2xl font-bold">{viagensPlanejadas.length}</div>
+            <p className="text-xs text-muted-foreground">Para executar</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Entregas</CardTitle>
+            <CardTitle className="text-sm font-medium">Remessas Alocadas</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-muted-foreground">Agendadas</p>
+            <div className="text-2xl font-bold">{totalRemessasAlocadas}</div>
+            <p className="text-xs text-muted-foreground">Total nas viagens</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eficiência</CardTitle>
+            <CardTitle className="text-sm font-medium">Disponíveis</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">87%</div>
-            <p className="text-xs text-muted-foreground">Taxa média</p>
+            <div className="text-2xl font-bold">{remessasDisponiveis.length}</div>
+            <p className="text-xs text-muted-foreground">Sem alocação</p>
           </CardContent>
         </Card>
       </div>
@@ -70,94 +104,138 @@ const Planejamento = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Otimização de Rotas</CardTitle>
+            <CardTitle>Remessas Disponíveis</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Remessas prontas para serem alocadas em viagens
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
-              <Route className="h-8 w-8 text-primary" />
-              <div className="flex-1">
-                <h4 className="font-semibold">Algoritmo Inteligente</h4>
-                <p className="text-sm text-muted-foreground">
-                  Sistema de otimização automática para reduzir tempo e combustível
-                </p>
+          <CardContent>
+            {loadingRemessas ? (
+              <div className="text-center py-4">Carregando remessas...</div>
+            ) : remessasDisponiveis.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                Nenhuma remessa disponível para alocação
               </div>
-              <Button variant="outline">Configurar</Button>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
-              <Clock className="h-8 w-8 text-primary" />
-              <div className="flex-1">
-                <h4 className="font-semibold">Janelas de Tempo</h4>
-                <p className="text-sm text-muted-foreground">
-                  Define horários específicos para cada entrega
-                </p>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {remessasDisponiveis.map((remessa) => (
+                  <div key={remessa.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{remessa.numero}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {remessa.peso_total}kg • Vol: {remessa.total_volumes} • R$ {remessa.valor_total}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Status: {remessa.status}
+                      </p>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          Alocar
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Alocar Remessa à Viagem</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="text-sm">
+                            <strong>Remessa:</strong> {remessa.numero}
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Selecione uma viagem:</h4>
+                            {viagensPlanejadas.length === 0 ? (
+                              <div className="text-muted-foreground text-sm">
+                                Nenhuma viagem planejada disponível
+                              </div>
+                            ) : (
+                              viagensPlanejadas.map((viagem) => (
+                                <Button
+                                  key={viagem.id}
+                                  variant="outline"
+                                  className="w-full justify-start"
+                                  onClick={() => handleAlocarRemessa(viagem.id, remessa.id)}
+                                >
+                                  <div className="text-left">
+                                    <div className="font-medium">{viagem.numero}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {viagem.viagem_remessas?.length || 0} remessas
+                                    </div>
+                                  </div>
+                                </Button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                ))}
               </div>
-              <Button variant="outline">Gerenciar</Button>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
-              <Users className="h-8 w-8 text-primary" />
-              <div className="flex-1">
-                <h4 className="font-semibold">Equipes e Veículos</h4>
-                <p className="text-sm text-muted-foreground">
-                  Aloca recursos disponíveis de forma eficiente
-                </p>
-              </div>
-              <Button variant="outline">Ver Recursos</Button>
-            </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Próximas Rotas</CardTitle>
+            <CardTitle>Viagens Planejadas</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Viagens com remessas alocadas
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">Rota SP-RJ</h4>
-                  <p className="text-sm text-muted-foreground">12 entregas • 8h estimado</p>
-                </div>
-                <Badge variant="secondary">Planejada</Badge>
+            {loadingViagens ? (
+              <div className="text-center py-4">Carregando viagens...</div>
+            ) : viagens.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                Nenhuma viagem cadastrada
               </div>
-              
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">Rota BH-Salvador</h4>
-                  <p className="text-sm text-muted-foreground">8 entregas • 6h estimado</p>
-                </div>
-                <Badge variant="default">Em Andamento</Badge>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {viagens.map((viagem) => (
+                  <div key={viagem.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium">{viagem.numero}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(viagem.data_inicio).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge {...getStatusBadge(viagem.status)}>
+                        {getStatusBadge(viagem.status).label}
+                      </Badge>
+                    </div>
+                    
+                    {viagem.viagem_remessas && Array.isArray(viagem.viagem_remessas) && viagem.viagem_remessas.length > 0 ? (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium">Remessas alocadas:</h5>
+                        {viagem.viagem_remessas.map((vr: any) => (
+                          <div key={vr.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded">
+                            <span>{vr.remessas?.numero}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDesalocarRemessa(viagem.id, vr.remessas?.id)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        Nenhuma remessa alocada
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">Rota SP-Campinas</h4>
-                  <p className="text-sm text-muted-foreground">15 entregas • 4h estimado</p>
-                </div>
-                <Badge variant="outline">Concluída</Badge>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center space-y-4">
-            <MapPin className="h-16 w-16 mx-auto text-muted-foreground" />
-            <h3 className="text-lg font-semibold">Mapa de Planejamento</h3>
-            <p className="text-muted-foreground">
-              Visualização interativa do mapa para planejamento de rotas será implementada em breve.
-              <br />
-              Aqui você poderá visualizar todas as entregas no mapa e otimizar rotas em tempo real.
-            </p>
-            <Button variant="outline">
-              Ver em Tela Cheia
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
