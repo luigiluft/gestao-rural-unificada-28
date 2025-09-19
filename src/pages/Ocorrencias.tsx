@@ -1,137 +1,121 @@
-import { useState } from "react"
-import { AlertTriangle, Plus, Search, Filter, Clock, CheckCircle, X, Camera } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  AlertTriangle, 
+  Clock, 
+  MapPin, 
+  User, 
+  FileText, 
+  Plus,
+  CheckCircle,
+  XCircle,
+  AlertCircle
+} from 'lucide-react';
 
-export default function Ocorrencias() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [tipoFilter, setTipoFilter] = useState("all")
+const Ocorrencias = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [tipoFilter, setTipoFilter] = useState('all');
 
   // Mock data para ocorrências
   const ocorrencias = [
     {
-      id: "OCO-001",
-      numero: "2024001",
-      tipo: "atraso",
-      severidade: "media",
-      titulo: "Atraso na entrega por problema mecânico",
-      descricao: "Veículo apresentou problema no sistema de freios durante a viagem",
-      entregaId: "ENT-003",
-      cliente: "Carlos Oliveira",
-      motorista: "Ana Silva",
-      veiculo: "Truck 001 - ABC-1234",
-      dataOcorrencia: "2024-01-15T11:30:00",
-      status: "aberta",
-      prioridade: "alta",
-      responsavel: "João Silva",
-      acaoCorretiva: null,
-      tempoResolucao: null,
-      fotos: 2,
-      localizacao: "Rod. Washington Luís, KM 235"
+      id: '1',
+      numero: 'OC-001',
+      tipo: 'acidente',
+      titulo: 'Acidente leve na BR-101',
+      descricao: 'Colisão traseira durante o trânsito. Sem feridos.',
+      status: 'aberta',
+      prioridade: 'alta',
+      viagem_id: 'VG-001',
+      veiculo: 'ABC-1234',
+      motorista: 'João Silva',
+      localizacao: 'BR-101, km 45',
+      data_ocorrencia: '2024-01-15 14:30',
+      criado_por: 'Sistema Automático',
+      responsavel: 'Maria Santos',
+      observacoes: 'Guincho a caminho. Estimativa de 2 horas para resolução.'
     },
     {
-      id: "OCO-002",
-      numero: "2024002",
-      tipo: "avaria",
-      severidade: "baixa",
-      titulo: "Sacas molhadas durante transporte",
-      descricao: "Algumas sacas de milho ficaram molhadas devido à chuva",
-      entregaId: "ENT-001",
-      cliente: "João Silva",
-      motorista: "Pedro Santos",
-      veiculo: "Truck 001 - ABC-1234",
-      dataOcorrencia: "2024-01-14T15:20:00",
-      status: "resolvida",
-      prioridade: "media",
-      responsavel: "Maria Santos",
-      acaoCorretiva: "Produtos foram secos e reembalados. Cliente foi ressarcido",
-      tempoResolucao: "2h 30min",
-      fotos: 4,
-      localizacao: "Fazenda Santa Maria"
+      id: '2',
+      numero: 'OC-002',
+      tipo: 'avaria',
+      titulo: 'Pneu furado',
+      descricao: 'Pneu dianteiro direito furou durante a viagem.',
+      status: 'resolvida',
+      prioridade: 'media',
+      viagem_id: 'VG-002',
+      veiculo: 'DEF-5678',
+      motorista: 'Carlos Oliveira',
+      localizacao: 'Rodovia dos Bandeirantes, km 78',
+      data_ocorrencia: '2024-01-14 10:15',
+      criado_por: 'Carlos Oliveira',
+      responsavel: 'Pedro Lima',
+      observacoes: 'Pneu trocado com sucesso. Viagem retomada às 11:30.'
     },
     {
-      id: "OCO-003",
-      numero: "2024003",
-      tipo: "recusa",
-      severidade: "alta",
-      titulo: "Cliente recusou recebimento",
-      descricao: "Cliente alegou que não fez o pedido e recusou o recebimento",
-      entregaId: "ENT-005",
-      cliente: "Maria Costa",
-      motorista: "João Silva",
-      veiculo: "Truck 002 - DEF-5678",
-      dataOcorrencia: "2024-01-13T14:15:00",
-      status: "em_andamento",
-      prioridade: "alta",
-      responsavel: "Pedro Santos",
-      acaoCorretiva: "Verificando documentação do pedido com o setor comercial",
-      tempoResolucao: null,
-      fotos: 1,
-      localizacao: "Sítio Boa Vista"
+      id: '3',
+      numero: 'OC-003',
+      tipo: 'atraso',
+      titulo: 'Atraso na entrega - trânsito intenso',
+      descricao: 'Entrega atrasada devido ao trânsito intenso na região.',
+      status: 'em_andamento',
+      prioridade: 'baixa',
+      viagem_id: 'VG-003',
+      veiculo: 'GHI-9012',
+      motorista: 'Ana Santos',
+      localizacao: 'Marginal Tietê, SP',
+      data_ocorrencia: '2024-01-15 16:00',
+      criado_por: 'Ana Santos',
+      responsavel: 'Roberto Silva',
+      observacoes: 'Cliente notificado sobre o atraso. Nova estimativa: 18:30.'
     }
-  ]
+  ];
 
   const statusBadges = {
-    aberta: { label: "Aberta", variant: "destructive" as const },
-    em_andamento: { label: "Em Andamento", variant: "secondary" as const },
-    resolvida: { label: "Resolvida", variant: "default" as const },
-    fechada: { label: "Fechada", variant: "secondary" as const }
-  }
+    aberta: { label: 'Aberta', variant: 'destructive' as const, icon: XCircle },
+    em_andamento: { label: 'Em Andamento', variant: 'default' as const, icon: Clock },
+    resolvida: { label: 'Resolvida', variant: 'outline' as const, icon: CheckCircle },
+    cancelada: { label: 'Cancelada', variant: 'secondary' as const, icon: XCircle }
+  };
 
   const tipoBadges = {
-    atraso: { label: "Atraso", variant: "secondary" as const },
-    avaria: { label: "Avaria", variant: "destructive" as const },
-    recusa: { label: "Recusa", variant: "secondary" as const },
-    endereco: { label: "Endereço", variant: "default" as const },
-    documentacao: { label: "Documentação", variant: "outline" as const }
-  }
+    acidente: { label: 'Acidente', variant: 'destructive' as const },
+    avaria: { label: 'Avaria', variant: 'default' as const },
+    atraso: { label: 'Atraso', variant: 'secondary' as const },
+    roubo: { label: 'Roubo', variant: 'destructive' as const },
+    outros: { label: 'Outros', variant: 'outline' as const }
+  };
 
-  const severidadeBadges = {
-    baixa: { label: "Baixa", variant: "secondary" as const },
-    media: { label: "Média", variant: "default" as const },
-    alta: { label: "Alta", variant: "destructive" as const }
-  }
+  const prioridadeBadges = {
+    alta: { label: 'Alta', variant: 'destructive' as const },
+    media: { label: 'Média', variant: 'default' as const },
+    baixa: { label: 'Baixa', variant: 'secondary' as const }
+  };
 
   const filteredOcorrencias = ocorrencias.filter(ocorrencia => {
     const matchesSearch = ocorrencia.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ocorrencia.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ocorrencia.titulo.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || ocorrencia.status === statusFilter
-    const matchesTipo = tipoFilter === "all" || ocorrencia.tipo === tipoFilter
-    return matchesSearch && matchesStatus && matchesTipo
-  })
-
-  const calcularTempoAberto = (dataOcorrencia: string) => {
-    const agora = new Date()
-    const data = new Date(dataOcorrencia)
-    const diferenca = agora.getTime() - data.getTime()
-    
-    const horas = Math.floor(diferenca / (1000 * 60 * 60))
-    const dias = Math.floor(horas / 24)
-    
-    if (dias > 0) return `${dias}d ${horas % 24}h`
-    return `${horas}h`
-  }
+                         ocorrencia.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ocorrencia.motorista.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || ocorrencia.status === statusFilter;
+    const matchesTipo = tipoFilter === 'all' || ocorrencia.tipo === tipoFilter;
+    return matchesSearch && matchesStatus && matchesTipo;
+  });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <AlertTriangle className="h-8 w-8" />
-            Ocorrências
-          </h1>
+          <h1 className="text-3xl font-bold">Ocorrências</h1>
           <p className="text-muted-foreground">
-            Registro e gestão de problemas durante o transporte
+            Gerencie e acompanhe ocorrências durante as viagens
           </p>
         </div>
         
@@ -145,76 +129,71 @@ export default function Ocorrencias() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Registrar Nova Ocorrência</DialogTitle>
-              <DialogDescription>
-                Registre um problema ocorrido durante o transporte
-              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Tipo de Ocorrência</label>
+                <div className="space-y-2">
+                  <Label htmlFor="tipo">Tipo de Ocorrência</Label>
                   <Select>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar tipo" />
+                      <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="atraso">Atraso</SelectItem>
+                      <SelectItem value="acidente">Acidente</SelectItem>
                       <SelectItem value="avaria">Avaria</SelectItem>
-                      <SelectItem value="recusa">Recusa</SelectItem>
-                      <SelectItem value="endereco">Endereço não localizado</SelectItem>
-                      <SelectItem value="documentacao">Problema de documentação</SelectItem>
+                      <SelectItem value="atraso">Atraso</SelectItem>
+                      <SelectItem value="roubo">Roubo</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Severidade</label>
+                <div className="space-y-2">
+                  <Label htmlFor="prioridade">Prioridade</Label>
                   <Select>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar severidade" />
+                      <SelectValue placeholder="Selecione a prioridade" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="baixa">Baixa</SelectItem>
-                      <SelectItem value="media">Média</SelectItem>
                       <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="baixa">Baixa</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Entrega Relacionada</label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar entrega" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ENT-001">ENT-001 - João Silva</SelectItem>
-                      <SelectItem value="ENT-002">ENT-002 - Maria Santos</SelectItem>
-                      <SelectItem value="ENT-003">ENT-003 - Carlos Oliveira</SelectItem>
-                    </SelectContent>
-                  </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="titulo">Título</Label>
+                <Input id="titulo" placeholder="Título da ocorrência" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="descricao">Descrição</Label>
+                <Textarea id="descricao" placeholder="Descreva detalhadamente a ocorrência" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="veiculo">Veículo</Label>
+                  <Input id="veiculo" placeholder="Placa do veículo" />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Localização</label>
-                  <Input placeholder="Local onde ocorreu o problema" />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Título</label>
-                <Input placeholder="Resumo do problema" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Descrição Detalhada</label>
-                <Textarea placeholder="Descreva o problema em detalhes..." />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Fotos (Opcional)</label>
-                <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
-                  <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Clique para adicionar fotos da ocorrência
-                  </p>
+                <div className="space-y-2">
+                  <Label htmlFor="motorista">Motorista</Label>
+                  <Input id="motorista" placeholder="Nome do motorista" />
                 </div>
               </div>
-              <div className="flex gap-2">
+              
+              <div className="space-y-2">
+                <Label htmlFor="localizacao">Localização</Label>
+                <Input id="localizacao" placeholder="Local onde ocorreu o problema" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="observacoes">Observações</Label>
+                <Textarea id="observacoes" placeholder="Observações adicionais" />
+              </div>
+              
+              <div className="flex justify-end gap-2">
                 <Button variant="outline">Cancelar</Button>
                 <Button>Registrar Ocorrência</Button>
               </div>
@@ -224,282 +203,176 @@ export default function Ocorrencias() {
       </div>
 
       {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar por número, cliente ou título..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Tipos</SelectItem>
-                <SelectItem value="atraso">Atraso</SelectItem>
-                <SelectItem value="avaria">Avaria</SelectItem>
-                <SelectItem value="recusa">Recusa</SelectItem>
-                <SelectItem value="endereco">Endereço</SelectItem>
-                <SelectItem value="documentacao">Documentação</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Status</SelectItem>
-                <SelectItem value="aberta">Aberta</SelectItem>
-                <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                <SelectItem value="resolvida">Resolvida</SelectItem>
-                <SelectItem value="fechada">Fechada</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex gap-4">
+        <Input
+          placeholder="Buscar por número, título ou motorista..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <Select value={tipoFilter} onValueChange={setTipoFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filtrar por tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Tipos</SelectItem>
+            <SelectItem value="acidente">Acidente</SelectItem>
+            <SelectItem value="avaria">Avaria</SelectItem>
+            <SelectItem value="atraso">Atraso</SelectItem>
+            <SelectItem value="roubo">Roubo</SelectItem>
+            <SelectItem value="outros">Outros</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Status</SelectItem>
+            <SelectItem value="aberta">Aberta</SelectItem>
+            <SelectItem value="em_andamento">Em Andamento</SelectItem>
+            <SelectItem value="resolvida">Resolvida</SelectItem>
+            <SelectItem value="cancelada">Cancelada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* Estatísticas */}
+      {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ocorrências Abertas</CardTitle>
+            <CardTitle className="text-sm font-medium">Abertas</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
+            <div className="text-2xl font-bold">
               {ocorrencias.filter(o => o.status === 'aberta').length}
             </div>
+            <p className="text-xs text-muted-foreground">Necessitam atenção</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">
+            <div className="text-2xl font-bold">
               {ocorrencias.filter(o => o.status === 'em_andamento').length}
             </div>
+            <p className="text-xs text-muted-foreground">Sendo resolvidas</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Resolvidas</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">
+            <div className="text-2xl font-bold">
               {ocorrencias.filter(o => o.status === 'resolvida').length}
             </div>
+            <p className="text-xs text-muted-foreground">Este mês</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Taxa de Resolução</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round((ocorrencias.filter(o => o.status === 'resolvida').length / ocorrencias.length) * 100)}%
-            </div>
+            <div className="text-2xl font-bold">85%</div>
+            <p className="text-xs text-muted-foreground">Últimos 30 dias</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="lista" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="lista">Lista de Ocorrências</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="lista">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ocorrências Registradas</CardTitle>
-              <CardDescription>
-                Gerencie e acompanhe as ocorrências do transporte
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {filteredOcorrencias.length === 0 ? (
-                <EmptyState
-                  icon={<AlertTriangle className="h-8 w-8" />}
-                  title="Nenhuma ocorrência encontrada"
-                  description="Não há ocorrências que correspondem aos filtros selecionados."
-                />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Número</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Título</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Severidade</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Tempo Aberto</TableHead>
-                      <TableHead>Responsável</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOcorrencias.map((ocorrencia) => (
-                      <TableRow key={ocorrencia.id}>
-                        <TableCell className="font-medium">{ocorrencia.numero}</TableCell>
-                        <TableCell>
-                          <Badge variant={tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].variant}>
-                            {tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">{ocorrencia.titulo}</TableCell>
-                        <TableCell>{ocorrencia.cliente}</TableCell>
-                        <TableCell>
-                          <Badge variant={severidadeBadges[ocorrencia.severidade as keyof typeof severidadeBadges].variant}>
-                            {severidadeBadges[ocorrencia.severidade as keyof typeof severidadeBadges].label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={statusBadges[ocorrencia.status as keyof typeof statusBadges].variant}>
-                            {statusBadges[ocorrencia.status as keyof typeof statusBadges].label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{calcularTempoAberto(ocorrencia.dataOcorrencia)}</TableCell>
-                        <TableCell>{ocorrencia.responsavel}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  Detalhes
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                  <DialogTitle>Ocorrência {ocorrencia.numero}</DialogTitle>
-                                  <DialogDescription>
-                                    Detalhes completos da ocorrência
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                      <strong>Tipo:</strong> {tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].label}
-                                    </div>
-                                    <div>
-                                      <strong>Severidade:</strong> {severidadeBadges[ocorrencia.severidade as keyof typeof severidadeBadges].label}
-                                    </div>
-                                    <div>
-                                      <strong>Cliente:</strong> {ocorrencia.cliente}
-                                    </div>
-                                    <div>
-                                      <strong>Motorista:</strong> {ocorrencia.motorista}
-                                    </div>
-                                    <div>
-                                      <strong>Veículo:</strong> {ocorrencia.veiculo}
-                                    </div>
-                                    <div>
-                                      <strong>Local:</strong> {ocorrencia.localizacao}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <strong>Descrição:</strong>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      {ocorrencia.descricao}
-                                    </p>
-                                  </div>
-                                  {ocorrencia.acaoCorretiva && (
-                                    <div>
-                                      <strong>Ação Corretiva:</strong>
-                                      <p className="text-sm text-muted-foreground mt-1">
-                                        {ocorrencia.acaoCorretiva}
-                                      </p>
-                                    </div>
-                                  )}
-                                  {ocorrencia.fotos > 0 && (
-                                    <div>
-                                      <strong>Anexos:</strong>
-                                      <p className="text-sm text-muted-foreground">
-                                        {ocorrencia.fotos} foto(s) anexada(s)
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            {ocorrencia.status !== 'resolvida' && (
-                              <Button variant="outline" size="sm">
-                                Resolver
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="dashboard">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ocorrências por Tipo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {Object.entries(tipoBadges).map(([tipo, badge]) => {
-                    const count = ocorrencias.filter(o => o.tipo === tipo).length
-                    const percentage = (count / ocorrencias.length) * 100
-                    return (
-                      <div key={tipo} className="flex items-center justify-between">
-                        <Badge variant={badge.variant}>{badge.label}</Badge>
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-primary h-2 rounded-full" 
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                          <span className="text-sm w-8">{count}</span>
-                        </div>
+      {/* Lista de Ocorrências */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Ocorrências</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredOcorrencias.map((ocorrencia) => (
+              <Card key={ocorrencia.id} className="border-l-4 border-l-primary">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-semibold">{ocorrencia.numero}</h3>
+                        <Badge variant={tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].variant}>
+                          {tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].label}
+                        </Badge>
+                        <Badge variant={prioridadeBadges[ocorrencia.prioridade as keyof typeof prioridadeBadges].variant}>
+                          {prioridadeBadges[ocorrencia.prioridade as keyof typeof prioridadeBadges].label}
+                        </Badge>
                       </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Tempo Médio de Resolução</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center">
-                  <div className="text-3xl font-bold">4h 20min</div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Tempo médio para resolver ocorrências
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                      <h4 className="text-lg font-medium">{ocorrencia.titulo}</h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={statusBadges[ocorrencia.status as keyof typeof statusBadges].variant}>
+                        {React.createElement(statusBadges[ocorrencia.status as keyof typeof statusBadges].icon, { className: "h-3 w-3 mr-1" })}
+                        {statusBadges[ocorrencia.status as keyof typeof statusBadges].label}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-4">{ocorrencia.descricao}</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>{ocorrencia.motorista} - {ocorrencia.veiculo}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{ocorrencia.localizacao}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{new Date(ocorrencia.data_ocorrencia).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  
+                  {ocorrencia.observacoes && (
+                    <div className="mt-4 p-3 bg-muted rounded text-sm">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-4 w-4" />
+                        <span className="font-medium">Observações:</span>
+                      </div>
+                      <p>{ocorrencia.observacoes}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Responsável: {ocorrencia.responsavel}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        Editar
+                      </Button>
+                      {ocorrencia.status === 'aberta' && (
+                        <Button size="sm">
+                          Iniciar Resolução
+                        </Button>
+                      )}
+                      {ocorrencia.status === 'em_andamento' && (
+                        <Button size="sm">
+                          Marcar como Resolvida
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
-  )
-}
+  );
+};
+
+export default Ocorrencias;

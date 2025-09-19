@@ -1,166 +1,154 @@
-import { useState } from "react"
-import { MapPin, Truck, Clock, Route, Search, Navigation, AlertTriangle } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  MapPin, 
+  Truck, 
+  Clock, 
+  Route, 
+  Navigation,
+  CheckCircle,
+  AlertTriangle,
+  Package
+} from 'lucide-react';
 
-export default function Tracking() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+const Tracking = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  // Mock data para rastreamento
+  // Mock data para entregas
   const entregas = [
     {
-      id: "ENT-001",
-      codigo: "TRK001",
-      cliente: "João Silva",
-      destino: "Fazenda Santa Maria, Ribeirão Preto - SP",
-      produto: "Milho - 50 sacos",
-      veiculo: "Truck 001 - ABC-1234",
-      motorista: "Pedro Santos",
-      status: "em_transito",
-      dataPartida: "2024-01-15T08:00:00",
-      previsaoChegada: "2024-01-15T12:30:00",
-      ultimaAtualizacao: "2024-01-15T10:15:00",
-      localizacaoAtual: "Rod. Anhanguera, KM 325",
-      distanciaTotal: 180,
-      distanciaPercorrida: 120,
-      eventos: [
-        { hora: "08:00", descricao: "Saída do depósito", local: "Centro de Distribuição" },
-        { hora: "09:15", descricao: "Passagem pelo pedágio", local: "Pedágio Anhanguera" },
-        { hora: "10:15", descricao: "Parada para abastecimento", local: "Posto BR - KM 325" }
+      id: '1',
+      codigo: 'ENT-001',
+      cliente: 'João Silva',
+      endereco: 'Rua das Flores, 123 - São Paulo, SP',
+      status: 'em_transito',
+      veiculo: 'ABC-1234',
+      motorista: 'Carlos Santos',
+      dataInicio: '2024-01-15 08:00',
+      previsaoEntrega: '2024-01-15 14:00',
+      progresso: 75,
+      distanciaTotal: '45 km',
+      distanciaPercorrida: '34 km',
+      tempoRestante: '1h 30min',
+      ultimaAtualizacao: '13:45',
+      coordenadas: { lat: -23.550520, lng: -46.633308 },
+      timeline: [
+        { evento: 'Saída do depósito', horario: '08:00', status: 'concluido' },
+        { evento: 'Primeiro ponto de parada', horario: '10:30', status: 'concluido' },
+        { evento: 'Em rota para destino final', horario: '12:00', status: 'em_andamento' },
+        { evento: 'Chegada prevista', horario: '14:00', status: 'pendente' }
       ]
     },
     {
-      id: "ENT-002",
-      codigo: "TRK002", 
-      cliente: "Maria Santos",
-      destino: "Sítio Boa Vista, Araraquara - SP",
-      produto: "Soja - 100 sacos",
-      veiculo: "Truck 002 - DEF-5678",
-      motorista: "João Silva",
-      status: "entregue",
-      dataPartida: "2024-01-14T09:00:00",
-      dataEntrega: "2024-01-14T13:45:00",
-      ultimaAtualizacao: "2024-01-14T13:45:00",
-      localizacaoAtual: "Destino",
-      distanciaTotal: 120,
-      distanciaPercorrida: 120,
-      eventos: [
-        { hora: "09:00", descricao: "Saída do depósito", local: "Centro de Distribuição" },
-        { hora: "11:30", descricao: "Chegada ao destino", local: "Sítio Boa Vista" },
-        { hora: "13:45", descricao: "Entrega concluída", local: "Sítio Boa Vista" }
+      id: '2',
+      codigo: 'ENT-002',
+      cliente: 'Maria Santos',
+      endereco: 'Av. Principal, 456 - Rio de Janeiro, RJ',
+      status: 'entregue',
+      veiculo: 'DEF-5678',
+      motorista: 'Ana Lima',
+      dataInicio: '2024-01-15 09:00',
+      previsaoEntrega: '2024-01-15 16:00',
+      progresso: 100,
+      distanciaTotal: '380 km',
+      distanciaPercorrida: '380 km',
+      tempoRestante: 'Entregue',
+      ultimaAtualizacao: '15:45',
+      coordenadas: { lat: -22.906847, lng: -43.172896 },
+      timeline: [
+        { evento: 'Saída do depósito', horario: '09:00', status: 'concluido' },
+        { evento: 'Parada para abastecimento', horario: '12:00', status: 'concluido' },
+        { evento: 'Chegada ao destino', horario: '15:45', status: 'concluido' },
+        { evento: 'Entrega realizada', horario: '15:50', status: 'concluido' }
       ]
     },
     {
-      id: "ENT-003",
-      codigo: "TRK003",
-      cliente: "Carlos Oliveira", 
-      destino: "Fazenda do Vale, São Carlos - SP",
-      produto: "Fertilizante - 20 sacas",
-      veiculo: "Truck 001 - ABC-1234",
-      motorista: "Ana Silva",
-      status: "atrasado",
-      dataPartida: "2024-01-15T07:00:00",
-      previsaoChegada: "2024-01-15T11:00:00",
-      ultimaAtualizacao: "2024-01-15T11:30:00",
-      localizacaoAtual: "Parado - Problema mecânico",
-      distanciaTotal: 200,
-      distanciaPercorrida: 150,
-      eventos: [
-        { hora: "07:00", descricao: "Saída do depósito", local: "Centro de Distribuição" },
-        { hora: "09:30", descricao: "Passagem por São Carlos", local: "Entrada da cidade" },
-        { hora: "11:30", descricao: "Veículo parado - Problema mecânico", local: "Rod. Washington Luís, KM 235" }
+      id: '3',
+      codigo: 'ENT-003',
+      cliente: 'Pedro Oliveira',
+      endereco: 'Rua do Campo, 789 - Belo Horizonte, MG',
+      status: 'atrasada',
+      veiculo: 'GHI-9012',
+      motorista: 'Roberto Silva',
+      dataInicio: '2024-01-15 07:00',
+      previsaoEntrega: '2024-01-15 13:00',
+      progresso: 60,
+      distanciaTotal: '520 km',
+      distanciaPercorrida: '312 km',
+      tempoRestante: '3h 20min',
+      ultimaAtualizacao: '14:30',
+      coordenadas: { lat: -19.916681, lng: -43.934493 },
+      timeline: [
+        { evento: 'Saída do depósito', horario: '07:00', status: 'concluido' },
+        { evento: 'Primeira parada', horario: '10:00', status: 'concluido' },
+        { evento: 'Atraso devido ao trânsito', horario: '13:00', status: 'atrasado' },
+        { evento: 'Nova previsão de chegada', horario: '16:20', status: 'pendente' }
       ]
     }
-  ]
+  ];
 
   const statusBadges = {
-    em_transito: { label: "Em Trânsito", variant: "default" as const },
-    entregue: { label: "Entregue", variant: "default" as const },
-    atrasado: { label: "Atrasado", variant: "destructive" as const },
-    coletando: { label: "Coletando", variant: "secondary" as const }
-  }
+    em_transito: { label: 'Em Trânsito', variant: 'default' as const },
+    entregue: { label: 'Entregue', variant: 'outline' as const },
+    atrasada: { label: 'Atrasada', variant: 'destructive' as const },
+    pendente: { label: 'Pendente', variant: 'secondary' as const }
+  };
 
   const filteredEntregas = entregas.filter(entrega => {
     const matchesSearch = entrega.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          entrega.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entrega.motorista.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || entrega.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+                         entrega.motorista.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || entrega.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const calcularProgresso = (entrega: any) => {
-    return Math.round((entrega.distanciaPercorrida / entrega.distanciaTotal) * 100)
-  }
+    return entrega.progresso;
+  };
 
   const calcularTempoRestante = (entrega: any) => {
-    if (entrega.status === 'entregue') return "Entregue"
-    if (entrega.status === 'atrasado') return "Atrasado"
-    
-    const agora = new Date()
-    const previsao = new Date(entrega.previsaoChegada)
-    const diferenca = previsao.getTime() - agora.getTime()
-    
-    if (diferenca <= 0) return "Atrasado"
-    
-    const horas = Math.floor(diferenca / (1000 * 60 * 60))
-    const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60))
-    
-    return `${horas}h ${minutos}min`
-  }
+    return entrega.tempoRestante;
+  };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Navigation className="h-8 w-8" />
-            Tracking
-          </h1>
-          <p className="text-muted-foreground">
-            Rastreamento em tempo real das entregas
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Tracking de Entregas</h1>
+        <p className="text-muted-foreground">
+          Acompanhe em tempo real todas as entregas em andamento
+        </p>
       </div>
 
       {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtros</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar por código, cliente ou motorista..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Status</SelectItem>
-                <SelectItem value="em_transito">Em Trânsito</SelectItem>
-                <SelectItem value="entregue">Entregue</SelectItem>
-                <SelectItem value="atrasado">Atrasado</SelectItem>
-                <SelectItem value="coletando">Coletando</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex gap-4">
+        <Input
+          placeholder="Buscar por código, cliente ou motorista..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Status</SelectItem>
+            <SelectItem value="em_transito">Em Trânsito</SelectItem>
+            <SelectItem value="entregue">Entregue</SelectItem>
+            <SelectItem value="atrasada">Atrasada</SelectItem>
+            <SelectItem value="pendente">Pendente</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* Estatísticas */}
+      {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -171,178 +159,173 @@ export default function Tracking() {
             <div className="text-2xl font-bold">
               {entregas.filter(e => e.status === 'em_transito').length}
             </div>
+            <p className="text-xs text-muted-foreground">Entregas ativas</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Entregues Hoje</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {entregas.filter(e => e.status === 'entregue').length}
             </div>
+            <p className="text-xs text-muted-foreground">Concluídas</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Atrasadas</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {entregas.filter(e => e.status === 'atrasado').length}
+            <div className="text-2xl font-bold">
+              {entregas.filter(e => e.status === 'atrasada').length}
             </div>
+            <p className="text-xs text-muted-foreground">Necessitam atenção</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">KM Percorridos</CardTitle>
             <Route className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {entregas.reduce((acc, e) => acc + e.distanciaPercorrida, 0)} km
-            </div>
+            <div className="text-2xl font-bold">1,026</div>
+            <p className="text-xs text-muted-foreground">Hoje</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Abas de Conteúdo */}
       <Tabs defaultValue="lista" className="space-y-4">
         <TabsList>
           <TabsTrigger value="lista">Lista de Entregas</TabsTrigger>
           <TabsTrigger value="mapa">Mapa em Tempo Real</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="lista">
-          <div className="space-y-4">
-            {filteredEntregas.length === 0 ? (
-              <EmptyState
-                icon={<Navigation className="h-8 w-8" />}
-                title="Nenhuma entrega encontrada"
-                description="Não há entregas que correspondem aos filtros selecionados."
-              />
-            ) : (
-              filteredEntregas.map((entrega) => (
-                <Card key={entrega.id} className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold">#{entrega.codigo}</h3>
-                      <Badge variant={statusBadges[entrega.status as keyof typeof statusBadges].variant}>
-                        {statusBadges[entrega.status as keyof typeof statusBadges].label}
-                      </Badge>
+        <TabsContent value="lista" className="space-y-4">
+          <div className="grid gap-4">
+            {filteredEntregas.map((entrega) => (
+              <Card key={entrega.id}>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-semibold text-lg">{entrega.codigo}</h3>
+                          <Badge variant={statusBadges[entrega.status as keyof typeof statusBadges].variant}>
+                            {statusBadges[entrega.status as keyof typeof statusBadges].label}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Cliente: {entrega.cliente}
+                        </p>
+                      </div>
+                      <div className="text-right text-sm">
+                        <p className="font-medium">Tempo Restante</p>
+                        <p className="text-muted-foreground">{calcularTempoRestante(entrega)}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Tempo restante</p>
-                      <p className="font-semibold">{calcularTempoRestante(entrega)}</p>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cliente</p>
-                      <p className="font-medium">{entrega.cliente}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Motorista</p>
-                      <p className="font-medium">{entrega.motorista}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Veículo</p>
-                      <p className="font-medium">{entrega.veiculo}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Produto</p>
-                      <p className="font-medium">{entrega.produto}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-sm text-muted-foreground mb-1">Destino</p>
-                    <p className="font-medium">{entrega.destino}</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
+                    {/* Progresso */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
                         <span>Progresso da Entrega</span>
                         <span>{calcularProgresso(entrega)}%</span>
                       </div>
                       <Progress value={calcularProgresso(entrega)} className="h-2" />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{entrega.distanciaPercorrida} percorridos</span>
+                        <span>{entrega.distanciaTotal} total</span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Localização Atual</p>
-                        <p className="font-medium">{entrega.localizacaoAtual}</p>
+                    {/* Detalhes */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span className="font-medium">Destino:</span>
+                        </div>
+                        <p className="text-muted-foreground pl-6">{entrega.endereco}</p>
                       </div>
-                      <div>
-                        <p className="text-muted-foreground">Última Atualização</p>
-                        <p className="font-medium">
-                          {new Date(entrega.ultimaAtualizacao).toLocaleTimeString()}
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4" />
+                          <span className="font-medium">Veículo:</span>
+                        </div>
+                        <p className="text-muted-foreground pl-6">
+                          {entrega.veiculo} - {entrega.motorista}
                         </p>
                       </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span className="font-medium">Última atualização:</span>
+                        </div>
+                        <p className="text-muted-foreground pl-6">{entrega.ultimaAtualizacao}</p>
+                      </div>
                     </div>
 
-                    <div>
-                      <p className="text-sm font-medium mb-2">Timeline de Eventos</p>
+                    {/* Timeline */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-3">Timeline da Entrega</h4>
                       <div className="space-y-2">
-                        {entrega.eventos.map((evento, index) => (
-                          <div key={index} className="flex items-start gap-3 p-2 bg-muted rounded">
-                            <div className="w-12 h-6 bg-primary text-primary-foreground rounded text-xs flex items-center justify-center">
-                              {evento.hora}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{evento.descricao}</p>
-                              <p className="text-xs text-muted-foreground">{evento.local}</p>
-                            </div>
+                        {entrega.timeline.map((item, index) => (
+                          <div key={index} className="flex items-center gap-3 text-sm">
+                            <div className={`w-3 h-3 rounded-full border-2 ${
+                              item.status === 'concluido' ? 'bg-green-500 border-green-500' :
+                              item.status === 'em_andamento' ? 'bg-blue-500 border-blue-500' :
+                              item.status === 'atrasado' ? 'bg-red-500 border-red-500' :
+                              'bg-gray-200 border-gray-300'
+                            }`} />
+                            <span className="flex-1">{item.evento}</span>
+                            <span className="text-muted-foreground">{item.horario}</span>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-end gap-2 mt-4">
-                    <Button variant="outline" size="sm">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Ver no Mapa
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Clock className="h-4 w-4 mr-2" />
-                      Histórico
-                    </Button>
+                    {/* Ações */}
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="outline" size="sm">
+                        <Navigation className="h-4 w-4 mr-2" />
+                        Ver no Mapa
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Package className="h-4 w-4 mr-2" />
+                        Detalhes
+                      </Button>
+                    </div>
                   </div>
-                </Card>
-              ))
-            )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
         <TabsContent value="mapa">
           <Card>
-            <CardHeader>
-              <CardTitle>Mapa em Tempo Real</CardTitle>
-              <CardDescription>
-                Visualização das entregas em andamento no mapa
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96 bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-medium text-muted-foreground">Mapa em Desenvolvimento</p>
-                  <p className="text-sm text-muted-foreground">
-                    Integração com Google Maps ou similar para rastreamento em tempo real
-                  </p>
-                </div>
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <MapPin className="h-16 w-16 mx-auto text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Mapa em Tempo Real</h3>
+                <p className="text-muted-foreground">
+                  A visualização do mapa será implementada em breve. <br />
+                  Aqui você poderá acompanhar a localização de todos os veículos em tempo real.
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
+
+export default Tracking;

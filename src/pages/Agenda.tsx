@@ -1,101 +1,100 @@
-import { useState } from "react"
-import { Calendar as CalendarIcon, Clock, Plus, Filter, User, MapPin, Phone } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Textarea } from "@/components/ui/textarea"
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Calendar as CalendarIcon, Clock, MapPin, Phone, User, Package, Plus } from 'lucide-react';
 
-export default function Agenda() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [tipoFilter, setTipoFilter] = useState("all")
+const Agenda = () => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [tipoFilter, setTipoFilter] = useState('all');
 
   // Mock data para agendamentos
   const agendamentos = [
     {
-      id: "AGE-001",
-      tipo: "entrega",
-      cliente: "João Silva",
-      telefone: "(16) 99999-1234",
-      endereco: "Fazenda Santa Maria, Ribeirão Preto - SP",
-      data: "2024-01-15",
-      horario: "08:00",
-      status: "confirmado",
-      observacoes: "Portão principal, próximo ao silo",
-      produto: "Milho - 50 sacos",
-      responsavel: "Pedro Santos"
+      id: '1',
+      tipo: 'entrega',
+      cliente: 'João Silva',
+      telefone: '(11) 99999-9999',
+      endereco: 'Rua das Flores, 123 - São Paulo, SP',
+      data: '2024-01-15',
+      horario: '09:00',
+      status: 'confirmado',
+      produto: 'Fertilizante NPK - 50kg',
+      observacoes: 'Portão azul, tocar campainha'
     },
     {
-      id: "AGE-002", 
-      tipo: "coleta",
-      cliente: "Maria Costa",
-      telefone: "(16) 98888-5678",
-      endereco: "Sítio Boa Vista, Araraquara - SP",
-      data: "2024-01-15",
-      horario: "14:00",
-      status: "pendente",
-      observacoes: "Ligar antes de chegar",
-      produto: "Soja - 100 sacos",
-      responsavel: "João Silva"
+      id: '2',
+      tipo: 'coleta',
+      cliente: 'Maria Santos',
+      telefone: '(11) 88888-8888',
+      endereco: 'Av. Principal, 456 - São Paulo, SP',
+      data: '2024-01-15',
+      horario: '14:30',
+      status: 'pendente',
+      produto: 'Sementes de Soja - 25 sacos',
+      observacoes: 'Agendar com antecedência'
     },
     {
-      id: "AGE-003",
-      tipo: "entrega",
-      cliente: "Carlos Oliveira",
-      telefone: "(16) 97777-9012",
-      endereco: "Fazenda do Vale, São Carlos - SP", 
-      data: "2024-01-16",
-      horario: "10:30",
-      status: "reagendado",
-      observacoes: "Cliente reagendou para manhã",
-      produto: "Fertilizante - 20 sacas",
-      responsavel: "Ana Silva"
+      id: '3',
+      tipo: 'entrega',
+      cliente: 'Carlos Oliveira',
+      telefone: '(11) 77777-7777',
+      endereco: 'Rua do Campo, 789 - São Paulo, SP',
+      data: '2024-01-15',
+      horario: '16:00',
+      status: 'concluido',
+      produto: 'Defensivo Agrícola - 10L',
+      observacoes: 'Entrega realizada com sucesso'
     }
-  ]
+  ];
 
   const statusBadges = {
-    pendente: { label: "Pendente", variant: "secondary" as const },
-    confirmado: { label: "Confirmado", variant: "default" as const },
-    reagendado: { label: "Reagendado", variant: "outline" as const },
-    concluido: { label: "Concluído", variant: "default" as const },
-    cancelado: { label: "Cancelado", variant: "destructive" as const }
-  }
+    pendente: { label: 'Pendente', variant: 'secondary' as const },
+    confirmado: { label: 'Confirmado', variant: 'default' as const },
+    concluido: { label: 'Concluído', variant: 'outline' as const },
+    cancelado: { label: 'Cancelado', variant: 'destructive' as const }
+  };
 
   const tipoBadges = {
-    entrega: { label: "Entrega", variant: "default" as const },
-    coleta: { label: "Coleta", variant: "secondary" as const }
-  }
+    entrega: { label: 'Entrega', variant: 'default' as const },
+    coleta: { label: 'Coleta', variant: 'secondary' as const }
+  };
 
   const filteredAgendamentos = agendamentos.filter(agendamento => {
-    const matchesDate = agendamento.data === selectedDate.toISOString().split('T')[0]
-    const matchesStatus = statusFilter === "all" || agendamento.status === statusFilter
-    const matchesTipo = tipoFilter === "all" || agendamento.tipo === tipoFilter
-    return matchesDate && matchesStatus && matchesTipo
-  })
+    const agendamentoDate = new Date(agendamento.data);
+    const isSameDate = selectedDate && 
+      agendamentoDate.toDateString() === selectedDate.toDateString();
+    
+    const matchesStatus = statusFilter === 'all' || agendamento.status === statusFilter;
+    const matchesTipo = tipoFilter === 'all' || agendamento.tipo === tipoFilter;
+    
+    return isSameDate && matchesStatus && matchesTipo;
+  });
 
-  // Horários disponíveis para agendamento
-  const horariosDisponiveis = [
-    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-    "11:00", "11:30", "13:00", "13:30", "14:00", "14:30",
-    "15:00", "15:30", "16:00", "16:30", "17:00"
-  ]
+  const getAgendamentosForDate = (date: Date) => {
+    return agendamentos.filter(agendamento => {
+      const agendamentoDate = new Date(agendamento.data);
+      return agendamentoDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const dailyStats = selectedDate ? getAgendamentosForDate(selectedDate) : [];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarIcon className="h-8 w-8" />
-            Agenda
-          </h1>
+          <h1 className="text-3xl font-bold">Agenda</h1>
           <p className="text-muted-foreground">
-            Agendamento de coletas e entregas
+            Gerencie agendamentos de entregas e coletas
           </p>
         </div>
         
@@ -109,17 +108,14 @@ export default function Agenda() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Novo Agendamento</DialogTitle>
-              <DialogDescription>
-                Agendar uma nova coleta ou entrega
-              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Tipo</label>
+                <div className="space-y-2">
+                  <Label htmlFor="tipo">Tipo</Label>
                   <Select>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar tipo" />
+                      <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="entrega">Entrega</SelectItem>
@@ -127,47 +123,46 @@ export default function Agenda() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Cliente</label>
-                  <Input placeholder="Nome do cliente" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Data</label>
-                  <Input type="date" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Horário</label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar horário" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {horariosDisponiveis.map(horario => (
-                        <SelectItem key={horario} value={horario}>{horario}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="cliente">Cliente</Label>
+                  <Input id="cliente" placeholder="Nome do cliente" />
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Endereço</label>
-                <Input placeholder="Endereço completo" />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="data">Data</Label>
+                  <Input id="data" type="date" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="horario">Horário</Label>
+                  <Input id="horario" type="time" />
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Telefone</label>
-                <Input placeholder="(00) 00000-0000" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="endereco">Endereço</Label>
+                <Input id="endereco" placeholder="Endereço completo" />
               </div>
-              <div>
-                <label className="text-sm font-medium">Produto/Descrição</label>
-                <Input placeholder="Ex: Milho - 50 sacos" />
+              
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input id="telefone" placeholder="(XX) XXXXX-XXXX" />
               </div>
-              <div>
-                <label className="text-sm font-medium">Observações</label>
-                <Textarea placeholder="Observações importantes..." />
+              
+              <div className="space-y-2">
+                <Label htmlFor="produto">Produto</Label>
+                <Input id="produto" placeholder="Descrição do produto" />
               </div>
-              <div className="flex gap-2">
+              
+              <div className="space-y-2">
+                <Label htmlFor="observacoes">Observações</Label>
+                <Textarea id="observacoes" placeholder="Observações adicionais" />
+              </div>
+              
+              <div className="flex justify-end gap-2">
                 <Button variant="outline">Cancelar</Button>
-                <Button>Agendar</Button>
+                <Button>Salvar Agendamento</Button>
               </div>
             </div>
           </DialogContent>
@@ -180,48 +175,47 @@ export default function Agenda() {
           <Card>
             <CardHeader>
               <CardTitle>Calendário</CardTitle>
-              <CardDescription>
-                Selecione uma data para ver os agendamentos
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
+                onSelect={setSelectedDate}
                 className="rounded-md border"
               />
-            </CardContent>
-          </Card>
-
-          {/* Estatísticas */}
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Estatísticas do Dia</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Total Agendamentos</span>
-                <Badge variant="outline">{filteredAgendamentos.length}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Entregas</span>
-                <Badge variant="default">
-                  {filteredAgendamentos.filter(a => a.tipo === 'entrega').length}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Coletas</span>
-                <Badge variant="secondary">
-                  {filteredAgendamentos.filter(a => a.tipo === 'coleta').length}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Confirmados</span>
-                <Badge variant="default">
-                  {filteredAgendamentos.filter(a => a.status === 'confirmado').length}
-                </Badge>
-              </div>
+              
+              {/* Estatísticas do Dia */}
+              {selectedDate && (
+                <div className="mt-4 space-y-2">
+                  <h4 className="font-semibold">
+                    {selectedDate.toLocaleDateString('pt-BR')}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Total:</span>
+                      <span className="font-medium">{dailyStats.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Entregas:</span>
+                      <span className="font-medium">
+                        {dailyStats.filter(a => a.tipo === 'entrega').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Coletas:</span>
+                      <span className="font-medium">
+                        {dailyStats.filter(a => a.tipo === 'coleta').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Confirmados:</span>
+                      <span className="font-medium">
+                        {dailyStats.filter(a => a.status === 'confirmado').length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -230,36 +224,31 @@ export default function Agenda() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>
-                    Agendamentos - {selectedDate.toLocaleDateString()}
-                  </CardTitle>
-                  <CardDescription>
-                    Gerencie os agendamentos do dia selecionado
-                  </CardDescription>
-                </div>
+              <div className="flex justify-between items-center">
+                <CardTitle>
+                  Agendamentos - {selectedDate?.toLocaleDateString('pt-BR')}
+                </CardTitle>
                 <div className="flex gap-2">
                   <Select value={tipoFilter} onValueChange={setTipoFilter}>
                     <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Tipo" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="entrega">Entregas</SelectItem>
-                      <SelectItem value="coleta">Coletas</SelectItem>
+                      <SelectItem value="entrega">Entrega</SelectItem>
+                      <SelectItem value="coleta">Coleta</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Status" />
+                    <SelectTrigger className="w-36">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="all">Todos Status</SelectItem>
                       <SelectItem value="pendente">Pendente</SelectItem>
                       <SelectItem value="confirmado">Confirmado</SelectItem>
-                      <SelectItem value="reagendado">Reagendado</SelectItem>
                       <SelectItem value="concluido">Concluído</SelectItem>
+                      <SelectItem value="cancelado">Cancelado</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -268,72 +257,69 @@ export default function Agenda() {
             <CardContent>
               {filteredAgendamentos.length === 0 ? (
                 <EmptyState
-                  icon={<CalendarIcon className="h-8 w-8" />}
                   title="Nenhum agendamento encontrado"
-                  description="Não há agendamentos para a data selecionada."
+                  description="Não há agendamentos para a data selecionada com os filtros aplicados."
                 />
               ) : (
                 <div className="space-y-4">
-                  {filteredAgendamentos
-                    .sort((a, b) => a.horario.localeCompare(b.horario))
-                    .map((agendamento) => (
-                    <Card key={agendamento.id} className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
-                            <Clock className="h-6 w-6 text-primary" />
+                  {filteredAgendamentos.map((agendamento) => (
+                    <Card key={agendamento.id} className="border-l-4 border-l-primary">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex gap-2">
+                            <Badge variant={tipoBadges[agendamento.tipo as keyof typeof tipoBadges].variant}>
+                              {tipoBadges[agendamento.tipo as keyof typeof tipoBadges].label}
+                            </Badge>
+                            <Badge variant={statusBadges[agendamento.status as keyof typeof statusBadges].variant}>
+                              {statusBadges[agendamento.status as keyof typeof statusBadges].label}
+                            </Badge>
                           </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold">{agendamento.horario}</h3>
-                              <Badge variant={tipoBadges[agendamento.tipo as keyof typeof tipoBadges].variant}>
-                                {tipoBadges[agendamento.tipo as keyof typeof tipoBadges].label}
-                              </Badge>
-                              <Badge variant={statusBadges[agendamento.status as keyof typeof statusBadges].variant}>
-                                {statusBadges[agendamento.status as keyof typeof statusBadges].label}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm">
-                              <User className="h-4 w-4" />
-                              <span className="font-medium">{agendamento.cliente}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Phone className="h-4 w-4" />
-                              <span>{agendamento.telefone}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <MapPin className="h-4 w-4" />
-                              <span>{agendamento.endereco}</span>
-                            </div>
-                            <div className="text-sm">
-                              <span className="font-medium">Produto:</span> {agendamento.produto}
-                            </div>
-                            {agendamento.observacoes && (
-                              <div className="text-sm text-muted-foreground">
-                                <span className="font-medium">Obs:</span> {agendamento.observacoes}
-                              </div>
-                            )}
-                            <div className="text-sm text-muted-foreground">
-                              <span className="font-medium">Responsável:</span> {agendamento.responsavel}
-                            </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            {agendamento.horario}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        
+                        <div className="grid gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">{agendamento.cliente}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            <span>{agendamento.telefone}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{agendamento.endereco}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            <span>{agendamento.produto}</span>
+                          </div>
+                          {agendamento.observacoes && (
+                            <div className="mt-2 p-2 bg-muted rounded text-sm">
+                              <strong>Obs:</strong> {agendamento.observacoes}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex justify-end gap-2 mt-4">
                           <Button variant="outline" size="sm">
                             Editar
                           </Button>
-                          {agendamento.status === 'confirmado' && (
-                            <Button size="sm">
-                              Concluir
-                            </Button>
-                          )}
                           {agendamento.status === 'pendente' && (
                             <Button size="sm">
                               Confirmar
                             </Button>
                           )}
+                          {agendamento.status === 'confirmado' && (
+                            <Button size="sm">
+                              Concluir
+                            </Button>
+                          )}
                         </div>
-                      </div>
+                      </CardContent>
                     </Card>
                   ))}
                 </div>
@@ -343,5 +329,7 @@ export default function Agenda() {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default Agenda;
