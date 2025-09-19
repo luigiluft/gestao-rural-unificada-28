@@ -29,7 +29,7 @@ import Configuracoes from "./pages/Configuracoes";
 import ControleAcesso from "./pages/ControleAcesso";
 import PerfisFuncionarios from "./pages/PerfisFuncionarios";
 import AlocacaoPallets from "./pages/AlocacaoPallets";
-import Posicoes from "./pages/Posicoes";
+import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
 import Transporte from "./pages/Transporte";
 import PlanejamentoPalletsPage from "./pages/PlanejamentoPallets";
@@ -95,7 +95,8 @@ const App = () => (
               <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />
               
               <Route path="alocacao-pallets" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />
-              <Route path="posicoes" element={<RequirePageAccess pageKey="posicoes"><Posicoes /></RequirePageAccess>} />
+              <Route path="gerenciar-alocacoes" element={<RequirePageAccess pageKey="gerenciar-alocacoes"><GerenciarPosicoes /></RequirePageAccess>} />
+              <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               <Route path="transporte" element={<RequirePageAccess pageKey="transporte"><Transporte /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />

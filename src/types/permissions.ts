@@ -7,7 +7,8 @@ export type PermissionCode =
   | 'dashboard.view' | 'entradas.view' | 'saidas.view' | 'recebimento.view' 
   | 'alocacao.view' | 'separacao.view' | 'expedicao.view' | 'inventario.view' 
   | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view'
-  | 'catalogo.view' | 'alocacao-pallets.view' | 'posicoes.view' | 'fazendas.view' | 'produtores.view'
+  | 'catalogo.view' | 'alocacao-pallets.view' | 'gerenciar-alocacoes.view'
+  | 'gerenciar-posicoes.view' | 'fazendas.view' | 'produtores.view'
   | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view';
 
 // Template de permissões para criar perfis de funcionários/subcontas
@@ -35,7 +36,7 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'entradas.manage', label: 'Gerenciar entradas' },
   { code: 'recebimento.view', label: 'Central de Recebimento' },
   { code: 'alocacao-pallets.view', label: 'Alocação de Pallets' },
-  { code: 'posicoes.view', label: 'Posições' },
+  { code: 'gerenciar-alocacoes.view', label: 'Gerenciar Posições' },
   { code: 'estoque.view', label: 'Ver estoque' },
   { code: 'estoque.manage', label: 'Gerenciar estoque' },
   { code: 'inventario.view', label: 'Inventário' },

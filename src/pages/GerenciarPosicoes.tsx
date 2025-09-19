@@ -16,7 +16,7 @@ import { usePalletDetails } from "@/hooks/usePalletDetails";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export default function Posicoes() {
+export default function GerenciarPosicoes() {
   const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
   const [reallocateDialog, setReallocateDialog] = useState<{
     open: boolean;
@@ -73,7 +73,7 @@ export default function Posicoes() {
       <div className="space-y-6 p-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Posições</h1>
+            <h1 className="text-3xl font-bold">Gerenciar Posições</h1>
             <p className="text-muted-foreground">Visualize e gerencie pallets nas posições</p>
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function Posicoes() {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Posições</h1>
+          <h1 className="text-3xl font-bold">Gerenciar Posições</h1>
           <p className="text-muted-foreground">Visualize e gerencie pallets nas posições</p>
         </div>
       </div>
