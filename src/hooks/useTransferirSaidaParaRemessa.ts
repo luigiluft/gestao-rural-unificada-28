@@ -17,13 +17,23 @@ export const useTransferirSaidaParaRemessa = () => {
       // Generate remessa number if not provided
       const numero = numeroRemessa || `REM-${Date.now().toString().slice(-8)}`
       
+      // Get user_id and deposito_id from the first saida
+      const { data: saidaInfo, error: saidaError } = await supabase
+        .from("saidas")
+        .select("user_id, deposito_id")
+        .eq("id", saidaIds[0])
+        .single()
+
+      if (saidaError) throw saidaError
+
       // Create remessa
       const { data: remessa, error: remessaError } = await supabase
         .from("remessas")
         .insert({
           numero,
+          user_id: saidaInfo.user_id,
+          deposito_id: saidaInfo.deposito_id,
           status: 'criada',
-          data_criacao: new Date().toISOString(),
           total_saidas: saidaIds.length
         })
         .select()
@@ -31,12 +41,11 @@ export const useTransferirSaidaParaRemessa = () => {
 
       if (remessaError) throw remessaError
 
-      // Update saidas to reference the remessa and change status
+      // Update saidas to reference the remessa
       const { error: saidasError } = await supabase
         .from("saidas")
         .update({
-          remessa_id: remessa.id,
-          status: 'em_remessa'
+          remessa_id: remessa.id
         })
         .in("id", saidaIds)
 

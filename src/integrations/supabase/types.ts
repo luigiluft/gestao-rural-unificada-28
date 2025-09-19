@@ -2400,6 +2400,7 @@ export type Database = {
           observacoes_aprovacao: string | null
           placa_veiculo: string | null
           produtor_destinatario_id: string | null
+          remessa_id: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor: string | null
           telefone_motorista: string | null
@@ -2423,6 +2424,7 @@ export type Database = {
           observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
+          remessa_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
@@ -2446,6 +2448,7 @@ export type Database = {
           observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
+          remessa_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
@@ -2460,6 +2463,13 @@ export type Database = {
             columns: ["deposito_id"]
             isOneToOne: false
             referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_remessa_id_fkey"
+            columns: ["remessa_id"]
+            isOneToOne: false
+            referencedRelation: "remessas"
             referencedColumns: ["id"]
           },
         ]

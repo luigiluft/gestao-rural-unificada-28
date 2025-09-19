@@ -7,7 +7,10 @@ export const useRemessas = (filters?: { status?: string }) => {
     queryFn: async () => {
       let query = supabase
         .from("remessas")
-        .select("*")
+        .select(`
+          *,
+          saidas:saidas(count)
+        `)
 
       if (filters?.status) {
         query = query.eq("status", filters.status)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Truck, Package, Plus, Search, Filter, Eye, Edit, Trash2 } from "lucide-react"
+import { Truck, Package, Plus, Search, Filter, Eye, Edit, Trash2, CheckCircle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,19 +11,44 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useRemessas } from "@/hooks/useRemessas"
 import { useSaidasPendentes } from "@/hooks/useSaidasPendentes"
+import { useTransferirSaidaParaRemessa } from "@/hooks/useTransferirSaidaParaRemessa"
 
 export default function Remessas() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [selectedSaidas, setSelectedSaidas] = useState<string[]>([])
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const { data: remessas = [], isLoading, error } = useRemessas({
     status: statusFilter === "all" ? undefined : statusFilter
   })
   
   const { data: saidasExpedidas = [] } = useSaidasPendentes()
+  const transferirMutation = useTransferirSaidaParaRemessa()
   
   // Filter only expedited outputs for remessa creation
   const saidasParaRemessa = saidasExpedidas.filter(saida => saida.status === 'expedido')
+
+  const handleTransferirSaidas = () => {
+    if (selectedSaidas.length === 0) return
+    
+    transferirMutation.mutate({
+      saidaIds: selectedSaidas
+    }, {
+      onSuccess: () => {
+        setSelectedSaidas([])
+        setDialogOpen(false)
+      }
+    })
+  }
+
+  const toggleSaidaSelection = (saidaId: string) => {
+    setSelectedSaidas(prev => 
+      prev.includes(saidaId) 
+        ? prev.filter(id => id !== saidaId)
+        : [...prev, saidaId]
+    )
+  }
 
   const statusBadges = {
     criada: { label: "Criada", variant: "secondary" as const },
@@ -72,9 +97,9 @@ export default function Remessas() {
           </p>
         </div>
         
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Remessa
             </Button>
@@ -88,7 +113,9 @@ export default function Remessas() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="max-h-96 overflow-y-auto">
-                <h4 className="text-sm font-medium mb-3">Saídas Expedidas Disponíveis</h4>
+                <h4 className="text-sm font-medium mb-3">
+                  Saídas Expedidas Disponíveis ({saidasParaRemessa.length})
+                </h4>
                 {saidasParaRemessa.length === 0 ? (
                   <p className="text-sm text-muted-foreground p-4 text-center border rounded-lg">
                     Nenhuma saída expedida disponível para agrupamento
@@ -96,16 +123,35 @@ export default function Remessas() {
                 ) : (
                   <div className="space-y-2">
                     {saidasParaRemessa.map((saida) => (
-                      <div key={saida.id} className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                      <div 
+                        key={saida.id} 
+                        className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedSaidas.includes(saida.id) 
+                            ? 'bg-primary/10 border-primary' 
+                            : 'hover:bg-muted/50'
+                        }`}
+                        onClick={() => toggleSaidaSelection(saida.id)}
+                      >
                         <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">SAI{saida.id.slice(-6).toUpperCase()}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {(saida as any).produtor?.nome || "Produtor não identificado"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {saida.saida_itens?.length || 0} itens
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                              selectedSaidas.includes(saida.id) 
+                                ? 'border-primary bg-primary' 
+                                : 'border-muted-foreground'
+                            }`}>
+                              {selectedSaidas.includes(saida.id) && (
+                                <CheckCircle className="w-3 h-3 text-primary-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium">SAI{saida.id.slice(-6).toUpperCase()}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {(saida as any).produtor?.nome || "Produtor não identificado"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {saida.saida_itens?.length || 0} itens
+                              </p>
+                            </div>
                           </div>
                           <Badge variant="outline">Expedido</Badge>
                         </div>
@@ -114,10 +160,33 @@ export default function Remessas() {
                   </div>
                 )}
               </div>
+              
+              {selectedSaidas.length > 0 && (
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <p className="text-sm font-medium">
+                    {selectedSaidas.length} saída(s) selecionada(s) para consolidação
+                  </p>
+                </div>
+              )}
+              
               <div className="flex gap-2">
-                <Button variant="outline">Cancelar</Button>
-                <Button disabled={saidasParaRemessa.length === 0}>
-                  Criar Remessa ({saidasParaRemessa.length} saídas)
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSelectedSaidas([])
+                    setDialogOpen(false)
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  disabled={selectedSaidas.length === 0 || transferirMutation.isPending}
+                  onClick={handleTransferirSaidas}
+                >
+                  {transferirMutation.isPending 
+                    ? "Criando..." 
+                    : `Criar Remessa (${selectedSaidas.length} saídas)`
+                  }
                 </Button>
               </div>
             </div>
