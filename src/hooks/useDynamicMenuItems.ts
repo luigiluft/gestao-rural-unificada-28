@@ -25,7 +25,8 @@ import {
   Clipboard,
   Package2,
   BookOpen,
-  Warehouse
+  Warehouse,
+  Navigation
 } from "lucide-react"
 
 export interface MenuItem {
@@ -63,7 +64,8 @@ const iconMap = {
   transporte: Truck,
   "perfis-funcionarios": Users,
   instrucoes: BookOpen,
-  wms: Warehouse
+  wms: Warehouse,
+  tms: Navigation
 }
 
 const menuLabels = {
@@ -93,7 +95,8 @@ const menuLabels = {
   transporte: "Transporte",
   "perfis-funcionarios": "Perfis de Funcionários",
   instrucoes: "Instruções",
-  wms: "WMS"
+  wms: "WMS",
+  tms: "TMS"
 }
 
 export const useDynamicMenuItems = () => {
@@ -111,7 +114,6 @@ export const useDynamicMenuItems = () => {
       'entradas',
       'estoque',
       'saidas',
-      'transporte',
       'rastreio',
       'relatorios',
       'produtores',
@@ -131,6 +133,11 @@ export const useDynamicMenuItems = () => {
       'inventario',
       'separacao',
       'expedicao'
+    ]
+
+    // Páginas do TMS
+    const tmsPages = [
+      'transporte'
     ]
 
     // Adicionar itens na ordem especificada
@@ -187,6 +194,45 @@ export const useDynamicMenuItems = () => {
           label: 'WMS',
           icon: iconMap.wms,
           subItems: wmsSubItems
+        })
+      }
+    }
+
+    // Verificar se tem permissão para pelo menos uma página do TMS
+    const hasTmsPermission = tmsPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasTmsPermission) {
+      const tmsSubItems: MenuItem[] = []
+      
+      tmsPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          tmsSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (tmsSubItems.length > 0) {
+        // Inserir TMS após saídas
+        const saidasIndex = items.findIndex(item => item.path === '/saidas')
+        const insertIndex = saidasIndex !== -1 ? saidasIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/tms',
+          label: 'TMS',
+          icon: iconMap.tms,
+          subItems: tmsSubItems
         })
       }
     }
