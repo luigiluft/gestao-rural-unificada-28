@@ -7,16 +7,7 @@ export const useRemessas = (filters?: { status?: string }) => {
     queryFn: async () => {
       let query = supabase
         .from("remessas")
-        .select(`
-          *,
-          viagem_remessas(
-            viagem_id,
-            viagens(
-              numero,
-              data_inicio
-            )
-          )
-        `)
+        .select("*")
 
       if (filters?.status) {
         query = query.eq("status", filters.status)
@@ -37,17 +28,12 @@ export const useRemessasDisponiveis = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("remessas")
-        .select(`
-          *,
-          viagem_remessas(viagem_id)
-        `)
+        .select("*")
         .in("status", ["criada", "pronta"])
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      
-      // Filter out remessas that are already allocated to a viagem
-      return data?.filter(remessa => !remessa.viagem_remessas || remessa.viagem_remessas.length === 0) || []
+      return data || []
     },
     staleTime: 30000,
   })
