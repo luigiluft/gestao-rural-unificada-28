@@ -347,7 +347,7 @@ export default function Subcontas() {
                         <SelectContent>
                           {profiles?.map((profile) => (
                             <SelectItem key={profile.id} value={profile.id}>
-                              {profile.nome} ({profile.target_role})
+                              {profile.nome}
                             </SelectItem>
                           ))}
                         </SelectContent>
