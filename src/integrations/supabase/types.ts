@@ -2440,6 +2440,8 @@ export type Database = {
         | "relatorios.view"
         | "rastreio.view"
         | "perfis-funcionarios.view"
+        | "catalogo.view"
+        | "alocacao-pallets.view"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -2595,6 +2597,8 @@ export const Constants = {
         "relatorios.view",
         "rastreio.view",
         "perfis-funcionarios.view",
+        "catalogo.view",
+        "alocacao-pallets.view",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
