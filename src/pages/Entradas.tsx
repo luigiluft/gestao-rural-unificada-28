@@ -47,7 +47,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -755,8 +754,8 @@ export default function Entradas() {
                 ))}
               </div>
             ) : entradas && entradas.length > 0 ? (
-              <ScrollArea className="h-full">
-                <div className="p-6">
+              <div className="h-full p-6">
+                <div className="max-w-full overflow-x-auto">
                   <Table className="min-w-[1200px]">
                     <TableHeader>
                       <TableRow>
@@ -925,9 +924,9 @@ export default function Entradas() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 </div>
-              </ScrollArea>
             ) : (
               <div className="flex items-center justify-center h-full p-6">
                 <EmptyState
