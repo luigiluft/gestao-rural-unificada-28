@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,19 +11,34 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
+import { transferirSaidaEntregueParaRemessa } from "@/utils/transferirSaidaEntregue"
 import { format } from "date-fns"
 import { Truck, CheckCircle } from "lucide-react"
 
 export default function Transporte() {
-  const { data: saidasData, isLoading } = useSaidasPendentes()
+  const { data: saidasData, isLoading, refetch } = useSaidasPendentes()
   const atualizarStatus = useAtualizarStatusSaida()
   
   const [selectedSaida, setSelectedSaida] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [observacoes, setObservacoes] = useState('')
+  
+  // Auto-transfer any delivered saidas to remessas
+  useEffect(() => {
+    const transferirSaidasEntregues = async () => {
+      try {
+        await transferirSaidaEntregueParaRemessa()
+        refetch() // Refresh the data after transfer
+      } catch (error) {
+        console.error("Erro ao transferir saídas entregues:", error)
+      }
+    }
+    
+    transferirSaidasEntregues()
+  }, [refetch])
 
-  // Filter only entregue status for transport confirmation
-  const saidas = saidasData?.filter(saida => saida.status === 'entregue') || []
+  // Filter only entregue status for transport confirmation  
+  const saidas = saidasData?.filter(saida => saida.status === 'entregue' && !saida.remessa_id) || []
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
