@@ -42,8 +42,8 @@ export default function Remessas() {
   const statusBadges = {
     criada: { label: "Criada", variant: "secondary" as const },
     despachada: { label: "Despachada", variant: "default" as const },
-    em_transito: { label: "Em Trânsito", variant: "warning" as const },
-    entregue: { label: "Entregue", variant: "success" as const }
+    em_transito: { label: "Em Trânsito", variant: "outline" as const },
+    entregue: { label: "Entregue", variant: "default" as const }
   }
 
   const filteredRemessas = remessas.filter(remessa => {
@@ -182,13 +182,13 @@ export default function Remessas() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {filteredRemessas.length === 0 ? (
+              {filteredRemessas.length === 0 ? (
             <EmptyState
-              icon={Package}
+              icon={<Package className="h-8 w-8" />}
               title="Nenhuma remessa encontrada"
               description="Não há remessas que correspondem aos filtros selecionados."
             />
-          ) : (
+              ) : (
             <Table>
               <TableHeader>
                 <TableRow>

@@ -82,13 +82,13 @@ export default function Ocorrencias() {
 
   const statusBadges = {
     aberta: { label: "Aberta", variant: "destructive" as const },
-    em_andamento: { label: "Em Andamento", variant: "warning" as const },
-    resolvida: { label: "Resolvida", variant: "success" as const },
+    em_andamento: { label: "Em Andamento", variant: "secondary" as const },
+    resolvida: { label: "Resolvida", variant: "default" as const },
     fechada: { label: "Fechada", variant: "secondary" as const }
   }
 
   const tipoBadges = {
-    atraso: { label: "Atraso", variant: "warning" as const },
+    atraso: { label: "Atraso", variant: "secondary" as const },
     avaria: { label: "Avaria", variant: "destructive" as const },
     recusa: { label: "Recusa", variant: "secondary" as const },
     endereco: { label: "Endereço", variant: "default" as const },
@@ -97,7 +97,7 @@ export default function Ocorrencias() {
 
   const severidadeBadges = {
     baixa: { label: "Baixa", variant: "secondary" as const },
-    media: { label: "Média", variant: "warning" as const },
+    media: { label: "Média", variant: "default" as const },
     alta: { label: "Alta", variant: "destructive" as const }
   }
 
@@ -287,7 +287,7 @@ export default function Ocorrencias() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">
+            <div className="text-2xl font-bold text-muted-foreground">
               {ocorrencias.filter(o => o.status === 'em_andamento').length}
             </div>
           </CardContent>
@@ -335,7 +335,7 @@ export default function Ocorrencias() {
             <CardContent>
               {filteredOcorrencias.length === 0 ? (
                 <EmptyState
-                  icon={AlertTriangle}
+                  icon={<AlertTriangle className="h-8 w-8" />}
                   title="Nenhuma ocorrência encontrada"
                   description="Não há ocorrências que correspondem aos filtros selecionados."
                 />

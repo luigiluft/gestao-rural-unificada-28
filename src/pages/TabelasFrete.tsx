@@ -257,7 +257,7 @@ export default function TabelasFrete() {
             <CardContent>
               {filteredTabelas.length === 0 ? (
                 <EmptyState
-                  icon={Calculator}
+                  icon={<Calculator className="h-8 w-8" />}
                   title="Nenhuma tabela encontrada"
                   description="Não há tabelas que correspondem aos filtros selecionados."
                 />
@@ -290,7 +290,7 @@ export default function TabelasFrete() {
                           {new Date(tabela.dataVencimento).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={tabela.ativo ? "success" : "secondary"}>
+                          <Badge variant={tabela.ativo ? "default" : "secondary"}>
                             {tabela.ativo ? "Ativa" : "Inativa"}
                           </Badge>
                         </TableCell>
@@ -483,7 +483,7 @@ export default function TabelasFrete() {
                       <TableCell>R$ {transportadora.valorKm.toFixed(2)}</TableCell>
                       <TableCell>R$ {transportadora.valorMinimo.toFixed(2)}</TableCell>
                       <TableCell>
-                        <Badge variant={transportadora.ativo ? "success" : "secondary"}>
+                        <Badge variant={transportadora.ativo ? "default" : "secondary"}>
                           {transportadora.ativo ? "Ativa" : "Inativa"}
                         </Badge>
                       </TableCell>

@@ -82,9 +82,9 @@ export default function Tracking() {
 
   const statusBadges = {
     em_transito: { label: "Em Trânsito", variant: "default" as const },
-    entregue: { label: "Entregue", variant: "success" as const },
+    entregue: { label: "Entregue", variant: "default" as const },
     atrasado: { label: "Atrasado", variant: "destructive" as const },
-    coletando: { label: "Coletando", variant: "warning" as const }
+    coletando: { label: "Coletando", variant: "secondary" as const }
   }
 
   const filteredEntregas = entregas.filter(entrega => {
@@ -221,7 +221,7 @@ export default function Tracking() {
           <div className="space-y-4">
             {filteredEntregas.length === 0 ? (
               <EmptyState
-                icon={Navigation}
+                icon={<Navigation className="h-8 w-8" />}
                 title="Nenhuma entrega encontrada"
                 description="Não há entregas que correspondem aos filtros selecionados."
               />

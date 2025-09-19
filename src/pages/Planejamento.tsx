@@ -52,8 +52,8 @@ export default function Planejamento() {
   const statusBadges = {
     planejada: { label: "Planejada", variant: "secondary" as const },
     iniciada: { label: "Iniciada", variant: "default" as const },
-    em_andamento: { label: "Em Andamento", variant: "warning" as const },
-    finalizada: { label: "Finalizada", variant: "success" as const }
+    em_andamento: { label: "Em Andamento", variant: "outline" as const },
+    finalizada: { label: "Finalizada", variant: "default" as const }
   }
 
   const filteredRotas = rotas.filter(rota => {
@@ -234,7 +234,7 @@ export default function Planejamento() {
             <CardContent>
               {filteredRotas.length === 0 ? (
                 <EmptyState
-                  icon={Route}
+                  icon={<Route className="h-8 w-8" />}
                   title="Nenhuma rota encontrada"
                   description="Não há rotas planejadas para a data selecionada."
                 />

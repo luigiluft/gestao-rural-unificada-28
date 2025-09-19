@@ -59,8 +59,8 @@ export default function Viagens() {
   const statusBadges = {
     planejada: { label: "Planejada", variant: "secondary" as const },
     iniciada: { label: "Iniciada", variant: "default" as const },
-    em_andamento: { label: "Em Andamento", variant: "warning" as const },
-    finalizada: { label: "Finalizada", variant: "success" as const },
+    em_andamento: { label: "Em Andamento", variant: "outline" as const },
+    finalizada: { label: "Finalizada", variant: "default" as const },
     cancelada: { label: "Cancelada", variant: "destructive" as const }
   }
 
@@ -268,7 +268,7 @@ export default function Viagens() {
             <CardContent>
               {filteredViagens.length === 0 ? (
                 <EmptyState
-                  icon={Truck}
+                  icon={<Truck className="h-8 w-8" />}
                   title="Nenhuma viagem encontrada"
                   description="Não há viagens que correspondem aos filtros selecionados."
                 />

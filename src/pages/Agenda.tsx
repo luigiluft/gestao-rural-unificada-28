@@ -62,8 +62,8 @@ export default function Agenda() {
   const statusBadges = {
     pendente: { label: "Pendente", variant: "secondary" as const },
     confirmado: { label: "Confirmado", variant: "default" as const },
-    reagendado: { label: "Reagendado", variant: "warning" as const },
-    concluido: { label: "Concluído", variant: "success" as const },
+    reagendado: { label: "Reagendado", variant: "outline" as const },
+    concluido: { label: "Concluído", variant: "default" as const },
     cancelado: { label: "Cancelado", variant: "destructive" as const }
   }
 
@@ -218,7 +218,7 @@ export default function Agenda() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Confirmados</span>
-                <Badge variant="success">
+                <Badge variant="default">
                   {filteredAgendamentos.filter(a => a.status === 'confirmado').length}
                 </Badge>
               </div>
@@ -268,7 +268,7 @@ export default function Agenda() {
             <CardContent>
               {filteredAgendamentos.length === 0 ? (
                 <EmptyState
-                  icon={CalendarIcon}
+                  icon={<CalendarIcon className="h-8 w-8" />}
                   title="Nenhum agendamento encontrado"
                   description="Não há agendamentos para a data selecionada."
                 />

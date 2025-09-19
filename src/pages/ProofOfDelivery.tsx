@@ -72,8 +72,8 @@ export default function ProofOfDelivery() {
 
   const statusBadges = {
     pendente: { label: "Pendente", variant: "secondary" as const },
-    completo: { label: "Completo", variant: "success" as const },
-    incompleto: { label: "Incompleto", variant: "warning" as const },
+    completo: { label: "Completo", variant: "default" as const },
+    incompleto: { label: "Incompleto", variant: "outline" as const },
     rejeitado: { label: "Rejeitado", variant: "destructive" as const }
   }
 
@@ -196,7 +196,7 @@ export default function ProofOfDelivery() {
             <CardContent>
               {filteredComprovantes.length === 0 ? (
                 <EmptyState
-                  icon={FileText}
+                  icon={<FileText className="h-8 w-8" />}
                   title="Nenhum comprovante encontrado"
                   description="Não há comprovantes que correspondem aos filtros selecionados."
                 />
