@@ -111,6 +111,7 @@ export const useDynamicMenuItems = () => {
       'recebimento',
       'alocacao-pallets',
       'gerenciar-alocacoes',
+      'gerenciar-posicoes',
       'estoque',
       'inventario',
       'saidas',
