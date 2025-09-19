@@ -18,66 +18,19 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
+import { useOcorrencias } from '@/hooks/useOcorrencias';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const Ocorrencias = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tipoFilter, setTipoFilter] = useState('all');
 
-  // Mock data para ocorrências
-  const ocorrencias = [
-    {
-      id: '1',
-      numero: 'OC-001',
-      tipo: 'acidente',
-      titulo: 'Acidente leve na BR-101',
-      descricao: 'Colisão traseira durante o trânsito. Sem feridos.',
-      status: 'aberta',
-      prioridade: 'alta',
-      viagem_id: 'VG-001',
-      veiculo: 'ABC-1234',
-      motorista: 'João Silva',
-      localizacao: 'BR-101, km 45',
-      data_ocorrencia: '2024-01-15 14:30',
-      criado_por: 'Sistema Automático',
-      responsavel: 'Maria Santos',
-      observacoes: 'Guincho a caminho. Estimativa de 2 horas para resolução.'
-    },
-    {
-      id: '2',
-      numero: 'OC-002',
-      tipo: 'avaria',
-      titulo: 'Pneu furado',
-      descricao: 'Pneu dianteiro direito furou durante a viagem.',
-      status: 'resolvida',
-      prioridade: 'media',
-      viagem_id: 'VG-002',
-      veiculo: 'DEF-5678',
-      motorista: 'Carlos Oliveira',
-      localizacao: 'Rodovia dos Bandeirantes, km 78',
-      data_ocorrencia: '2024-01-14 10:15',
-      criado_por: 'Carlos Oliveira',
-      responsavel: 'Pedro Lima',
-      observacoes: 'Pneu trocado com sucesso. Viagem retomada às 11:30.'
-    },
-    {
-      id: '3',
-      numero: 'OC-003',
-      tipo: 'atraso',
-      titulo: 'Atraso na entrega - trânsito intenso',
-      descricao: 'Entrega atrasada devido ao trânsito intenso na região.',
-      status: 'em_andamento',
-      prioridade: 'baixa',
-      viagem_id: 'VG-003',
-      veiculo: 'GHI-9012',
-      motorista: 'Ana Santos',
-      localizacao: 'Marginal Tietê, SP',
-      data_ocorrencia: '2024-01-15 16:00',
-      criado_por: 'Ana Santos',
-      responsavel: 'Roberto Silva',
-      observacoes: 'Cliente notificado sobre o atraso. Nova estimativa: 18:30.'
-    }
-  ];
+  const { data: ocorrencias = [], isLoading, error } = useOcorrencias({ 
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    tipo: tipoFilter !== 'all' ? tipoFilter : undefined
+  });
 
   const statusBadges = {
     aberta: { label: 'Aberta', variant: 'destructive' as const, icon: XCircle },
@@ -101,13 +54,19 @@ const Ocorrencias = () => {
   };
 
   const filteredOcorrencias = ocorrencias.filter(ocorrencia => {
-    const matchesSearch = ocorrencia.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ocorrencia.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ocorrencia.motorista.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || ocorrencia.status === statusFilter;
-    const matchesTipo = tipoFilter === 'all' || ocorrencia.tipo === tipoFilter;
-    return matchesSearch && matchesStatus && matchesTipo;
+    const matchesSearch = ocorrencia.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ocorrencia.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ocorrencia.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <div>Erro ao carregar ocorrências: {error.message}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -294,80 +253,85 @@ const Ocorrencias = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredOcorrencias.map((ocorrencia) => (
+            {filteredOcorrencias.length === 0 ? (
+              <EmptyState 
+                message="Nenhuma ocorrência encontrada"
+                description="Quando houver ocorrências registradas, elas aparecerão aqui"
+              />
+            ) : (
+              filteredOcorrencias.map((ocorrencia) => (
               <Card key={ocorrencia.id} className="border-l-4 border-l-primary">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-4">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold">{ocorrencia.numero}</h3>
-                        <Badge variant={tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].variant}>
-                          {tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges].label}
-                        </Badge>
-                        <Badge variant={prioridadeBadges[ocorrencia.prioridade as keyof typeof prioridadeBadges].variant}>
-                          {prioridadeBadges[ocorrencia.prioridade as keyof typeof prioridadeBadges].label}
-                        </Badge>
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-semibold">{ocorrencia.numero}</h3>
+                          <Badge variant={tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges]?.variant || 'outline'}>
+                            {tipoBadges[ocorrencia.tipo as keyof typeof tipoBadges]?.label || ocorrencia.tipo}
+                          </Badge>
+                          <Badge variant={prioridadeBadges[ocorrencia.prioridade as keyof typeof prioridadeBadges]?.variant || 'secondary'}>
+                            {prioridadeBadges[ocorrencia.prioridade as keyof typeof prioridadeBadges]?.label || ocorrencia.prioridade}
+                          </Badge>
+                        </div>
+                        <h4 className="text-lg font-medium">{ocorrencia.titulo}</h4>
+                    </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={statusBadges[ocorrencia.status as keyof typeof statusBadges]?.variant || 'secondary'}>
+                            {statusBadges[ocorrencia.status as keyof typeof statusBadges] && 
+                              React.createElement(statusBadges[ocorrencia.status as keyof typeof statusBadges].icon, { className: "h-3 w-3 mr-1" })
+                            }
+                            {statusBadges[ocorrencia.status as keyof typeof statusBadges]?.label || ocorrencia.status}
+                          </Badge>
+                        </div>
+                  </div>
+                  
+                      <p className="text-sm text-muted-foreground mb-4">{ocorrencia.descricao}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{ocorrencia.localizacao || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span>{ocorrencia.created_at ? new Date(ocorrencia.created_at).toLocaleString() : 'N/A'}</span>
+                        </div>
                       </div>
-                      <h4 className="text-lg font-medium">{ocorrencia.titulo}</h4>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={statusBadges[ocorrencia.status as keyof typeof statusBadges].variant}>
-                        {React.createElement(statusBadges[ocorrencia.status as keyof typeof statusBadges].icon, { className: "h-3 w-3 mr-1" })}
-                        {statusBadges[ocorrencia.status as keyof typeof statusBadges].label}
-                      </Badge>
-                    </div>
-                  </div>
                   
-                  <p className="text-sm text-muted-foreground mb-4">{ocorrencia.descricao}</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>{ocorrencia.motorista} - {ocorrencia.veiculo}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{ocorrencia.localizacao}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{new Date(ocorrencia.data_ocorrencia).toLocaleString()}</span>
-                    </div>
-                  </div>
-                  
-                  {ocorrencia.observacoes && (
-                    <div className="mt-4 p-3 bg-muted rounded text-sm">
-                      <div className="flex items-center gap-2 mb-2">
-                        <FileText className="h-4 w-4" />
-                        <span className="font-medium">Observações:</span>
+                      {ocorrencia.observacoes && (
+                        <div className="mt-4 p-3 bg-muted rounded text-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-medium">Observações:</span>
+                          </div>
+                          <p>{ocorrencia.observacoes}</p>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                        <div className="text-sm text-muted-foreground">
+                          Criado por: {ocorrencia.criado_por || 'Sistema'}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            Editar
+                          </Button>
+                          {ocorrencia.status === 'aberta' && (
+                            <Button size="sm">
+                              Iniciar Resolução
+                            </Button>
+                          )}
+                          {ocorrencia.status === 'em_andamento' && (
+                            <Button size="sm">
+                              Marcar como Resolvida
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <p>{ocorrencia.observacoes}</p>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                    <div className="text-sm text-muted-foreground">
-                      Responsável: {ocorrencia.responsavel}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Editar
-                      </Button>
-                      {ocorrencia.status === 'aberta' && (
-                        <Button size="sm">
-                          Iniciar Resolução
-                        </Button>
-                      )}
-                      {ocorrencia.status === 'em_andamento' && (
-                        <Button size="sm">
-                          Marcar como Resolvida
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
           </div>
         </CardContent>
       </Card>

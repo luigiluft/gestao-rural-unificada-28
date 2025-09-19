@@ -17,53 +17,15 @@ import {
   Clock,
   User
 } from 'lucide-react';
+import { useComprovantesEntrega } from '@/hooks/useComprovantesEntrega';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const ProofOfDelivery = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Mock data para comprovantes de entrega
-  const comprovantes = [
-    {
-      id: '1',
-      codigo: 'POD-001',
-      cliente: 'João Silva',
-      endereco: 'Rua das Flores, 123 - São Paulo, SP',
-      data_entrega: '2024-01-15 14:30',
-      recebido_por: 'Maria Silva',
-      documento_recebedor: '123.456.789-00',
-      status: 'confirmado',
-      tem_assinatura: true,
-      total_fotos: 3,
-      observacoes: 'Entrega realizada no portão principal'
-    },
-    {
-      id: '2',
-      codigo: 'POD-002',
-      cliente: 'Maria Santos',
-      endereco: 'Av. Principal, 456 - Rio de Janeiro, RJ',
-      data_entrega: '2024-01-15 16:45',
-      recebido_por: 'Carlos Santos',
-      documento_recebedor: '987.654.321-00',
-      status: 'pendente',
-      tem_assinatura: false,
-      total_fotos: 1,
-      observacoes: 'Aguardando confirmação do recebedor'
-    },
-    {
-      id: '3',
-      codigo: 'POD-003',
-      cliente: 'Pedro Oliveira',
-      endereco: 'Rua do Campo, 789 - Belo Horizonte, MG',
-      data_entrega: '2024-01-14 11:20',
-      recebido_por: 'Ana Oliveira',
-      documento_recebedor: '456.789.123-00',
-      status: 'confirmado',
-      tem_assinatura: true,
-      total_fotos: 5,
-      observacoes: 'Entrega conferida e aprovada'
-    }
-  ];
+  const { data: comprovantes = [], isLoading, error } = useComprovantesEntrega({ status: statusFilter !== 'all' ? statusFilter : undefined });
 
   const statusBadges = {
     pendente: { label: 'Pendente', variant: 'secondary' as const },
@@ -72,12 +34,19 @@ const ProofOfDelivery = () => {
   };
 
   const filteredComprovantes = comprovantes.filter(comprovante => {
-    const matchesSearch = comprovante.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         comprovante.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         comprovante.recebido_por.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || comprovante.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesSearch = comprovante.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         comprovante.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         comprovante.recebido_por?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <div>Erro ao carregar comprovantes: {error.message}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -186,61 +155,69 @@ const ProofOfDelivery = () => {
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {filteredComprovantes.map((comprovante) => (
-                <TableRow key={comprovante.id}>
-                  <TableCell className="font-medium">{comprovante.codigo}</TableCell>
-                  <TableCell>{comprovante.cliente}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <User className="h-3 w-3" />
-                        <span className="text-sm">{comprovante.recebido_por}</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Doc: {comprovante.documento_recebedor}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3 w-3" />
-                      <span className="text-sm">
-                        {new Date(comprovante.data_entrega).toLocaleString()}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={statusBadges[comprovante.status as keyof typeof statusBadges].variant}>
-                      {statusBadges[comprovante.status as keyof typeof statusBadges].label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <Signature className="h-3 w-3" />
-                        <span className={comprovante.tem_assinatura ? "text-green-600" : "text-gray-400"}>
-                          {comprovante.tem_assinatura ? "Sim" : "Não"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Camera className="h-3 w-3" />
-                        <span>{comprovante.total_fotos}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                <TableBody>
+                  {filteredComprovantes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        Nenhum comprovante encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredComprovantes.map((comprovante) => (
+                      <TableRow key={comprovante.id}>
+                        <TableCell className="font-medium">{comprovante.codigo}</TableCell>
+                        <TableCell>{comprovante.cliente_nome}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <User className="h-3 w-3" />
+                              <span className="text-sm">{comprovante.recebido_por || 'N/A'}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Doc: {comprovante.documento_recebedor || 'N/A'}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3" />
+                            <span className="text-sm">
+                              {comprovante.data_entrega ? new Date(comprovante.data_entrega).toLocaleString() : 'N/A'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusBadges[comprovante.status as keyof typeof statusBadges]?.variant || 'secondary'}>
+                            {statusBadges[comprovante.status as keyof typeof statusBadges]?.label || comprovante.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <Signature className="h-3 w-3" />
+                              <span className={comprovante.tem_assinatura ? "text-green-600" : "text-gray-400"}>
+                                {comprovante.tem_assinatura ? "Sim" : "Não"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Camera className="h-3 w-3" />
+                              <span>{comprovante.total_fotos}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
             </TableBody>
           </Table>
         </CardContent>

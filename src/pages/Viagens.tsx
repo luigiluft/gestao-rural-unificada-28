@@ -8,59 +8,15 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MapPin, Truck, User, Calendar, Clock, Route } from 'lucide-react';
+import { useViagens } from '@/hooks/useViagens';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const Viagens = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock data para viagens
-  const viagens = [
-    {
-      id: '1',
-      numero: 'VG-001',
-      rota: 'São Paulo → Rio de Janeiro',
-      motorista: 'João Silva',
-      veiculo: 'ABC-1234',
-      status: 'em_andamento',
-      dataInicio: '2024-01-15',
-      dataPrevisao: '2024-01-16',
-      origem: 'São Paulo, SP',
-      destino: 'Rio de Janeiro, RJ',
-      distancia: '430 km',
-      progresso: 65,
-      tempoEstimado: '2h 30min'
-    },
-    {
-      id: '2',
-      numero: 'VG-002',
-      rota: 'Belo Horizonte → Salvador',
-      motorista: 'Maria Santos',
-      veiculo: 'DEF-5678',
-      status: 'planejada',
-      dataInicio: '2024-01-16',
-      dataPrevisao: '2024-01-17',
-      origem: 'Belo Horizonte, MG',
-      destino: 'Salvador, BA',
-      distancia: '1200 km',
-      progresso: 0,
-      tempoEstimado: '18h 00min'
-    },
-    {
-      id: '3',
-      numero: 'VG-003',
-      rota: 'Curitiba → Porto Alegre',
-      motorista: 'Carlos Oliveira',
-      veiculo: 'GHI-9012',
-      status: 'concluida',
-      dataInicio: '2024-01-14',
-      dataPrevisao: '2024-01-15',
-      origem: 'Curitiba, PR',
-      destino: 'Porto Alegre, RS',
-      distancia: '710 km',
-      progresso: 100,
-      tempoEstimado: 'Concluída'
-    }
-  ];
+  const { data: viagens = [], isLoading, error } = useViagens();
 
   const statusBadges = {
     planejada: { label: 'Planejada', variant: 'secondary' as const },
@@ -70,16 +26,24 @@ const Viagens = () => {
   };
 
   const filteredViagens = viagens.filter(viagem => {
-    const matchesSearch = viagem.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         viagem.rota.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         viagem.motorista.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = viagem.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         viagem.origem?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         viagem.destino?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || viagem.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const calcularProgresso = (viagem: any) => {
-    return viagem.progresso;
+    return viagem.progresso || 0;
   };
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <div>Erro ao carregar viagens: {error.message}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -166,39 +130,37 @@ const Viagens = () => {
 
         <TabsContent value="ativas" className="space-y-4">
           <div className="grid gap-4">
-            {filteredViagens.filter(v => v.status === 'em_andamento').map((viagem) => (
-              <Card key={viagem.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-4 flex-1">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-lg">{viagem.numero}</h3>
-                          <p className="text-sm text-muted-foreground">{viagem.rota}</p>
+            {filteredViagens.filter(v => v.status === 'em_andamento').length === 0 ? (
+              <EmptyState 
+                message="Nenhuma viagem em andamento"
+                description="Quando houver viagens ativas, elas aparecerão aqui"
+              />
+            ) : (
+              filteredViagens.filter(v => v.status === 'em_andamento').map((viagem) => (
+                <Card key={viagem.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-4 flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-semibold text-lg">{viagem.numero}</h3>
+                            <p className="text-sm text-muted-foreground">{viagem.origem} → {viagem.destino}</p>
+                          </div>
+                          <Badge variant={statusBadges[viagem.status as keyof typeof statusBadges]?.variant || 'secondary'}>
+                            {statusBadges[viagem.status as keyof typeof statusBadges]?.label || viagem.status}
+                          </Badge>
                         </div>
-                        <Badge variant={statusBadges[viagem.status as keyof typeof statusBadges].variant}>
-                          {statusBadges[viagem.status as keyof typeof statusBadges].label}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>{viagem.motorista}</span>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{viagem.data_inicio ? new Date(viagem.data_inicio).toLocaleDateString() : 'N/A'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span>{viagem.data_previsao_chegada ? new Date(viagem.data_previsao_chegada).toLocaleDateString() : 'N/A'}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Truck className="h-4 w-4" />
-                          <span>{viagem.veiculo}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>{new Date(viagem.dataInicio).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span>{viagem.tempoEstimado}</span>
-                        </div>
-                      </div>
                       
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
@@ -208,10 +170,11 @@ const Viagens = () => {
                         <Progress value={calcularProgresso(viagem)} className="h-2" />
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
 
@@ -230,25 +193,33 @@ const Viagens = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredViagens.map((viagem) => (
-                    <TableRow key={viagem.id}>
-                      <TableCell className="font-medium">{viagem.numero}</TableCell>
-                      <TableCell>{viagem.rota}</TableCell>
-                      <TableCell>{viagem.motorista}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusBadges[viagem.status as keyof typeof statusBadges].variant}>
-                          {statusBadges[viagem.status as keyof typeof statusBadges].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date(viagem.dataInicio).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Progress value={viagem.progresso} className="h-2 w-16" />
-                          <span className="text-sm">{viagem.progresso}%</span>
-                        </div>
+                  {filteredViagens.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhuma viagem encontrada
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredViagens.map((viagem) => (
+                      <TableRow key={viagem.id}>
+                        <TableCell className="font-medium">{viagem.numero}</TableCell>
+                        <TableCell>{viagem.origem} → {viagem.destino}</TableCell>
+                        <TableCell>-</TableCell>
+                        <TableCell>
+                          <Badge variant={statusBadges[viagem.status as keyof typeof statusBadges]?.variant || 'secondary'}>
+                            {statusBadges[viagem.status as keyof typeof statusBadges]?.label || viagem.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{viagem.data_inicio ? new Date(viagem.data_inicio).toLocaleDateString() : 'N/A'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={calcularProgresso(viagem)} className="h-2 w-16" />
+                            <span className="text-sm">{calcularProgresso(viagem)}%</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

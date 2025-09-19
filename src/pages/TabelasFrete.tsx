@@ -23,57 +23,8 @@ const TabelasFrete = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('all');
 
-  // Mock data para tabelas de frete
-  const tabelasFrete = [
-    {
-      id: '1',
-      nome: 'Tabela São Paulo Capital',
-      tipo: 'regional',
-      origem: 'São Paulo, SP',
-      destino: 'Grande São Paulo',
-      distancia_min: 0,
-      distancia_max: 50,
-      valor_base: 150.00,
-      valor_por_km: 2.50,
-      valor_por_kg: 0.15,
-      valor_minimo: 80.00,
-      ativa: true,
-      data_criacao: '2024-01-10',
-      data_atualizacao: '2024-01-15'
-    },
-    {
-      id: '2',
-      nome: 'Tabela Longa Distância Sul',
-      tipo: 'nacional',
-      origem: 'São Paulo, SP',
-      destino: 'Região Sul',
-      distancia_min: 400,
-      distancia_max: 1200,
-      valor_base: 500.00,
-      valor_por_km: 1.80,
-      valor_por_kg: 0.12,
-      valor_minimo: 400.00,
-      ativa: true,
-      data_criacao: '2024-01-08',
-      data_atualizacao: '2024-01-12'
-    },
-    {
-      id: '3',
-      nome: 'Tabela Nordeste',
-      tipo: 'nacional',
-      origem: 'São Paulo, SP',
-      destino: 'Região Nordeste',
-      distancia_min: 1000,
-      distancia_max: 2500,
-      valor_base: 800.00,
-      valor_por_km: 1.60,
-      valor_por_kg: 0.10,
-      valor_minimo: 600.00,
-      ativa: false,
-      data_criacao: '2024-01-05',
-      data_atualizacao: '2024-01-05'
-    }
-  ];
+  // Tabelas de frete será implementada com dados reais em breve
+  const tabelasFrete: any[] = [];
 
   // Mock data para simulação de frete
   const [simulacao, setSimulacao] = useState({
@@ -316,7 +267,14 @@ const TabelasFrete = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTabelas.map((tabela) => (
+                  {filteredTabelas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        Nenhuma tabela de frete encontrada. Esta funcionalidade será implementada em breve.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTabelas.map((tabela) => (
                     <TableRow key={tabela.id}>
                       <TableCell className="font-medium">{tabela.nome}</TableCell>
                       <TableCell>
@@ -344,8 +302,9 @@ const TabelasFrete = () => {
                           </Button>
                         </div>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
