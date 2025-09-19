@@ -59,25 +59,43 @@ export default function Subcontas() {
     refetch: refetchInvites 
   } = usePendingInvites()
 
-  // Buscar subcontas do usuário
+  // Buscar subcontas do usuário - usando estratégia de duas queries para evitar problemas de RLS
   const { data: subaccounts = [], refetch: refetchSubaccounts, isLoading: loadingSubaccounts } = useQuery({
     queryKey: ["subaccounts-simplified", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<SubaccountProfile[]> => {
-      const { data, error } = await supabase
+      // Primeiro, buscar IDs dos filhos na hierarquia
+      const { data: hierarchyData, error: hierarchyError } = await supabase
         .from("user_hierarchy")
-        .select(`
-          child_user_id,
-          profiles!inner(user_id, nome, email)
-        `)
+        .select("child_user_id")
         .eq("parent_user_id", user!.id)
 
-      if (error) throw error
+      if (hierarchyError) {
+        console.error('Erro ao buscar hierarquia:', hierarchyError)
+        throw hierarchyError
+      }
 
-      const subaccountProfiles = (data ?? []).map((item: any) => ({
-        user_id: item.profiles.user_id,
-        nome: item.profiles.nome,
-        email: item.profiles.email,
+      if (!hierarchyData || hierarchyData.length === 0) {
+        return []
+      }
+
+      const childUserIds = hierarchyData.map(h => h.child_user_id)
+
+      // Depois, buscar perfis desses usuários
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, nome, email")
+        .in("user_id", childUserIds)
+
+      if (profilesError) {
+        console.error('Erro ao buscar perfis:', profilesError)
+        throw profilesError
+      }
+
+      const subaccountProfiles = (profilesData ?? []).map(profile => ({
+        user_id: profile.user_id,
+        nome: profile.nome,
+        email: profile.email,
       }))
 
       // Buscar templates de permissões para cada subconta
