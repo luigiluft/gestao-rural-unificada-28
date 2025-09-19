@@ -2442,6 +2442,7 @@ export type Database = {
         | "perfis-funcionarios.view"
         | "catalogo.view"
         | "alocacao-pallets.view"
+        | "gerenciar-posicoes.view"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -2599,6 +2600,7 @@ export const Constants = {
         "perfis-funcionarios.view",
         "catalogo.view",
         "alocacao-pallets.view",
+        "gerenciar-posicoes.view",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
