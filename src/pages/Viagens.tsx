@@ -27,8 +27,7 @@ const Viagens = () => {
 
   const filteredViagens = viagens.filter(viagem => {
     const matchesSearch = viagem.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         viagem.origem?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         viagem.destino?.toLowerCase().includes(searchTerm.toLowerCase());
+                         viagem.observacoes?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || viagem.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -132,7 +131,7 @@ const Viagens = () => {
           <div className="grid gap-4">
             {filteredViagens.filter(v => v.status === 'em_andamento').length === 0 ? (
               <EmptyState 
-                message="Nenhuma viagem em andamento"
+                title="Nenhuma viagem em andamento"
                 description="Quando houver viagens ativas, elas aparecerão aqui"
               />
             ) : (
@@ -144,7 +143,7 @@ const Viagens = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="font-semibold text-lg">{viagem.numero}</h3>
-                            <p className="text-sm text-muted-foreground">{viagem.origem} → {viagem.destino}</p>
+                            <p className="text-sm text-muted-foreground">{viagem.observacoes || 'Sem descrição'}</p>
                           </div>
                           <Badge variant={statusBadges[viagem.status as keyof typeof statusBadges]?.variant || 'secondary'}>
                             {statusBadges[viagem.status as keyof typeof statusBadges]?.label || viagem.status}
@@ -158,7 +157,7 @@ const Viagens = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>{viagem.data_previsao_chegada ? new Date(viagem.data_previsao_chegada).toLocaleDateString() : 'N/A'}</span>
+                            <span>{viagem.data_fim ? new Date(viagem.data_fim).toLocaleDateString() : 'N/A'}</span>
                           </div>
                         </div>
                       
@@ -203,7 +202,7 @@ const Viagens = () => {
                     filteredViagens.map((viagem) => (
                       <TableRow key={viagem.id}>
                         <TableCell className="font-medium">{viagem.numero}</TableCell>
-                        <TableCell>{viagem.origem} → {viagem.destino}</TableCell>
+                        <TableCell>{viagem.observacoes || 'Sem descrição'}</TableCell>
                         <TableCell>-</TableCell>
                         <TableCell>
                           <Badge variant={statusBadges[viagem.status as keyof typeof statusBadges]?.variant || 'secondary'}>

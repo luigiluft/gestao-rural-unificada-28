@@ -35,8 +35,7 @@ const Tracking = () => {
 
   const filteredViagens = viagens.filter(viagem => {
     const matchesSearch = viagem.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         viagem.origem?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         viagem.destino?.toLowerCase().includes(searchTerm.toLowerCase());
+                         viagem.observacoes?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || viagem.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -150,7 +149,7 @@ const Tracking = () => {
           <div className="grid gap-4">
             {filteredViagens.length === 0 ? (
               <EmptyState 
-                message="Nenhuma viagem para rastrear"
+                title="Nenhuma viagem para rastrear"
                 description="Quando houver viagens ativas, elas aparecerão aqui"
               />
             ) : (
@@ -168,7 +167,7 @@ const Tracking = () => {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Rota: {viagem.origem} → {viagem.destino}
+                            Viagem: {viagem.observacoes || 'Sem descrição'}
                           </p>
                         </div>
                         <div className="text-right text-sm">
@@ -184,10 +183,10 @@ const Tracking = () => {
                           <span>{calcularProgresso(viagem)}%</span>
                         </div>
                         <Progress value={calcularProgresso(viagem)} className="h-2" />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Em andamento</span>
-                          <span>Destino: {viagem.destino}</span>
-                        </div>
+                         <div className="flex justify-between text-xs text-muted-foreground">
+                           <span>Em andamento</span>
+                           <span>Viagem: {viagem.numero}</span>
+                         </div>
                       </div>
 
                       {/* Detalhes */}
@@ -195,9 +194,9 @@ const Tracking = () => {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4" />
-                            <span className="font-medium">Destino:</span>
+                            <span className="font-medium">Informações:</span>
                           </div>
-                          <p className="text-muted-foreground pl-6">{viagem.destino}</p>
+                          <p className="text-muted-foreground pl-6">{viagem.observacoes || 'N/A'}</p>
                         </div>
                         
                         <div className="space-y-2">
@@ -213,10 +212,10 @@ const Tracking = () => {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span className="font-medium">Previsão Chegada:</span>
+                            <span className="font-medium">Previsão Fim:</span>
                           </div>
                           <p className="text-muted-foreground pl-6">
-                            {viagem.data_previsao_chegada ? new Date(viagem.data_previsao_chegada).toLocaleDateString() : 'N/A'}
+                            {viagem.data_fim ? new Date(viagem.data_fim).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                       </div>

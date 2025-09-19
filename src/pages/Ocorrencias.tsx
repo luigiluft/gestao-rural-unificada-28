@@ -32,6 +32,25 @@ const Ocorrencias = () => {
     tipo: tipoFilter !== 'all' ? tipoFilter : undefined
   });
 
+  // Mock data for demonstration while table is being created
+  const mockOcorrencias = [
+    {
+      id: '1',
+      numero: 'OC-001',
+      tipo: 'acidente',
+      titulo: 'Acidente leve na BR-101',
+      descricao: 'Colisão traseira durante o trânsito. Sem feridos.',
+      status: 'aberta',
+      prioridade: 'alta',
+      localizacao: 'BR-101, km 45',
+      created_at: '2024-01-15 14:30',
+      criado_por: 'Sistema Automático',
+      observacoes: 'Guincho a caminho. Estimativa de 2 horas para resolução.'
+    }
+  ];
+
+  const displayOcorrencias = ocorrencias.length > 0 ? ocorrencias : mockOcorrencias;
+
   const statusBadges = {
     aberta: { label: 'Aberta', variant: 'destructive' as const, icon: XCircle },
     em_andamento: { label: 'Em Andamento', variant: 'default' as const, icon: Clock },
@@ -53,7 +72,7 @@ const Ocorrencias = () => {
     baixa: { label: 'Baixa', variant: 'secondary' as const }
   };
 
-  const filteredOcorrencias = ocorrencias.filter(ocorrencia => {
+  const filteredOcorrencias = displayOcorrencias.filter(ocorrencia => {
     const matchesSearch = ocorrencia.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ocorrencia.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ocorrencia.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -205,7 +224,7 @@ const Ocorrencias = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {ocorrencias.filter(o => o.status === 'aberta').length}
+              {displayOcorrencias.filter(o => o.status === 'aberta').length}
             </div>
             <p className="text-xs text-muted-foreground">Necessitam atenção</p>
           </CardContent>
@@ -217,7 +236,7 @@ const Ocorrencias = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {ocorrencias.filter(o => o.status === 'em_andamento').length}
+              {displayOcorrencias.filter(o => o.status === 'em_andamento').length}
             </div>
             <p className="text-xs text-muted-foreground">Sendo resolvidas</p>
           </CardContent>
@@ -229,7 +248,7 @@ const Ocorrencias = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {ocorrencias.filter(o => o.status === 'resolvida').length}
+              {displayOcorrencias.filter(o => o.status === 'resolvida').length}
             </div>
             <p className="text-xs text-muted-foreground">Este mês</p>
           </CardContent>
@@ -254,10 +273,10 @@ const Ocorrencias = () => {
         <CardContent>
           <div className="space-y-4">
             {filteredOcorrencias.length === 0 ? (
-              <EmptyState 
-                message="Nenhuma ocorrência encontrada"
-                description="Quando houver ocorrências registradas, elas aparecerão aqui"
-              />
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="text-lg font-medium mb-2">Nenhuma ocorrência encontrada</div>
+                <p>Quando houver ocorrências registradas, elas aparecerão aqui</p>
+              </div>
             ) : (
               filteredOcorrencias.map((ocorrencia) => (
               <Card key={ocorrencia.id} className="border-l-4 border-l-primary">
