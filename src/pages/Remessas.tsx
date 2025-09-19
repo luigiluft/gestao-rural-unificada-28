@@ -8,50 +8,50 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EmptyState } from "@/components/ui/empty-state"
+import { LoadingState } from "@/components/ui/loading-state"
+import { useRemessas } from "@/hooks/useRemessas"
 
 export default function Remessas() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
-  // Mock data para remessas
-  const remessas = [
-    {
-      id: "REM-001",
-      numero: "2024001",
-      status: "criada",
-      dataCreacao: "2024-01-15",
-      totalSaidas: 3,
-      totalVolumes: 150,
-      pesoTotal: 2500,
-      destinatarios: ["João Silva", "Maria Santos"],
-      valorTotal: 15000
-    },
-    {
-      id: "REM-002", 
-      numero: "2024002",
-      status: "despachada",
-      dataCreacao: "2024-01-14",
-      totalSaidas: 2,
-      totalVolumes: 80,
-      pesoTotal: 1200,
-      destinatarios: ["Pedro Costa"],
-      valorTotal: 8500
-    }
-  ]
+  const { data: remessas = [], isLoading, error } = useRemessas({
+    status: statusFilter === "all" ? undefined : statusFilter
+  })
 
   const statusBadges = {
     criada: { label: "Criada", variant: "secondary" as const },
-    despachada: { label: "Despachada", variant: "default" as const },
+    pronta: { label: "Pronta", variant: "default" as const },
+    despachada: { label: "Despachada", variant: "outline" as const },
     em_transito: { label: "Em Trânsito", variant: "outline" as const },
     entregue: { label: "Entregue", variant: "default" as const }
   }
 
   const filteredRemessas = remessas.filter(remessa => {
-    const matchesSearch = remessa.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         remessa.destinatarios.some(d => d.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesStatus = statusFilter === "all" || remessa.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesSearch = remessa.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         remessa.observacoes?.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesSearch
   })
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <LoadingState />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive">Erro ao carregar remessas: {error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -115,6 +115,7 @@ export default function Remessas() {
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="criada">Criada</SelectItem>
+                <SelectItem value="pronta">Pronta</SelectItem>
                 <SelectItem value="despachada">Despachada</SelectItem>
                 <SelectItem value="em_transito">Em Trânsito</SelectItem>
                 <SelectItem value="entregue">Entregue</SelectItem>
@@ -155,7 +156,7 @@ export default function Remessas() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {remessas.reduce((acc, r) => acc + r.totalVolumes, 0)}
+              {remessas.reduce((acc, r) => acc + (r.total_volumes || 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -167,7 +168,7 @@ export default function Remessas() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {remessas.reduce((acc, r) => acc + r.pesoTotal, 0).toLocaleString()}
+              {remessas.reduce((acc, r) => acc + (r.peso_total || 0), 0).toLocaleString()}
             </div>
           </CardContent>
         </Card>
@@ -195,29 +196,29 @@ export default function Remessas() {
                   <TableHead>Número</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data Criação</TableHead>
-                  <TableHead>Saídas</TableHead>
+                  <TableHead>Total Saídas</TableHead>
                   <TableHead>Volumes</TableHead>
                   <TableHead>Peso (kg)</TableHead>
-                  <TableHead>Destinatários</TableHead>
                   <TableHead>Valor Total</TableHead>
+                  <TableHead>Observações</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRemessas.map((remessa) => (
                   <TableRow key={remessa.id}>
-                    <TableCell className="font-medium">{remessa.numero}</TableCell>
+                    <TableCell className="font-medium">{remessa.numero || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={statusBadges[remessa.status as keyof typeof statusBadges].variant}>
-                        {statusBadges[remessa.status as keyof typeof statusBadges].label}
+                      <Badge variant={statusBadges[remessa.status as keyof typeof statusBadges]?.variant || "secondary"}>
+                        {statusBadges[remessa.status as keyof typeof statusBadges]?.label || remessa.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(remessa.dataCreacao).toLocaleDateString()}</TableCell>
-                    <TableCell>{remessa.totalSaidas}</TableCell>
-                    <TableCell>{remessa.totalVolumes}</TableCell>
-                    <TableCell>{remessa.pesoTotal.toLocaleString()}</TableCell>
-                    <TableCell>{remessa.destinatarios.join(", ")}</TableCell>
-                    <TableCell>R$ {remessa.valorTotal.toLocaleString()}</TableCell>
+                    <TableCell>{new Date(remessa.data_criacao || remessa.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>{remessa.total_saidas || 0}</TableCell>
+                    <TableCell>{remessa.total_volumes || 0}</TableCell>
+                    <TableCell>{(remessa.peso_total || 0).toLocaleString()}</TableCell>
+                    <TableCell>R$ {(remessa.valor_total || 0).toLocaleString()}</TableCell>
+                    <TableCell>{remessa.observacoes || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm">
