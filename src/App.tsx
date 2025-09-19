@@ -99,6 +99,14 @@ const App = () => (
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               <Route path="transporte" element={<RequirePageAccess pageKey="transporte"><Transporte /></RequirePageAccess>} />
+              <Route path="remessas" element={<RequirePageAccess pageKey="remessas"><Remessas /></RequirePageAccess>} />
+              <Route path="planejamento" element={<RequirePageAccess pageKey="planejamento"><Planejamento /></RequirePageAccess>} />
+              <Route path="viagens" element={<RequirePageAccess pageKey="viagens"><Viagens /></RequirePageAccess>} />
+              <Route path="agenda" element={<RequirePageAccess pageKey="agenda"><Agenda /></RequirePageAccess>} />
+              <Route path="tracking" element={<RequirePageAccess pageKey="tracking"><Tracking /></RequirePageAccess>} />
+              <Route path="proof-of-delivery" element={<RequirePageAccess pageKey="proof-of-delivery"><ProofOfDelivery /></RequirePageAccess>} />
+              <Route path="ocorrencias" element={<RequirePageAccess pageKey="ocorrencias"><Ocorrencias /></RequirePageAccess>} />
+              <Route path="tabelas-frete" element={<RequirePageAccess pageKey="tabelas-frete"><TabelasFrete /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />
               
               {/* Rotas de Instruções */}

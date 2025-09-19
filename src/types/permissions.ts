@@ -9,7 +9,9 @@ export type PermissionCode =
   | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view'
   | 'catalogo.view' | 'alocacao-pallets.view' | 'gerenciar-alocacoes.view'
   | 'gerenciar-posicoes.view' | 'fazendas.view' | 'produtores.view'
-  | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view';
+  | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view'
+  | 'remessas.view' | 'planejamento.view' | 'viagens.view' | 'agenda.view'
+  | 'tracking.view' | 'proof-of-delivery.view' | 'ocorrencias.view' | 'tabelas-frete.view';
 
 // Template de permissões para criar perfis de funcionários/subcontas
 export interface PermissionTemplate {
@@ -45,6 +47,14 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'separacao.view', label: 'Central de Separação' },
   { code: 'expedicao.view', label: 'Central de Expedição' },
   { code: 'transporte.view', label: 'Transporte' },
+  { code: 'remessas.view', label: 'Remessas' },
+  { code: 'planejamento.view', label: 'Planejamento' },
+  { code: 'viagens.view', label: 'Viagens' },
+  { code: 'agenda.view', label: 'Agenda' },
+  { code: 'tracking.view', label: 'Tracking' },
+  { code: 'proof-of-delivery.view', label: 'Proof of Delivery' },
+  { code: 'ocorrencias.view', label: 'Ocorrências' },
+  { code: 'tabelas-frete.view', label: 'Tabelas de Frete' },
   { code: 'rastreio.view', label: 'Rastreamento' },
   { code: 'relatorios.view', label: 'Ver relatórios' },
   { code: 'produtores.view', label: 'Produtores' },
