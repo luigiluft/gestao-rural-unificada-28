@@ -22,13 +22,12 @@ export default function Transporte() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [observacoes, setObservacoes] = useState('')
 
-  // Filter only expedido status for transport
-  const saidas = saidasData?.filter(saida => saida.status === 'expedido') || []
+  // Filter only entregue status for transport confirmation
+  const saidas = saidasData?.filter(saida => saida.status === 'entregue') || []
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      'expedido': { label: 'Expedido', variant: 'default' as const, icon: Truck },
-      'entregue': { label: 'Entregue', variant: 'outline' as const, icon: CheckCircle },
+      'entregue': { label: 'Entregue', variant: 'default' as const, icon: CheckCircle },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -45,14 +44,14 @@ export default function Transporte() {
 
   const getNextStatus = (currentStatus: string) => {
     const statusFlow = {
-      'expedido': 'entregue'
+      'entregue': 'finalizado'
     }
     return statusFlow[currentStatus as keyof typeof statusFlow]
   }
 
   const getNextStatusLabel = (currentStatus: string) => {
     const statusLabels = {
-      'expedido': 'Marcar como Entregue'
+      'entregue': 'Finalizar Entrega'
     }
     return statusLabels[currentStatus as keyof typeof statusLabels] || null
   }
@@ -113,7 +112,7 @@ export default function Transporte() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Transporte</h1>
         <p className="text-muted-foreground">
-          Gerencie a entrega dos produtos expedidos e confirme as entregas realizadas
+          Confirme as entregas que já foram realizadas e finalize o processo de transporte
         </p>
       </div>
 
@@ -123,8 +122,8 @@ export default function Transporte() {
         {saidas.length === 0 ? (
           <EmptyState
             icon={<Truck className="h-12 w-12 text-muted-foreground" />}
-            title="Nenhuma saída expedida"
-            description="Não há saídas expedidas aguardando entrega no período selecionado. Produtos aparecerão aqui após serem expedidos."
+            title="Nenhuma entrega pendente"
+            description="Não há entregas confirmadas aguardando finalização. Produtos aparecerão aqui após serem entregues."
           />
         ) : (
           <div className="grid gap-4">
@@ -226,20 +225,20 @@ export default function Transporte() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar Entrega</DialogTitle>
+            <DialogTitle>Finalizar Entrega</DialogTitle>
             <DialogDescription>
-              {selectedSaida && `Deseja confirmar a entrega da saída SAI${selectedSaida.id.slice(-6).toUpperCase()}?`}
+              {selectedSaida && `Deseja finalizar o processo de entrega da saída SAI${selectedSaida.id.slice(-6).toUpperCase()}?`}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="observacoes">Observações da Entrega (opcional)</Label>
+              <Label htmlFor="observacoes">Observações da Finalização (opcional)</Label>
               <Textarea
                 id="observacoes"
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Adicione observações sobre a entrega..."
+                placeholder="Adicione observações sobre a finalização da entrega..."
                 rows={3}
               />
             </div>
@@ -253,7 +252,7 @@ export default function Transporte() {
               onClick={handleConfirm}
               disabled={atualizarStatus.isPending}
             >
-              {atualizarStatus.isPending ? "Confirmando..." : "Confirmar Entrega"}
+              {atualizarStatus.isPending ? "Finalizando..." : "Finalizar Entrega"}
             </Button>
           </DialogFooter>
         </DialogContent>

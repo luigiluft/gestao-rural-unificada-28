@@ -25,7 +25,8 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
             )
           )
         `)
-        .in("status", ["separacao_pendente", "separado", "expedido"])
+        .in("status", ["separacao_pendente", "separado", "expedido", "entregue"])
+        .is("remessa_id", null) // Only saidas not yet in remessas
         
       // Apply date filters if provided
       if (dateRange?.from) {

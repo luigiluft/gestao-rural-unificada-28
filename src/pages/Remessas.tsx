@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useRemessas } from "@/hooks/useRemessas"
+import { useSaidasPendentes } from "@/hooks/useSaidasPendentes"
 
 export default function Remessas() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -18,6 +19,11 @@ export default function Remessas() {
   const { data: remessas = [], isLoading, error } = useRemessas({
     status: statusFilter === "all" ? undefined : statusFilter
   })
+  
+  const { data: saidasExpedidas = [] } = useSaidasPendentes()
+  
+  // Filter only expedited outputs for remessa creation
+  const saidasParaRemessa = saidasExpedidas.filter(saida => saida.status === 'expedido')
 
   const statusBadges = {
     criada: { label: "Criada", variant: "secondary" as const },
@@ -81,12 +87,38 @@ export default function Remessas() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Aqui seria exibida uma lista de saídas com status "expedido" disponíveis para agrupamento
-              </p>
+              <div className="max-h-96 overflow-y-auto">
+                <h4 className="text-sm font-medium mb-3">Saídas Expedidas Disponíveis</h4>
+                {saidasParaRemessa.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-4 text-center border rounded-lg">
+                    Nenhuma saída expedida disponível para agrupamento
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {saidasParaRemessa.map((saida) => (
+                      <div key={saida.id} className="p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">SAI{saida.id.slice(-6).toUpperCase()}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {(saida as any).produtor?.nome || "Produtor não identificado"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {saida.saida_itens?.length || 0} itens
+                            </p>
+                          </div>
+                          <Badge variant="outline">Expedido</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button variant="outline">Cancelar</Button>
-                <Button>Criar Remessa</Button>
+                <Button disabled={saidasParaRemessa.length === 0}>
+                  Criar Remessa ({saidasParaRemessa.length} saídas)
+                </Button>
               </div>
             </div>
           </DialogContent>
