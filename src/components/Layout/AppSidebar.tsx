@@ -3,7 +3,8 @@ import {
   LogOut,
   HelpCircle,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import logoImg from "@/assets/agrohub-logo.svg"
@@ -17,6 +18,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
@@ -45,6 +49,7 @@ export function AppSidebar() {
   const { user, logout } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
   const [customLogo, setCustomLogo] = useState<string | null>(null)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   
   const { data: notifications } = useNotifications()
   const { menuItems, isLoading: menuLoading } = useDynamicMenuItems()
@@ -123,6 +128,24 @@ export function AppSidebar() {
     }
   }
 
+  const getWmsNotificationCount = (subItems: any[], notifications: any) => {
+    if (!notifications || !subItems) return 0
+    
+    return subItems.reduce((total, item) => {
+      return total + getNotificationCount(item.label, notifications)
+    }, 0)
+  }
+
+  const toggleExpanded = (itemPath: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(itemPath)) {
+      newExpanded.delete(itemPath)
+    } else {
+      newExpanded.add(itemPath)
+    }
+    setExpandedItems(newExpanded)
+  }
+
   // Convert regular paths to demo paths during tutorial
   const convertToTutorialPath = (path: string) => {
     if (!isTutorialActive) return path
@@ -175,29 +198,92 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton asChild>
-                     <NavLink 
-                       to={convertToTutorialPath(item.path)} 
-                       end={item.path === "/"}
-                       data-tutorial={item.label === "Entradas" ? "entradas-link" : item.label === "Recebimento" ? "menu-recebimento" : undefined}
-                       className={({ isActive }) => 
-                         `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
-                       }
-                     >
+                  {item.subItems ? (
+                    // Item com submenu (WMS)
+                    <>
+                      <SidebarMenuButton 
+                        onClick={() => !collapsed && toggleExpanded(item.path)}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-secondary/50 cursor-pointer`}
+                      >
                         <div className="relative">
                           {item.icon && <item.icon className="w-5 h-5 flex-shrink-0" />}
-                         {notifications && getNotificationCount(item.label, notifications) > 0 && (
-                           <Badge 
-                             variant="destructive" 
-                             className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
-                           >
-                             {getNotificationCount(item.label, notifications)}
-                           </Badge>
-                         )}
-                       </div>
-                       {!collapsed && <span className="font-medium">{item.label}</span>}
-                     </NavLink>
-                  </SidebarMenuButton>
+                          {notifications && getWmsNotificationCount(item.subItems, notifications) > 0 && (
+                            <Badge 
+                              variant="destructive" 
+                              className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                            >
+                              {getWmsNotificationCount(item.subItems, notifications)}
+                            </Badge>
+                          )}
+                        </div>
+                        {!collapsed && (
+                          <>
+                            <span className="font-medium flex-1">{item.label}</span>
+                            <ChevronRight 
+                              className={`h-4 w-4 transition-transform duration-200 ${
+                                expandedItems.has(item.path) ? 'rotate-90' : ''
+                              }`} 
+                            />
+                          </>
+                        )}
+                      </SidebarMenuButton>
+                      {!collapsed && expandedItems.has(item.path) && (
+                        <SidebarMenuSub>
+                          {item.subItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.label}>
+                              <SidebarMenuSubButton asChild>
+                                <NavLink 
+                                  to={convertToTutorialPath(subItem.path)}
+                                  data-tutorial={subItem.label === "Recebimento" ? "menu-recebimento" : undefined}
+                                  className={({ isActive }) => 
+                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
+                                  }
+                                >
+                                  <div className="relative">
+                                    {subItem.icon && <subItem.icon className="w-4 h-4 flex-shrink-0" />}
+                                    {notifications && getNotificationCount(subItem.label, notifications) > 0 && (
+                                      <Badge 
+                                        variant="destructive" 
+                                        className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                                      >
+                                        {getNotificationCount(subItem.label, notifications)}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <span className="font-medium">{subItem.label}</span>
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </>
+                  ) : (
+                    // Item normal sem submenu
+                    <SidebarMenuButton asChild>
+                       <NavLink 
+                         to={convertToTutorialPath(item.path)} 
+                         end={item.path === "/"}
+                         data-tutorial={item.label === "Entradas" ? "entradas-link" : undefined}
+                         className={({ isActive }) => 
+                           `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
+                         }
+                       >
+                          <div className="relative">
+                            {item.icon && <item.icon className="w-5 h-5 flex-shrink-0" />}
+                           {notifications && getNotificationCount(item.label, notifications) > 0 && (
+                             <Badge 
+                               variant="destructive" 
+                               className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                             >
+                               {getNotificationCount(item.label, notifications)}
+                             </Badge>
+                           )}
+                         </div>
+                         {!collapsed && <span className="font-medium">{item.label}</span>}
+                       </NavLink>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

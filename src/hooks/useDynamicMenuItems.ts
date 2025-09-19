@@ -24,7 +24,8 @@ import {
   Grid3X3,
   Clipboard,
   Package2,
-  BookOpen
+  BookOpen,
+  Warehouse
 } from "lucide-react"
 
 export interface MenuItem {
@@ -61,7 +62,8 @@ const iconMap = {
   inventario: Package2,
   transporte: Truck,
   "perfis-funcionarios": Users,
-  instrucoes: BookOpen
+  instrucoes: BookOpen,
+  wms: Warehouse
 }
 
 const menuLabels = {
@@ -90,7 +92,8 @@ const menuLabels = {
   inventario: "Inventário",
   transporte: "Transporte",
   "perfis-funcionarios": "Perfis de Funcionários",
-  instrucoes: "Instruções"
+  instrucoes: "Instruções",
+  wms: "WMS"
 }
 
 export const useDynamicMenuItems = () => {
@@ -106,14 +109,8 @@ export const useDynamicMenuItems = () => {
       'dashboard',
       'catalogo', 
       'entradas',
-      'recebimento',
-      'alocacao-pallets',
-      'gerenciar-posicoes',
       'estoque',
-      'inventario',
       'saidas',
-      'separacao',
-      'expedicao',
       'transporte',
       'rastreio',
       'relatorios',
@@ -124,6 +121,16 @@ export const useDynamicMenuItems = () => {
       'perfis-funcionarios',
       'instrucoes',
       'suporte'
+    ]
+
+    // Páginas do WMS
+    const wmsPages = [
+      'recebimento',
+      'alocacao-pallets',
+      'gerenciar-posicoes',
+      'inventario',
+      'separacao',
+      'expedicao'
     ]
 
     // Adicionar itens na ordem especificada
@@ -144,6 +151,45 @@ export const useDynamicMenuItems = () => {
         })
       }
     })
+
+    // Verificar se tem permissão para pelo menos uma página do WMS
+    const hasWmsPermission = wmsPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasWmsPermission) {
+      const wmsSubItems: MenuItem[] = []
+      
+      wmsPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          wmsSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (wmsSubItems.length > 0) {
+        // Inserir WMS após estoque
+        const estoqueIndex = items.findIndex(item => item.path === '/estoque')
+        const insertIndex = estoqueIndex !== -1 ? estoqueIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/wms',
+          label: 'WMS',
+          icon: iconMap.wms,
+          subItems: wmsSubItems
+        })
+      }
+    }
 
     return items
   }, [permissions, isLoading])
