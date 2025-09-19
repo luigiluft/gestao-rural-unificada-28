@@ -32,24 +32,7 @@ const Ocorrencias = () => {
     tipo: tipoFilter !== 'all' ? tipoFilter : undefined
   });
 
-  // Mock data for demonstration while table is being created
-  const mockOcorrencias = [
-    {
-      id: '1',
-      numero: 'OC-001',
-      tipo: 'acidente',
-      titulo: 'Acidente leve na BR-101',
-      descricao: 'Colisão traseira durante o trânsito. Sem feridos.',
-      status: 'aberta',
-      prioridade: 'alta',
-      localizacao: 'BR-101, km 45',
-      created_at: '2024-01-15 14:30',
-      criado_por: 'Sistema Automático',
-      observacoes: 'Guincho a caminho. Estimativa de 2 horas para resolução.'
-    }
-  ];
-
-  const displayOcorrencias = ocorrencias.length > 0 ? ocorrencias : mockOcorrencias;
+  const displayOcorrencias = ocorrencias;
 
   const statusBadges = {
     aberta: { label: 'Aberta', variant: 'destructive' as const, icon: XCircle },
@@ -273,10 +256,10 @@ const Ocorrencias = () => {
         <CardContent>
           <div className="space-y-4">
             {filteredOcorrencias.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <div className="text-lg font-medium mb-2">Nenhuma ocorrência encontrada</div>
-                <p>Quando houver ocorrências registradas, elas aparecerão aqui</p>
-              </div>
+              <EmptyState 
+                title="Nenhuma ocorrência encontrada"
+                description="Quando houver ocorrências registradas, elas aparecerão aqui"
+              />
             ) : (
               filteredOcorrencias.map((ocorrencia) => (
               <Card key={ocorrencia.id} className="border-l-4 border-l-primary">

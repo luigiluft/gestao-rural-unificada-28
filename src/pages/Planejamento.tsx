@@ -21,9 +21,7 @@ const Planejamento = () => {
   const viagensPlanejadas = viagens.filter(v => v.status === 'planejada');
   const viagensEmAndamento = viagens.filter(v => v.status === 'em_andamento');
   
-  const totalRemessasAlocadas = viagens.reduce((total, viagem) => 
-    total + (viagem.viagem_remessas?.length || 0), 0
-  );
+  const totalRemessasAlocadas = 0; // TODO: Implementar contagem de remessas quando relacionamento for criado
 
   const handleAlocarRemessa = (viagemId: string, remessaId: string) => {
     alocarRemessa.mutate({ viagemId, remessaId });
@@ -160,8 +158,8 @@ const Planejamento = () => {
                                   <div className="text-left">
                                     <div className="font-medium">{viagem.numero}</div>
                                     <div className="text-sm text-muted-foreground">
-                                      {viagem.viagem_remessas?.length || 0} remessas
-                                    </div>
+                                       0 remessas
+                                     </div>
                                   </div>
                                 </Button>
                               ))
@@ -207,28 +205,9 @@ const Planejamento = () => {
                       </Badge>
                     </div>
                     
-                    {viagem.viagem_remessas && Array.isArray(viagem.viagem_remessas) && viagem.viagem_remessas.length > 0 ? (
-                      <div className="space-y-2">
-                        <h5 className="text-sm font-medium">Remessas alocadas:</h5>
-                        {viagem.viagem_remessas.map((vr: any) => (
-                          <div key={vr.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded">
-                            <span>{vr.remessas?.numero}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDesalocarRemessa(viagem.id, vr.remessas?.id)}
-                              className="h-6 px-2 text-xs"
-                            >
-                              Remover
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        Nenhuma remessa alocada
-                      </div>
-                    )}
+                    <div className="text-sm text-muted-foreground">
+                      Nenhuma remessa alocada para esta viagem
+                    </div>
                   </div>
                 ))}
               </div>

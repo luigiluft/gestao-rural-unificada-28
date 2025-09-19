@@ -7,22 +7,7 @@ export const useViagens = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("viagens")
-        .select(`
-          *,
-          viagem_remessas(
-            id,
-            ordem_entrega,
-            remessas(
-              id,
-              numero,
-              peso_total,
-              total_volumes,
-              valor_total,
-              status,
-              data_criacao
-            )
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
 
       if (error) throw error
@@ -38,22 +23,7 @@ export const useViagemById = (id: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("viagens")
-        .select(`
-          *,
-          viagem_remessas(
-            id,
-            ordem_entrega,
-            remessas(
-              id,
-              numero,
-              peso_total,
-              total_volumes,
-              valor_total,
-              status,
-              data_criacao
-            )
-          )
-        `)
+        .select("*")
         .eq("id", id)
         .single()
 
