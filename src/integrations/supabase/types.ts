@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      agendamentos: {
+        Row: {
+          cliente_email: string | null
+          cliente_nome: string
+          cliente_telefone: string | null
+          created_at: string
+          data_agendamento: string
+          data_conclusao: string | null
+          endereco: string
+          horario_agendamento: string
+          id: string
+          numero: string
+          observacoes: string | null
+          prioridade: string
+          produto_descricao: string | null
+          responsavel_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_email?: string | null
+          cliente_nome: string
+          cliente_telefone?: string | null
+          created_at?: string
+          data_agendamento: string
+          data_conclusao?: string | null
+          endereco: string
+          horario_agendamento: string
+          id?: string
+          numero: string
+          observacoes?: string | null
+          prioridade?: string
+          produto_descricao?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_email?: string | null
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          created_at?: string
+          data_agendamento?: string
+          data_conclusao?: string | null
+          endereco?: string
+          horario_agendamento?: string
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          prioridade?: string
+          produto_descricao?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chamados_suporte: {
         Row: {
           categoria: string | null
@@ -55,6 +118,112 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      comprovante_fotos: {
+        Row: {
+          comprovante_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          tipo: string
+          url_foto: string
+        }
+        Insert: {
+          comprovante_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo: string
+          url_foto: string
+        }
+        Update: {
+          comprovante_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          url_foto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comprovante_fotos_comprovante_id_fkey"
+            columns: ["comprovante_id"]
+            isOneToOne: false
+            referencedRelation: "comprovantes_entrega"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comprovantes_entrega: {
+        Row: {
+          cliente_nome: string
+          codigo: string
+          created_at: string
+          data_entrega: string | null
+          documento_recebedor: string | null
+          id: string
+          latitude: number | null
+          localizacao: string | null
+          longitude: number | null
+          observacoes: string | null
+          produto_descricao: string | null
+          recebido_por: string | null
+          status: string
+          tem_assinatura: boolean
+          total_fotos: number
+          tracking_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_nome: string
+          codigo: string
+          created_at?: string
+          data_entrega?: string | null
+          documento_recebedor?: string | null
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          observacoes?: string | null
+          produto_descricao?: string | null
+          recebido_por?: string | null
+          status?: string
+          tem_assinatura?: boolean
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_nome?: string
+          codigo?: string
+          created_at?: string
+          data_entrega?: string | null
+          documento_recebedor?: string | null
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          observacoes?: string | null
+          produto_descricao?: string | null
+          recebido_por?: string | null
+          status?: string
+          tem_assinatura?: boolean
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comprovantes_entrega_tracking_id_fkey"
+            columns: ["tracking_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_entregas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       configuracoes_sistema: {
         Row: {
@@ -1239,6 +1408,51 @@ export type Database = {
         }
         Relationships: []
       }
+      motoristas: {
+        Row: {
+          ativo: boolean
+          categoria_cnh: string | null
+          cnh: string
+          cpf: string
+          created_at: string
+          data_vencimento_cnh: string | null
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria_cnh?: string | null
+          cnh: string
+          cpf: string
+          created_at?: string
+          data_vencimento_cnh?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria_cnh?: string | null
+          cnh?: string
+          cpf?: string
+          created_at?: string
+          data_vencimento_cnh?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           created_at: string
@@ -1291,6 +1505,128 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_fotos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          ocorrencia_id: string
+          url_foto: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ocorrencia_id: string
+          url_foto: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ocorrencia_id?: string
+          url_foto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_fotos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias_transporte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencias_transporte: {
+        Row: {
+          acao_corretiva: string | null
+          cliente_nome: string | null
+          created_at: string
+          data_resolucao: string | null
+          descricao: string
+          id: string
+          latitude: number | null
+          localizacao: string | null
+          longitude: number | null
+          numero: string
+          prioridade: string
+          responsavel_id: string | null
+          severidade: string
+          status: string
+          tempo_resolucao: unknown | null
+          tipo: string
+          titulo: string
+          total_fotos: number
+          tracking_id: string | null
+          updated_at: string
+          user_id: string
+          viagem_id: string | null
+        }
+        Insert: {
+          acao_corretiva?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_resolucao?: string | null
+          descricao: string
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          numero: string
+          prioridade?: string
+          responsavel_id?: string | null
+          severidade?: string
+          status?: string
+          tempo_resolucao?: unknown | null
+          tipo: string
+          titulo: string
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id: string
+          viagem_id?: string | null
+        }
+        Update: {
+          acao_corretiva?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_resolucao?: string | null
+          descricao?: string
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          numero?: string
+          prioridade?: string
+          responsavel_id?: string | null
+          severidade?: string
+          status?: string
+          tempo_resolucao?: unknown | null
+          tipo?: string
+          titulo?: string
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id?: string
+          viagem_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_transporte_tracking_id_fkey"
+            columns: ["tracking_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_transporte_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
             referencedColumns: ["id"]
           },
         ]
@@ -1702,6 +2038,105 @@ export type Database = {
           },
         ]
       }
+      remessa_saidas: {
+        Row: {
+          created_at: string
+          id: string
+          remessa_id: string
+          saida_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          remessa_id: string
+          saida_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          remessa_id?: string
+          saida_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remessa_saidas_remessa_id_fkey"
+            columns: ["remessa_id"]
+            isOneToOne: false
+            referencedRelation: "remessas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessa_saidas_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remessas: {
+        Row: {
+          created_at: string
+          data_criacao: string
+          data_despacho: string | null
+          data_entrega: string | null
+          deposito_id: string
+          id: string
+          motorista_id: string | null
+          numero: string
+          observacoes: string | null
+          peso_total: number
+          status: string
+          total_saidas: number
+          total_volumes: number
+          transportadora_id: string | null
+          updated_at: string
+          user_id: string
+          valor_total: number
+          veiculo_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_criacao?: string
+          data_despacho?: string | null
+          data_entrega?: string | null
+          deposito_id: string
+          id?: string
+          motorista_id?: string | null
+          numero: string
+          observacoes?: string | null
+          peso_total?: number
+          status?: string
+          total_saidas?: number
+          total_volumes?: number
+          transportadora_id?: string | null
+          updated_at?: string
+          user_id: string
+          valor_total?: number
+          veiculo_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_criacao?: string
+          data_despacho?: string | null
+          data_entrega?: string | null
+          deposito_id?: string
+          id?: string
+          motorista_id?: string | null
+          numero?: string
+          observacoes?: string | null
+          peso_total?: number
+          status?: string
+          total_saidas?: number
+          total_volumes?: number
+          transportadora_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_total?: number
+          veiculo_id?: string | null
+        }
+        Relationships: []
+      }
       reservas_horario: {
         Row: {
           created_at: string
@@ -1742,6 +2177,120 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rota_paradas: {
+        Row: {
+          cidade: string
+          cliente_nome: string
+          created_at: string
+          endereco: string
+          horario_chegada: string | null
+          horario_previsto: string | null
+          horario_saida: string | null
+          id: string
+          observacoes: string | null
+          ordem: number
+          remessa_id: string
+          rota_id: string
+          status: string
+        }
+        Insert: {
+          cidade: string
+          cliente_nome: string
+          created_at?: string
+          endereco: string
+          horario_chegada?: string | null
+          horario_previsto?: string | null
+          horario_saida?: string | null
+          id?: string
+          observacoes?: string | null
+          ordem: number
+          remessa_id: string
+          rota_id: string
+          status?: string
+        }
+        Update: {
+          cidade?: string
+          cliente_nome?: string
+          created_at?: string
+          endereco?: string
+          horario_chegada?: string | null
+          horario_previsto?: string | null
+          horario_saida?: string | null
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          remessa_id?: string
+          rota_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rota_paradas_remessa_id_fkey"
+            columns: ["remessa_id"]
+            isOneToOne: false
+            referencedRelation: "remessas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rota_paradas_rota_id_fkey"
+            columns: ["rota_id"]
+            isOneToOne: false
+            referencedRelation: "rotas_planejamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rotas_planejamento: {
+        Row: {
+          created_at: string
+          data_rota: string
+          deposito_id: string
+          id: string
+          motorista_id: string | null
+          nome: string
+          observacoes: string | null
+          status: string
+          tempo_estimado: unknown | null
+          total_km: number
+          total_remessas: number
+          updated_at: string
+          user_id: string
+          veiculo_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_rota: string
+          deposito_id: string
+          id?: string
+          motorista_id?: string | null
+          nome: string
+          observacoes?: string | null
+          status?: string
+          tempo_estimado?: unknown | null
+          total_km?: number
+          total_remessas?: number
+          updated_at?: string
+          user_id: string
+          veiculo_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_rota?: string
+          deposito_id?: string
+          id?: string
+          motorista_id?: string | null
+          nome?: string
+          observacoes?: string | null
+          status?: string
+          tempo_estimado?: unknown | null
+          total_km?: number
+          total_remessas?: number
+          updated_at?: string
+          user_id?: string
+          veiculo_id?: string | null
+        }
+        Relationships: []
       }
       saida_itens: {
         Row: {
@@ -1954,6 +2503,253 @@ export type Database = {
           reservado_por_wave_id?: string | null
           reservado_temporariamente?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tabela_frete_regras: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          faixa_fim: number | null
+          faixa_inicio: number
+          id: string
+          tabela_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          faixa_fim?: number | null
+          faixa_inicio?: number
+          id?: string
+          tabela_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          faixa_fim?: number | null
+          faixa_inicio?: number
+          id?: string
+          tabela_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tabela_frete_regras_tabela_id_fkey"
+            columns: ["tabela_id"]
+            isOneToOne: false
+            referencedRelation: "tabelas_frete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tabelas_frete: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_vencimento: string | null
+          data_vigencia: string
+          id: string
+          nome: string
+          origem: string | null
+          tipo: string
+          unidade: string
+          updated_at: string
+          user_id: string
+          valor_base: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_vencimento?: string | null
+          data_vigencia: string
+          id?: string
+          nome: string
+          origem?: string | null
+          tipo: string
+          unidade?: string
+          updated_at?: string
+          user_id: string
+          valor_base?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_vencimento?: string | null
+          data_vigencia?: string
+          id?: string
+          nome?: string
+          origem?: string | null
+          tipo?: string
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+          valor_base?: number
+        }
+        Relationships: []
+      }
+      tracking_entregas: {
+        Row: {
+          cliente_nome: string
+          codigo_rastreamento: string
+          created_at: string
+          data_entrega: string | null
+          data_partida: string | null
+          distancia_percorrida: number | null
+          distancia_total: number | null
+          id: string
+          localizacao_atual: string | null
+          observacoes: string | null
+          previsao_chegada: string | null
+          produto_descricao: string | null
+          remessa_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          viagem_id: string | null
+        }
+        Insert: {
+          cliente_nome: string
+          codigo_rastreamento: string
+          created_at?: string
+          data_entrega?: string | null
+          data_partida?: string | null
+          distancia_percorrida?: number | null
+          distancia_total?: number | null
+          id?: string
+          localizacao_atual?: string | null
+          observacoes?: string | null
+          previsao_chegada?: string | null
+          produto_descricao?: string | null
+          remessa_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          viagem_id?: string | null
+        }
+        Update: {
+          cliente_nome?: string
+          codigo_rastreamento?: string
+          created_at?: string
+          data_entrega?: string | null
+          data_partida?: string | null
+          distancia_percorrida?: number | null
+          distancia_total?: number | null
+          id?: string
+          localizacao_atual?: string | null
+          observacoes?: string | null
+          previsao_chegada?: string | null
+          produto_descricao?: string | null
+          remessa_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          viagem_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_entregas_remessa_id_fkey"
+            columns: ["remessa_id"]
+            isOneToOne: false
+            referencedRelation: "remessas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracking_entregas_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_eventos: {
+        Row: {
+          created_at: string
+          descricao: string
+          hora: string
+          id: string
+          latitude: number | null
+          local: string
+          longitude: number | null
+          tracking_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          hora: string
+          id?: string
+          latitude?: number | null
+          local: string
+          longitude?: number | null
+          tracking_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          hora?: string
+          id?: string
+          latitude?: number | null
+          local?: string
+          longitude?: number | null
+          tracking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_eventos_tracking_id_fkey"
+            columns: ["tracking_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_entregas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transportadoras: {
+        Row: {
+          ativo: boolean
+          cnpj: string
+          contato: string | null
+          created_at: string
+          email: string | null
+          especialidade: string | null
+          id: string
+          nome: string
+          regiao_atendimento: string | null
+          updated_at: string
+          user_id: string
+          valor_km: number | null
+          valor_minimo: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj: string
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          especialidade?: string | null
+          id?: string
+          nome: string
+          regiao_atendimento?: string | null
+          updated_at?: string
+          user_id: string
+          valor_km?: number | null
+          valor_minimo?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          especialidade?: string | null
+          id?: string
+          nome?: string
+          regiao_atendimento?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_km?: number | null
+          valor_minimo?: number | null
         }
         Relationships: []
       }
@@ -2185,6 +2981,131 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      veiculos: {
+        Row: {
+          ano: number | null
+          ativo: boolean
+          capacidade_peso: number | null
+          capacidade_volume: number | null
+          created_at: string
+          id: string
+          marca: string | null
+          modelo: string | null
+          placa: string
+          tipo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ano?: number | null
+          ativo?: boolean
+          capacidade_peso?: number | null
+          capacidade_volume?: number | null
+          created_at?: string
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          placa: string
+          tipo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ano?: number | null
+          ativo?: boolean
+          capacidade_peso?: number | null
+          capacidade_volume?: number | null
+          created_at?: string
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          placa?: string
+          tipo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      viagens: {
+        Row: {
+          combustivel_fim: number | null
+          combustivel_inicio: number | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          deposito_id: string
+          distancia_percorrida: number
+          distancia_total: number
+          hodometro_fim: number | null
+          hodometro_inicio: number | null
+          id: string
+          motorista_id: string | null
+          numero: string
+          observacoes: string | null
+          remessas_entregues: number
+          rota_id: string | null
+          status: string
+          total_remessas: number
+          updated_at: string
+          user_id: string
+          veiculo_id: string | null
+        }
+        Insert: {
+          combustivel_fim?: number | null
+          combustivel_inicio?: number | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          deposito_id: string
+          distancia_percorrida?: number
+          distancia_total?: number
+          hodometro_fim?: number | null
+          hodometro_inicio?: number | null
+          id?: string
+          motorista_id?: string | null
+          numero: string
+          observacoes?: string | null
+          remessas_entregues?: number
+          rota_id?: string | null
+          status?: string
+          total_remessas?: number
+          updated_at?: string
+          user_id: string
+          veiculo_id?: string | null
+        }
+        Update: {
+          combustivel_fim?: number | null
+          combustivel_inicio?: number | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          deposito_id?: string
+          distancia_percorrida?: number
+          distancia_total?: number
+          hodometro_fim?: number | null
+          hodometro_inicio?: number | null
+          id?: string
+          motorista_id?: string | null
+          numero?: string
+          observacoes?: string | null
+          remessas_entregues?: number
+          rota_id?: string | null
+          status?: string
+          total_remessas?: number
+          updated_at?: string
+          user_id?: string
+          veiculo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viagens_rota_id_fkey"
+            columns: ["rota_id"]
+            isOneToOne: false
+            referencedRelation: "rotas_planejamento"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
