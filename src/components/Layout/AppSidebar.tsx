@@ -117,8 +117,10 @@ export function AppSidebar() {
         return notifications.separacao || 0
       case "Expedição":
         return notifications.expedicao || 0
+      case "Remessas":
+        return notifications.remessas || 0
       case "Transporte":
-        return notifications.transporte || 0
+        return 0 // Transporte não tem mais notificações
       case "Suporte":
         return notifications.suporte || 0
       case "Subcontas":

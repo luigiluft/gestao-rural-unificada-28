@@ -14,7 +14,7 @@ export const useNotifications = () => {
         alocacoes: 0,
         separacao: 0,
         expedicao: 0,
-        transporte: 0,
+        remessas: 0,
         suporte: 0,
         subcontas: 0,
       }
@@ -35,7 +35,7 @@ export const useNotifications = () => {
       let alocacoes = 0
       let separacao = 0
       let expedicao = 0
-      let transporte = 0
+      let remessas = 0
       let suporte = 0
       let subcontas = 0
 
@@ -171,12 +171,12 @@ export const useNotifications = () => {
           expedicao = saidasCount || 0
         }
 
-        // TRANSPORTE: For franqueados - saídas expedidas awaiting delivery
+        // REMESSAS: For franqueados - remessas criadas e prontas
         if (isFranqueado || isAdmin) {
-          let transporteQuery = supabase
-            .from("saidas")
+          let remessasQuery = supabase
+            .from("remessas")
             .select("id", { count: "exact" })
-            .eq("status", "expedido")
+            .in("status", ["criada", "pronta"])
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
@@ -187,12 +187,12 @@ export const useNotifications = () => {
             
             const franquiaIds = franquias?.map(f => f.id) || []
             if (franquiaIds.length > 0) {
-              transporteQuery = transporteQuery.in("deposito_id", franquiaIds)
+              remessasQuery = remessasQuery.in("deposito_id", franquiaIds)
             }
           }
 
-          const { count: transporteCount } = await transporteQuery
-          transporte = transporteCount || 0
+          const { count: remessasCount } = await remessasQuery
+          remessas = remessasCount || 0
         }
 
         // SUPORTE: Open support tickets for current user
@@ -232,7 +232,7 @@ export const useNotifications = () => {
         alocacoes,
         separacao,
         expedicao,
-        transporte,
+        remessas,
         suporte,
         subcontas,
       }
