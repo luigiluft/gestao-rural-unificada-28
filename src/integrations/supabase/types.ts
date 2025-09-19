@@ -2251,8 +2251,8 @@ export type Database = {
         Returns: boolean
       }
       complete_invite_signup: {
-        Args: { _email: string; _user_id: string }
-        Returns: boolean
+        Args: { _email: string } | { _email: string; _user_id: string }
+        Returns: Json
       }
       complete_pallet_allocation_and_create_stock: {
         Args: {
@@ -2387,6 +2387,10 @@ export type Database = {
       process_entrada_itens_without_produto: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      process_orphaned_invites: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       process_saida_items: {
         Args: { p_saida_id: string }
