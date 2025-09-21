@@ -21,6 +21,12 @@ export const useViagemComRemessas = () => {
   return useQuery({
     queryKey: ["viagens-com-remessas"],
     queryFn: async () => {
+      console.log('🔍 useViagemComRemessas: Fetching viagens with remessas...')
+      
+      // Check authentication first
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔍 useViagemComRemessas: Current session:', session?.user?.id)
+      
       // Get all viagens with their associated saidas
       const { data: viagens, error } = await supabase
         .from("viagens")
@@ -38,7 +44,14 @@ export const useViagemComRemessas = () => {
         `)
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      console.log('🔍 useViagemComRemessas: Query result:', { viagens, error })
+      
+      if (error) {
+        console.error('❌ useViagemComRemessas: Error fetching viagens:', error)
+        throw error
+      }
+      
+      console.log('✅ useViagemComRemessas: Found', viagens?.length || 0, 'viagens')
       return viagens || []
     },
     staleTime: 30000,

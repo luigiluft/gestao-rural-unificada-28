@@ -54,33 +54,78 @@ export const NovaViagemDialog = ({ children }: NovaViagemDialogProps) => {
 
   const createViagem = useMutation({
     mutationFn: async (data: ViagemFormData) => {
-      // Get current user's first deposito_id
-      const { data: userProfile } = await supabase.auth.getUser();
-      const { data: franquias } = await supabase
+      console.log('🔍 NovaViagemDialog: Creating viagem...', data)
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      console.log('🔍 NovaViagemDialog: Current user:', user.id)
+      
+      // Get user's franquia (deposito)
+      const { data: franquia, error: franquiaError } = await supabase
         .from('franquias')
         .select('id')
-        .limit(1)
-        .single();
+        .eq('master_franqueado_id', user.id)
+        .maybeSingle();
+        
+      if (franquiaError) {
+        console.error('❌ NovaViagemDialog: Error fetching franquia:', franquiaError)
+        throw franquiaError;
+      }
+      
+      if (!franquia) {
+        console.log('⚠️ NovaViagemDialog: No franquia found for user, using first available')
+        // Fallback: get any active franquia for admin users
+        const { data: fallbackFranquia } = await supabase
+          .from('franquias')
+          .select('id')
+          .eq('ativo', true)
+          .limit(1)
+          .maybeSingle();
+          
+        if (!fallbackFranquia) {
+          throw new Error('Nenhuma franquia encontrada');
+        }
+        
+        console.log('🔍 NovaViagemDialog: Using fallback franquia:', fallbackFranquia.id)
+      }
+
+      const viagemData = {
+        numero: data.numero,
+        data_inicio: data.data_inicio,
+        data_fim: data.data_fim || null,
+        observacoes: data.observacoes || null,
+        status: 'planejada',
+        deposito_id: franquia?.id || '',
+        user_id: user.id,
+        // Required fields with defaults
+        distancia_total: 0,
+        distancia_percorrida: 0,
+        total_remessas: 0,
+        remessas_entregues: 0,
+      };
+      
+      console.log('🔍 NovaViagemDialog: Inserting viagem data:', viagemData)
 
       const { data: newViagem, error } = await supabase
         .from('viagens')
-        .insert({
-          numero: data.numero,
-          data_inicio: data.data_inicio,
-          data_fim: data.data_fim || null,
-          observacoes: data.observacoes || null,
-          status: 'planejada',
-          deposito_id: franquias?.id || '',
-          user_id: userProfile.user?.id || '',
-        })
+        .insert(viagemData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ NovaViagemDialog: Error inserting viagem:', error)
+        throw error;
+      }
+      
+      console.log('✅ NovaViagemDialog: Viagem created successfully:', newViagem)
       return newViagem;
     },
     onSuccess: () => {
+      // Invalidate both viagens queries
       queryClient.invalidateQueries({ queryKey: ['viagens'] });
+      queryClient.invalidateQueries({ queryKey: ['viagens-com-remessas'] });
       toast({ title: 'Viagem criada com sucesso!' });
       setOpen(false);
       form.reset();

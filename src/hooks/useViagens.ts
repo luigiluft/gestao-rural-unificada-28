@@ -5,12 +5,25 @@ export const useViagens = () => {
   return useQuery({
     queryKey: ["viagens"],
     queryFn: async () => {
+      console.log('🔍 useViagens: Fetching viagens...')
+      
+      // Check authentication first
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔍 useViagens: Current session:', session?.user?.id)
+      
       const { data, error } = await supabase
         .from("viagens")
         .select("*")
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      console.log('🔍 useViagens: Query result:', { data, error })
+      
+      if (error) {
+        console.error('❌ useViagens: Error fetching viagens:', error)
+        throw error
+      }
+      
+      console.log('✅ useViagens: Found', data?.length || 0, 'viagens')
       return data || []
     },
     staleTime: 30000,
