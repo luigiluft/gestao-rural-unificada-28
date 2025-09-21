@@ -8,7 +8,7 @@ export const useTotalRemessasAlocadas = () => {
       const { count, error } = await supabase
         .from("saidas")
         .select("*", { count: "exact", head: true })
-        .eq("status", "em_transito")
+        .not("viagem_id", "is", null)
 
       if (error) throw error
       return count || 0

@@ -19,7 +19,7 @@ export const useAlocarSaidaViagem = () => {
         .from("saidas")
         .update({ 
           viagem_id: viagemId,
-          status: "expedido" 
+          status: "em_transito"
         })
         .eq("id", saidaId)
 

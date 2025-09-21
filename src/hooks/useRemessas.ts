@@ -11,11 +11,11 @@ export const useRemessas = (filters?: { status?: string }) => {
         .eq("status", "expedido")
 
       if (filters?.status) {
-        // Map old remessa status to saida status
-        if (filters.status === "entregue") {
+        // Only filter expedited saidas
+        if (filters.status === "expedido") {
+          query = query.eq("status", "expedido")
+        } else if (filters.status === "entregue") {
           query = query.eq("status", "entregue")
-        } else if (filters.status === "em_transito") {
-          query = query.eq("status", "em_transito")
         }
       }
 

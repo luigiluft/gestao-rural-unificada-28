@@ -2194,6 +2194,7 @@ export type Database = {
           updated_at: string
           user_id: string
           valor_total: number | null
+          viagem_id: string | null
         }
         Insert: {
           cpf_motorista?: string | null
@@ -2217,6 +2218,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           valor_total?: number | null
+          viagem_id?: string | null
         }
         Update: {
           cpf_motorista?: string | null
@@ -2240,6 +2242,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           valor_total?: number | null
+          viagem_id?: string | null
         }
         Relationships: [
           {
@@ -2247,6 +2250,13 @@ export type Database = {
             columns: ["deposito_id"]
             isOneToOne: false
             referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
             referencedColumns: ["id"]
           },
         ]
