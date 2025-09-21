@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-import { transferirSaidaExpedidaParaRemessa } from "@/utils/transferirSaidaExpedida"
 
 export const useExpedirSaida = () => {
   const queryClient = useQueryClient()
@@ -26,15 +25,12 @@ export const useExpedirSaida = () => {
 
       if (updateError) throw updateError
 
-      // Transfer expedited saida to remessa
-      await transferirSaidaExpedidaParaRemessa()
-
       return { saidaId }
     },
     onSuccess: (data) => {
       toast({
         title: "Saída expedida",
-        description: "A saída foi expedida com sucesso e transferida para remessa",
+        description: "A saída foi expedida com sucesso",
       })
       queryClient.invalidateQueries({ queryKey: ["saidas-pendentes"] })
       queryClient.invalidateQueries({ queryKey: ["saidas"] })

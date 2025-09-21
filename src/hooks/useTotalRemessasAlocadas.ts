@@ -6,8 +6,9 @@ export const useTotalRemessasAlocadas = () => {
     queryKey: ["total-remessas-alocadas"],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from("viagem_remessas")
+        .from("saidas")
         .select("*", { count: "exact", head: true })
+        .eq("status", "em_transito")
 
       if (error) throw error
       return count || 0
@@ -20,42 +21,25 @@ export const useViagemComRemessas = () => {
   return useQuery({
     queryKey: ["viagens-com-remessas"],
     queryFn: async () => {
-      // First get all viagens
+      // Get all viagens with their associated saidas
       const { data: viagens, error } = await supabase
         .from("viagens")
-        .select("*")
+        .select(`
+          *,
+          saidas:saidas(
+            id,
+            numero_saida,
+            status,
+            peso_total,
+            valor_total,
+            data_saida,
+            observacoes
+          )
+        `)
         .order("created_at", { ascending: false })
 
       if (error) throw error
-
-      // Then get remessas for each viagem
-      const viagensWithRemessas = await Promise.all(
-        (viagens || []).map(async (viagem) => {
-          const { data: viagemRemessas } = await supabase
-            .from("viagem_remessas")
-            .select(`
-              id,
-              remessa_id,
-              ordem_entrega,
-              remessas:remessas(
-                id,
-                numero,
-                status,
-                peso_total,
-                total_volumes,
-                valor_total
-              )
-            `)
-            .eq("viagem_id", viagem.id)
-
-          return {
-            ...viagem,
-            viagem_remessas: viagemRemessas || []
-          }
-        })
-      )
-
-      return viagensWithRemessas
+      return viagens || []
     },
     staleTime: 30000,
   })

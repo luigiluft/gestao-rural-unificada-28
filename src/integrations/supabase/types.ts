@@ -2038,105 +2038,6 @@ export type Database = {
           },
         ]
       }
-      remessa_saidas: {
-        Row: {
-          created_at: string
-          id: string
-          remessa_id: string
-          saida_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          remessa_id: string
-          saida_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          remessa_id?: string
-          saida_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "remessa_saidas_remessa_id_fkey"
-            columns: ["remessa_id"]
-            isOneToOne: false
-            referencedRelation: "remessas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "remessa_saidas_saida_id_fkey"
-            columns: ["saida_id"]
-            isOneToOne: false
-            referencedRelation: "saidas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      remessas: {
-        Row: {
-          created_at: string
-          data_criacao: string
-          data_despacho: string | null
-          data_entrega: string | null
-          deposito_id: string
-          id: string
-          motorista_id: string | null
-          numero: string
-          observacoes: string | null
-          peso_total: number
-          status: string
-          total_saidas: number
-          total_volumes: number
-          transportadora_id: string | null
-          updated_at: string
-          user_id: string
-          valor_total: number
-          veiculo_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          data_criacao?: string
-          data_despacho?: string | null
-          data_entrega?: string | null
-          deposito_id: string
-          id?: string
-          motorista_id?: string | null
-          numero: string
-          observacoes?: string | null
-          peso_total?: number
-          status?: string
-          total_saidas?: number
-          total_volumes?: number
-          transportadora_id?: string | null
-          updated_at?: string
-          user_id: string
-          valor_total?: number
-          veiculo_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          data_criacao?: string
-          data_despacho?: string | null
-          data_entrega?: string | null
-          deposito_id?: string
-          id?: string
-          motorista_id?: string | null
-          numero?: string
-          observacoes?: string | null
-          peso_total?: number
-          status?: string
-          total_saidas?: number
-          total_volumes?: number
-          transportadora_id?: string | null
-          updated_at?: string
-          user_id?: string
-          valor_total?: number
-          veiculo_id?: string | null
-        }
-        Relationships: []
-      }
       reservas_horario: {
         Row: {
           created_at: string
@@ -2286,7 +2187,6 @@ export type Database = {
           observacoes_aprovacao: string | null
           placa_veiculo: string | null
           produtor_destinatario_id: string | null
-          remessa_id: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor: string | null
           telefone_motorista: string | null
@@ -2310,7 +2210,6 @@ export type Database = {
           observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
-          remessa_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
@@ -2334,7 +2233,6 @@ export type Database = {
           observacoes_aprovacao?: string | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
-          remessa_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
@@ -2349,13 +2247,6 @@ export type Database = {
             columns: ["deposito_id"]
             isOneToOne: false
             referencedRelation: "franquias"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "saidas_remessa_id_fkey"
-            columns: ["remessa_id"]
-            isOneToOne: false
-            referencedRelation: "remessas"
             referencedColumns: ["id"]
           },
         ]
@@ -2499,7 +2390,6 @@ export type Database = {
           observacoes: string | null
           previsao_chegada: string | null
           produto_descricao: string | null
-          remessa_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -2518,7 +2408,6 @@ export type Database = {
           observacoes?: string | null
           previsao_chegada?: string | null
           produto_descricao?: string | null
-          remessa_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -2537,20 +2426,12 @@ export type Database = {
           observacoes?: string | null
           previsao_chegada?: string | null
           produto_descricao?: string | null
-          remessa_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
           viagem_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "tracking_entregas_remessa_id_fkey"
-            columns: ["remessa_id"]
-            isOneToOne: false
-            referencedRelation: "remessas"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tracking_entregas_viagem_id_fkey"
             columns: ["viagem_id"]
@@ -2920,33 +2801,6 @@ export type Database = {
           tipo?: string | null
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      viagem_remessas: {
-        Row: {
-          created_at: string
-          id: string
-          ordem_entrega: number | null
-          remessa_id: string
-          updated_at: string
-          viagem_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          ordem_entrega?: number | null
-          remessa_id: string
-          updated_at?: string
-          viagem_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          ordem_entrega?: number | null
-          remessa_id?: string
-          updated_at?: string
-          viagem_id?: string
         }
         Relationships: []
       }

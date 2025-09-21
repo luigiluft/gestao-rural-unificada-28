@@ -8,13 +8,11 @@ export const useCorrigirStatusSaida = () => {
 
   return useMutation({
     mutationFn: async ({ 
-      remessaId, 
       saidaId 
     }: { 
-      remessaId: string
       saidaId: string 
     }) => {
-      // Update saida status to expedido
+      // Update saida status back to expedido
       const { error: saidaError } = await supabase
         .from("saidas")
         .update({ status: "expedido" })
@@ -22,20 +20,12 @@ export const useCorrigirStatusSaida = () => {
 
       if (saidaError) throw saidaError
 
-      // Update remessa status to pronta
-      const { error: remessaError } = await supabase
-        .from("remessas")
-        .update({ status: "pronta" })
-        .eq("id", remessaId)
-
-      if (remessaError) throw remessaError
-
-      return { remessaId, saidaId }
+      return { saidaId }
     },
     onSuccess: () => {
       toast({
         title: "Status corrigido",
-        description: "O status da saída foi alterado para 'expedido' e a remessa para 'pronta'",
+        description: "O status da saída foi alterado para 'expedido'",
       })
       queryClient.invalidateQueries({ queryKey: ["remessas"] })
       queryClient.invalidateQueries({ queryKey: ["saidas"] })

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Truck, Package, MapPin, Clock } from 'lucide-react';
 import { useRemessasDisponiveis } from '@/hooks/useRemessas';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useAlocarRemessa, useDesalocarRemessa } from '@/hooks/useViagemRemessas';
+import { useAlocarSaidaViagem, useDesalocarSaidaViagem } from '@/hooks/useViagemSaidas';
 import { useTotalRemessasAlocadas, useViagemComRemessas } from '@/hooks/useTotalRemessasAlocadas';
 import { NovaViagemDialog } from '@/components/Planejamento/NovaViagemDialog';
 
@@ -17,18 +17,18 @@ const Planejamento = () => {
   const { data: viagensComRemessas = [], isLoading: loadingViagens } = useViagemComRemessas();
   const { data: remessasDisponiveis = [], isLoading: loadingRemessas } = useRemessasDisponiveis();
   const { data: totalRemessasAlocadas = 0 } = useTotalRemessasAlocadas();
-  const alocarRemessa = useAlocarRemessa();
-  const desalocarRemessa = useDesalocarRemessa();
+  const alocarSaida = useAlocarSaidaViagem();
+  const desalocarSaida = useDesalocarSaidaViagem();
 
   const viagensPlanejadas = viagensComRemessas.filter(v => v.status === 'planejada');
   const viagensEmAndamento = viagensComRemessas.filter(v => v.status === 'em_andamento');
 
-  const handleAlocarRemessa = (viagemId: string, remessaId: string) => {
-    alocarRemessa.mutate({ viagemId, remessaId });
+  const handleAlocarSaida = (viagemId: string, saidaId: string) => {
+    alocarSaida.mutate({ viagemId, saidaId });
   };
 
-  const handleDesalocarRemessa = (viagemId: string, remessaId: string) => {
-    desalocarRemessa.mutate({ viagemId, remessaId });
+  const handleDesalocarSaida = (saidaId: string) => {
+    desalocarSaida.mutate({ saidaId });
   };
 
   const getStatusBadge = (status: string) => {
@@ -76,7 +76,7 @@ const Planejamento = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Remessas Alocadas</CardTitle>
+            <CardTitle className="text-sm font-medium">Saídas Alocadas</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -99,29 +99,29 @@ const Planejamento = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Remessas Disponíveis</CardTitle>
+            <CardTitle>Saídas Expedidas Disponíveis</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Remessas prontas para serem alocadas em viagens
+              Saídas expedidas prontas para serem alocadas em viagens
             </p>
           </CardHeader>
           <CardContent>
             {loadingRemessas ? (
-              <div className="text-center py-4">Carregando remessas...</div>
+              <div className="text-center py-4">Carregando saídas...</div>
             ) : remessasDisponiveis.length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
-                Nenhuma remessa disponível para alocação
+                Nenhuma saída expedida disponível para alocação
               </div>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {remessasDisponiveis.map((remessa) => (
-                  <div key={remessa.id} className="flex items-center justify-between p-3 border rounded-lg">
+                {remessasDisponiveis.map((saida) => (
+                  <div key={saida.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
-                      <h4 className="font-medium">{remessa.numero}</h4>
+                      <h4 className="font-medium">{saida.numero_saida}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {remessa.peso_total}kg • Vol: {remessa.total_volumes} • R$ {remessa.valor_total}
+                        {saida.peso_total}kg • R$ {saida.valor_total}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Status: {remessa.status}
+                        Status: {saida.status}
                       </p>
                     </div>
                     <Dialog>
@@ -132,11 +132,11 @@ const Planejamento = () => {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Alocar Remessa à Viagem</DialogTitle>
+                          <DialogTitle>Alocar Saída à Viagem</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="text-sm">
-                            <strong>Remessa:</strong> {remessa.numero}
+                            <strong>Saída:</strong> {saida.numero_saida}
                           </div>
                           <div className="space-y-2">
                             <h4 className="font-medium">Selecione uma viagem:</h4>
@@ -150,12 +150,12 @@ const Planejamento = () => {
                                   key={viagem.id}
                                   variant="outline"
                                   className="w-full justify-start"
-                                  onClick={() => handleAlocarRemessa(viagem.id, remessa.id)}
+                                  onClick={() => handleAlocarSaida(viagem.id, saida.id)}
                                 >
                                    <div className="text-left">
-                                     <div className="font-medium">{viagem.numero}</div>
+                                     <div className="font-medium">{viagem.numero_viagem}</div>
                                      <div className="text-sm text-muted-foreground">
-                                        {viagem.viagem_remessas?.length || 0} remessas
+                                        {viagem.saidas?.length || 0} saídas
                                       </div>
                                    </div>
                                 </Button>
@@ -176,7 +176,7 @@ const Planejamento = () => {
           <CardHeader>
             <CardTitle>Viagens Planejadas</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Viagens com remessas alocadas
+              Viagens com saídas alocadas
             </p>
           </CardHeader>
           <CardContent>
@@ -192,7 +192,7 @@ const Planejamento = () => {
                   <div key={viagem.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h4 className="font-medium">{viagem.numero}</h4>
+                        <h4 className="font-medium">{viagem.numero_viagem}</h4>
                         <p className="text-sm text-muted-foreground">
                           {new Date(viagem.data_inicio).toLocaleDateString()}
                         </p>
@@ -203,19 +203,19 @@ const Planejamento = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      {viagem.viagem_remessas && viagem.viagem_remessas.length > 0 ? (
-                        viagem.viagem_remessas.map((vr: any) => (
-                          <div key={vr.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                      {viagem.saidas && viagem.saidas.length > 0 ? (
+                        viagem.saidas.map((saida: any) => (
+                          <div key={saida.id} className="flex items-center justify-between p-2 bg-muted rounded">
                             <div className="text-sm">
-                              <span className="font-medium">{vr.remessas?.numero}</span>
+                              <span className="font-medium">{saida.numero_saida}</span>
                               <span className="text-muted-foreground ml-2">
-                                ({vr.remessas?.peso_total}kg • {vr.remessas?.total_volumes} vol.)
+                                ({saida.peso_total}kg • R$ {saida.valor_total})
                               </span>
                             </div>
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleDesalocarRemessa(viagem.id, vr.remessa_id)}
+                              onClick={() => handleDesalocarSaida(saida.id)}
                             >
                               Remover
                             </Button>
@@ -223,7 +223,7 @@ const Planejamento = () => {
                         ))
                       ) : (
                         <div className="text-sm text-muted-foreground">
-                          Nenhuma remessa alocada para esta viagem
+                          Nenhuma saída alocada para esta viagem
                         </div>
                       )}
                     </div>

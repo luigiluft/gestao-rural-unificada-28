@@ -6,14 +6,17 @@ export const useRemessas = (filters?: { status?: string }) => {
     queryKey: ["remessas", filters],
     queryFn: async () => {
       let query = supabase
-        .from("remessas")
-        .select(`
-          *,
-          saidas:saidas(count)
-        `)
+        .from("saidas")
+        .select("*")
+        .eq("status", "expedido")
 
       if (filters?.status) {
-        query = query.eq("status", filters.status)
+        // Map old remessa status to saida status
+        if (filters.status === "entregue") {
+          query = query.eq("status", "entregue")
+        } else if (filters.status === "em_transito") {
+          query = query.eq("status", "em_transito")
+        }
       }
 
       const { data, error } = await query.order("created_at", { ascending: false })
@@ -30,9 +33,9 @@ export const useRemessasDisponiveis = () => {
     queryKey: ["remessas", "disponiveis"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("remessas")
+        .from("saidas")
         .select("*")
-        .in("status", ["criada", "pronta"])
+        .eq("status", "expedido")
         .order("created_at", { ascending: false })
 
       if (error) throw error
