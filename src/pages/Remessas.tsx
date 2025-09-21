@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Truck, Package, Plus, Search, Filter, Eye, Edit, Trash2, CheckCircle } from "lucide-react"
+import { Truck, Package, Plus, Search, Filter, Eye, Edit, Trash2, CheckCircle, Settings } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/ui/loading-state"
 import { useRemessas } from "@/hooks/useRemessas"
 import { useSaidasPendentes } from "@/hooks/useSaidasPendentes"
 import { useTransferirSaidaParaRemessa } from "@/hooks/useTransferirSaidaParaRemessa"
+import { useCorrigirStatusSaida } from "@/hooks/useCorrigirStatusSaida"
 
 export default function Remessas() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -25,6 +26,7 @@ export default function Remessas() {
   
   const { data: saidasExpedidas = [] } = useSaidasPendentes()
   const transferirMutation = useTransferirSaidaParaRemessa()
+  const corrigirStatusMutation = useCorrigirStatusSaida()
   
   // Filter only expedited outputs for remessa creation
   const saidasParaRemessa = saidasExpedidas.filter(saida => saida.status === 'expedido')
@@ -48,6 +50,24 @@ export default function Remessas() {
         ? prev.filter(id => id !== saidaId)
         : [...prev, saidaId]
     )
+  }
+
+  const handleCorrigirStatus = async (remessa: any) => {
+    // First fetch the saida associated with this remessa
+    const response = await fetch(`https://fejvckhuhflndcjuoppy.supabase.co/rest/v1/saidas?remessa_id=eq.${remessa.id}&select=id`, {
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlanZja2h1aGZsbmRjanVvcHB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NTkwMTgsImV4cCI6MjA3MDMzNTAxOH0.8hvIEXgBqhS5Z2QcdaNrr6n672EN-zUcmf3VPxgqEyE',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const saidas = await response.json();
+    if (saidas && saidas.length > 0) {
+      corrigirStatusMutation.mutate({
+        remessaId: remessa.id,
+        saidaId: saidas[0].id
+      });
+    }
   }
 
   const statusBadges = {
@@ -320,19 +340,30 @@ export default function Remessas() {
                     <TableCell>{(remessa.peso_total || 0).toLocaleString()}</TableCell>
                     <TableCell>R$ {(remessa.valor_total || 0).toLocaleString()}</TableCell>
                     <TableCell>{remessa.observacoes || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="flex items-center gap-2">
+                         {remessa.status === 'entregue' && (
+                           <Button 
+                             variant="ghost" 
+                             size="sm"
+                             onClick={() => handleCorrigirStatus(remessa)}
+                             disabled={corrigirStatusMutation.isPending}
+                             title="Corrigir status para expedido"
+                           >
+                             <Settings className="h-4 w-4" />
+                           </Button>
+                         )}
+                         <Button variant="ghost" size="sm">
+                           <Eye className="h-4 w-4" />
+                         </Button>
+                         <Button variant="ghost" size="sm">
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button variant="ghost" size="sm">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
