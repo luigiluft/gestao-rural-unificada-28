@@ -15,14 +15,14 @@ export const transferirSaidaEntregueParaRemessa = async () => {
       return null
     }
 
-    // Create remessa for the delivered saida
+    // Create remessa for the delivered saida with 'pronta' status for planning
     const { data: remessa, error: remessaError } = await supabase
       .from("remessas")
       .insert({
-        numero: `REM-ENTREGUE-${Date.now().toString().slice(-6)}`,
+        numero: `REM-${Date.now().toString().slice(-6)}`,
         user_id: saidaEntregue.user_id,
         deposito_id: saidaEntregue.deposito_id,
-        status: 'entregue',
+        status: 'pronta', // Changed from 'entregue' to 'pronta' for planning
         total_saidas: 1
       })
       .select()

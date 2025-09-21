@@ -4,24 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Plus, Truck, Package, MapPin, Clock } from 'lucide-react';
-import { useViagens } from '@/hooks/useViagens';
 import { useRemessasDisponiveis } from '@/hooks/useRemessas';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAlocarRemessa, useDesalocarRemessa } from '@/hooks/useViagemRemessas';
+import { useTotalRemessasAlocadas, useViagemComRemessas } from '@/hooks/useTotalRemessasAlocadas';
+import { NovaViagemDialog } from '@/components/Planejamento/NovaViagemDialog';
 
 const Planejamento = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedViagem, setSelectedViagem] = useState<string | null>(null);
   
-  const { data: viagens = [], isLoading: loadingViagens } = useViagens();
+  const { data: viagensComRemessas = [], isLoading: loadingViagens } = useViagemComRemessas();
   const { data: remessasDisponiveis = [], isLoading: loadingRemessas } = useRemessasDisponiveis();
+  const { data: totalRemessasAlocadas = 0 } = useTotalRemessasAlocadas();
   const alocarRemessa = useAlocarRemessa();
   const desalocarRemessa = useDesalocarRemessa();
 
-  const viagensPlanejadas = viagens.filter(v => v.status === 'planejada');
-  const viagensEmAndamento = viagens.filter(v => v.status === 'em_andamento');
-  
-  const totalRemessasAlocadas = 0; // TODO: Implementar contagem de remessas quando relacionamento for criado
+  const viagensPlanejadas = viagensComRemessas.filter(v => v.status === 'planejada');
+  const viagensEmAndamento = viagensComRemessas.filter(v => v.status === 'em_andamento');
 
   const handleAlocarRemessa = (viagemId: string, remessaId: string) => {
     alocarRemessa.mutate({ viagemId, remessaId });
@@ -50,10 +50,7 @@ const Planejamento = () => {
           </p>
         </div>
         
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Viagem
-        </Button>
+        <NovaViagemDialog />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -155,12 +152,12 @@ const Planejamento = () => {
                                   className="w-full justify-start"
                                   onClick={() => handleAlocarRemessa(viagem.id, remessa.id)}
                                 >
-                                  <div className="text-left">
-                                    <div className="font-medium">{viagem.numero}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                       0 remessas
-                                     </div>
-                                  </div>
+                                   <div className="text-left">
+                                     <div className="font-medium">{viagem.numero}</div>
+                                     <div className="text-sm text-muted-foreground">
+                                        {viagem.viagem_remessas?.length || 0} remessas
+                                      </div>
+                                   </div>
                                 </Button>
                               ))
                             )}
@@ -185,13 +182,13 @@ const Planejamento = () => {
           <CardContent>
             {loadingViagens ? (
               <div className="text-center py-4">Carregando viagens...</div>
-            ) : viagens.length === 0 ? (
+            ) : viagensComRemessas.length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
                 Nenhuma viagem cadastrada
               </div>
             ) : (
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {viagens.map((viagem) => (
+                {viagensComRemessas.map((viagem) => (
                   <div key={viagem.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -205,8 +202,30 @@ const Planejamento = () => {
                       </Badge>
                     </div>
                     
-                    <div className="text-sm text-muted-foreground">
-                      Nenhuma remessa alocada para esta viagem
+                    <div className="space-y-2">
+                      {viagem.viagem_remessas && viagem.viagem_remessas.length > 0 ? (
+                        viagem.viagem_remessas.map((vr: any) => (
+                          <div key={vr.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                            <div className="text-sm">
+                              <span className="font-medium">{vr.remessas?.numero}</span>
+                              <span className="text-muted-foreground ml-2">
+                                ({vr.remessas?.peso_total}kg • {vr.remessas?.total_volumes} vol.)
+                              </span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDesalocarRemessa(viagem.id, vr.remessa_id)}
+                            >
+                              Remover
+                            </Button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          Nenhuma remessa alocada para esta viagem
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
