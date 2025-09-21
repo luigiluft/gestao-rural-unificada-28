@@ -56,7 +56,7 @@ export default function Remessas() {
   }
 
   const filteredRemessas = remessas.filter(saida => {
-    const matchesSearch = saida.numero_saida?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = saida.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          saida.observacoes?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesSearch
   })
@@ -156,7 +156,7 @@ export default function Remessas() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {remessas.reduce((acc, r) => acc + (r.peso_total || 0), 0).toLocaleString()}
+              {remessas.length}
             </div>
           </CardContent>
         </Card>
@@ -205,14 +205,14 @@ export default function Remessas() {
               <TableBody>
                 {filteredRemessas.map((saida) => (
                   <TableRow key={saida.id}>
-                    <TableCell className="font-medium">{saida.numero_saida || '-'}</TableCell>
+                    <TableCell className="font-medium">#{saida.id.slice(0, 8)}</TableCell>
                     <TableCell>
                       <Badge variant={statusBadges[saida.status as keyof typeof statusBadges]?.variant || "secondary"}>
                         {statusBadges[saida.status as keyof typeof statusBadges]?.label || saida.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{new Date(saida.data_saida).toLocaleDateString()}</TableCell>
-                    <TableCell>{(saida.peso_total || 0).toLocaleString()}</TableCell>
+                    <TableCell>-</TableCell>
                     <TableCell>R$ {(saida.valor_total || 0).toLocaleString()}</TableCell>
                     <TableCell>{saida.observacoes || '-'}</TableCell>
                      <TableCell>

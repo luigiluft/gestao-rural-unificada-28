@@ -171,12 +171,12 @@ export const useNotifications = () => {
           expedicao = saidasCount || 0
         }
 
-        // REMESSAS: For franqueados - remessas criadas e prontas
+        // SAIDAS EM TRANSITO: For franqueados - saidas allocated to trips
         if (isFranqueado || isAdmin) {
-          let remessasQuery = supabase
-            .from("remessas")
+          let saidasTransitoQuery = supabase
+            .from("saidas")
             .select("id", { count: "exact" })
-            .in("status", ["criada", "pronta"])
+            .not("viagem_id", "is", null)
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
@@ -187,12 +187,12 @@ export const useNotifications = () => {
             
             const franquiaIds = franquias?.map(f => f.id) || []
             if (franquiaIds.length > 0) {
-              remessasQuery = remessasQuery.in("deposito_id", franquiaIds)
+              saidasTransitoQuery = saidasTransitoQuery.in("deposito_id", franquiaIds)
             }
           }
 
-          const { count: remessasCount } = await remessasQuery
-          remessas = remessasCount || 0
+          const { count: saidasTransitoCount } = await saidasTransitoQuery
+          remessas = saidasTransitoCount || 0
         }
 
         // SUPORTE: Open support tickets for current user

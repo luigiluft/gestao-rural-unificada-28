@@ -116,9 +116,9 @@ const Planejamento = () => {
                 {remessasDisponiveis.map((saida) => (
                   <div key={saida.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
-                      <h4 className="font-medium">{saida.numero_saida}</h4>
+                      <h4 className="font-medium">Saída #{saida.id.slice(0, 8)}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {saida.peso_total}kg • R$ {saida.valor_total}
+                        R$ {saida.valor_total || 0}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Status: {saida.status}
@@ -136,7 +136,7 @@ const Planejamento = () => {
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="text-sm">
-                            <strong>Saída:</strong> {saida.numero_saida}
+                            <strong>Saída:</strong> #{saida.id.slice(0, 8)}
                           </div>
                           <div className="space-y-2">
                             <h4 className="font-medium">Selecione uma viagem:</h4>
@@ -153,7 +153,7 @@ const Planejamento = () => {
                                   onClick={() => handleAlocarSaida(viagem.id, saida.id)}
                                 >
                                    <div className="text-left">
-                                     <div className="font-medium">{viagem.numero_viagem}</div>
+                                     <div className="font-medium">Viagem #{viagem.id.slice(0, 8)}</div>
                                      <div className="text-sm text-muted-foreground">
                                         {viagem.saidas?.length || 0} saídas
                                       </div>
@@ -192,7 +192,7 @@ const Planejamento = () => {
                   <div key={viagem.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h4 className="font-medium">{viagem.numero_viagem}</h4>
+                        <h4 className="font-medium">Viagem #{viagem.id.slice(0, 8)}</h4>
                         <p className="text-sm text-muted-foreground">
                           {new Date(viagem.data_inicio).toLocaleDateString()}
                         </p>

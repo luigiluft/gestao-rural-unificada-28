@@ -14,12 +14,11 @@ export const useAlocarSaidaViagem = () => {
       viagemId: string
       saidaId: string 
     }) => {
-      // Update saida to link to viagem and change status to em_transito
+      // Update saida to link to viagem
       const { error } = await supabase
         .from("saidas")
         .update({ 
-          viagem_id: viagemId,
-          status: "em_transito"
+          viagem_id: viagemId
         })
         .eq("id", saidaId)
 
