@@ -2178,120 +2178,6 @@ export type Database = {
           },
         ]
       }
-      rota_paradas: {
-        Row: {
-          cidade: string
-          cliente_nome: string
-          created_at: string
-          endereco: string
-          horario_chegada: string | null
-          horario_previsto: string | null
-          horario_saida: string | null
-          id: string
-          observacoes: string | null
-          ordem: number
-          remessa_id: string
-          rota_id: string
-          status: string
-        }
-        Insert: {
-          cidade: string
-          cliente_nome: string
-          created_at?: string
-          endereco: string
-          horario_chegada?: string | null
-          horario_previsto?: string | null
-          horario_saida?: string | null
-          id?: string
-          observacoes?: string | null
-          ordem: number
-          remessa_id: string
-          rota_id: string
-          status?: string
-        }
-        Update: {
-          cidade?: string
-          cliente_nome?: string
-          created_at?: string
-          endereco?: string
-          horario_chegada?: string | null
-          horario_previsto?: string | null
-          horario_saida?: string | null
-          id?: string
-          observacoes?: string | null
-          ordem?: number
-          remessa_id?: string
-          rota_id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rota_paradas_remessa_id_fkey"
-            columns: ["remessa_id"]
-            isOneToOne: false
-            referencedRelation: "remessas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "rota_paradas_rota_id_fkey"
-            columns: ["rota_id"]
-            isOneToOne: false
-            referencedRelation: "rotas_planejamento"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rotas_planejamento: {
-        Row: {
-          created_at: string
-          data_rota: string
-          deposito_id: string
-          id: string
-          motorista_id: string | null
-          nome: string
-          observacoes: string | null
-          status: string
-          tempo_estimado: unknown | null
-          total_km: number
-          total_remessas: number
-          updated_at: string
-          user_id: string
-          veiculo_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          data_rota: string
-          deposito_id: string
-          id?: string
-          motorista_id?: string | null
-          nome: string
-          observacoes?: string | null
-          status?: string
-          tempo_estimado?: unknown | null
-          total_km?: number
-          total_remessas?: number
-          updated_at?: string
-          user_id: string
-          veiculo_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          data_rota?: string
-          deposito_id?: string
-          id?: string
-          motorista_id?: string | null
-          nome?: string
-          observacoes?: string | null
-          status?: string
-          tempo_estimado?: unknown | null
-          total_km?: number
-          total_remessas?: number
-          updated_at?: string
-          user_id?: string
-          veiculo_id?: string | null
-        }
-        Relationships: []
-      }
       saida_itens: {
         Row: {
           created_at: string
@@ -3134,15 +3020,7 @@ export type Database = {
           user_id?: string
           veiculo_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "viagens_rota_id_fkey"
-            columns: ["rota_id"]
-            isOneToOne: false
-            referencedRelation: "rotas_planejamento"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
