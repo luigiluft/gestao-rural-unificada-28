@@ -31,7 +31,7 @@ import PerfisFuncionarios from "./pages/PerfisFuncionarios";
 import AlocacaoPallets from "./pages/AlocacaoPallets";
 import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
-import Transporte from "./pages/Transporte";
+
 import Remessas from "./pages/Remessas";
 import Planejamento from "./pages/Planejamento";
 import Viagens from "./pages/Viagens";
@@ -106,7 +106,7 @@ const App = () => (
               <Route path="gerenciar-alocacoes" element={<RequirePageAccess pageKey="gerenciar-alocacoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="gerenciar-posicoes" element={<RequirePageAccess pageKey="gerenciar-posicoes"><GerenciarPosicoes /></RequirePageAccess>} />
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
-              <Route path="transporte" element={<RequirePageAccess pageKey="transporte"><Transporte /></RequirePageAccess>} />
+              
               <Route path="remessas" element={<RequirePageAccess pageKey="remessas"><Remessas /></RequirePageAccess>} />
               <Route path="planejamento" element={<RequirePageAccess pageKey="planejamento"><Planejamento /></RequirePageAccess>} />
               <Route path="viagens" element={<RequirePageAccess pageKey="viagens"><Viagens /></RequirePageAccess>} />

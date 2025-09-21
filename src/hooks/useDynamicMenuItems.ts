@@ -164,8 +164,7 @@ export const useDynamicMenuItems = () => {
       'tracking',
       'proof-of-delivery',
       'ocorrencias',
-      'tabelas-frete',
-      'transporte'
+      'tabelas-frete'
     ]
 
     // Adicionar itens na ordem especificada

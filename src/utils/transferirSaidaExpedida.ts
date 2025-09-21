@@ -1,28 +1,28 @@
 import { supabase } from "@/integrations/supabase/client"
 
-export const transferirSaidaEntregueParaRemessa = async () => {
+export const transferirSaidaExpedidaParaRemessa = async () => {
   try {
-    // Get the delivered saida that's not in any remessa
-    const { data: saidaEntregue, error: saidaError } = await supabase
+    // Get the expedited saida that's not in any remessa
+    const { data: saidaExpedida, error: saidaError } = await supabase
       .from("saidas")
       .select("id, user_id, deposito_id")
-      .eq("status", "entregue")
+      .eq("status", "expedido")
       .is("remessa_id", null)
       .maybeSingle()
 
-    if (saidaError || !saidaEntregue) {
-      console.log("Nenhuma saída entregue para transferir")
+    if (saidaError || !saidaExpedida) {
+      console.log("Nenhuma saída expedida para transferir")
       return null
     }
 
-    // Create remessa for the delivered saida with 'pronta' status for planning
+    // Create remessa for the expedited saida with 'pronta' status for planning
     const { data: remessa, error: remessaError } = await supabase
       .from("remessas")
       .insert({
         numero: `REM-${Date.now().toString().slice(-6)}`,
-        user_id: saidaEntregue.user_id,
-        deposito_id: saidaEntregue.deposito_id,
-        status: 'pronta', // Changed from 'entregue' to 'pronta' for planning
+        user_id: saidaExpedida.user_id,
+        deposito_id: saidaExpedida.deposito_id,
+        status: 'pronta',
         total_saidas: 1
       })
       .select()
@@ -34,11 +34,11 @@ export const transferirSaidaEntregueParaRemessa = async () => {
     const { error: updateError } = await supabase
       .from("saidas")
       .update({ remessa_id: remessa.id })
-      .eq("id", saidaEntregue.id)
+      .eq("id", saidaExpedida.id)
 
     if (updateError) throw updateError
 
-    console.log("Saída transferida para remessa:", remessa.numero)
+    console.log("Saída expedida transferida para remessa:", remessa.numero)
     return remessa
   } catch (error) {
     console.error("Erro ao transferir saída:", error)
