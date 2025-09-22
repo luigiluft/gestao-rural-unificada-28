@@ -2832,7 +2832,6 @@ export type Database = {
           observacoes: string | null
           peso_total: number | null
           remessas_entregues: number
-          rota_id: string | null
           status: string
           total_remessas: number
           updated_at: string
@@ -2856,7 +2855,6 @@ export type Database = {
           observacoes?: string | null
           peso_total?: number | null
           remessas_entregues?: number
-          rota_id?: string | null
           status?: string
           total_remessas?: number
           updated_at?: string
@@ -2880,7 +2878,6 @@ export type Database = {
           observacoes?: string | null
           peso_total?: number | null
           remessas_entregues?: number
-          rota_id?: string | null
           status?: string
           total_remessas?: number
           updated_at?: string
