@@ -9,15 +9,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EmptyState } from "@/components/ui/empty-state"
 import { LoadingState } from "@/components/ui/loading-state"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useRemessas } from "@/hooks/useRemessas"
 import { useSaidasPendentes } from "@/hooks/useSaidasPendentes"
-
 import { useCorrigirStatusSaida } from "@/hooks/useCorrigirStatusSaida"
+import { NovaViagemComRemessasDialog } from "@/components/Viagens/NovaViagemComRemessasDialog"
 
 export default function Remessas() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedSaidas, setSelectedSaidas] = useState<string[]>([])
+  const [selectedRemessas, setSelectedRemessas] = useState<string[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const { data: remessas = [], isLoading, error } = useRemessas({
@@ -32,12 +33,29 @@ export default function Remessas() {
   const saidasParaRemessa = saidasExpedidas.filter(saida => saida.status === 'expedido')
 
 
-  const toggleSaidaSelection = (saidaId: string) => {
-    setSelectedSaidas(prev => 
-      prev.includes(saidaId) 
-        ? prev.filter(id => id !== saidaId)
-        : [...prev, saidaId]
+  const toggleRemessaSelection = (remessaId: string) => {
+    setSelectedRemessas(prev => 
+      prev.includes(remessaId) 
+        ? prev.filter(id => id !== remessaId)
+        : [...prev, remessaId]
     )
+  }
+
+  const selectAllRemessas = () => {
+    if (selectedRemessas.length === filteredRemessas.length) {
+      setSelectedRemessas([])
+    } else {
+      setSelectedRemessas(filteredRemessas.map(r => r.id))
+    }
+  }
+
+  const clearSelection = () => {
+    setSelectedRemessas([])
+  }
+
+  const handleViagemSuccess = () => {
+    setSelectedRemessas([])
+    setDialogOpen(false)
   }
 
   const handleCorrigirStatus = async (saida: any) => {
@@ -94,6 +112,27 @@ export default function Remessas() {
           </p>
         </div>
         
+        {selectedRemessas.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {selectedRemessas.length} remessa(s) selecionada(s)
+            </span>
+            <Button 
+              onClick={() => setDialogOpen(true)}
+              className="ml-2"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Viagem
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={clearSelection}
+              size="sm"
+            >
+              Limpar Seleção
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Filtros */}
@@ -121,6 +160,15 @@ export default function Remessas() {
                 <SelectItem value="entregue">Entregue</SelectItem>
               </SelectContent>
             </Select>
+            {filteredRemessas.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={selectAllRemessas}
+                size="sm"
+              >
+                {selectedRemessas.length === filteredRemessas.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -193,6 +241,12 @@ export default function Remessas() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={filteredRemessas.length > 0 && selectedRemessas.length === filteredRemessas.length}
+                      onCheckedChange={selectAllRemessas}
+                    />
+                  </TableHead>
                   <TableHead>Número</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data Saída</TableHead>
@@ -205,6 +259,12 @@ export default function Remessas() {
               <TableBody>
                 {filteredRemessas.map((saida) => (
                   <TableRow key={saida.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRemessas.includes(saida.id)}
+                        onCheckedChange={() => toggleRemessaSelection(saida.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">#{saida.id.slice(0, 8)}</TableCell>
                     <TableCell>
                       <Badge variant={statusBadges[saida.status as keyof typeof statusBadges]?.variant || "secondary"}>
@@ -246,6 +306,13 @@ export default function Remessas() {
           )}
         </CardContent>
       </Card>
+
+      <NovaViagemComRemessasDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        remessasSelecionadas={filteredRemessas.filter(r => selectedRemessas.includes(r.id))}
+        onSuccess={handleViagemSuccess}
+      />
     </div>
   )
 }
