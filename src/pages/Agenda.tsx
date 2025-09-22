@@ -4,127 +4,73 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Calendar as CalendarIcon, Clock, MapPin, Phone, User, Package, Plus } from 'lucide-react';
-import { useAgendamentos, useAgendamentosByDate, useCriarAgendamento, useAtualizarAgendamento } from '@/hooks/useAgendamentos';
+import { Calendar as CalendarIcon, Clock, MapPin, Phone, User, Package, Truck, AlertTriangle } from 'lucide-react';
+import { useAgendaData, useAgendaStats } from '@/hooks/useAgendaData';
 import { format } from 'date-fns';
 
 const Agenda = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [statusFilter, setStatusFilter] = useState('all');
-  const [tipoFilter, setTipoFilter] = useState('all');
+  const [divergenciaFilter, setDivergenciaFilter] = useState('all');
 
-  // Get appointments from database
-  const { data: agendamentos = [] } = useAgendamentosByDate(
-    selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''
-  );
-  const criarAgendamento = useCriarAgendamento();
-  const atualizarAgendamento = useAtualizarAgendamento();
+  // Get agenda data from saidas and viagens
+  const { data: agendaItems = [], isLoading } = useAgendaData(selectedDate);
+  const { data: stats } = useAgendaStats();
 
   const statusBadges = {
-    pendente: { label: 'Pendente', variant: 'secondary' as const },
-    confirmado: { label: 'Confirmado', variant: 'default' as const },
-    concluido: { label: 'Concluído', variant: 'outline' as const },
-    cancelado: { label: 'Cancelado', variant: 'destructive' as const }
+    expedido: { label: 'Expedido', variant: 'default' as const },
+    entregue: { label: 'Entregue', variant: 'outline' as const },
+    separacao_pendente: { label: 'Separação Pendente', variant: 'secondary' as const },
+    em_separacao: { label: 'Em Separação', variant: 'secondary' as const }
   };
 
-  const tipoBadges = {
-    entrega: { label: 'Entrega', variant: 'default' as const },
-    coleta: { label: 'Coleta', variant: 'secondary' as const }
+  const divergenciaBadges = {
+    ok: { label: 'No Prazo', variant: 'default' as const, color: 'bg-green-100 text-green-800' },
+    pequena: { label: 'Divergência Pequena', variant: 'secondary' as const, color: 'bg-yellow-100 text-yellow-800' },
+    grande: { label: 'Divergência Grande', variant: 'destructive' as const, color: 'bg-red-100 text-red-800' },
+    sem_planejamento: { label: 'Sem Planejamento', variant: 'outline' as const, color: 'bg-gray-100 text-gray-800' }
   };
 
-  const filteredAgendamentos = agendamentos.filter(agendamento => {
-    const matchesStatus = statusFilter === 'all' || agendamento.status === statusFilter;
-    const matchesTipo = tipoFilter === 'all' || agendamento.tipo === tipoFilter;
+  const filteredAgendaItems = agendaItems.filter(item => {
+    const matchesStatus = statusFilter === 'all' || item.status_saida === statusFilter;
+    const matchesDivergencia = divergenciaFilter === 'all' || item.tipo_divergencia === divergenciaFilter;
     
-    return matchesStatus && matchesTipo;
+    return matchesStatus && matchesDivergencia;
   });
 
-  const dailyStats = agendamentos;
+  const dailyStats = agendaItems;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Agenda</h1>
+          <h1 className="text-3xl font-bold">Agenda de Entregas</h1>
           <p className="text-muted-foreground">
-            Gerencie agendamentos de entregas e coletas
+            Compare datas ideais vs planejadas das entregas
           </p>
         </div>
         
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Agendamento
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Novo Agendamento</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="entrega">Entrega</SelectItem>
-                      <SelectItem value="coleta">Coleta</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cliente">Cliente</Label>
-                  <Input id="cliente" placeholder="Nome do cliente" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="data">Data</Label>
-                  <Input id="data" type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="horario">Horário</Label>
-                  <Input id="horario" type="time" />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="endereco">Endereço</Label>
-                <Input id="endereco" placeholder="Endereço completo" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input id="telefone" placeholder="(XX) XXXXX-XXXX" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="produto">Produto</Label>
-                <Input id="produto" placeholder="Descrição do produto" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea id="observacoes" placeholder="Observações adicionais" />
-              </div>
-              
-              <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancelar</Button>
-                <Button>Salvar Agendamento</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="text-2xl font-bold">{stats.total_saidas}</div>
+              <div className="text-sm text-muted-foreground">Total de Saídas</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-green-600">{stats.no_prazo}</div>
+              <div className="text-sm text-muted-foreground">No Prazo</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-red-600">{stats.atrasadas}</div>
+              <div className="text-sm text-muted-foreground">Atrasadas</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-gray-600">{stats.sem_viagem}</div>
+              <div className="text-sm text-muted-foreground">Sem Planejamento</div>
+            </Card>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -154,21 +100,21 @@ const Agenda = () => {
                       <span className="font-medium">{dailyStats.length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Entregas:</span>
-                      <span className="font-medium">
-                        {dailyStats.filter(a => a.tipo === 'entrega').length}
+                      <span>No Prazo:</span>
+                      <span className="font-medium text-green-600">
+                        {dailyStats.filter(a => a.tipo_divergencia === 'ok').length}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Coletas:</span>
-                      <span className="font-medium">
-                        {dailyStats.filter(a => a.tipo === 'coleta').length}
+                      <span>Divergências:</span>
+                      <span className="font-medium text-yellow-600">
+                        {dailyStats.filter(a => ['pequena', 'grande'].includes(a.tipo_divergencia)).length}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Confirmados:</span>
-                      <span className="font-medium">
-                        {dailyStats.filter(a => a.status === 'confirmado').length}
+                      <span>Sem Planejamento:</span>
+                      <span className="font-medium text-gray-600">
+                        {dailyStats.filter(a => a.tipo_divergencia === 'sem_planejamento').length}
                       </span>
                     </div>
                   </div>
@@ -184,17 +130,19 @@ const Agenda = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>
-                  Agendamentos - {selectedDate?.toLocaleDateString('pt-BR')}
+                  Entregas - {selectedDate?.toLocaleDateString('pt-BR')}
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Select value={tipoFilter} onValueChange={setTipoFilter}>
-                    <SelectTrigger className="w-32">
+                  <Select value={divergenciaFilter} onValueChange={setDivergenciaFilter}>
+                    <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="entrega">Entrega</SelectItem>
-                      <SelectItem value="coleta">Coleta</SelectItem>
+                      <SelectItem value="all">Todas Divergências</SelectItem>
+                      <SelectItem value="ok">No Prazo</SelectItem>
+                      <SelectItem value="pequena">Pequena Divergência</SelectItem>
+                      <SelectItem value="grande">Grande Divergência</SelectItem>
+                      <SelectItem value="sem_planejamento">Sem Planejamento</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -203,91 +151,98 @@ const Agenda = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos Status</SelectItem>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="confirmado">Confirmado</SelectItem>
-                      <SelectItem value="concluido">Concluído</SelectItem>
-                      <SelectItem value="cancelado">Cancelado</SelectItem>
+                      <SelectItem value="expedido">Expedido</SelectItem>
+                      <SelectItem value="entregue">Entregue</SelectItem>
+                      <SelectItem value="separacao_pendente">Separação Pendente</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              {filteredAgendamentos.length === 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : filteredAgendaItems.length === 0 ? (
                 <EmptyState
-                  title="Nenhum agendamento encontrado"
-                  description="Não há agendamentos para a data selecionada com os filtros aplicados."
+                  title="Nenhuma entrega encontrada"
+                  description="Não há entregas para a data selecionada com os filtros aplicados."
                 />
               ) : (
                 <div className="space-y-4">
-                  {filteredAgendamentos.map((agendamento) => (
-                    <Card key={agendamento.id} className="border-l-4 border-l-primary">
+                  {filteredAgendaItems.map((item) => (
+                    <Card key={item.saida_id} className={`border-l-4 ${
+                      item.tipo_divergencia === 'ok' ? 'border-l-green-500' :
+                      item.tipo_divergencia === 'pequena' ? 'border-l-yellow-500' :
+                      item.tipo_divergencia === 'grande' ? 'border-l-red-500' :
+                      'border-l-gray-400'
+                    }`}>
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex gap-2">
-                            <Badge variant={tipoBadges[agendamento.tipo as keyof typeof tipoBadges].variant}>
-                              {tipoBadges[agendamento.tipo as keyof typeof tipoBadges].label}
+                            <Badge variant={statusBadges[item.status_saida as keyof typeof statusBadges]?.variant || 'outline'}>
+                              {statusBadges[item.status_saida as keyof typeof statusBadges]?.label || item.status_saida}
                             </Badge>
-                            <Badge variant={statusBadges[agendamento.status as keyof typeof statusBadges].variant}>
-                              {statusBadges[agendamento.status as keyof typeof statusBadges].label}
+                            <Badge className={divergenciaBadges[item.tipo_divergencia].color}>
+                              {divergenciaBadges[item.tipo_divergencia].label}
                             </Badge>
+                            {item.viagem_id && (
+                              <Badge variant="outline">
+                                <Truck className="h-3 w-3 mr-1" />
+                                Viagem: {item.viagem_id.slice(-6)}
+                              </Badge>
+                            )}
                           </div>
-                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                             <Clock className="h-4 w-4" />
-                             {agendamento.horario_agendamento}
-                           </div>
+                          <div className="text-right text-sm">
+                            <div className="font-medium">
+                              Data Ideal: {new Date(item.data_ideal).toLocaleDateString('pt-BR')}
+                            </div>
+                            {item.data_planejada && (
+                              <div className="text-muted-foreground">
+                                Planejada: {new Date(item.data_planejada).toLocaleDateString('pt-BR')}
+                              </div>
+                            )}
+                            {item.divergencia_dias !== undefined && item.divergencia_dias !== 0 && (
+                              <div className={`text-sm ${item.divergencia_dias > 0 ? 'text-red-600' : 'text-blue-600'}`}>
+                                <AlertTriangle className="h-3 w-3 inline mr-1" />
+                                {Math.abs(item.divergencia_dias)} dia(s) {item.divergencia_dias > 0 ? 'atrasada' : 'adiantada'}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         
-                         <div className="grid gap-2 text-sm">
-                           <div className="flex items-center gap-2">
-                             <User className="h-4 w-4" />
-                             <span className="font-medium">{agendamento.cliente_nome}</span>
-                           </div>
-                           {agendamento.cliente_telefone && (
-                             <div className="flex items-center gap-2">
-                               <Phone className="h-4 w-4" />
-                               <span>{agendamento.cliente_telefone}</span>
-                             </div>
-                           )}
-                           <div className="flex items-center gap-2">
-                             <MapPin className="h-4 w-4" />
-                             <span>{agendamento.endereco}</span>
-                           </div>
-                           {agendamento.produto_descricao && (
-                             <div className="flex items-center gap-2">
-                               <Package className="h-4 w-4" />
-                               <span>{agendamento.produto_descricao}</span>
-                             </div>
-                           )}
-                           {agendamento.observacoes && (
-                             <div className="mt-2 p-2 bg-muted rounded text-sm">
-                               <strong>Obs:</strong> {agendamento.observacoes}
-                             </div>
-                           )}
-                         </div>
-                        
-                         <div className="flex justify-end gap-2 mt-4">
-                           <Button variant="outline" size="sm">
-                             Editar
-                           </Button>
-                           <Button 
-                             size="sm"
-                             onClick={() => {
-                               const novoStatus = agendamento.status === "pendente" ? "confirmado" :
-                                                agendamento.status === "confirmado" ? "concluido" : "pendente"
-                               
-                               atualizarAgendamento.mutate({
-                                 id: agendamento.id,
-                                 status: novoStatus,
-                                 ...(novoStatus === "concluido" && { data_conclusao: new Date().toISOString() })
-                               })
-                             }}
-                             disabled={atualizarAgendamento.isPending}
-                           >
-                             {agendamento.status === "pendente" ? "Confirmar" :
-                              agendamento.status === "confirmado" ? "Concluir" : "Reabrir"}
-                           </Button>
-                         </div>
+                        <div className="grid gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">{item.cliente_nome}</span>
+                          </div>
+                          {item.cliente_telefone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{item.cliente_telefone}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{item.endereco}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            <span>{item.produto_descricao}</span>
+                          </div>
+                          {item.janela_horario && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>Janela: {item.janela_horario}</span>
+                            </div>
+                          )}
+                          {item.valor_total && (
+                            <div className="text-sm font-medium text-green-600">
+                              Valor: R$ {item.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
