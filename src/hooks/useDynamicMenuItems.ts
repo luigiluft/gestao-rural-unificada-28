@@ -77,7 +77,9 @@ const iconMap = {
   tracking: MapPin,
   "proof-of-delivery": FileText,
   ocorrencias: AlertTriangle,
-  "tabelas-frete": Calculator
+  "tabelas-frete": Calculator,
+  veiculos: Truck,
+  motoristas: Users
 }
 
 const menuLabels = {
@@ -116,7 +118,9 @@ const menuLabels = {
   tracking: "Tracking",
   "proof-of-delivery": "Proof of Delivery",
   ocorrencias: "Ocorrências",
-  "tabelas-frete": "Tabelas de Frete"
+  "tabelas-frete": "Tabelas de Frete",
+  veiculos: "Veículos",
+  motoristas: "Motoristas"
 }
 
 export const useDynamicMenuItems = () => {
@@ -159,7 +163,9 @@ export const useDynamicMenuItems = () => {
     const tmsPages = [
       'remessas',
       'planejamento',
-      'viagens', 
+      'viagens',
+      'veiculos',
+      'motoristas',
       'agenda',
       'tracking',
       'proof-of-delivery',
