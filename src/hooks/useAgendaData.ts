@@ -24,6 +24,7 @@ export const useAgendaData = (selectedDate?: Date) => {
   return useQuery({
     queryKey: ["agenda-data", selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null],
     queryFn: async () => {
+      console.log('🔍 useAgendaData: Starting query for date:', selectedDate ? format(selectedDate, 'yyyy-MM-dd') : 'all dates')
       const dateFilter = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null
       
       let query = supabase
@@ -55,15 +56,23 @@ export const useAgendaData = (selectedDate?: Date) => {
             )
           )
         `)
-        .order("data_saida", { ascending: true })
 
       if (dateFilter) {
-        query = query.or(`data_saida.eq.${dateFilter},viagens.data_inicio.eq.${dateFilter}`)
+        console.log('🔍 useAgendaData: Applying date filter for:', dateFilter)
+        // Simplificar: buscar apenas saídas com data_saida na data selecionada
+        query = query.eq('data_saida', dateFilter)
       }
+      
+      query = query.order("data_saida", { ascending: true })
 
+      console.log('🔍 useAgendaData: Executing query...')
       const { data, error } = await query
 
-      if (error) throw error
+      console.log('🔍 useAgendaData: Query result:', { data: data?.length, error })
+      if (error) {
+        console.error('❌ useAgendaData: Query error:', error)
+        throw error
+      }
 
       const agendaItems: AgendaItem[] = (data || []).map(saida => {
         const viagem = Array.isArray(saida.viagens) ? saida.viagens[0] : saida.viagens
@@ -109,6 +118,7 @@ export const useAgendaData = (selectedDate?: Date) => {
         }
       })
 
+      console.log('🔍 useAgendaData: Processed items:', agendaItems.length, 'items')
       return agendaItems
     },
     staleTime: 30000,
