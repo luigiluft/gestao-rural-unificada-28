@@ -10,51 +10,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Calendar as CalendarIcon, Clock, MapPin, Phone, User, Package, Plus } from 'lucide-react';
+import { useAgendamentos, useAgendamentosByDate, useCriarAgendamento, useAtualizarAgendamento } from '@/hooks/useAgendamentos';
+import { format } from 'date-fns';
 
 const Agenda = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [statusFilter, setStatusFilter] = useState('all');
   const [tipoFilter, setTipoFilter] = useState('all');
 
-  // Mock data para agendamentos
-  const agendamentos = [
-    {
-      id: '1',
-      tipo: 'entrega',
-      cliente: 'João Silva',
-      telefone: '(11) 99999-9999',
-      endereco: 'Rua das Flores, 123 - São Paulo, SP',
-      data: '2024-01-15',
-      horario: '09:00',
-      status: 'confirmado',
-      produto: 'Fertilizante NPK - 50kg',
-      observacoes: 'Portão azul, tocar campainha'
-    },
-    {
-      id: '2',
-      tipo: 'coleta',
-      cliente: 'Maria Santos',
-      telefone: '(11) 88888-8888',
-      endereco: 'Av. Principal, 456 - São Paulo, SP',
-      data: '2024-01-15',
-      horario: '14:30',
-      status: 'pendente',
-      produto: 'Sementes de Soja - 25 sacos',
-      observacoes: 'Agendar com antecedência'
-    },
-    {
-      id: '3',
-      tipo: 'entrega',
-      cliente: 'Carlos Oliveira',
-      telefone: '(11) 77777-7777',
-      endereco: 'Rua do Campo, 789 - São Paulo, SP',
-      data: '2024-01-15',
-      horario: '16:00',
-      status: 'concluido',
-      produto: 'Defensivo Agrícola - 10L',
-      observacoes: 'Entrega realizada com sucesso'
-    }
-  ];
+  // Get appointments from database
+  const { data: agendamentos = [] } = useAgendamentosByDate(
+    selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''
+  );
+  const criarAgendamento = useCriarAgendamento();
+  const atualizarAgendamento = useAtualizarAgendamento();
 
   const statusBadges = {
     pendente: { label: 'Pendente', variant: 'secondary' as const },
@@ -69,24 +38,13 @@ const Agenda = () => {
   };
 
   const filteredAgendamentos = agendamentos.filter(agendamento => {
-    const agendamentoDate = new Date(agendamento.data);
-    const isSameDate = selectedDate && 
-      agendamentoDate.toDateString() === selectedDate.toDateString();
-    
     const matchesStatus = statusFilter === 'all' || agendamento.status === statusFilter;
     const matchesTipo = tipoFilter === 'all' || agendamento.tipo === tipoFilter;
     
-    return isSameDate && matchesStatus && matchesTipo;
+    return matchesStatus && matchesTipo;
   });
 
-  const getAgendamentosForDate = (date: Date) => {
-    return agendamentos.filter(agendamento => {
-      const agendamentoDate = new Date(agendamento.data);
-      return agendamentoDate.toDateString() === date.toDateString();
-    });
-  };
-
-  const dailyStats = selectedDate ? getAgendamentosForDate(selectedDate) : [];
+  const dailyStats = agendamentos;
 
   return (
     <div className="space-y-6">
@@ -274,51 +232,62 @@ const Agenda = () => {
                               {statusBadges[agendamento.status as keyof typeof statusBadges].label}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            {agendamento.horario}
-                          </div>
+                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                             <Clock className="h-4 w-4" />
+                             {agendamento.horario_agendamento}
+                           </div>
                         </div>
                         
-                        <div className="grid gap-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span className="font-medium">{agendamento.cliente}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            <span>{agendamento.telefone}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{agendamento.endereco}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4" />
-                            <span>{agendamento.produto}</span>
-                          </div>
-                          {agendamento.observacoes && (
-                            <div className="mt-2 p-2 bg-muted rounded text-sm">
-                              <strong>Obs:</strong> {agendamento.observacoes}
-                            </div>
-                          )}
-                        </div>
+                         <div className="grid gap-2 text-sm">
+                           <div className="flex items-center gap-2">
+                             <User className="h-4 w-4" />
+                             <span className="font-medium">{agendamento.cliente_nome}</span>
+                           </div>
+                           {agendamento.cliente_telefone && (
+                             <div className="flex items-center gap-2">
+                               <Phone className="h-4 w-4" />
+                               <span>{agendamento.cliente_telefone}</span>
+                             </div>
+                           )}
+                           <div className="flex items-center gap-2">
+                             <MapPin className="h-4 w-4" />
+                             <span>{agendamento.endereco}</span>
+                           </div>
+                           {agendamento.produto_descricao && (
+                             <div className="flex items-center gap-2">
+                               <Package className="h-4 w-4" />
+                               <span>{agendamento.produto_descricao}</span>
+                             </div>
+                           )}
+                           {agendamento.observacoes && (
+                             <div className="mt-2 p-2 bg-muted rounded text-sm">
+                               <strong>Obs:</strong> {agendamento.observacoes}
+                             </div>
+                           )}
+                         </div>
                         
-                        <div className="flex justify-end gap-2 mt-4">
-                          <Button variant="outline" size="sm">
-                            Editar
-                          </Button>
-                          {agendamento.status === 'pendente' && (
-                            <Button size="sm">
-                              Confirmar
-                            </Button>
-                          )}
-                          {agendamento.status === 'confirmado' && (
-                            <Button size="sm">
-                              Concluir
-                            </Button>
-                          )}
-                        </div>
+                         <div className="flex justify-end gap-2 mt-4">
+                           <Button variant="outline" size="sm">
+                             Editar
+                           </Button>
+                           <Button 
+                             size="sm"
+                             onClick={() => {
+                               const novoStatus = agendamento.status === "pendente" ? "confirmado" :
+                                                agendamento.status === "confirmado" ? "concluido" : "pendente"
+                               
+                               atualizarAgendamento.mutate({
+                                 id: agendamento.id,
+                                 status: novoStatus,
+                                 ...(novoStatus === "concluido" && { data_conclusao: new Date().toISOString() })
+                               })
+                             }}
+                             disabled={atualizarAgendamento.isPending}
+                           >
+                             {agendamento.status === "pendente" ? "Confirmar" :
+                              agendamento.status === "confirmado" ? "Concluir" : "Reabrir"}
+                           </Button>
+                         </div>
                       </CardContent>
                     </Card>
                   ))}
