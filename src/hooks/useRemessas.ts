@@ -9,9 +9,10 @@ export const useRemessas = (filters?: { status?: string }) => {
         .from("saidas")
         .select("*")
         .eq("status", "expedido")
+        .is("viagem_id", null) // Only show saidas that are not allocated to any trip
 
       if (filters?.status) {
-        // Only filter expedited saidas
+        // Only filter expedited saidas that are not planned
         if (filters.status === "expedido") {
           query = query.eq("status", "expedido")
         } else if (filters.status === "entregue") {
