@@ -36,6 +36,7 @@ export const useRemessasDisponiveis = () => {
         .from("saidas")
         .select("*")
         .eq("status", "expedido")
+        .is("viagem_id", null)
         .order("created_at", { ascending: false })
 
       if (error) throw error
