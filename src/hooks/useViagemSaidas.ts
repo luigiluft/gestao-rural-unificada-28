@@ -31,7 +31,9 @@ export const useAlocarSaidaViagem = () => {
         description: "A saída foi alocada à viagem com sucesso",
       })
       queryClient.invalidateQueries({ queryKey: ["viagens"] })
+      queryClient.invalidateQueries({ queryKey: ["viagens-com-remessas"] })
       queryClient.invalidateQueries({ queryKey: ["remessas"] })
+      queryClient.invalidateQueries({ queryKey: ["total-remessas-alocadas"] })
     },
     onError: (error) => {
       console.error("Erro ao alocar saída:", error)
@@ -68,7 +70,9 @@ export const useDesalocarSaidaViagem = () => {
         description: "A saída foi removida da viagem com sucesso",
       })
       queryClient.invalidateQueries({ queryKey: ["viagens"] })
+      queryClient.invalidateQueries({ queryKey: ["viagens-com-remessas"] })
       queryClient.invalidateQueries({ queryKey: ["remessas"] })
+      queryClient.invalidateQueries({ queryKey: ["total-remessas-alocadas"] })
     },
     onError: (error) => {
       console.error("Erro ao desalocar saída:", error)
