@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { parseLocalDate, calculateDeliveryWindowEnd } from "@/lib/delivery-window"
 
 interface SaidaItem {
   produto_id: string
@@ -15,6 +16,7 @@ interface DadosSaida {
   deposito: { id: string }
   produtorDestinatario?: { user_id: string }
   observacoes?: string
+  janelaEntregaDias?: number
 }
 
 export function useSaidaSubmission() {
@@ -52,7 +54,12 @@ export function useSaidaSubmission() {
       // 1. Validar dados
       validarDados(dados, itens)
 
-      // 2. Iniciar transação criando a saída
+      // 2. Calcular janela de entrega
+      const janelaEntregaDias = dados.janelaEntregaDias || 3; // padrão 3 dias se não informado
+      const dataInicioJanela = parseLocalDate(dados.dataSaida);
+      const dataFimJanela = calculateDeliveryWindowEnd(dataInicioJanela, janelaEntregaDias);
+
+      // 3. Iniciar transação criando a saída
       const { data: saida, error: saidaError } = await supabase
         .from("saidas")
         .insert({
@@ -63,7 +70,10 @@ export function useSaidaSubmission() {
           observacoes: dados.observacoes || "",
           criado_por_franqueado: true,
           status_aprovacao_produtor: dados.produtorDestinatario ? "pendente" : "nao_aplicavel",
-          produtor_destinatario_id: dados.produtorDestinatario?.user_id || null
+          produtor_destinatario_id: dados.produtorDestinatario?.user_id || null,
+          data_inicio_janela: dataInicioJanela.toISOString().split('T')[0],
+          data_fim_janela: dataFimJanela.toISOString().split('T')[0],
+          janela_entrega_dias: janelaEntregaDias
         })
         .select()
         .single()
@@ -79,7 +89,7 @@ export function useSaidaSubmission() {
 
       console.log("Saída criada com sucesso:", saida.id)
 
-      // 3. Criar todos os itens da saída
+      // 4. Criar todos os itens da saída
       const itensParaInserir = itens.map(item => ({
         user_id: user!.id,
         saida_id: saida.id,

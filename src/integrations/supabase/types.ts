@@ -2114,9 +2114,12 @@ export type Database = {
           created_at: string
           criado_por_franqueado: boolean | null
           data_aprovacao_produtor: string | null
+          data_fim_janela: string | null
+          data_inicio_janela: string | null
           data_saida: string
           deposito_id: string
           id: string
+          janela_entrega_dias: number | null
           janela_horario: string | null
           mopp_motorista: string | null
           nome_motorista: string | null
@@ -2138,9 +2141,12 @@ export type Database = {
           created_at?: string
           criado_por_franqueado?: boolean | null
           data_aprovacao_produtor?: string | null
+          data_fim_janela?: string | null
+          data_inicio_janela?: string | null
           data_saida: string
           deposito_id: string
           id?: string
+          janela_entrega_dias?: number | null
           janela_horario?: string | null
           mopp_motorista?: string | null
           nome_motorista?: string | null
@@ -2162,9 +2168,12 @@ export type Database = {
           created_at?: string
           criado_por_franqueado?: boolean | null
           data_aprovacao_produtor?: string | null
+          data_fim_janela?: string | null
+          data_inicio_janela?: string | null
           data_saida?: string
           deposito_id?: string
           id?: string
+          janela_entrega_dias?: number | null
           janela_horario?: string | null
           mopp_motorista?: string | null
           nome_motorista?: string | null

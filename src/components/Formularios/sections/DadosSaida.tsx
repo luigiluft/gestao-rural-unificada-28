@@ -70,7 +70,14 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   )
 
   const handleChange = (campo: keyof DadosSaida, valor: string) => {
-    onDadosChange({ ...dados, [campo]: valor })
+    const updatedDados = { ...dados, [campo]: valor }
+    
+    // Se mudou a data de saída, incluir a configuração de janela
+    if (campo === 'data_saida') {
+      updatedDados.janela_entrega_dias = janelaEntregaDias
+    }
+    
+    onDadosChange(updatedDados)
   }
 
   return (

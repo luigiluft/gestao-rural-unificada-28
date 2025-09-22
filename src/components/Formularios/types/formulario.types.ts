@@ -52,6 +52,7 @@ export interface DadosSaida extends DadosGenericosBase {
   cpf_motorista: string
   mopp_motorista: string
   janela_horario: string
+  janela_entrega_dias?: number
 }
 
 export interface FormularioGenericoProps {
