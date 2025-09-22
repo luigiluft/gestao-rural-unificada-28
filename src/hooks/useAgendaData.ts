@@ -37,46 +37,73 @@ export const useAgendaData = (selectedDate?: Date) => {
           valor_total,
           viagem_id,
           observacoes,
-          produtor_destinatario_id,
-          viagens:viagem_id (
-            id,
-            data_inicio,
-            data_fim,
-            status
-          ),
-          profiles:produtor_destinatario_id (
-            nome,
-            telefone
-          ),
-          saida_itens (
-            produto_id,
-            quantidade,
-            produtos (
-              nome
-            )
-          )
+          produtor_destinatario_id
         `)
 
       if (dateFilter) {
         console.log('🔍 useAgendaData: Applying date filter for:', dateFilter)
-        // Simplificar: buscar apenas saídas com data_saida na data selecionada
         query = query.eq('data_saida', dateFilter)
       }
       
       query = query.order("data_saida", { ascending: true })
 
       console.log('🔍 useAgendaData: Executing query...')
-      const { data, error } = await query
+      const { data: saidasData, error } = await query
 
-      console.log('🔍 useAgendaData: Query result:', { data: data?.length, error })
+      console.log('🔍 useAgendaData: Query result:', { data: saidasData?.length, error })
       if (error) {
         console.error('❌ useAgendaData: Query error:', error)
         throw error
       }
 
-      const agendaItems: AgendaItem[] = (data || []).map(saida => {
-        const viagem = Array.isArray(saida.viagens) ? saida.viagens[0] : saida.viagens
-        const profile = Array.isArray(saida.profiles) ? saida.profiles[0] : saida.profiles
+      if (!saidasData || saidasData.length === 0) {
+        console.log('🔍 useAgendaData: No saidas found')
+        return []
+      }
+
+      // Buscar dados das viagens separadamente
+      const viagemIds = saidasData.map(s => s.viagem_id).filter(Boolean)
+      const { data: viagensData } = viagemIds.length > 0 ? await supabase
+        .from("viagens")
+        .select("id, data_inicio, data_fim, status")
+        .in("id", viagemIds) : { data: [] }
+
+      // Buscar profiles separadamente
+      const produtorIds = saidasData.map(s => s.produtor_destinatario_id).filter(Boolean)
+      const { data: profilesData } = produtorIds.length > 0 ? await supabase
+        .from("profiles")
+        .select("user_id, nome, telefone")
+        .in("user_id", produtorIds) : { data: [] }
+
+      // Buscar saida_itens separadamente
+      const saidaIds = saidasData.map(s => s.id)
+      const { data: itensData } = await supabase
+        .from("saida_itens")
+        .select("saida_id, produto_id, quantidade")
+        .in("saida_id", saidaIds)
+
+      // Buscar produtos se houver itens
+      const produtoIds = itensData?.map(item => item.produto_id).filter(Boolean) || []
+      const { data: produtosData } = produtoIds.length > 0 ? await supabase
+        .from("produtos")
+        .select("id, nome")
+        .in("id", produtoIds) : { data: [] }
+
+      console.log('🔍 useAgendaData: Processing', saidasData.length, 'saidas with related data')
+
+      const agendaItems: AgendaItem[] = saidasData.map(saida => {
+        // Encontrar viagem relacionada
+        const viagem = viagensData?.find(v => v.id === saida.viagem_id)
+        
+        // Encontrar profile relacionado
+        const profile = profilesData?.find(p => p.user_id === saida.produtor_destinatario_id)
+        
+        // Consolidar produtos para esta saída
+        const saidaItens = itensData?.filter(item => item.saida_id === saida.id) || []
+        const produtos = saidaItens.map(item => {
+          const produto = produtosData?.find(p => p.id === item.produto_id)
+          return produto?.nome || 'Produto não especificado'
+        }).filter(Boolean).join(', ') || 'Produto não especificado'
         
         // Calcular divergência
         let divergencia_dias = 0
@@ -93,11 +120,6 @@ export const useAgendaData = (selectedDate?: Date) => {
             tipo_divergencia = 'grande'
           }
         }
-
-        // Consolidar produtos
-        const produtos = saida.saida_itens?.map(item => 
-          Array.isArray(item.produtos) ? item.produtos[0]?.nome : item.produtos?.nome
-        ).filter(Boolean).join(', ') || 'Produto não especificado'
 
         return {
           saida_id: saida.id,
@@ -129,38 +151,50 @@ export const useAgendaStats = () => {
   return useQuery({
     queryKey: ["agenda-stats"],
     queryFn: async () => {
-      // Buscar estatísticas gerais das saídas
-      const { data, error } = await supabase
+      // Buscar estatísticas gerais das saídas sem JOINs problemáticos
+      const { data: saidasData, error } = await supabase
         .from("saidas")
-        .select(`
-          id,
-          data_saida,
-          status,
-          viagem_id,
-          viagens:viagem_id (
-            data_inicio
-          )
-        `)
+        .select("id, data_saida, status, viagem_id")
 
       if (error) throw error
 
+      if (!saidasData) {
+        return {
+          total_saidas: 0,
+          com_viagem: 0,
+          sem_viagem: 0,
+          no_prazo: 0,
+          atrasadas: 0,
+          adiantadas: 0
+        }
+      }
+
+      // Buscar dados das viagens separadamente
+      const viagemIds = saidasData.map(s => s.viagem_id).filter(Boolean)
+      const { data: viagensData } = viagemIds.length > 0 ? await supabase
+        .from("viagens")
+        .select("id, data_inicio")
+        .in("id", viagemIds) : { data: [] }
+
       const stats = {
-        total_saidas: data?.length || 0,
-        com_viagem: data?.filter(s => s.viagem_id).length || 0,
-        sem_viagem: data?.filter(s => !s.viagem_id).length || 0,
+        total_saidas: saidasData.length,
+        com_viagem: saidasData.filter(s => s.viagem_id).length,
+        sem_viagem: saidasData.filter(s => !s.viagem_id).length,
         no_prazo: 0,
         atrasadas: 0,
         adiantadas: 0
       }
 
       // Calcular estatísticas de prazo
-      data?.forEach(saida => {
-        const viagem = Array.isArray(saida.viagens) ? saida.viagens[0] : saida.viagens
-        if (viagem?.data_inicio && saida.data_saida) {
-          const diff = differenceInDays(new Date(viagem.data_inicio), new Date(saida.data_saida))
-          if (diff === 0) stats.no_prazo++
-          else if (diff > 0) stats.atrasadas++
-          else stats.adiantadas++
+      saidasData.forEach(saida => {
+        if (saida.viagem_id) {
+          const viagem = viagensData?.find(v => v.id === saida.viagem_id)
+          if (viagem?.data_inicio && saida.data_saida) {
+            const diff = differenceInDays(new Date(viagem.data_inicio), new Date(saida.data_saida))
+            if (diff === 0) stats.no_prazo++
+            else if (diff > 0) stats.atrasadas++
+            else stats.adiantadas++
+          }
         }
       })
 
