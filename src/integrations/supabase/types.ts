@@ -14,69 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      agendamentos: {
-        Row: {
-          cliente_email: string | null
-          cliente_nome: string
-          cliente_telefone: string | null
-          created_at: string
-          data_agendamento: string
-          data_conclusao: string | null
-          endereco: string
-          horario_agendamento: string
-          id: string
-          numero: string
-          observacoes: string | null
-          prioridade: string
-          produto_descricao: string | null
-          responsavel_id: string | null
-          status: string
-          tipo: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          cliente_email?: string | null
-          cliente_nome: string
-          cliente_telefone?: string | null
-          created_at?: string
-          data_agendamento: string
-          data_conclusao?: string | null
-          endereco: string
-          horario_agendamento: string
-          id?: string
-          numero: string
-          observacoes?: string | null
-          prioridade?: string
-          produto_descricao?: string | null
-          responsavel_id?: string | null
-          status?: string
-          tipo: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          cliente_email?: string | null
-          cliente_nome?: string
-          cliente_telefone?: string | null
-          created_at?: string
-          data_agendamento?: string
-          data_conclusao?: string | null
-          endereco?: string
-          horario_agendamento?: string
-          id?: string
-          numero?: string
-          observacoes?: string | null
-          prioridade?: string
-          produto_descricao?: string | null
-          responsavel_id?: string | null
-          status?: string
-          tipo?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       chamados_suporte: {
         Row: {
           categoria: string | null
