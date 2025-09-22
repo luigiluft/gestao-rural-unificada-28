@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Plus, Truck, Package, MapPin, Clock } from 'lucide-react';
+import { Plus, Truck, Package, MapPin, Clock, CheckCircle } from 'lucide-react';
 import { useRemessasDisponiveis } from '@/hooks/useRemessas';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAlocarSaidaViagem, useDesalocarSaidaViagem } from '@/hooks/useViagemSaidas';
 import { useTotalRemessasAlocadas, useViagemComRemessas } from '@/hooks/useTotalRemessasAlocadas';
 import { NovaViagemDialog } from '@/components/Planejamento/NovaViagemDialog';
+import { useConfirmarViagem } from '@/hooks/useConfirmarViagem';
 
 const Planejamento = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,6 +20,7 @@ const Planejamento = () => {
   const { data: totalRemessasAlocadas = 0 } = useTotalRemessasAlocadas();
   const alocarSaida = useAlocarSaidaViagem();
   const desalocarSaida = useDesalocarSaidaViagem();
+  const confirmarViagem = useConfirmarViagem();
 
   const viagensPlanejadas = viagensComRemessas.filter(v => v.status === 'planejada');
   const viagensEmAndamento = viagensComRemessas.filter(v => v.status === 'em_andamento');
@@ -29,6 +31,10 @@ const Planejamento = () => {
 
   const handleDesalocarSaida = (saidaId: string) => {
     desalocarSaida.mutate({ saidaId });
+  };
+
+  const handleConfirmarViagem = (viagemId: string) => {
+    confirmarViagem.mutate({ viagemId });
   };
 
   const getStatusBadge = (status: string) => {
@@ -188,7 +194,7 @@ const Planejamento = () => {
               </div>
             ) : (
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {viagensComRemessas.map((viagem) => (
+                {viagensPlanejadas.map((viagem) => (
                   <div key={viagem.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -212,13 +218,15 @@ const Planejamento = () => {
                                  R$ {saida.valor_total || 0}
                                </span>
                              </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDesalocarSaida(saida.id)}
-                            >
-                              Remover
-                            </Button>
+                            {viagem.status === 'planejada' && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDesalocarSaida(saida.id)}
+                              >
+                                Remover
+                              </Button>
+                            )}
                           </div>
                         ))
                       ) : (
@@ -227,6 +235,19 @@ const Planejamento = () => {
                         </div>
                       )}
                     </div>
+
+                    {viagem.status === 'planejada' && viagem.saidas && viagem.saidas.length > 0 && (
+                      <div className="mt-3 pt-3 border-t">
+                        <Button
+                          className="w-full"
+                          onClick={() => handleConfirmarViagem(viagem.id)}
+                          disabled={confirmarViagem.isPending}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          {confirmarViagem.isPending ? 'Confirmando...' : 'Confirmar Viagem'}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
