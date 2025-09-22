@@ -8,7 +8,7 @@ import { useProfile, useProdutoresComEstoqueNaFranquia, useFazendas } from "@/ho
 import { useAuth } from "@/contexts/AuthContext"
 import { getMinScheduleDate, isDateAfterBlockedBusinessDays } from "@/lib/business-days"
 import { useDiasUteisExpedicao, useHorariosRetirada, useJanelaEntregaDias } from "@/hooks/useConfiguracoesSistema"
-import { formatDeliveryWindowComplete } from "@/lib/delivery-window"
+import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
 import { useMemo } from "react"
@@ -95,9 +95,9 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
             {dados.data_saida && (
               <div className="space-y-1">
                 <p className="text-xs text-primary font-medium">
-                  Janela: {formatDeliveryWindowComplete(new Date(dados.data_saida), janelaEntregaDias)}
+                  Janela: {formatDeliveryWindowComplete(parseLocalDate(dados.data_saida), janelaEntregaDias)}
                 </p>
-                {!isDateAfterBlockedBusinessDays(new Date(dados.data_saida), diasUteisExpedicao) && (
+                {!isDateAfterBlockedBusinessDays(parseLocalDate(dados.data_saida), diasUteisExpedicao) && (
                   <p className="text-xs text-destructive">
                     Mínimo: {diasUteisExpedicao} dias úteis ({getMinScheduleDate(diasUteisExpedicao)})
                   </p>

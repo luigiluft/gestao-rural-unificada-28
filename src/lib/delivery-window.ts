@@ -6,6 +6,17 @@ import { addBusinessDays } from "./business-days";
 import { format } from "date-fns";
 
 /**
+ * Converte uma string de data local (YYYY-MM-DD) para um objeto Date local
+ * Evita problemas de timezone que podem ocorrer com new Date(dateString)
+ * @param dateString String no formato "YYYY-MM-DD"
+ * @returns Date object local correto
+ */
+export function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day); // month é 0-indexed
+}
+
+/**
  * Calcula a data final da janela de entrega
  * @param startDate Data de início da janela
  * @param windowDays Quantidade de dias da janela
