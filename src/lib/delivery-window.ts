@@ -15,7 +15,10 @@ export function calculateDeliveryWindowEnd(startDate: Date, windowDays: number):
   if (windowDays <= 1) {
     return new Date(startDate);
   }
-  return addBusinessDays(startDate, windowDays - 1);
+  
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + (windowDays - 1));
+  return endDate;
 }
 
 /**
