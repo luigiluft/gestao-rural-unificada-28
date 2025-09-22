@@ -18,6 +18,7 @@ export default function Configuracoes() {
   const [novoHorario, setNovoHorario] = useState("")
   const [horarios, setHorarios] = useState<string[]>([])
   const [diasUteis, setDiasUteis] = useState("")
+  const [janelaEntregaDias, setJanelaEntregaDias] = useState("")
 
   React.useEffect(() => {
     if (configuracoes.length > 0) {
@@ -39,6 +40,11 @@ export default function Configuracoes() {
       
       if (diasUteisConfig) {
         setDiasUteis(diasUteisConfig.valor)
+      }
+      
+      const janelaEntregaConfig = configuracoes.find(c => c.chave === "janela_entrega_dias")
+      if (janelaEntregaConfig) {
+        setJanelaEntregaDias(janelaEntregaConfig.valor)
       }
     }
   }, [configuracoes])
@@ -75,6 +81,13 @@ export default function Configuracoes() {
     updateConfiguracao.mutate({
       chave: "dias_uteis_expedicao",
       valor: diasUteis
+    })
+  }
+
+  const handleSaveJanelaEntrega = () => {
+    updateConfiguracao.mutate({
+      chave: "janela_entrega_dias",
+      valor: janelaEntregaDias
     })
   }
 
@@ -254,6 +267,43 @@ export default function Configuracoes() {
                 </div>
                 <Button 
                   onClick={handleSaveDiasUteis}
+                  disabled={updateConfiguracao.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configuração de Janela de Entrega */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Janela de Entrega</CardTitle>
+              <CardDescription>
+                Configure quantos dias compõem a janela de entrega a partir da data selecionada
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end space-x-4">
+                <div className="flex-1">
+                  <Label htmlFor="janela-entrega">Número de Dias</Label>
+                  <Input
+                    id="janela-entrega"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={janelaEntregaDias}
+                    onChange={(e) => setJanelaEntregaDias(e.target.value)}
+                    placeholder="3"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Janela de {janelaEntregaDias || "3"} dias. Ex: se selecionar 15/09, a janela será de 15/09 a {
+                      parseInt(janelaEntregaDias || "3") === 1 ? "15/09" : `${15 + parseInt(janelaEntregaDias || "3") - 1}/09`
+                    }
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleSaveJanelaEntrega}
                   disabled={updateConfiguracao.isPending}
                 >
                   Salvar

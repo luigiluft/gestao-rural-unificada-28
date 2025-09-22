@@ -18,74 +18,20 @@ export const useConfirmarViagem = () => {
 
       if (viagemError) throw viagemError
 
-      // Get all saidas for this viagem to create agendamentos
-      const { data: saidas, error: saidasError } = await supabase
-        .from("saidas")
-        .select(`
-          id,
-          data_saida,
-          observacoes,
-          user_id,
-          deposito_id,
-          saida_itens (
-            produto_id,
-            produtos (
-              nome
-            )
-          )
-        `)
-        .eq("viagem_id", viagemId)
+      // Note: agendamentos table was removed from database
+      // The viagem confirmation now only updates the viagem status
+      
+      const agendamentosCriados = 0 // No agendamentos created since table doesn't exist
 
-      if (saidasError) throw saidasError
-
-      // Create agendamentos for each saida
-      const agendamentosToCreate = saidas?.map(saida => {
-        // Get product descriptions
-        const produtos = saida.saida_itens?.map(item => 
-          item.produtos?.nome
-        ).filter(Boolean).join(", ") || "Produtos diversos"
-
-        // Check if there's a reserved time for this saida
-        const horarioDefault = "08:00"
-
-        return {
-          user_id: saida.user_id,
-          tipo: "entrega",
-          numero: `SAIDA-${saida.id.slice(0, 8)}`,
-          cliente_nome: "Cliente da saída",
-          cliente_telefone: null,
-          cliente_email: null,
-          endereco: "Endereço da entrega",
-          data_agendamento: saida.data_saida,
-          horario_agendamento: horarioDefault,
-          status: "confirmado",
-          prioridade: "media",
-          produto_descricao: produtos,
-          observacoes: `Entrega da viagem. ${saida.observacoes || ""}`.trim()
-        }
-      }) || []
-
-      if (agendamentosToCreate.length > 0) {
-        const { error: agendamentosError } = await supabase
-          .from("agendamentos")
-          .insert(agendamentosToCreate)
-
-        if (agendamentosError) {
-          console.error("Erro ao criar agendamentos:", agendamentosError)
-          // Don't throw here - viagem was confirmed successfully
-        }
-      }
-
-      return { viagemId, agendamentosCriados: agendamentosToCreate.length }
+      return { viagemId, agendamentosCriados }
     },
     onSuccess: (data) => {
       toast({
         title: "Viagem confirmada",
-        description: `A viagem foi confirmada e ${data.agendamentosCriados} agendamentos foram criados`,
+        description: "A viagem foi confirmada com sucesso",
       })
       queryClient.invalidateQueries({ queryKey: ["viagens"] })
       queryClient.invalidateQueries({ queryKey: ["viagens-com-remessas"] })
-      queryClient.invalidateQueries({ queryKey: ["agendamentos"] })
     },
     onError: (error) => {
       console.error("Erro ao confirmar viagem:", error)

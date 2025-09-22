@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
 import { useProfile, useProdutoresComEstoqueNaFranquia, useFazendas } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
-import { getMinScheduleDate } from "@/lib/business-days"
-import { useDiasUteisExpedicao, useHorariosRetirada } from "@/hooks/useConfiguracoesSistema"
+import { getMinScheduleDate, isDateAfterBlockedBusinessDays } from "@/lib/business-days"
+import { useDiasUteisExpedicao, useHorariosRetirada, useJanelaEntregaDias } from "@/hooks/useConfiguracoesSistema"
+import { formatDeliveryWindowComplete } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
 import { useMemo } from "react"
@@ -25,6 +26,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const { data: produtoresComEstoque } = useProdutoresComEstoqueNaFranquia()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
+  const janelaEntregaDias = useJanelaEntregaDias()
 
   // Hooks condicionais baseados no papel do usuário
   const { data: depositosProdutor = [] } = useDepositosDisponiveis(
@@ -82,7 +84,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="data_saida">Data de Saída *</Label>
+            <Label htmlFor="data_saida">Data de Entrega *</Label>
             <Input
               id="data_saida"
               type="date"
@@ -90,9 +92,23 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
               min={getMinScheduleDate(diasUteisExpedicao)}
               onChange={(e) => handleChange('data_saida', e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
-              Mínimo: {diasUteisExpedicao} dias úteis ({getMinScheduleDate(diasUteisExpedicao)})
-            </p>
+            {dados.data_saida && (
+              <div className="space-y-1">
+                <p className="text-xs text-primary font-medium">
+                  Janela: {formatDeliveryWindowComplete(new Date(dados.data_saida), janelaEntregaDias)}
+                </p>
+                {!isDateAfterBlockedBusinessDays(new Date(dados.data_saida), diasUteisExpedicao) && (
+                  <p className="text-xs text-destructive">
+                    Mínimo: {diasUteisExpedicao} dias úteis ({getMinScheduleDate(diasUteisExpedicao)})
+                  </p>
+                )}
+              </div>
+            )}
+            {!dados.data_saida && (
+              <p className="text-xs text-muted-foreground">
+                Mínimo: {diasUteisExpedicao} dias úteis
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
