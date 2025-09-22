@@ -207,9 +207,9 @@ const Planejamento = () => {
                         viagem.saidas.map((saida: any) => (
                           <div key={saida.id} className="flex items-center justify-between p-2 bg-muted rounded">
                             <div className="text-sm">
-                              <span className="font-medium">{saida.numero_saida}</span>
+                              <span className="font-medium">Saída #{String(saida.id).slice(0, 8)}</span>
                               <span className="text-muted-foreground ml-2">
-                                ({saida.peso_total}kg • R$ {saida.valor_total})
+                                ({saida.peso_total || 0}kg • R$ {saida.valor_total || 0})
                               </span>
                             </div>
                             <Button
