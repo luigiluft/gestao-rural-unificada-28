@@ -3150,6 +3150,10 @@ export type Database = {
         | "catalogo.view"
         | "alocacao-pallets.view"
         | "gerenciar-posicoes.view"
+        | "veiculos.view"
+        | "veiculos.manage"
+        | "motoristas.view"
+        | "motoristas.manage"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -3308,6 +3312,10 @@ export const Constants = {
         "catalogo.view",
         "alocacao-pallets.view",
         "gerenciar-posicoes.view",
+        "veiculos.view",
+        "veiculos.manage",
+        "motoristas.view",
+        "motoristas.manage",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
