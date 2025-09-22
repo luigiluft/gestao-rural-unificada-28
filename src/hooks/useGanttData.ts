@@ -6,13 +6,15 @@ export interface GanttItem {
   saida_id: string;
   pedido_numero: string;
   cliente_nome: string;
-  data_ideal: Date;
+  data_inicio_janela: Date;
+  data_fim_janela: Date;
   janela_horario?: string;
   data_real?: Date;
   status: string;
   divergencia_dias: number;
   viagem_id?: string;
   produto_descricao?: string;
+  janela_entrega_dias: number;
 }
 
 export const useGanttData = (selectedDate?: Date) => {
@@ -26,6 +28,9 @@ export const useGanttData = (selectedDate?: Date) => {
         .select(`
           id,
           data_saida,
+          data_inicio_janela,
+          data_fim_janela,
+          janela_entrega_dias,
           janela_horario,
           status,
           viagem_id,
@@ -33,12 +38,14 @@ export const useGanttData = (selectedDate?: Date) => {
           observacoes,
           valor_total
         `)
-        .order("data_saida", { ascending: true })
+        .order("data_inicio_janela", { ascending: true })
 
-      // Filter by date if provided
+      // Filter by date if provided - check if date intersects with delivery window
       if (selectedDate) {
         const dateStr = selectedDate.toISOString().split('T')[0]
-        query = query.eq("data_saida", dateStr)
+        query = query
+          .lte("data_inicio_janela", dateStr)
+          .gte("data_fim_janela", dateStr)
       } else {
         // Get data for current month if no date selected
         const startOfMonth = new Date()
@@ -51,8 +58,8 @@ export const useGanttData = (selectedDate?: Date) => {
         endOfMonth.setHours(23, 59, 59, 999)
         
         query = query
-          .gte("data_saida", startOfMonth.toISOString().split('T')[0])
-          .lte("data_saida", endOfMonth.toISOString().split('T')[0])
+          .lte("data_inicio_janela", endOfMonth.toISOString().split('T')[0])
+          .gte("data_fim_janela", startOfMonth.toISOString().split('T')[0])
       }
 
       const { data: saidas, error: saidasError } = await query
@@ -127,24 +134,34 @@ export const useGanttData = (selectedDate?: Date) => {
         const profile = profiles.find(p => p.user_id === saida.produtor_destinatario_id)
         const firstItem = saidaItens?.find(item => item.saida_id === saida.id)
         
-        const dataIdeal = new Date(saida.data_saida)
+        const dataInicioJanela = new Date(saida.data_inicio_janela || saida.data_saida)
+        const dataFimJanela = new Date(saida.data_fim_janela || saida.data_saida)
         const dataReal = viagem?.data_inicio ? new Date(viagem.data_inicio) : undefined
         
-        const divergenciaDias = dataReal 
-          ? differenceInDays(dataReal, dataIdeal)
-          : 0
+        // Calculate divergence: negative if within window, positive if outside
+        let divergenciaDias = 0
+        if (dataReal) {
+          if (dataReal < dataInicioJanela) {
+            divergenciaDias = differenceInDays(dataInicioJanela, dataReal) * -1 // Antecipado
+          } else if (dataReal > dataFimJanela) {
+            divergenciaDias = differenceInDays(dataReal, dataFimJanela) // Atrasado
+          }
+          // Se estiver dentro da janela, divergenciaDias permanece 0
+        }
 
         return {
           saida_id: saida.id,
           pedido_numero: `Saída ${saida.id.slice(-8)}`,
           cliente_nome: profile?.nome || 'Cliente não identificado',
-          data_ideal: dataIdeal,
+          data_inicio_janela: dataInicioJanela,
+          data_fim_janela: dataFimJanela,
           janela_horario: saida.janela_horario,
           data_real: dataReal,
           status: saida.status,
           divergencia_dias: divergenciaDias,
           viagem_id: saida.viagem_id,
-          produto_descricao: (firstItem?.produtos as any)?.nome || 'Produto não identificado'
+          produto_descricao: (firstItem?.produtos as any)?.nome || 'Produto não identificado',
+          janela_entrega_dias: saida.janela_entrega_dias || 3
         }
       })
 

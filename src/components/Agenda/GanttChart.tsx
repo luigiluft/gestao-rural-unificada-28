@@ -105,14 +105,15 @@ export const GanttChart = ({ data, selectedDate }: GanttChartProps) => {
             {/* Gantt rows */}
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {data.map((item, index) => {
-                const dataIdealTime = item.data_ideal.getTime()
+                const dataInicioTime = item.data_inicio_janela.getTime()
+                const dataFimTime = item.data_fim_janela.getTime()
                 const weekStartTime = weekStart.getTime()
                 const weekEndTime = weekEnd.getTime()
                 
-                // Check if ideal date is in current week
-                const isInWeek = dataIdealTime >= weekStartTime && dataIdealTime <= weekEndTime
+                // Check if delivery window intersects with current week
+                const hasIntersection = dataInicioTime <= weekEndTime && dataFimTime >= weekStartTime
                 
-                if (!isInWeek) return null
+                if (!hasIntersection) return null
 
                 return (
                   <div key={item.saida_id} className="grid grid-cols-8 gap-2 items-center py-2 border-b border-border/50">
@@ -129,24 +130,37 @@ export const GanttChart = ({ data, selectedDate }: GanttChartProps) => {
                     {/* Timeline cells */}
                     {weekDays.map(day => {
                       const dayTime = day.getTime()
-                      const isIdealDay = format(day, 'yyyy-MM-dd') === format(item.data_ideal, 'yyyy-MM-dd')
+                      const dayStr = format(day, 'yyyy-MM-dd')
+                      const inicioJanelaStr = format(item.data_inicio_janela, 'yyyy-MM-dd')
+                      const fimJanelaStr = format(item.data_fim_janela, 'yyyy-MM-dd')
+                      
+                      // Check if this day is within the delivery window
+                      const isWithinWindow = dayStr >= inicioJanelaStr && dayStr <= fimJanelaStr
+                      const isStartOfWindow = dayStr === inicioJanelaStr
+                      const isEndOfWindow = dayStr === fimJanelaStr
                       const isRealDay = item.data_real && format(day, 'yyyy-MM-dd') === format(item.data_real, 'yyyy-MM-dd')
                       
                       return (
                         <div key={day.toISOString()} className="relative h-8 flex items-center justify-center">
-                          {/* Ideal delivery window (blue bar) */}
-                          {isIdealDay && (
+                          {/* Delivery window bar */}
+                          {isWithinWindow && (
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className={`w-full h-4 rounded ${getStatusColor(item.status)} opacity-60 flex items-center justify-center`}>
-                                  {getStatusIcon(item.status)}
+                                <div className={`w-full h-4 ${getStatusColor(item.status)} opacity-60 flex items-center justify-center 
+                                  ${isStartOfWindow ? 'rounded-l' : ''} 
+                                  ${isEndOfWindow ? 'rounded-r' : ''}
+                                  ${isStartOfWindow && isEndOfWindow ? 'rounded' : ''}`}>
+                                  {isStartOfWindow && getStatusIcon(item.status)}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <div className="space-y-1">
                                   <div className="font-medium">{item.pedido_numero}</div>
                                   <div className="text-sm">Cliente: {item.cliente_nome}</div>
-                                  <div className="text-sm">Data Ideal: {format(item.data_ideal, 'dd/MM/yyyy')}</div>
+                                  <div className="text-sm">
+                                    Janela: {format(item.data_inicio_janela, 'dd/MM')} a {format(item.data_fim_janela, 'dd/MM')} 
+                                    ({item.janela_entrega_dias} dias)
+                                  </div>
                                   {item.janela_horario && (
                                     <div className="text-sm">Horário: {item.janela_horario}</div>
                                   )}
@@ -157,12 +171,18 @@ export const GanttChart = ({ data, selectedDate }: GanttChartProps) => {
                             </Tooltip>
                           )}
 
-                          {/* Real transport date (red X marker) */}
+                          {/* Real transport date marker */}
                           {isRealDay && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="absolute top-0 right-0 z-10">
-                                  <XCircle className="h-4 w-4 text-red-600 bg-background rounded-full" />
+                                  {item.divergencia_dias === 0 ? (
+                                    <CheckCircle className="h-4 w-4 text-green-600 bg-background rounded-full" />
+                                  ) : item.divergencia_dias > 0 ? (
+                                    <XCircle className="h-4 w-4 text-red-600 bg-background rounded-full" />
+                                  ) : (
+                                    <Clock className="h-4 w-4 text-blue-600 bg-background rounded-full" />
+                                  )}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -170,9 +190,9 @@ export const GanttChart = ({ data, selectedDate }: GanttChartProps) => {
                                   <div className="font-medium">Data Programada</div>
                                   <div className="text-sm">Viagem: {format(item.data_real!, 'dd/MM/yyyy')}</div>
                                   <div className={`text-sm font-medium ${getDivergenceColor(item.divergencia_dias)}`}>
-                                    {item.divergencia_dias === 0 && 'No prazo'}
-                                    {item.divergencia_dias > 0 && `${item.divergencia_dias} dia(s) de atraso`}
-                                    {item.divergencia_dias < 0 && `${Math.abs(item.divergencia_dias)} dia(s) antecipado`}
+                                    {item.divergencia_dias === 0 && 'Dentro da janela ✓'}
+                                    {item.divergencia_dias > 0 && `${item.divergencia_dias} dia(s) após janela`}
+                                    {item.divergencia_dias < 0 && `${Math.abs(item.divergencia_dias)} dia(s) antes da janela`}
                                   </div>
                                 </div>
                               </TooltipContent>
@@ -192,19 +212,19 @@ export const GanttChart = ({ data, selectedDate }: GanttChartProps) => {
               <div className="flex flex-wrap gap-4 text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-blue-500 opacity-60 rounded"></div>
-                  <span>Janela Ideal de Entrega</span>
+                  <span>Janela de Entrega</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span>Viagem Dentro da Janela</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4 text-red-600" />
-                  <span>Data Programada (Viagem)</span>
+                  <span>Viagem Fora da Janela (Atrasada)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="h-3 w-3 text-green-600" />
-                  <span>Entregue</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3 text-purple-600" />
-                  <span>Expedido</span>
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span>Viagem Antecipada</span>
                 </div>
               </div>
             </div>
