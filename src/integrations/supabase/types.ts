@@ -2830,6 +2830,7 @@ export type Database = {
           motorista_id: string | null
           numero: string
           observacoes: string | null
+          peso_total: number | null
           remessas_entregues: number
           rota_id: string | null
           status: string
@@ -2853,6 +2854,7 @@ export type Database = {
           motorista_id?: string | null
           numero: string
           observacoes?: string | null
+          peso_total?: number | null
           remessas_entregues?: number
           rota_id?: string | null
           status?: string
@@ -2876,6 +2878,7 @@ export type Database = {
           motorista_id?: string | null
           numero?: string
           observacoes?: string | null
+          peso_total?: number | null
           remessas_entregues?: number
           rota_id?: string | null
           status?: string
@@ -2906,6 +2909,10 @@ export type Database = {
       auto_allocate_positions: {
         Args: { p_wave_id: string }
         Returns: boolean
+      }
+      calculate_viagem_peso_total: {
+        Args: { p_viagem_id: string }
+        Returns: number
       }
       can_create_role: {
         Args: {
