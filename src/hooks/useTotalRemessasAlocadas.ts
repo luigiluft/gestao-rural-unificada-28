@@ -35,7 +35,6 @@ export const useViagemComRemessas = () => {
           saidas:saidas(
             id,
             status,
-            peso_total,
             valor_total,
             data_saida,
             observacoes

@@ -206,12 +206,12 @@ const Planejamento = () => {
                       {viagem.saidas && viagem.saidas.length > 0 ? (
                         viagem.saidas.map((saida: any) => (
                           <div key={saida.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                            <div className="text-sm">
-                              <span className="font-medium">Saída #{String(saida.id).slice(0, 8)}</span>
-                              <span className="text-muted-foreground ml-2">
-                                ({saida.peso_total || 0}kg • R$ {saida.valor_total || 0})
-                              </span>
-                            </div>
+                             <div className="text-sm">
+                               <span className="font-medium">Saída #{String(saida.id).slice(0, 8)}</span>
+                               <span className="text-muted-foreground ml-2">
+                                 R$ {saida.valor_total || 0}
+                               </span>
+                             </div>
                             <Button
                               size="sm"
                               variant="ghost"
