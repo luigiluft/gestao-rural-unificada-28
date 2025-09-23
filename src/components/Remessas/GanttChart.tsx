@@ -45,8 +45,9 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
       if (!r.data_inicio_janela || !r.data_fim_janela) return false;
       
       try {
-        const remessaStart = parseISO(r.data_inicio_janela);
-        const remessaEnd = parseISO(r.data_fim_janela);
+        // Como as datas vêm em formato YYYY-MM-DD do banco, vamos usar esse formato
+        const remessaStart = new Date(r.data_inicio_janela + 'T00:00:00');
+        const remessaEnd = new Date(r.data_fim_janela + 'T23:59:59');
         
         // Verificar se as datas são válidas
         if (isNaN(remessaStart.getTime()) || isNaN(remessaEnd.getTime())) return false;
@@ -56,7 +57,6 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
         const filterEnd = endOfDay(endDate);
         
         // Verifica se há sobreposição com o intervalo selecionado
-        // A remessa deve ter pelo menos um dia dentro do período filtrado
         return (remessaStart <= filterEnd && remessaEnd >= filterStart);
       } catch (error) {
         console.warn('Erro ao filtrar remessa:', r, error);
@@ -74,8 +74,9 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
       if (!r.data_inicio_janela || !r.data_fim_janela) return false;
       
       try {
-        const startDate = parseISO(r.data_inicio_janela);
-        const endDate = parseISO(r.data_fim_janela);
+        // Como as datas vêm em formato YYYY-MM-DD do banco, vamos usar esse formato
+        const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
+        const endDate = new Date(r.data_fim_janela + 'T23:59:59');
         
         // Verificar se as datas são válidas
         return !isNaN(startDate.getTime()) && !isNaN(endDate.getTime()) && startDate <= endDate;
@@ -90,7 +91,10 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     // Encontrar as datas mínima e máxima para definir o range
     const allDates = remessasValidas.flatMap(r => {
       try {
-        return [parseISO(r.data_inicio_janela), parseISO(r.data_fim_janela)];
+        // Como as datas vêm em formato YYYY-MM-DD do banco, vamos usar esse formato
+        const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
+        const endDate = new Date(r.data_fim_janela + 'T23:59:59');
+        return [startDate, endDate];
       } catch (error) {
         return [];
       }
@@ -110,8 +114,9 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     
     return remessasValidas.map((remessa, index) => {
       try {
-        const startDate = parseISO(remessa.data_inicio_janela);
-        const endDate = parseISO(remessa.data_fim_janela);
+        // Como as datas vêm em formato YYYY-MM-DD do banco
+        const startDate = new Date(remessa.data_inicio_janela + 'T00:00:00');
+        const endDate = new Date(remessa.data_fim_janela + 'T23:59:59');
         
         let start: number;
         let duration: number;
@@ -249,7 +254,10 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
       
       const allDates = remessasValidas.flatMap(r => {
         try {
-          return [parseISO(r.data_inicio_janela), parseISO(r.data_fim_janela)];
+          // Como as datas vêm em formato YYYY-MM-DD do banco
+          const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
+          const endDate = new Date(r.data_fim_janela + 'T23:59:59');
+          return [startDate, endDate];
         } catch {
           return [];
         }
