@@ -265,12 +265,12 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
       </div>
 
       {/* Timeline Kanban Container Responsivo */}
-      <div className="w-full max-w-full">
-        <div className="border rounded-lg bg-background overflow-hidden">
+      <div className="w-full max-w-full overflow-hidden">
+        <div className="border rounded-lg bg-background">
           <div className="overflow-x-auto overflow-y-hidden h-[600px] scrollbar-thin scrollbar-thumb-border scrollbar-track-background">
-            <div className="min-w-max">
+            <div style={{ width: `${dates.length * 192}px` }}>
               {/* Header com datas */}
-              <div className="flex border-b bg-muted/50">
+              <div className="flex border-b bg-muted/50" style={{ width: `${dates.length * 192}px` }}>
                 {dates.map((date, index) => {
                   const isToday = isSameDay(date, new Date())
                   return (
@@ -302,7 +302,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-                <div className="flex min-h-96">
+                <div className="flex min-h-96" style={{ width: `${dates.length * 192}px` }}>
                   {dates.map((date, dateIndex) => {
                     const dateKey = format(date, 'yyyy-MM-dd')
                     const viagensNaData = viagensByDate[dateKey] || []
