@@ -17,6 +17,7 @@ import {
 import {
   useSortable,
 } from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -50,6 +51,26 @@ const statusBadges = {
   em_andamento: { label: 'Em Andamento', variant: 'default' as const, color: 'bg-amber-500' },
   concluida: { label: 'Concluída', variant: 'outline' as const, color: 'bg-green-500' },
   cancelada: { label: 'Cancelada', variant: 'destructive' as const, color: 'bg-red-500' }
+}
+
+interface DroppableColumnProps {
+  dateIndex: number
+  children: React.ReactNode
+}
+
+const DroppableColumn: React.FC<DroppableColumnProps> = ({ dateIndex, children }) => {
+  const { setNodeRef } = useDroppable({
+    id: `droppable-${dateIndex}`,
+  })
+
+  return (
+    <div 
+      ref={setNodeRef}
+      className="flex-shrink-0 w-48 p-3 border-r min-h-96 bg-background hover:bg-muted/30 transition-colors"
+    >
+      {children}
+    </div>
+  )
 }
 
 interface SortableViagemCardProps {
@@ -180,9 +201,17 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     if (!over || !active.data.current) return
 
     const viagem = active.data.current.viagem as Viagem
-    const newDateIndex = parseInt(over.id.toString())
-    const newDate = dates[newDateIndex]
+    const overId = over.id.toString()
     
+    // Extrair o índice da data do ID do droppable
+    let newDateIndex: number
+    if (overId.startsWith('droppable-')) {
+      newDateIndex = parseInt(overId.replace('droppable-', ''))
+    } else {
+      return
+    }
+    
+    const newDate = dates[newDateIndex]
     if (!newDate) return
 
     // Calcular duração original da viagem
@@ -313,10 +342,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
                         items={viagensNaData.map(v => `${v.id}-${dateIndex}`)}
                         strategy={verticalListSortingStrategy}
                       >
-                        <div 
-                          className="flex-shrink-0 w-48 p-3 border-r min-h-96 bg-background hover:bg-muted/30 transition-colors"
-                          data-date-index={dateIndex}
-                        >
+                        <DroppableColumn dateIndex={dateIndex}>
                           {viagensNaData.map((viagem) => (
                             <SortableViagemCard
                               key={`${viagem.id}-${dateIndex}`}
@@ -325,7 +351,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
                               onClick={() => onViagemSelect?.(viagem)}
                             />
                           ))}
-                        </div>
+                        </DroppableColumn>
                       </SortableContext>
                     )
                   })}
