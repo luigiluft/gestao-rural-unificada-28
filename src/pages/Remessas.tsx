@@ -14,6 +14,7 @@ import { useRemessas } from "@/hooks/useRemessas"
 import { useSaidasPendentes } from "@/hooks/useSaidasPendentes"
 import { useCorrigirStatusSaida } from "@/hooks/useCorrigirStatusSaida"
 import { NovaViagemComRemessasDialog } from "@/components/Viagens/NovaViagemComRemessasDialog"
+import GanttChart from "@/components/Remessas/GanttChart"
 
 export default function Remessas() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -221,6 +222,9 @@ export default function Remessas() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Gantt Chart */}
+      <GanttChart remessas={filteredRemessas} />
 
       {/* Lista de Remessas */}
       <Card>
