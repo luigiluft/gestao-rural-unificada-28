@@ -53,6 +53,11 @@ export interface DadosSaida extends DadosGenericosBase {
   mopp_motorista: string
   janela_horario: string
   janela_entrega_dias?: number
+  frete_origem?: string
+  frete_destino?: string
+  frete_distancia?: number
+  valor_frete_calculado?: number
+  prazo_entrega_calculado?: number
 }
 
 export interface FormularioGenericoProps {

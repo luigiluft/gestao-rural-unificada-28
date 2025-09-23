@@ -83,7 +83,9 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             janela_horario: dadosSaida.janela_horario || null,
             criado_por_franqueado: !isProdutor,
             status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente',
-            produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario
+            produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario,
+            valor_frete_calculado: dadosSaida.valor_frete_calculado || null,
+            prazo_entrega_calculado: dadosSaida.prazo_entrega_calculado || null
           })
           .select()
           .single()

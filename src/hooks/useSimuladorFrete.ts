@@ -46,7 +46,7 @@ export const useSimuladorFrete = () => {
       query.eq("franqueado_id", franqueado_id)
     }
 
-    const { data: tabelas, error } = await query.limit(1).single()
+    const { data: tabelas, error } = await query.limit(1).maybeSingle()
 
     if (error || !tabelas) {
       throw new Error("Nenhuma tabela de frete encontrada")

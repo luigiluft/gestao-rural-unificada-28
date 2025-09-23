@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
+import { SimuladorFrete } from "./SimuladorFrete"
 import { useProfile, useProdutoresComEstoqueNaFranquia, useFazendas } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
 import { getMinScheduleDate, isDateAfterBlockedBusinessDays } from "@/lib/business-days"
@@ -77,6 +78,15 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
       updatedDados.janela_entrega_dias = janelaEntregaDias
     }
     
+    onDadosChange(updatedDados)
+  }
+
+  const handleFreteCalculado = (resultado: any) => {
+    const updatedDados = {
+      ...dados,
+      valor_frete_calculado: resultado.valor_total,
+      prazo_entrega_calculado: resultado.prazo_entrega
+    }
     onDadosChange(updatedDados)
   }
 
@@ -291,6 +301,16 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
           />
         </div>
       </CardContent>
+
+      {/* Simulador de Frete - apenas para entrega na fazenda */}
+      {dados.tipo_saida === 'entrega_fazenda' && dados.fazenda_id && pesoTotal > 0 && (
+        <div className="mt-6">
+          <SimuladorFrete 
+            pesoTotal={pesoTotal}
+            onFreteCalculado={handleFreteCalculado}
+          />
+        </div>
+      )}
     </Card>
   )
 }
