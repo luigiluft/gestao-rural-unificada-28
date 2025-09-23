@@ -19,20 +19,28 @@ interface RemessaData {
 
 interface GanttChartProps {
   remessas: RemessaData[];
+  selectedRemessas?: string[];
+  onToggleSelection?: (remessaId: string) => void;
 }
 
 interface GanttDataPoint {
   name: string;
+  id: string;
   start: number;
   duration: number;
   startDate: string;
   endDate: string;
   status: string;
+  isSelected: boolean;
 }
 
 type TimeUnit = 'dias' | 'semanas' | 'meses';
 
-const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
+const GanttChart: React.FC<GanttChartProps> = ({ 
+  remessas, 
+  selectedRemessas = [], 
+  onToggleSelection 
+}) => {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
@@ -127,20 +135,24 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
         
         return {
           name: `#${remessa.id.slice(0, 8)}`,
+          id: remessa.id,
           start: Math.max(0, start),
           duration: Math.max(1, duration),
           startDate: format(startDate, 'dd/MM/yyyy', { locale: ptBR }),
           endDate: format(endDate, 'dd/MM/yyyy', { locale: ptBR }),
-          status: remessa.status
+          status: remessa.status,
+          isSelected: selectedRemessas.includes(remessa.id)
         };
       } catch (error) {
         return {
           name: `#${remessa.id.slice(0, 8)}`,
+          id: remessa.id,
           start: 0,
           duration: 1,
           startDate: 'Data inválida',
           endDate: 'Data inválida',
-          status: remessa.status
+          status: remessa.status,
+          isSelected: selectedRemessas.includes(remessa.id)
         };
       }
     });
@@ -173,8 +185,11 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
 
   const todayPosition = getTodayPosition();
 
-  // Função para obter cor baseada no status
-  const getBarColor = (status: string) => {
+  // Função para obter cor baseada no status e seleção
+  const getBarColor = (status: string, isSelected: boolean) => {
+    if (isSelected) {
+      return 'hsl(var(--accent))';
+    }
     switch (status) {
       case 'expedido':
         return 'hsl(var(--primary))';
@@ -190,12 +205,29 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{`Remessa: ${label}`}</p>
-          <p className="text-sm text-muted-foreground">{`Início: ${data.startDate}`}</p>
-          <p className="text-sm text-muted-foreground">{`Fim: ${data.endDate}`}</p>
-          <p className="text-sm text-muted-foreground">{`Duração: ${data.duration} dias`}</p>
-          <p className="text-sm text-muted-foreground">{`Status: ${data.status}`}</p>
+        <div className="bg-background border border-border rounded-lg p-4 shadow-lg min-w-[200px]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-medium">{`Remessa: ${label}`}</p>
+            {onToggleSelection && (
+              <Button
+                size="sm"
+                variant={data.isSelected ? "default" : "outline"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSelection(data.id);
+                }}
+                className="ml-2"
+              >
+                {data.isSelected ? "Selecionada" : "Selecionar"}
+              </Button>
+            )}
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">{`Início: ${data.startDate}`}</p>
+            <p className="text-sm text-muted-foreground">{`Fim: ${data.endDate}`}</p>
+            <p className="text-sm text-muted-foreground">{`Duração: ${data.duration} dias`}</p>
+            <p className="text-sm text-muted-foreground">{`Status: ${data.status}`}</p>
+          </div>
         </div>
       );
     }
@@ -456,11 +488,19 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
                 dataKey="duration" 
                 stackId="gantt"
                 radius={[2, 2, 2, 2]}
+                cursor="pointer"
+                onClick={(data) => {
+                  if (onToggleSelection && data) {
+                    onToggleSelection(data.id);
+                  }
+                }}
               >
                 {ganttData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={getBarColor(entry.status)}
+                    fill={getBarColor(entry.status, entry.isSelected)}
+                    stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"}
+                    strokeWidth={entry.isSelected ? 2 : 0}
                   />
                 ))}
               </Bar>
@@ -484,6 +524,23 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
             />
             <span className="text-sm text-muted-foreground">Entregue</span>
           </div>
+          {onToggleSelection && (
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-4 h-4 rounded border-2" 
+                style={{ 
+                  backgroundColor: 'hsl(var(--accent))', 
+                  borderColor: 'hsl(var(--accent-foreground))' 
+                }}
+              />
+              <span className="text-sm text-muted-foreground">Selecionada</span>
+            </div>
+          )}
+          {onToggleSelection && (
+            <div className="text-sm text-muted-foreground ml-auto">
+              Clique nas barras ou use o botão no tooltip para selecionar remessas
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -224,92 +224,12 @@ export default function Remessas() {
       </div>
 
       {/* Gantt Chart */}
-      <GanttChart remessas={filteredRemessas} />
+      <GanttChart 
+        remessas={filteredRemessas} 
+        selectedRemessas={selectedRemessas}
+        onToggleSelection={toggleRemessaSelection}
+      />
 
-      {/* Lista de Remessas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Saídas Expedidas</CardTitle>
-          <CardDescription>
-            Gerencie suas saídas expedidas e acompanhe o status de entrega
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-              {filteredRemessas.length === 0 ? (
-            <EmptyState
-              icon={<Package className="h-8 w-8" />}
-              title="Nenhuma saída expedida encontrada"
-              description="Não há saídas expedidas que correspondem aos filtros selecionados."
-            />
-              ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={filteredRemessas.length > 0 && selectedRemessas.length === filteredRemessas.length}
-                      onCheckedChange={selectAllRemessas}
-                    />
-                  </TableHead>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data Saída</TableHead>
-                  <TableHead>Peso (kg)</TableHead>
-                  <TableHead>Valor Total</TableHead>
-                  <TableHead>Observações</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRemessas.map((saida) => (
-                  <TableRow key={saida.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedRemessas.includes(saida.id)}
-                        onCheckedChange={() => toggleRemessaSelection(saida.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">#{saida.id.slice(0, 8)}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusBadges[saida.status as keyof typeof statusBadges]?.variant || "secondary"}>
-                        {statusBadges[saida.status as keyof typeof statusBadges]?.label || saida.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(saida.data_saida).toLocaleDateString()}</TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell>R$ {(saida.valor_total || 0).toLocaleString()}</TableCell>
-                    <TableCell>{saida.observacoes || '-'}</TableCell>
-                     <TableCell>
-                       <div className="flex items-center gap-2">
-                         {saida.status === 'entregue' && (
-                           <Button 
-                             variant="ghost" 
-                             size="sm"
-                             onClick={() => handleCorrigirStatus(saida)}
-                             disabled={corrigirStatusMutation.isPending}
-                             title="Corrigir status para expedido"
-                           >
-                             <Settings className="h-4 w-4" />
-                           </Button>
-                         )}
-                         <Button variant="ghost" size="sm">
-                           <Eye className="h-4 w-4" />
-                         </Button>
-                         <Button variant="ghost" size="sm">
-                           <Edit className="h-4 w-4" />
-                         </Button>
-                         <Button variant="ghost" size="sm">
-                           <Trash2 className="h-4 w-4" />
-                         </Button>
-                       </div>
-                     </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
 
       <NovaViagemComRemessasDialog
         open={dialogOpen}
