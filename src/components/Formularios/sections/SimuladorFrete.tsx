@@ -4,19 +4,52 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { useSimuladorFrete } from "@/hooks/useSimuladorFrete"
 import { useProfile } from "@/hooks/useProfile"
-import { Loader2, Calculator } from "lucide-react"
+import { Loader2, Calculator, MapPin } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import type { Coordinates } from "@/services/routingService"
 
 interface SimuladorFreteProps {
   pesoTotal: number
   onFreteCalculado?: (resultado: any) => void
+  franquiaCoords?: Coordinates
+  fazendaCoords?: Coordinates
+  franquiaNome?: string
+  fazendaNome?: string
 }
 
-export function SimuladorFrete({ pesoTotal, onFreteCalculado }: SimuladorFreteProps) {
+export function SimuladorFrete({ 
+  pesoTotal, 
+  onFreteCalculado, 
+  franquiaCoords, 
+  fazendaCoords,
+  franquiaNome,
+  fazendaNome 
+}: SimuladorFreteProps) {
   const { data: profile } = useProfile()
-  const { simulacao, setSimulacao, calcularFrete } = useSimuladorFrete()
+  const { 
+    simulacao, 
+    setSimulacao, 
+    calcularFrete, 
+    calcularDistanciaAutomatica,
+    isCalculatingDistance 
+  } = useSimuladorFrete()
   const [calculando, setCalculando] = useState(false)
+
+  const handleCalcularDistancia = async () => {
+    if (!franquiaCoords || !fazendaCoords) {
+      toast.error("Coordenadas não disponíveis para calcular distância")
+      return
+    }
+
+    try {
+      await calcularDistanciaAutomatica(franquiaCoords, fazendaCoords)
+      toast.success("Distância calculada automaticamente!")
+    } catch (error: any) {
+      console.error("Erro ao calcular distância:", error)
+      toast.error(error.message || "Erro ao calcular distância")
+    }
+  }
 
   const handleCalcular = async () => {
     if (!simulacao.origem || !simulacao.destino || !simulacao.distancia || pesoTotal <= 0) {
@@ -76,8 +109,9 @@ export function SimuladorFrete({ pesoTotal, onFreteCalculado }: SimuladorFretePr
             <Input
               id="origem"
               placeholder="Ex: São Paulo - SP"
-              value={simulacao.origem}
+              value={franquiaNome ? `${franquiaNome} (Franquia)` : simulacao.origem}
               onChange={(e) => setSimulacao(prev => ({ ...prev, origem: e.target.value }))}
+              disabled={!!franquiaNome}
             />
           </div>
           
@@ -86,20 +120,39 @@ export function SimuladorFrete({ pesoTotal, onFreteCalculado }: SimuladorFretePr
             <Input
               id="destino"
               placeholder="Ex: Curitiba - PR"
-              value={simulacao.destino}
+              value={fazendaNome ? `${fazendaNome} (Fazenda)` : simulacao.destino}
               onChange={(e) => setSimulacao(prev => ({ ...prev, destino: e.target.value }))}
+              disabled={!!fazendaNome}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="distancia">Distância (km)</Label>
-            <Input
-              id="distancia"
-              type="number"
-              placeholder="Ex: 408"
-              value={simulacao.distancia}
-              onChange={(e) => setSimulacao(prev => ({ ...prev, distancia: e.target.value }))}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="distancia"
+                type="number"
+                placeholder="Ex: 408"
+                value={simulacao.distancia}
+                onChange={(e) => setSimulacao(prev => ({ ...prev, distancia: e.target.value }))}
+              />
+              {franquiaCoords && fazendaCoords && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCalcularDistancia}
+                  disabled={isCalculatingDistance}
+                  className="shrink-0"
+                >
+                  {isCalculatingDistance ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MapPin className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
           
           <div className="space-y-2">

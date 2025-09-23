@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { FreteFaixa } from "./useTabelasFrete"
+import { calculateDistance, type Coordinates } from "@/services/routingService"
 
 export interface SimulacaoFrete {
   franqueado_id?: string
@@ -26,6 +27,7 @@ export const useSimuladorFrete = () => {
     distancia: '',
     peso: '',
   })
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false)
 
   const calcularFrete = async (franqueado_id?: string) => {
     if (!simulacao.distancia || !simulacao.peso) return
@@ -46,7 +48,7 @@ export const useSimuladorFrete = () => {
       query.eq("franqueado_id", franqueado_id)
     }
 
-    const { data: tabelas, error } = await query.limit(1).maybeSingle()
+    const { data: tabelas, error } = await query.maybeSingle()
 
     if (error || !tabelas) {
       throw new Error("Nenhuma tabela de frete encontrada")
@@ -89,9 +91,31 @@ export const useSimuladorFrete = () => {
     return resultado
   }
 
+  const calcularDistanciaAutomatica = async (
+    franquiaCoords: Coordinates,
+    fazendaCoords: Coordinates
+  ) => {
+    setIsCalculatingDistance(true)
+    try {
+      const distancia = await calculateDistance(franquiaCoords, fazendaCoords)
+      setSimulacao(prev => ({ 
+        ...prev, 
+        distancia: distancia.toString() 
+      }))
+      return distancia
+    } catch (error) {
+      console.error('Erro ao calcular distância:', error)
+      throw error
+    } finally {
+      setIsCalculatingDistance(false)
+    }
+  }
+
   return {
     simulacao,
     setSimulacao,
-    calcularFrete
+    calcularFrete,
+    calcularDistanciaAutomatica,
+    isCalculatingDistance
   }
 }

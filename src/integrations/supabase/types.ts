@@ -1156,7 +1156,9 @@ export type Database = {
           estado: string | null
           id: string
           inscricao_estadual: string | null
+          latitude: number | null
           layout_armazem: string | null
+          longitude: number | null
           master_franqueado_id: string
           nome: string
           numero: string | null
@@ -1180,7 +1182,9 @@ export type Database = {
           estado?: string | null
           id?: string
           inscricao_estadual?: string | null
+          latitude?: number | null
           layout_armazem?: string | null
+          longitude?: number | null
           master_franqueado_id: string
           nome: string
           numero?: string | null
@@ -1204,7 +1208,9 @@ export type Database = {
           estado?: string | null
           id?: string
           inscricao_estadual?: string | null
+          latitude?: number | null
           layout_armazem?: string | null
+          longitude?: number | null
           master_franqueado_id?: string
           nome?: string
           numero?: string | null

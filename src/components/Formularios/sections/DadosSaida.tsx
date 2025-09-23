@@ -7,6 +7,9 @@ import { DadosSaida } from "../types/formulario.types"
 import { SimuladorFrete } from "./SimuladorFrete"
 import { useProfile, useProdutoresComEstoqueNaFranquia, useFazendas } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
+import { useState, useEffect } from "react"
+import type { Coordinates } from "@/services/routingService"
 import { getMinScheduleDate, isDateAfterBlockedBusinessDays } from "@/lib/business-days"
 import { useDiasUteisExpedicao, useHorariosRetirada, useJanelaEntregaDias } from "@/hooks/useConfiguracoesSistema"
 import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
@@ -28,6 +31,9 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
   const janelaEntregaDias = useJanelaEntregaDias()
+  const [franquiaCoords, setFranquiaCoords] = useState<Coordinates | null>(null)
+  const [fazendaCoords, setFazendaCoords] = useState<Coordinates | null>(null)
+  const [franquiaNome, setFranquiaNome] = useState<string>('')
 
   // Hooks condicionais baseados no papel do usuário
   const { data: depositosProdutor = [] } = useDepositosDisponiveis(
@@ -81,11 +87,75 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
     onDadosChange(updatedDados)
   }
 
+  // Buscar coordenadas da franquia do usuário logado
+  useEffect(() => {
+    const fetchFranquiaCoords = async () => {
+      if (!user?.id) return
+
+      try {
+        const { data: franquia } = await supabase
+          .from('franquias')
+          .select('latitude, longitude, nome')
+          .eq('master_franqueado_id', user.id)
+          .maybeSingle()
+
+        if (franquia?.latitude && franquia?.longitude) {
+          setFranquiaCoords({
+            latitude: Number(franquia.latitude),
+            longitude: Number(franquia.longitude)
+          })
+          setFranquiaNome(franquia.nome)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar coordenadas da franquia:', error)
+      }
+    }
+
+    fetchFranquiaCoords()
+  }, [user?.id])
+
+  // Buscar coordenadas da fazenda quando selecionada
+  useEffect(() => {
+    const fetchFazendaCoords = async () => {
+      if (!dados.fazenda_id) {
+        setFazendaCoords(null)
+        return
+      }
+
+      try {
+        const { data: fazenda } = await supabase
+          .from('fazendas')
+          .select('latitude, longitude, nome')
+          .eq('id', dados.fazenda_id)
+          .maybeSingle()
+
+        if (fazenda?.latitude && fazenda?.longitude) {
+          setFazendaCoords({
+            latitude: Number(fazenda.latitude),
+            longitude: Number(fazenda.longitude)
+          })
+        } else {
+          setFazendaCoords(null)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar coordenadas da fazenda:', error)
+        setFazendaCoords(null)
+      }
+    }
+
+    fetchFazendaCoords()
+  }, [dados.fazenda_id])
+
   const handleFreteCalculado = (resultado: any) => {
     const updatedDados = {
       ...dados,
       valor_frete_calculado: resultado.valor_total,
-      prazo_entrega_calculado: resultado.prazo_entrega
+      prazo_entrega_calculado: resultado.prazo_entrega,
+      frete_origem: franquiaNome,
+      frete_destino: fazendas.find(f => f.id === dados.fazenda_id)?.nome || '',
+      frete_distancia: resultado.faixa_aplicada ? 
+        (Number(resultado.faixa_aplicada.distancia_min) + Number(resultado.faixa_aplicada.distancia_max)) / 2 : 
+        undefined
     }
     onDadosChange(updatedDados)
   }
@@ -307,6 +377,10 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         <div className="mt-6">
           <SimuladorFrete 
             pesoTotal={pesoTotal}
+            franquiaCoords={franquiaCoords || undefined}
+            fazendaCoords={fazendaCoords || undefined}
+            franquiaNome={franquiaNome}
+            fazendaNome={fazendas.find(f => f.id === dados.fazenda_id)?.nome}
             onFreteCalculado={handleFreteCalculado}
           />
         </div>
