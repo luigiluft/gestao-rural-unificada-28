@@ -182,13 +182,61 @@ export function useSeparacaoItens() {
 
   const finalizarSeparacao = useMutation({
     mutationFn: async ({ saidaId }: { saidaId: string }) => {
-      // Verificar se todos os itens foram separados
+      console.log('🔍 Iniciando finalização da separação para saída:', saidaId);
+      
+      // STEP 1: Usar estado local para validação inicial
+      console.log('📊 Estado local dos itens:', itensSeparacao.map(item => ({
+        id: item.id,
+        quantidade_total: item.quantidade_total,
+        quantidade_separada: item.quantidade_separada,
+        completo: item.quantidade_separada >= item.quantidade_total
+      })));
+
+      const itensIncompletoLocal = itensSeparacao.filter(item => 
+        item.quantidade_separada < item.quantidade_total
+      );
+
+      if (itensIncompletoLocal.length > 0) {
+        console.log('❌ Itens incompletos no estado local:', itensIncompletoLocal);
+        throw new Error(`Ainda há ${itensIncompletoLocal.length} item(ns) não completamente separado(s)`);
+      }
+
+      // STEP 2: "Flush" todas as quantidades locais para o banco antes de finalizar
+      console.log('🔄 Sincronizando todas as quantidades com o banco...');
+      
+      for (const item of itensSeparacao) {
+        if (item.quantidade_separada > 0) {
+          console.log(`🔄 Atualizando item ${item.id}: ${item.quantidade_separada}/${item.quantidade_total}`);
+          
+          const { error: updateError } = await supabase
+            .from('saida_itens')
+            .update({ 
+              quantidade_separada: item.quantidade_separada,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', item.id);
+
+          if (updateError) {
+            console.error('❌ Erro ao atualizar item:', item.id, updateError);
+            throw new Error(`Erro ao sincronizar item: ${updateError.message}`);
+          }
+        }
+      }
+
+      // STEP 3: Re-validar contra o banco após flush
+      console.log('🔍 Re-validando contra o banco após sincronização...');
       const { data: itens, error: itensError } = await supabase
         .from('saida_itens')
-        .select('quantidade, quantidade_separada')
+        .select('id, quantidade, quantidade_separada')
         .eq('saida_id', saidaId)
 
       if (itensError) throw itensError
+
+      console.log('📊 Itens no banco após flush:', itens?.map(item => ({
+        id: item.id,
+        quantidade: item.quantidade,
+        quantidade_separada: item.quantidade_separada
+      })));
 
       const todosSeparados = itens?.every((item: any) => {
         const quantidadeSeparada = item.quantidade_separada || 0;
@@ -198,10 +246,21 @@ export function useSeparacaoItens() {
       })
 
       if (!todosSeparados) {
+        const itensIncompletos = itens?.filter(item => 
+          (item.quantidade_separada || 0) < item.quantidade
+        );
+        console.log('❌ Itens ainda não completamente separados no banco:', itensIncompletos?.map(item => ({
+          id: item.id,
+          separado: item.quantidade_separada || 0,
+          total: item.quantidade,
+          faltando: item.quantidade - (item.quantidade_separada || 0)
+        })));
         throw new Error('Nem todos os itens foram separados completamente')
       }
 
-      // Atualizar status da saída para "separado"
+      console.log('✅ Todos os itens foram separados, atualizando status...');
+
+      // STEP 4: Atualizar status da saída para "separado"
       const { data, error } = await supabase
         .from('saidas')
         .update({ 
@@ -224,6 +283,7 @@ export function useSeparacaoItens() {
           observacoes: 'Separação concluída individualmente'
         })
 
+      console.log('✅ Separação finalizada com sucesso!');
       return data
     },
     onSuccess: () => {
