@@ -162,7 +162,6 @@ export const useDynamicMenuItems = () => {
     // Páginas do TMS
     const tmsPages = [
       'remessas',
-      'planejamento',
       'viagens',
       'veiculos',
       'motoristas',
