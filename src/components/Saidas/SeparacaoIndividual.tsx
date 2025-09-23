@@ -83,12 +83,18 @@ export function SeparacaoIndividual({ saida, open, onClose }: SeparacaoIndividua
 
   const handleConfirmarItem = async () => {
     if (itemAtual && itemAtual.quantidade_separada > 0) {
+      console.log('🔄 Confirmando item:', itemAtual.id, 'Quantidade:', itemAtual.quantidade_separada);
+      
       // Persistir a separação no banco
       await separarItem.mutateAsync({
         itemId: itemAtual.id,
         quantidadeSeparada: itemAtual.quantidade_separada,
-        lote: itemAtual.lote
+        posicaoId: itemAtual.posicoes_disponiveis?.[0]?.posicao_id,
+        lote: itemAtual.lote,
+        palletId: undefined // Para separação individual, não há pallet específico
       })
+      
+      console.log('✅ Item confirmado no banco:', itemAtual.id);
       
       // Navegar automaticamente para próximo item incompleto
       const proximoIncompleto = itensSeparacao.findIndex((item, index) => 
