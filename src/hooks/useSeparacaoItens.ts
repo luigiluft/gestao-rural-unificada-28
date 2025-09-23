@@ -211,8 +211,7 @@ export function useSeparacaoItens() {
           const { error: updateError } = await supabase
             .from('saida_itens')
             .update({ 
-              quantidade_separada: item.quantidade_separada,
-              updated_at: new Date().toISOString()
+              quantidade_separada: item.quantidade_separada
             })
             .eq('id', item.id);
 
@@ -264,8 +263,7 @@ export function useSeparacaoItens() {
       const { data, error } = await supabase
         .from('saidas')
         .update({ 
-          status: 'separado',
-          updated_at: new Date().toISOString()
+          status: 'separado'
         })
         .eq('id', saidaId)
         .select()
