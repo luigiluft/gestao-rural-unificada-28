@@ -37,40 +37,12 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
-  // Filtrar remessas por intervalo de datas se especificado
-  const filteredRemessas = React.useMemo(() => {
-    if (!startDate || !endDate) return remessas;
-    
-    return remessas.filter(r => {
-      if (!r.data_inicio_janela || !r.data_fim_janela) return false;
-      
-      try {
-        // Como as datas vêm em formato YYYY-MM-DD do banco, vamos usar esse formato
-        const remessaStart = new Date(r.data_inicio_janela + 'T00:00:00');
-        const remessaEnd = new Date(r.data_fim_janela + 'T23:59:59');
-        
-        // Verificar se as datas são válidas
-        if (isNaN(remessaStart.getTime()) || isNaN(remessaEnd.getTime())) return false;
-        
-        // Converter datas de filtro para início e fim do dia para comparação precisa
-        const filterStart = startOfDay(startDate);
-        const filterEnd = endOfDay(endDate);
-        
-        // Verifica se há sobreposição com o intervalo selecionado
-        return (remessaStart <= filterEnd && remessaEnd >= filterStart);
-      } catch (error) {
-        console.warn('Erro ao filtrar remessa:', r, error);
-        return false;
-      }
-    });
-  }, [remessas, startDate, endDate]);
-
-  // Preparar dados para o gráfico
+  // Preparar dados para o gráfico (usando todas as remessas)
   const prepareGanttData = (): GanttDataPoint[] => {
-    if (!filteredRemessas.length) return [];
+    if (!remessas.length) return [];
 
     // Filtrar remessas com datas válidas
-    const remessasValidas = filteredRemessas.filter(r => {
+    const remessasValidas = remessas.filter(r => {
       if (!r.data_inicio_janela || !r.data_fim_janela) return false;
       
       try {
@@ -103,13 +75,28 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     if (!allDates.length) return [];
     
     // Definir data de referência baseada na unidade de tempo
+    // Se há filtro de data, usar as datas do filtro como referência
+    // Senão, usar as datas mínimas dos dados
     let minDate: Date;
-    if (timeUnit === 'semanas') {
-      minDate = startOfWeek(new Date(Math.min(...allDates.map(d => d.getTime()))), { locale: ptBR });
-    } else if (timeUnit === 'meses') {
-      minDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+    
+    if (startDate && endDate) {
+      // Usar a data de início do filtro como referência
+      if (timeUnit === 'semanas') {
+        minDate = startOfWeek(startDate, { locale: ptBR });
+      } else if (timeUnit === 'meses') {
+        minDate = startOfMonth(startDate);
+      } else {
+        minDate = startOfDay(startDate);
+      }
     } else {
-      minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      // Usar as datas dos dados como referência
+      if (timeUnit === 'semanas') {
+        minDate = startOfWeek(new Date(Math.min(...allDates.map(d => d.getTime()))), { locale: ptBR });
+      } else if (timeUnit === 'meses') {
+        minDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      } else {
+        minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      }
     }
     
     return remessasValidas.map((remessa, index) => {
@@ -180,7 +167,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     
     try {
       const today = new Date();
-      const remessasValidas = filteredRemessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
+      const remessasValidas = remessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
       if (!remessasValidas.length) return null;
       
       const allDates = remessasValidas.flatMap(r => {
@@ -458,7 +445,56 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 type="number" 
-                domain={[0, (dataMax: number) => Math.max(dataMax + 2, 1)]}
+                domain={(() => {
+                  if (!startDate || !endDate) {
+                    return [0, (dataMax: number) => Math.max(dataMax + 2, 1)];
+                  }
+                  
+                  // Calcular domínio baseado no filtro de datas
+                  const remessasValidas = remessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
+                  if (!remessasValidas.length) return [0, 1];
+                  
+                  const allDates = remessasValidas.flatMap(r => {
+                    try {
+                      const startDateRemessa = new Date(r.data_inicio_janela + 'T00:00:00');
+                      const endDateRemessa = new Date(r.data_fim_janela + 'T23:59:59');
+                      return [startDateRemessa, endDateRemessa];
+                    } catch {
+                      return [];
+                    }
+                  }).filter(date => !isNaN(date.getTime()));
+                  
+                  if (!allDates.length) return [0, 1];
+                  
+                  let ganttMinDate: Date;
+                  if (timeUnit === 'semanas') {
+                    ganttMinDate = startOfWeek(new Date(Math.min(...allDates.map(d => d.getTime()))), { locale: ptBR });
+                  } else if (timeUnit === 'meses') {
+                    ganttMinDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+                  } else {
+                    ganttMinDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+                  }
+                  
+                  if (timeUnit === 'semanas') {
+                    const filterStartWeek = startOfWeek(startDate, { locale: ptBR });
+                    const filterEndWeek = startOfWeek(endDate, { locale: ptBR });
+                    const domainStart = Math.floor(differenceInDays(filterStartWeek, ganttMinDate) / 7);
+                    const domainEnd = Math.floor(differenceInDays(filterEndWeek, ganttMinDate) / 7) + 1;
+                    return [domainStart, domainEnd];
+                  } else if (timeUnit === 'meses') {
+                    const filterStartMonth = startOfMonth(startDate);
+                    const filterEndMonth = startOfMonth(endDate);
+                    const domainStart = (filterStartMonth.getFullYear() - ganttMinDate.getFullYear()) * 12 + 
+                                       (filterStartMonth.getMonth() - ganttMinDate.getMonth());
+                    const domainEnd = (filterEndMonth.getFullYear() - ganttMinDate.getFullYear()) * 12 + 
+                                     (filterEndMonth.getMonth() - ganttMinDate.getMonth()) + 1;
+                    return [domainStart, domainEnd];
+                  } else {
+                    const domainStart = differenceInDays(startOfDay(startDate), ganttMinDate);
+                    const domainEnd = differenceInDays(endOfDay(endDate), ganttMinDate) + 1;
+                    return [domainStart, domainEnd];
+                  }
+                })()}
                 tickFormatter={formatXAxisTick}
                 tick={{ fontSize: 12 }}
                 label={{ value: getXAxisLabel(), position: 'insideBottom', offset: -10 }}
