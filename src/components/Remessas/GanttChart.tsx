@@ -48,11 +48,18 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
         const remessaStart = parseISO(r.data_inicio_janela);
         const remessaEnd = parseISO(r.data_fim_janela);
         
+        // Verificar se as datas são válidas
+        if (isNaN(remessaStart.getTime()) || isNaN(remessaEnd.getTime())) return false;
+        
+        // Converter datas de filtro para início e fim do dia para comparação precisa
+        const filterStart = startOfDay(startDate);
+        const filterEnd = endOfDay(endDate);
+        
         // Verifica se há sobreposição com o intervalo selecionado
-        return isWithinInterval(remessaStart, { start: startDate, end: endDate }) ||
-               isWithinInterval(remessaEnd, { start: startDate, end: endDate }) ||
-               (remessaStart <= startDate && remessaEnd >= endDate);
-      } catch {
+        // A remessa deve ter pelo menos um dia dentro do período filtrado
+        return (remessaStart <= filterEnd && remessaEnd >= filterStart);
+      } catch (error) {
+        console.warn('Erro ao filtrar remessa:', r, error);
         return false;
       }
     });
