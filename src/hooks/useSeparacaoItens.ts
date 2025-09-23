@@ -190,9 +190,12 @@ export function useSeparacaoItens() {
 
       if (itensError) throw itensError
 
-      const todosSeparados = itens?.every((item: any) => 
-        (item.quantidade_separada || 0) >= item.quantidade
-      )
+      const todosSeparados = itens?.every((item: any) => {
+        const quantidadeSeparada = item.quantidade_separada || 0;
+        const quantidadeTotal = item.quantidade;
+        console.log(`🔍 Verificando item: ${quantidadeSeparada}/${quantidadeTotal} = ${quantidadeSeparada >= quantidadeTotal}`);
+        return quantidadeSeparada >= quantidadeTotal;
+      })
 
       if (!todosSeparados) {
         throw new Error('Nem todos os itens foram separados completamente')
