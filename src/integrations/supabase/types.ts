@@ -1213,6 +1213,50 @@ export type Database = {
         }
         Relationships: []
       }
+      frete_faixas: {
+        Row: {
+          created_at: string
+          distancia_max: number
+          distancia_min: number
+          id: string
+          pedagio_por_ton: number
+          prazo_dias: number
+          tabela_frete_id: string
+          valor_ate_300kg: number
+          valor_por_kg_301_999: number
+        }
+        Insert: {
+          created_at?: string
+          distancia_max: number
+          distancia_min: number
+          id?: string
+          pedagio_por_ton: number
+          prazo_dias: number
+          tabela_frete_id: string
+          valor_ate_300kg: number
+          valor_por_kg_301_999: number
+        }
+        Update: {
+          created_at?: string
+          distancia_max?: number
+          distancia_min?: number
+          id?: string
+          pedagio_por_ton?: number
+          prazo_dias?: number
+          tabela_frete_id?: string
+          valor_ate_300kg?: number
+          valor_por_kg_301_999?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_frete_faixas_tabela"
+            columns: ["tabela_frete_id"]
+            isOneToOne: false
+            referencedRelation: "tabelas_frete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventario_itens: {
         Row: {
           codigo_barras: string | null
@@ -2293,6 +2337,7 @@ export type Database = {
           created_at: string
           data_vencimento: string | null
           data_vigencia: string
+          franqueado_id: string | null
           id: string
           nome: string
           origem: string | null
@@ -2307,6 +2352,7 @@ export type Database = {
           created_at?: string
           data_vencimento?: string | null
           data_vigencia: string
+          franqueado_id?: string | null
           id?: string
           nome: string
           origem?: string | null
@@ -2321,6 +2367,7 @@ export type Database = {
           created_at?: string
           data_vencimento?: string | null
           data_vigencia?: string
+          franqueado_id?: string | null
           id?: string
           nome?: string
           origem?: string | null

@@ -8,6 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { 
   Calculator, 
   MapPin, 
@@ -18,21 +22,32 @@ import {
   Trash2,
   Route
 } from 'lucide-react';
+import { useTabelasFrete, useCreateTabelaFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
+import { useSimuladorFrete } from '@/hooks/useSimuladorFrete';
+
+const formSchema = z.object({
+  nome: z.string().min(1, "Nome é obrigatório"),
+  tipo: z.string().default("regional"),
+  franqueado_email: z.string().email("Email inválido")
+});
 
 const TabelasFrete = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Tabelas de frete será implementada com dados reais em breve
-  const tabelasFrete: any[] = [];
+  const { data: tabelasFrete = [], isLoading } = useTabelasFrete();
+  const createTabelaMutation = useCreateTabelaFrete();
+  const deleteTabelaMutation = useDeleteTabelaFrete();
+  const { simulacao, setSimulacao, calcularFrete } = useSimuladorFrete();
 
-  // Mock data para simulação de frete
-  const [simulacao, setSimulacao] = useState({
-    origem: '',
-    destino: '',
-    distancia: '',
-    peso: '',
-    resultado: null as any
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nome: "",
+      tipo: "regional", 
+      franqueado_email: "lucca+2@luft.com.br"
+    }
   });
 
   const tiposBadges = {
@@ -42,41 +57,46 @@ const TabelasFrete = () => {
   };
 
   const filteredTabelas = tabelasFrete.filter(tabela => {
-    const matchesSearch = tabela.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tabela.origem.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tabela.destino.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = tabela.nome.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTipo = tipoFilter === 'all' || tabela.tipo === tipoFilter;
     return matchesSearch && matchesTipo;
   });
 
-  const calcularFrete = () => {
-    if (!simulacao.distancia || !simulacao.peso) return;
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // ID do franqueado específico
+    const franqueado_id = "a695e2b8-a539-4374-ba04-8c2055c485ea";
     
-    // Encontrar tabela aplicável (simulação simples)
-    const tabela = tabelasFrete.find(t => 
-      t.ativa && 
-      parseFloat(simulacao.distancia) >= t.distancia_min && 
-      parseFloat(simulacao.distancia) <= t.distancia_max
-    ) || tabelasFrete[0];
-    
-    const distancia = parseFloat(simulacao.distancia);
-    const peso = parseFloat(simulacao.peso);
-    
-    const valorDistancia = distancia * tabela.valor_por_km;
-    const valorPeso = peso * tabela.valor_por_kg;
-    const valorTotal = Math.max(tabela.valor_base + valorDistancia + valorPeso, tabela.valor_minimo);
-    
-    setSimulacao(prev => ({
-      ...prev,
-      resultado: {
-        tabela_aplicada: tabela.nome,
-        valor_base: tabela.valor_base,
-        valor_distancia: valorDistancia,
-        valor_peso: valorPeso,
-        valor_total: valorTotal,
-        valor_minimo: tabela.valor_minimo
-      }
-    }));
+    // Dados das faixas conforme especificação
+    const faixas = [
+      { distancia_min: 0, distancia_max: 50, valor_ate_300kg: 250, valor_por_kg_301_999: 0.80, pedagio_por_ton: 5, prazo_dias: 3 },
+      { distancia_min: 51, distancia_max: 150, valor_ate_300kg: 300, valor_por_kg_301_999: 1.00, pedagio_por_ton: 10, prazo_dias: 4 },
+      { distancia_min: 151, distancia_max: 300, valor_ate_300kg: 400, valor_por_kg_301_999: 1.20, pedagio_por_ton: 15, prazo_dias: 5 },
+      { distancia_min: 301, distancia_max: 500, valor_ate_300kg: 550, valor_por_kg_301_999: 1.40, pedagio_por_ton: 20, prazo_dias: 6 },
+      { distancia_min: 501, distancia_max: 800, valor_ate_300kg: 750, valor_por_kg_301_999: 1.60, pedagio_por_ton: 25, prazo_dias: 7 },
+      { distancia_min: 801, distancia_max: 1200, valor_ate_300kg: 1000, valor_por_kg_301_999: 1.80, pedagio_por_ton: 30, prazo_dias: 8 },
+      { distancia_min: 1201, distancia_max: 1600, valor_ate_300kg: 1300, valor_por_kg_301_999: 2.00, pedagio_por_ton: 35, prazo_dias: 9 },
+      { distancia_min: 1601, distancia_max: 2000, valor_ate_300kg: 1600, valor_por_kg_301_999: 2.20, pedagio_por_ton: 40, prazo_dias: 10 },
+      { distancia_min: 2001, distancia_max: 2500, valor_ate_300kg: 2000, valor_por_kg_301_999: 2.40, pedagio_por_ton: 45, prazo_dias: 11 },
+      { distancia_min: 2501, distancia_max: 3000, valor_ate_300kg: 2500, valor_por_kg_301_999: 2.60, pedagio_por_ton: 50, prazo_dias: 12 }
+    ];
+
+    await createTabelaMutation.mutateAsync({
+      franqueado_id,
+      nome: values.nome,
+      tipo: values.tipo,
+      faixas
+    });
+
+    setIsDialogOpen(false);
+    form.reset();
+  };
+
+  const handleCalcularFrete = async () => {
+    try {
+      await calcularFrete();
+    } catch (error) {
+      console.error('Erro ao calcular frete:', error);
+    }
   };
 
   return (
@@ -89,87 +109,80 @@ const TabelasFrete = () => {
           </p>
         </div>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Nova Tabela
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Nova Tabela de Frete</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Nome da Tabela</Label>
-                  <Input id="nome" placeholder="Ex: Tabela São Paulo Capital" />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="nome"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome da Tabela</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Tabela Padrão" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="tipo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="regional">Regional</SelectItem>
+                          <SelectItem value="nacional">Nacional</SelectItem>
+                          <SelectItem value="internacional">Internacional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="franqueado_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email do Franqueado</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createTabelaMutation.isPending}>
+                    {createTabelaMutation.isPending ? 'Salvando...' : 'Criar Tabela'}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="regional">Regional</SelectItem>
-                      <SelectItem value="nacional">Nacional</SelectItem>
-                      <SelectItem value="internacional">Internacional</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="origem">Origem</Label>
-                  <Input id="origem" placeholder="Cidade/Estado de origem" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="destino">Destino</Label>
-                  <Input id="destino" placeholder="Região de destino" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dist_min">Distância Mínima (km)</Label>
-                  <Input id="dist_min" type="number" placeholder="0" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dist_max">Distância Máxima (km)</Label>
-                  <Input id="dist_max" type="number" placeholder="100" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="valor_base">Valor Base (R$)</Label>
-                  <Input id="valor_base" type="number" step="0.01" placeholder="100.00" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="valor_km">Valor por Km (R$)</Label>
-                  <Input id="valor_km" type="number" step="0.01" placeholder="2.50" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="valor_kg">Valor por Kg (R$)</Label>
-                  <Input id="valor_kg" type="number" step="0.01" placeholder="0.15" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="valor_min">Valor Mínimo (R$)</Label>
-                  <Input id="valor_min" type="number" step="0.01" placeholder="80.00" />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancelar</Button>
-                <Button>Salvar Tabela</Button>
-              </div>
-            </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -193,29 +206,29 @@ const TabelasFrete = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {tabelasFrete.filter(t => t.ativa).length}
+              {tabelasFrete.filter(t => t.ativo).length}
             </div>
             <p className="text-xs text-muted-foreground">Em uso</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Médio/Km</CardTitle>
+            <CardTitle className="text-sm font-medium">Faixas de Distância</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 1,97</div>
-            <p className="text-xs text-muted-foreground">Média geral</p>
+            <div className="text-2xl font-bold">10</div>
+            <p className="text-xs text-muted-foreground">0-3.000 km</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Regiões Cobertas</CardTitle>
+            <CardTitle className="text-sm font-medium">Franqueados</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">Áreas de entrega</p>
+            <div className="text-2xl font-bold">1</div>
+            <p className="text-xs text-muted-foreground">Com tabela</p>
           </CardContent>
         </Card>
       </div>
@@ -231,7 +244,7 @@ const TabelasFrete = () => {
           {/* Filtros */}
           <div className="flex gap-4">
             <Input
-              placeholder="Buscar por nome, origem ou destino..."
+              placeholder="Buscar por nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -257,51 +270,58 @@ const TabelasFrete = () => {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Origem</TableHead>
-                    <TableHead>Destino</TableHead>
-                    <TableHead>Distância (km)</TableHead>
-                    <TableHead>Valor Base</TableHead>
-                    <TableHead>Valor/Km</TableHead>
+                    <TableHead>Faixas</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Criada em</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTabelas.length === 0 ? (
+                  {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                        Nenhuma tabela de frete encontrada. Esta funcionalidade será implementada em breve.
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Carregando tabelas...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredTabelas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhuma tabela de frete encontrada.
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredTabelas.map((tabela) => (
-                    <TableRow key={tabela.id}>
-                      <TableCell className="font-medium">{tabela.nome}</TableCell>
-                      <TableCell>
-                        <Badge variant={tiposBadges[tabela.tipo as keyof typeof tiposBadges].variant}>
-                          {tiposBadges[tabela.tipo as keyof typeof tiposBadges].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{tabela.origem}</TableCell>
-                      <TableCell>{tabela.destino}</TableCell>
-                      <TableCell>{tabela.distancia_min} - {tabela.distancia_max}</TableCell>
-                      <TableCell>R$ {tabela.valor_base.toFixed(2)}</TableCell>
-                      <TableCell>R$ {tabela.valor_por_km.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Badge variant={tabela.ativa ? 'default' : 'secondary'}>
-                          {tabela.ativa ? 'Ativa' : 'Inativa'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      <TableRow key={tabela.id}>
+                        <TableCell className="font-medium">{tabela.nome}</TableCell>
+                        <TableCell>
+                          <Badge variant={tiposBadges[tabela.tipo as keyof typeof tiposBadges]?.variant || 'default'}>
+                            {tiposBadges[tabela.tipo as keyof typeof tiposBadges]?.label || tabela.tipo}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{tabela.frete_faixas?.length || 0} faixas</TableCell>
+                        <TableCell>
+                          <Badge variant={tabela.ativo ? 'default' : 'secondary'}>
+                            {tabela.ativo ? 'Ativa' : 'Inativa'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(tabela.created_at).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => deleteTabelaMutation.mutate(tabela.id)}
+                              disabled={deleteTabelaMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -309,6 +329,39 @@ const TabelasFrete = () => {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Tabela de faixas detalhada */}
+          {filteredTabelas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Detalhes das Faixas de Frete</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Distância (km)</TableHead>
+                      <TableHead>Até 300 kg (R$/viagem)</TableHead>
+                      <TableHead>301–999 kg (R$/kg)</TableHead>
+                      <TableHead>Pedágio (R$/ton)</TableHead>
+                      <TableHead>Prazo (dias)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTabelas[0]?.frete_faixas?.map((faixa) => (
+                      <TableRow key={faixa.id}>
+                        <TableCell>{faixa.distancia_min}–{faixa.distancia_max}</TableCell>
+                        <TableCell>R$ {faixa.valor_ate_300kg.toFixed(2)}</TableCell>
+                        <TableCell>R$ {faixa.valor_por_kg_301_999.toFixed(2)}</TableCell>
+                        <TableCell>R$ {faixa.pedagio_por_ton.toFixed(2)}</TableCell>
+                        <TableCell>D+{faixa.prazo_dias}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="simulador">
@@ -361,7 +414,7 @@ const TabelasFrete = () => {
                   />
                 </div>
                 
-                <Button onClick={calcularFrete} className="w-full">
+                <Button onClick={handleCalcularFrete} className="w-full">
                   <Calculator className="h-4 w-4 mr-2" />
                   Calcular Frete
                 </Button>
@@ -378,21 +431,17 @@ const TabelasFrete = () => {
                   <div className="space-y-4">
                     <div className="p-4 bg-muted rounded">
                       <h4 className="font-semibold mb-2">Tabela Aplicada:</h4>
-                      <p className="text-sm">{simulacao.resultado.tabela_aplicada}</p>
+                      <p className="text-sm">{simulacao.resultado.tabela_nome}</p>
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span>Valor Base:</span>
-                        <span>R$ {simulacao.resultado.valor_base.toFixed(2)}</span>
+                        <span>Valor do Frete:</span>
+                        <span>R$ {simulacao.resultado.valor_frete.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Valor por Distância:</span>
-                        <span>R$ {simulacao.resultado.valor_distancia.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Valor por Peso:</span>
-                        <span>R$ {simulacao.resultado.valor_peso.toFixed(2)}</span>
+                        <span>Valor do Pedágio:</span>
+                        <span>R$ {simulacao.resultado.valor_pedagio.toFixed(2)}</span>
                       </div>
                       <div className="border-t pt-2">
                         <div className="flex justify-between font-semibold text-lg">
@@ -401,7 +450,7 @@ const TabelasFrete = () => {
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Valor mínimo garantido: R$ {simulacao.resultado.valor_minimo.toFixed(2)}
+                        Prazo de entrega: D+{simulacao.resultado.prazo_entrega} dias
                       </div>
                     </div>
                   </div>
