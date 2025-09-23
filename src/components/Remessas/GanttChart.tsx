@@ -12,9 +12,8 @@ import { cn } from '@/lib/utils';
 
 interface RemessaData {
   id: string;
-  data_inicio_janela?: string;
-  data_fim_janela?: string;
-  data_saida: string;
+  data_inicio_janela: string;
+  data_fim_janela: string;
   status: string;
 }
 
@@ -52,24 +51,14 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     }
     
     // Senão, usar a data mínima dos dados
-    const remessasComDatas = remessas.filter(r => {
-      // Aceitar remessas com janela de entrega ou pelo menos data_saida
-      return (r.data_inicio_janela && r.data_fim_janela) || r.data_saida;
-    });
+    const remessasValidas = remessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
+    if (!remessasValidas.length) return new Date();
     
-    if (!remessasComDatas.length) return new Date();
-    
-    const allDates = remessasComDatas.flatMap(r => {
+    const allDates = remessasValidas.flatMap(r => {
       try {
-        if (r.data_inicio_janela && r.data_fim_janela) {
-          const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
-          const endDate = new Date(r.data_fim_janela + 'T23:59:59');
-          return [startDate, endDate];
-        } else if (r.data_saida) {
-          const saidaDate = new Date(r.data_saida + 'T00:00:00');
-          return [saidaDate];
-        }
-        return [];
+        const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
+        const endDate = new Date(r.data_fim_janela + 'T23:59:59');
+        return [startDate, endDate];
       } catch (error) {
         return [];
       }
@@ -92,30 +81,17 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
   const prepareGanttData = (): GanttDataPoint[] => {
     if (!remessas.length) return [];
 
-    // Filtrar remessas com datas válidas - se não tiver janela definida, usar data_saida
+    // Filtrar remessas com datas válidas
     const remessasValidas = remessas.filter(r => {
-      // Se tem janela de entrega definida, validar as datas
-      if (r.data_inicio_janela && r.data_fim_janela) {
-        try {
-          const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
-          const endDate = new Date(r.data_fim_janela + 'T23:59:59');
-          return !isNaN(startDate.getTime()) && !isNaN(endDate.getTime()) && startDate <= endDate;
-        } catch (error) {
-          return false;
-        }
-      }
+      if (!r.data_inicio_janela || !r.data_fim_janela) return false;
       
-      // Se não tem janela, mas tem data_saida, usar ela como fallback
-      if (r.data_saida) {
-        try {
-          const saidaDate = new Date(r.data_saida + 'T00:00:00');
-          return !isNaN(saidaDate.getTime());
-        } catch (error) {
-          return false;
-        }
+      try {
+        const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
+        const endDate = new Date(r.data_fim_janela + 'T23:59:59');
+        return !isNaN(startDate.getTime()) && !isNaN(endDate.getTime()) && startDate <= endDate;
+      } catch (error) {
+        return false;
       }
-      
-      return false;
     });
 
     if (!remessasValidas.length) return [];
@@ -124,19 +100,8 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     
     return remessasValidas.map((remessa) => {
       try {
-        let startDate: Date;
-        let endDate: Date;
-        
-        // Se tem janela de entrega definida, usar ela
-        if (remessa.data_inicio_janela && remessa.data_fim_janela) {
-          startDate = new Date(remessa.data_inicio_janela + 'T00:00:00');
-          endDate = new Date(remessa.data_fim_janela + 'T23:59:59');
-        } else {
-          // Fallback: usar data_saida como início e adicionar 7 dias como estimativa
-          startDate = new Date(remessa.data_saida + 'T00:00:00');
-          endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + 7); // Janela padrão de 7 dias
-        }
+        const startDate = new Date(remessa.data_inicio_janela + 'T00:00:00');
+        const endDate = new Date(remessa.data_fim_janela + 'T23:59:59');
         
         let start: number;
         let duration: number;
