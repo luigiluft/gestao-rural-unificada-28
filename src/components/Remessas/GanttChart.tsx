@@ -373,70 +373,86 @@ const GanttChart: React.FC<GanttChartProps> = ({
           </div>
         </CardHeader>
       <CardContent>
-        <div className="h-96">
-          {/* Título "Remessas" acima do gráfico */}
+        <div className="h-96 flex">
+          {/* Área de seleção das remessas */}
           {onToggleSelection && (
-            <div className="absolute z-10 text-sm font-medium text-muted-foreground" style={{ left: '20px', top: '35px' }}>
-              Remessas
+            <div className="w-32 flex flex-col">
+              <div className="text-sm font-medium text-muted-foreground mb-2 px-2">
+                Remessas
+              </div>
+              <div className="flex flex-col justify-center flex-1">
+                {ganttData.map((item, index) => (
+                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${100 / ganttData.length}%` }}>
+                    <Checkbox 
+                      checked={item.isSelected} 
+                      onCheckedChange={() => onToggleSelection(item.id)} 
+                    />
+                    <span className="text-xs">{item.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={ganttData} layout="vertical" margin={{
-            top: 20,
-            right: 30,
-            left: onToggleSelection ? 110 : 80,
-            bottom: 5
-          }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" orientation="top" domain={(() => {
-              if (!startDate || !endDate) {
-                return [0, (dataMax: number) => Math.max(dataMax + 2, 1)];
-              }
-              const baseDate = getBaseDate();
-              let domainStart: number;
-              let domainEnd: number;
-              if (timeUnit === 'semanas') {
-                const filterStartWeek = startOfWeek(startDate, {
-                  locale: ptBR
-                });
-                const filterEndWeek = startOfWeek(endDate, {
-                  locale: ptBR
-                });
-                domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
-                domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
-              } else if (timeUnit === 'meses') {
-                const filterStartMonth = startOfMonth(startDate);
-                const filterEndMonth = startOfMonth(endDate);
-                domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
-                domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
-              } else {
-                domainStart = differenceInDays(startOfDay(startDate), baseDate);
-                domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
-              }
-              return [domainStart, domainEnd];
-            })()} tickFormatter={formatXAxisTick} tick={{
-              fontSize: 12
-            }} />
-              <YAxis type="category" dataKey="name" width={onToggleSelection ? 130 : 90} tick={<CustomYAxisTick />} />
-              <Tooltip content={<CustomTooltip />} />
-              
-              {/* Linha indicando hoje */}
-              {todayPosition !== null && todayPosition >= 0 && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
-              value: "Hoje",
-              position: "top",
-              fill: "hsl(var(--destructive))"
-            }} />}
-              
-              {/* Barra invisível para posicionar o início */}
-              <Bar dataKey="start" stackId="gantt" fill="transparent" />
-              
-              {/* Barra colorida para a duração */}
-              <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
-                {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {/* Área do gráfico */}
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ganttData} layout="vertical" margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 5
+            }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" orientation="top" domain={(() => {
+                if (!startDate || !endDate) {
+                  return [0, (dataMax: number) => Math.max(dataMax + 2, 1)];
+                }
+                const baseDate = getBaseDate();
+                let domainStart: number;
+                let domainEnd: number;
+                if (timeUnit === 'semanas') {
+                  const filterStartWeek = startOfWeek(startDate, {
+                    locale: ptBR
+                  });
+                  const filterEndWeek = startOfWeek(endDate, {
+                    locale: ptBR
+                  });
+                  domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
+                  domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
+                } else if (timeUnit === 'meses') {
+                  const filterStartMonth = startOfMonth(startDate);
+                  const filterEndMonth = startOfMonth(endDate);
+                  domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
+                  domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
+                } else {
+                  domainStart = differenceInDays(startOfDay(startDate), baseDate);
+                  domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
+                }
+                return [domainStart, domainEnd];
+              })()} tickFormatter={formatXAxisTick} tick={{
+                fontSize: 12
+              }} />
+                <YAxis type="category" dataKey="name" hide />
+                <Tooltip content={<CustomTooltip />} />
+                
+                {/* Linha indicando hoje */}
+                {todayPosition !== null && todayPosition >= 0 && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
+                value: "Hoje",
+                position: "top",
+                fill: "hsl(var(--destructive))"
+              }} />}
+                
+                {/* Barra invisível para posicionar o início */}
+                <Bar dataKey="start" stackId="gantt" fill="transparent" />
+                
+                {/* Barra colorida para a duração */}
+                <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
+                  {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
         
         {/* Legenda */}
