@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { format, parseISO, differenceInDays, startOfDay, endOfDay, startOfWeek, startOfMonth, getISOWeek } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
+import { format, parseISO, differenceInDays, startOfDay, endOfDay, startOfWeek, startOfMonth, getISOWeek, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RemessaData {
   id: string;
@@ -29,13 +34,36 @@ type TimeUnit = 'dias' | 'semanas' | 'meses';
 
 const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+
+  // Filtrar remessas por intervalo de datas se especificado
+  const filteredRemessas = React.useMemo(() => {
+    if (!startDate || !endDate) return remessas;
+    
+    return remessas.filter(r => {
+      if (!r.data_inicio_janela || !r.data_fim_janela) return false;
+      
+      try {
+        const remessaStart = parseISO(r.data_inicio_janela);
+        const remessaEnd = parseISO(r.data_fim_janela);
+        
+        // Verifica se há sobreposição com o intervalo selecionado
+        return isWithinInterval(remessaStart, { start: startDate, end: endDate }) ||
+               isWithinInterval(remessaEnd, { start: startDate, end: endDate }) ||
+               (remessaStart <= startDate && remessaEnd >= endDate);
+      } catch {
+        return false;
+      }
+    });
+  }, [remessas, startDate, endDate]);
 
   // Preparar dados para o gráfico
   const prepareGanttData = (): GanttDataPoint[] => {
-    if (!remessas.length) return [];
+    if (!filteredRemessas.length) return [];
 
     // Filtrar remessas com datas válidas
-    const remessasValidas = remessas.filter(r => {
+    const remessasValidas = filteredRemessas.filter(r => {
       if (!r.data_inicio_janela || !r.data_fim_janela) return false;
       
       try {
@@ -134,6 +162,46 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
 
   const ganttData = prepareGanttData();
 
+  // Calcular posição da linha "hoje"
+  const getTodayPosition = (): number | null => {
+    if (!ganttData.length) return null;
+    
+    try {
+      const today = new Date();
+      const remessasValidas = filteredRemessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
+      if (!remessasValidas.length) return null;
+      
+      const allDates = remessasValidas.flatMap(r => {
+        try {
+          return [parseISO(r.data_inicio_janela), parseISO(r.data_fim_janela)];
+        } catch {
+          return [];
+        }
+      }).filter(date => !isNaN(date.getTime()));
+      
+      if (!allDates.length) return null;
+      
+      let minDate: Date;
+      if (timeUnit === 'semanas') {
+        minDate = startOfWeek(new Date(Math.min(...allDates.map(d => d.getTime()))), { locale: ptBR });
+        const todayWeek = startOfWeek(today, { locale: ptBR });
+        return Math.floor(differenceInDays(todayWeek, minDate) / 7);
+      } else if (timeUnit === 'meses') {
+        minDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+        const todayMonth = startOfMonth(today);
+        return (todayMonth.getFullYear() - minDate.getFullYear()) * 12 + 
+               (todayMonth.getMonth() - minDate.getMonth());
+      } else {
+        minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+        return differenceInDays(startOfDay(today), minDate);
+      }
+    } catch {
+      return null;
+    }
+  };
+
+  const todayPosition = getTodayPosition();
+
   // Função para obter cor baseada no status
   const getBarColor = (status: string) => {
     switch (status) {
@@ -223,10 +291,26 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Cronograma de Entregas</CardTitle>
-          <CardDescription>
-            Visualização das janelas de entrega das remessas expedidas
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Cronograma de Entregas</CardTitle>
+              <CardDescription>
+                Visualização das janelas de entrega das remessas expedidas
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dias">Dias</SelectItem>
+                  <SelectItem value="semanas">Semanas</SelectItem>
+                  <SelectItem value="meses">Meses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -257,26 +341,97 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Cronograma de Entregas</CardTitle>
-            <CardDescription>
-              Visualização das janelas de entrega das remessas expedidas
-            </CardDescription>
+        <CardHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Cronograma de Entregas</CardTitle>
+                <CardDescription>
+                  Visualização das janelas de entrega das remessas expedidas
+                </CardDescription>
+              </div>
+              <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dias">Dias</SelectItem>
+                  <SelectItem value="semanas">Semanas</SelectItem>
+                  <SelectItem value="meses">Meses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Filtros de Data */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Período:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-40 justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "dd/MM/yyyy") : "Data início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                <span className="text-muted-foreground">até</span>
+                
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-40 justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "dd/MM/yyyy") : "Data fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                {(startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setStartDate(undefined);
+                      setEndDate(undefined);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
-          <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Unidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dias">Dias</SelectItem>
-              <SelectItem value="semanas">Semanas</SelectItem>
-              <SelectItem value="meses">Meses</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent>
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
@@ -301,6 +456,17 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
                 label={{ value: 'Remessas', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip content={<CustomTooltip />} />
+              
+              {/* Linha indicando hoje */}
+              {todayPosition !== null && todayPosition >= 0 && (
+                <ReferenceLine 
+                  x={todayPosition} 
+                  stroke="hsl(var(--destructive))" 
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  label={{ value: "Hoje", position: "top", fill: "hsl(var(--destructive))" }}
+                />
+              )}
               
               {/* Barra invisível para posicionar o início */}
               <Bar 
