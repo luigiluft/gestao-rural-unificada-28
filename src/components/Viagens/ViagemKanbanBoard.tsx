@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import {
   DndContext,
-  closestCenter,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -201,15 +201,24 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     if (!over || !active.data.current) return
 
     const viagem = active.data.current.viagem as Viagem
-    const overId = over.id.toString()
+    const overId = String(over.id)
     
-    // Extrair o índice da data do ID do droppable
-    let newDateIndex: number
+    // Identificar a coluna alvo
+    let newDateIndex: number | null = null
+
+    // Caso 1: soltou na coluna vazia (id: droppable-<idx>)
     if (overId.startsWith('droppable-')) {
-      newDateIndex = parseInt(overId.replace('droppable-', ''))
-    } else {
-      return
+      const parsed = parseInt(overId.replace('droppable-', ''), 10)
+      if (!Number.isNaN(parsed)) newDateIndex = parsed
     }
+
+    // Caso 2: soltou sobre outro card (id: <uuid>-<idx>)
+    if (newDateIndex === null) {
+      const match = overId.match(/-(\d+)$/)
+      if (match) newDateIndex = parseInt(match[1], 10)
+    }
+
+    if (newDateIndex === null) return
     
     const newDate = dates[newDateIndex]
     if (!newDate) return
@@ -327,7 +336,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
               {/* Área de drop das viagens */}
               <DndContext 
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={pointerWithin}
                 onDragEnd={handleDragEnd}
               >
                 <div className="flex min-h-96" style={{ width: `${dates.length * 192}px` }}>
