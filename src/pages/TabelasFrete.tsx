@@ -20,10 +20,12 @@ import {
   Plus,
   Edit,
   Trash2,
-  Route
+  Route,
+  Eye
 } from 'lucide-react';
 import { useTabelasFrete, useCreateTabelaFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
 import { useSimuladorFrete } from '@/hooks/useSimuladorFrete';
+import { useNavigate } from 'react-router-dom';
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -32,6 +34,7 @@ const formSchema = z.object({
 });
 
 const TabelasFrete = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -309,6 +312,13 @@ const TabelasFrete = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate(`/tabela-frete/${tabela.id}`)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                             <Button variant="outline" size="sm">
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -330,38 +340,6 @@ const TabelasFrete = () => {
             </CardContent>
           </Card>
 
-          {/* Tabela de faixas detalhada */}
-          {filteredTabelas.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Detalhes das Faixas de Frete</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Distância (km)</TableHead>
-                      <TableHead>Até 300 kg (R$/viagem)</TableHead>
-                      <TableHead>301–999 kg (R$/kg)</TableHead>
-                      <TableHead>Pedágio (R$/ton)</TableHead>
-                      <TableHead>Prazo (dias)</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTabelas[0]?.frete_faixas?.map((faixa) => (
-                      <TableRow key={faixa.id}>
-                        <TableCell>{faixa.distancia_min}–{faixa.distancia_max}</TableCell>
-                        <TableCell>R$ {faixa.valor_ate_300kg.toFixed(2)}</TableCell>
-                        <TableCell>R$ {faixa.valor_por_kg_301_999.toFixed(2)}</TableCell>
-                        <TableCell>R$ {faixa.pedagio_por_ton.toFixed(2)}</TableCell>
-                        <TableCell>D+{faixa.prazo_dias}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="simulador">

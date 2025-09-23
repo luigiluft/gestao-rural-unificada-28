@@ -40,6 +40,7 @@ import Tracking from "./pages/Tracking";
 import ProofOfDelivery from "./pages/ProofOfDelivery";
 import Ocorrencias from "./pages/Ocorrencias";
 import TabelasFrete from "./pages/TabelasFrete";
+import TabelaFrete from "./pages/TabelaFrete";
 import Veiculos from "./pages/Veiculos";
 import Motoristas from "./pages/Motoristas";
 import PlanejamentoPalletsPage from "./pages/PlanejamentoPallets";
@@ -119,6 +120,7 @@ const App = () => (
               <Route path="proof-of-delivery" element={<RequirePageAccess pageKey="proof-of-delivery"><ProofOfDelivery /></RequirePageAccess>} />
               <Route path="ocorrencias" element={<RequirePageAccess pageKey="ocorrencias"><Ocorrencias /></RequirePageAccess>} />
               <Route path="tabelas-frete" element={<RequirePageAccess pageKey="tabelas-frete"><TabelasFrete /></RequirePageAccess>} />
+              <Route path="tabela-frete/:id" element={<RequirePageAccess pageKey="tabelas-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />
               
               {/* Rotas de Instruções */}
