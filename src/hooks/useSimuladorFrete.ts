@@ -29,11 +29,11 @@ export const useSimuladorFrete = () => {
   })
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false)
 
-  const calcularFrete = async (franqueado_id?: string) => {
-    if (!simulacao.distancia || !simulacao.peso) return
+  const calcularFrete = async (franqueado_id?: string, pesoOverride?: number) => {
+    const peso = pesoOverride || parseFloat(simulacao.peso)
+    if (!simulacao.distancia || !peso) return
 
     const distancia = parseFloat(simulacao.distancia)
-    const peso = parseFloat(simulacao.peso)
 
     // Buscar tabela do franqueado específico ou primeira ativa
     const query = supabase

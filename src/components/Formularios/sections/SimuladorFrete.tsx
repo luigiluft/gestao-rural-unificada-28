@@ -69,7 +69,7 @@ export function SimuladorFrete({
       
       // Calcular usando o user_id como franqueado_id para franqueados
       const franqueadoId = profile?.role === 'franqueado' ? profile.user_id : undefined
-      const resultado = await calcularFrete(franqueadoId)
+      const resultado = await calcularFrete(franqueadoId, pesoTotal)
       
       if (resultado && onFreteCalculado) {
         onFreteCalculado(resultado)
