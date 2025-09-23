@@ -11,6 +11,7 @@ import { MapPin, Truck, User, Calendar, Clock, Route } from 'lucide-react';
 import { useViagens } from '@/hooks/useViagens';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ViagemKanbanBoard } from '@/components/Viagens/ViagemKanbanBoard';
 
 const Viagens = () => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -120,12 +121,23 @@ const Viagens = () => {
       </div>
 
       {/* Abas de Conteúdo */}
-      <Tabs defaultValue="ativas" className="space-y-4">
+      <Tabs defaultValue="kanban" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="kanban">Timeline Kanban</TabsTrigger>
           <TabsTrigger value="ativas">Viagens Ativas</TabsTrigger>
           <TabsTrigger value="todas">Todas as Viagens</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="kanban" className="space-y-4">
+          <ViagemKanbanBoard 
+            viagens={filteredViagens}
+            onViagemSelect={(viagem) => {
+              console.log('Viagem selecionada:', viagem)
+              // Aqui você pode implementar modal de detalhes ou navegação
+            }}
+          />
+        </TabsContent>
 
         <TabsContent value="ativas" className="space-y-4">
           <div className="grid gap-4">
