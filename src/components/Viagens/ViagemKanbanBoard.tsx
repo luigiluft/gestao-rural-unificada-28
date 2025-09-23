@@ -264,73 +264,75 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
         </div>
       </div>
 
-      {/* Timeline Kanban */}
-      <div className="border rounded-lg bg-background">
-        <div className="overflow-x-auto">
-          <div className="min-w-full">
-            {/* Header com datas */}
-            <div className="flex border-b bg-muted/50">
-              {dates.map((date, index) => {
-                const isToday = isSameDay(date, new Date())
-                return (
-                  <div 
-                    key={index}
-                    className={`flex-shrink-0 w-48 p-3 border-r text-center ${
-                      isToday ? 'bg-primary/10 border-primary' : ''
-                    }`}
-                  >
-                    <div className={`font-medium ${isToday ? 'text-primary' : ''}`}>
-                      {format(date, 'EEE', { locale: ptBR })}
-                    </div>
-                    <div className={`text-sm ${isToday ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
-                      {format(date, 'dd/MM', { locale: ptBR })}
-                    </div>
-                    {isToday && (
-                      <div className="text-xs text-primary font-medium mt-1">
-                        Hoje
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Área de drop das viagens */}
-            <DndContext 
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="flex min-h-96">
-                {dates.map((date, dateIndex) => {
-                  const dateKey = format(date, 'yyyy-MM-dd')
-                  const viagensNaData = viagensByDate[dateKey] || []
-                  
+      {/* Timeline Kanban Container Responsivo */}
+      <div className="w-full">
+        <div className="border rounded-lg bg-background overflow-hidden">
+          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-background">
+            <div className="min-w-max">
+              {/* Header com datas */}
+              <div className="flex border-b bg-muted/50">
+                {dates.map((date, index) => {
+                  const isToday = isSameDay(date, new Date())
                   return (
-                    <SortableContext 
-                      key={dateIndex}
-                      id={dateIndex.toString()}
-                      items={viagensNaData.map(v => `${v.id}-${dateIndex}`)}
-                      strategy={verticalListSortingStrategy}
+                    <div 
+                      key={index}
+                      className={`flex-shrink-0 w-48 p-3 border-r text-center ${
+                        isToday ? 'bg-primary/10 border-primary' : ''
+                      }`}
                     >
-                      <div 
-                        className="flex-shrink-0 w-48 p-3 border-r min-h-96 bg-background hover:bg-muted/30 transition-colors"
-                        data-date-index={dateIndex}
-                      >
-                        {viagensNaData.map((viagem) => (
-                          <SortableViagemCard
-                            key={`${viagem.id}-${dateIndex}`}
-                            viagem={viagem}
-                            dateIndex={dateIndex}
-                            onClick={() => onViagemSelect?.(viagem)}
-                          />
-                        ))}
+                      <div className={`font-medium ${isToday ? 'text-primary' : ''}`}>
+                        {format(date, 'EEE', { locale: ptBR })}
                       </div>
-                    </SortableContext>
+                      <div className={`text-sm ${isToday ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                        {format(date, 'dd/MM', { locale: ptBR })}
+                      </div>
+                      {isToday && (
+                        <div className="text-xs text-primary font-medium mt-1">
+                          Hoje
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
-            </DndContext>
+
+              {/* Área de drop das viagens */}
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="flex min-h-96">
+                  {dates.map((date, dateIndex) => {
+                    const dateKey = format(date, 'yyyy-MM-dd')
+                    const viagensNaData = viagensByDate[dateKey] || []
+                    
+                    return (
+                      <SortableContext 
+                        key={dateIndex}
+                        id={dateIndex.toString()}
+                        items={viagensNaData.map(v => `${v.id}-${dateIndex}`)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div 
+                          className="flex-shrink-0 w-48 p-3 border-r min-h-96 bg-background hover:bg-muted/30 transition-colors"
+                          data-date-index={dateIndex}
+                        >
+                          {viagensNaData.map((viagem) => (
+                            <SortableViagemCard
+                              key={`${viagem.id}-${dateIndex}`}
+                              viagem={viagem}
+                              dateIndex={dateIndex}
+                              onClick={() => onViagemSelect?.(viagem)}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    )
+                  })}
+                </div>
+              </DndContext>
+            </div>
           </div>
         </div>
       </div>
