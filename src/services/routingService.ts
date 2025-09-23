@@ -31,6 +31,7 @@ export async function calculateDistance(
       headers: {
         'Accept': 'application/json',
       },
+      mode: 'cors', // Explicitly set CORS mode
     });
 
     if (!response.ok) {
@@ -48,6 +49,12 @@ export async function calculateDistance(
     return Math.round(distanceInKm * 100) / 100; // Arredonda para 2 casas decimais
   } catch (error) {
     console.error('Erro ao calcular distância:', error);
+    
+    // Handle CORS and network errors gracefully
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Serviço de cálculo de distância temporariamente indisponível. Por favor, insira a distância manualmente.');
+    }
+    
     throw new Error(
       error instanceof Error 
         ? `Erro ao calcular distância: ${error.message}`

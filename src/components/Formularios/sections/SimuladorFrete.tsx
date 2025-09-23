@@ -169,7 +169,7 @@ export function SimuladorFrete({
 
         <Button 
           onClick={handleCalcular} 
-          disabled={calculando || !simulacao.origem || !simulacao.destino || !simulacao.distancia || pesoTotal <= 0}
+          disabled={calculando || !simulacao.origem.trim() || !simulacao.destino.trim() || !simulacao.distancia.trim() || pesoTotal <= 0 || parseFloat(simulacao.distancia) <= 0}
           className="w-full"
         >
           {calculando ? (
