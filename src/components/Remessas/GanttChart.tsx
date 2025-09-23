@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 interface RemessaData {
@@ -200,28 +201,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
     }
   };
 
-  // Componente customizado de tooltip
+  // Componente customizado de tooltip (sem botão de seleção)
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-background border border-border rounded-lg p-4 shadow-lg min-w-[200px]">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-medium">{`Remessa: ${label}`}</p>
-            {onToggleSelection && (
-              <Button
-                size="sm"
-                variant={data.isSelected ? "default" : "outline"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleSelection(data.id);
-                }}
-                className="ml-2"
-              >
-                {data.isSelected ? "Selecionada" : "Selecionar"}
-              </Button>
-            )}
-          </div>
+          <p className="font-medium mb-2">{`Remessa: ${label}`}</p>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{`Início: ${data.startDate}`}</p>
             <p className="text-sm text-muted-foreground">{`Fim: ${data.endDate}`}</p>
@@ -255,6 +241,38 @@ const GanttChart: React.FC<GanttChartProps> = ({
     } catch (error) {
       return '';
     }
+  };
+
+  // Componente customizado para o eixo Y com checkboxes
+  const CustomYAxisTick = (props: any) => {
+    const { x, y, payload } = props;
+    const remessaData = ganttData.find(item => item.name === payload.value);
+    
+    if (!remessaData) return null;
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        {onToggleSelection && (
+          <foreignObject x={-120} y={-10} width={20} height={20}>
+            <Checkbox
+              checked={remessaData.isSelected}
+              onCheckedChange={() => onToggleSelection(remessaData.id)}
+              className="pointer-events-auto"
+            />
+          </foreignObject>
+        )}
+        <text 
+          x={onToggleSelection ? -95 : -10} 
+          y={0} 
+          dy={4} 
+          textAnchor="start" 
+          fill="currentColor" 
+          fontSize={12}
+        >
+          {payload.value}
+        </text>
+      </g>
+    );
   };
 
   const getXAxisLabel = () => {
@@ -459,8 +477,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
               <YAxis 
                 type="category" 
                 dataKey="name" 
-                width={90}
-                tick={{ fontSize: 12 }}
+                width={onToggleSelection ? 130 : 90}
+                tick={<CustomYAxisTick />}
                 label={{ value: 'Remessas', angle: -90, position: 'insideLeft' }}
               />
               <Tooltip content={<CustomTooltip />} />
@@ -488,12 +506,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 dataKey="duration" 
                 stackId="gantt"
                 radius={[2, 2, 2, 2]}
-                cursor="pointer"
-                onClick={(data) => {
-                  if (onToggleSelection && data) {
-                    onToggleSelection(data.id);
-                  }
-                }}
               >
                 {ganttData.map((entry, index) => (
                   <Cell 
@@ -538,7 +550,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
           )}
           {onToggleSelection && (
             <div className="text-sm text-muted-foreground ml-auto">
-              Clique nas barras ou use o botão no tooltip para selecionar remessas
+              Use as caixas de seleção à esquerda para selecionar remessas
             </div>
           )}
         </div>
