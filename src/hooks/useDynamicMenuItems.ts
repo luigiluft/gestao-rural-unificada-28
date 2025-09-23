@@ -142,6 +142,7 @@ export const useDynamicMenuItems = () => {
       'saidas',
       'rastreio',
       'relatorios',
+      'tabelas-frete',
       'produtores',
       'fazendas',
       'perfil',
@@ -171,7 +172,6 @@ export const useDynamicMenuItems = () => {
       'tracking',
       'proof-of-delivery',
       'ocorrencias',
-      'tabelas-frete',
       'tabela-frete'
     ]
 
