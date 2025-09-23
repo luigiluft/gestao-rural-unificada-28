@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, X } from 'lucide-react';
+import { CalendarIcon, X, ArrowUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 interface RemessaData {
@@ -32,6 +32,7 @@ interface GanttDataPoint {
   isSelected: boolean;
 }
 type TimeUnit = 'dias' | 'semanas' | 'meses';
+type SortOrder = 'asc' | 'desc';
 const GanttChart: React.FC<GanttChartProps> = ({
   remessas,
   selectedRemessas = [],
@@ -40,6 +41,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   // Função para obter a data base para todos os cálculos
   const getBaseDate = (): Date => {
@@ -150,7 +152,15 @@ const GanttChart: React.FC<GanttChartProps> = ({
       }
     });
   };
-  const ganttData = prepareGanttData();
+  
+  // Aplicar ordenação aos dados do gráfico
+  const ganttData = prepareGanttData().sort((a, b) => {
+    if (sortOrder === 'asc') {
+      return a.start - b.start;
+    } else {
+      return b.start - a.start;
+    }
+  });
 
   // Calcular posição da linha "hoje"
   const getTodayPosition = (): number | null => {
@@ -320,16 +330,27 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   Visualização das janelas de entrega das remessas expedidas
                 </CardDescription>
               </div>
-              <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dias">Dias</SelectItem>
-                  <SelectItem value="semanas">Semanas</SelectItem>
-                  <SelectItem value="meses">Meses</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  {sortOrder === 'asc' ? 'Mais próximas primeiro' : 'Mais distantes primeiro'}
+                </Button>
+                <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dias">Dias</SelectItem>
+                    <SelectItem value="semanas">Semanas</SelectItem>
+                    <SelectItem value="meses">Meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {/* Filtros de Data */}
