@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { format, parseISO, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, differenceInDays, startOfDay, endOfDay, startOfWeek, startOfMonth, getISOWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RemessaData {
   id: string;
@@ -24,7 +25,11 @@ interface GanttDataPoint {
   status: string;
 }
 
+type TimeUnit = 'dias' | 'semanas' | 'meses';
+
 const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
+  const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
+
   // Preparar dados para o gráfico
   const prepareGanttData = (): GanttDataPoint[] => {
     if (!remessas.length) return [];
@@ -58,18 +63,47 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     
     if (!allDates.length) return [];
     
-    const minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+    // Definir data de referência baseada na unidade de tempo
+    let minDate: Date;
+    if (timeUnit === 'semanas') {
+      minDate = startOfWeek(new Date(Math.min(...allDates.map(d => d.getTime()))), { locale: ptBR });
+    } else if (timeUnit === 'meses') {
+      minDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+    } else {
+      minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+    }
     
     return remessasValidas.map((remessa, index) => {
       try {
         const startDate = parseISO(remessa.data_inicio_janela);
         const endDate = parseISO(remessa.data_fim_janela);
         
-        // Calcular posição inicial em dias desde a data mínima
-        const start = differenceInDays(startOfDay(startDate), minDate);
+        let start: number;
+        let duration: number;
         
-        // Calcular duração em dias
-        const duration = differenceInDays(endOfDay(endDate), startOfDay(startDate)) + 1;
+        if (timeUnit === 'semanas') {
+          // Calcular em semanas
+          const startWeek = startOfWeek(startDate, { locale: ptBR });
+          const endWeek = startOfWeek(endDate, { locale: ptBR });
+          const minWeek = startOfWeek(minDate, { locale: ptBR });
+          
+          start = Math.floor(differenceInDays(startWeek, minWeek) / 7);
+          duration = Math.max(1, Math.floor(differenceInDays(endWeek, startWeek) / 7) + 1);
+        } else if (timeUnit === 'meses') {
+          // Calcular em meses
+          const startMonth = startOfMonth(startDate);
+          const endMonth = startOfMonth(endDate);
+          const minMonth = startOfMonth(minDate);
+          
+          start = (startMonth.getFullYear() - minMonth.getFullYear()) * 12 + 
+                  (startMonth.getMonth() - minMonth.getMonth());
+          duration = Math.max(1, (endMonth.getFullYear() - startMonth.getFullYear()) * 12 + 
+                              (endMonth.getMonth() - startMonth.getMonth()) + 1);
+        } else {
+          // Calcular em dias
+          start = differenceInDays(startOfDay(startDate), minDate);
+          duration = differenceInDays(endOfDay(endDate), startOfDay(startDate)) + 1;
+        }
         
         // Garantir que os valores são números válidos
         const validStart = isNaN(start) ? 0 : Math.max(0, start);
@@ -129,7 +163,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     return null;
   };
 
-  // Função para formatar os ticks do eixo X (dias)
+  // Função para formatar os ticks do eixo X baseado na unidade de tempo
   const formatXAxisTick = (value: number) => {
     if (ganttData.length === 0 || isNaN(value)) return '';
     
@@ -148,14 +182,40 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
       
       if (!allDates.length) return '';
       
-      const minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      let minDate: Date;
+      if (timeUnit === 'semanas') {
+        minDate = startOfWeek(new Date(Math.min(...allDates.map(d => d.getTime()))), { locale: ptBR });
+      } else if (timeUnit === 'meses') {
+        minDate = startOfMonth(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      } else {
+        minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      }
       
       const tickDate = new Date(minDate);
-      tickDate.setDate(tickDate.getDate() + value);
       
-      return format(tickDate, 'dd/MM', { locale: ptBR });
+      if (timeUnit === 'semanas') {
+        tickDate.setDate(tickDate.getDate() + (value * 7));
+        return `S${getISOWeek(tickDate)}`;
+      } else if (timeUnit === 'meses') {
+        tickDate.setMonth(tickDate.getMonth() + value);
+        return format(tickDate, 'MMM/yy', { locale: ptBR });
+      } else {
+        tickDate.setDate(tickDate.getDate() + value);
+        return format(tickDate, 'dd/MM', { locale: ptBR });
+      }
     } catch (error) {
       return '';
+    }
+  };
+
+  const getXAxisLabel = () => {
+    switch (timeUnit) {
+      case 'semanas':
+        return 'Período (semanas)';
+      case 'meses':
+        return 'Período (meses)';
+      default:
+        return 'Período (dias)';
     }
   };
 
@@ -198,10 +258,24 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cronograma de Entregas</CardTitle>
-        <CardDescription>
-          Visualização das janelas de entrega das remessas expedidas
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Cronograma de Entregas</CardTitle>
+            <CardDescription>
+              Visualização das janelas de entrega das remessas expedidas
+            </CardDescription>
+          </div>
+          <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Unidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dias">Dias</SelectItem>
+              <SelectItem value="semanas">Semanas</SelectItem>
+              <SelectItem value="meses">Meses</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-96">
@@ -217,7 +291,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
                 domain={[0, (dataMax: number) => Math.max(dataMax + 2, 1)]}
                 tickFormatter={formatXAxisTick}
                 tick={{ fontSize: 12 }}
-                label={{ value: 'Período (dias)', position: 'insideBottom', offset: -10 }}
+                label={{ value: getXAxisLabel(), position: 'insideBottom', offset: -10 }}
               />
               <YAxis 
                 type="category" 
