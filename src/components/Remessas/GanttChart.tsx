@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, X } from 'lucide-react';
+import { CalendarIcon, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 interface RemessaData {
@@ -32,6 +32,7 @@ interface GanttDataPoint {
   isSelected: boolean;
 }
 type TimeUnit = 'dias' | 'semanas' | 'meses';
+type SortOrder = 'asc' | 'desc' | 'none';
 const GanttChart: React.FC<GanttChartProps> = ({
   remessas,
   selectedRemessas = [],
@@ -40,6 +41,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [sortOrder, setSortOrder] = useState<SortOrder>('none');
 
   // Função para obter a data base para todos os cálculos
   const getBaseDate = (): Date => {
@@ -86,7 +88,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
     if (!remessas.length) return [];
 
     // Filtrar remessas com datas válidas
-    const remessasValidas = remessas.filter(r => {
+    let remessasValidas = remessas.filter(r => {
       if (!r.data_inicio_janela || !r.data_fim_janela) return false;
       try {
         const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
@@ -96,6 +98,21 @@ const GanttChart: React.FC<GanttChartProps> = ({
         return false;
       }
     });
+
+    // Ordenar remessas se necessário
+    if (sortOrder !== 'none') {
+      remessasValidas = remessasValidas.sort((a, b) => {
+        const dateA = new Date(a.data_inicio_janela + 'T00:00:00');
+        const dateB = new Date(b.data_inicio_janela + 'T00:00:00');
+        
+        if (sortOrder === 'asc') {
+          return dateA.getTime() - dateB.getTime();
+        } else {
+          return dateB.getTime() - dateA.getTime();
+        }
+      });
+    }
+
     if (!remessasValidas.length) return [];
     const baseDate = getBaseDate();
     return remessasValidas.map(remessa => {
@@ -254,15 +271,25 @@ const GanttChart: React.FC<GanttChartProps> = ({
         </text>
       </g>;
   };
-  const getXAxisLabel = () => {
-    switch (timeUnit) {
-      case 'semanas':
-        return 'Período (semanas)';
-      case 'meses':
-        return 'Período (meses)';
-      default:
-        return 'Período (dias)';
-    }
+  // Função para alternar ordenação
+  const toggleSort = () => {
+    setSortOrder(prev => {
+      if (prev === 'none') return 'asc';
+      if (prev === 'asc') return 'desc';
+      return 'none';
+    });
+  };
+
+  const getSortIcon = () => {
+    if (sortOrder === 'asc') return <ArrowUp className="h-4 w-4" />;
+    if (sortOrder === 'desc') return <ArrowDown className="h-4 w-4" />;
+    return <ArrowUpDown className="h-4 w-4" />;
+  };
+
+  const getSortLabel = () => {
+    if (sortOrder === 'asc') return 'Data: Mais próxima primeiro';
+    if (sortOrder === 'desc') return 'Data: Mais distante primeiro';
+    return 'Ordenar por data';
   };
   if (!remessas.length) {
     return <Card>
@@ -320,16 +347,27 @@ const GanttChart: React.FC<GanttChartProps> = ({
                   Visualização das janelas de entrega das remessas expedidas
                 </CardDescription>
               </div>
-              <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dias">Dias</SelectItem>
-                  <SelectItem value="semanas">Semanas</SelectItem>
-                  <SelectItem value="meses">Meses</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSort}
+                  className="flex items-center gap-2"
+                >
+                  {getSortIcon()}
+                  {getSortLabel()}
+                </Button>
+                <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Unidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dias">Dias</SelectItem>
+                    <SelectItem value="semanas">Semanas</SelectItem>
+                    <SelectItem value="meses">Meses</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {/* Filtros de Data */}
@@ -394,64 +432,66 @@ const GanttChart: React.FC<GanttChartProps> = ({
             </div>
           )}
           
-          {/* Área do gráfico */}
-          <div className="flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ganttData} layout="vertical" margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 5
-            }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" orientation="top" domain={(() => {
-                if (!startDate || !endDate) {
-                  return [0, (dataMax: number) => Math.max(dataMax + 2, 1)];
-                }
-                const baseDate = getBaseDate();
-                let domainStart: number;
-                let domainEnd: number;
-                if (timeUnit === 'semanas') {
-                  const filterStartWeek = startOfWeek(startDate, {
-                    locale: ptBR
-                  });
-                  const filterEndWeek = startOfWeek(endDate, {
-                    locale: ptBR
-                  });
-                  domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
-                  domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
-                } else if (timeUnit === 'meses') {
-                  const filterStartMonth = startOfMonth(startDate);
-                  const filterEndMonth = startOfMonth(endDate);
-                  domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
-                  domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
-                } else {
-                  domainStart = differenceInDays(startOfDay(startDate), baseDate);
-                  domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
-                }
-                return [domainStart, domainEnd];
-              })()} tickFormatter={formatXAxisTick} tick={{
-                fontSize: 12
-              }} />
-                <YAxis type="category" dataKey="name" hide />
-                <Tooltip content={<CustomTooltip />} />
-                
-                {/* Linha indicando hoje */}
-                {todayPosition !== null && todayPosition >= 0 && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
-                value: "Hoje",
-                position: "top",
-                fill: "hsl(var(--destructive))"
-              }} />}
-                
-                {/* Barra invisível para posicionar o início */}
-                <Bar dataKey="start" stackId="gantt" fill="transparent" />
-                
-                {/* Barra colorida para a duração */}
-                <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
-                  {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          {/* Área do gráfico com scroll horizontal */}
+          <div className="flex-1 overflow-x-auto">
+            <div style={{ minWidth: '800px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ganttData} layout="vertical" margin={{
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 5
+              }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" orientation="top" domain={(() => {
+                  if (!startDate || !endDate) {
+                    return [0, (dataMax: number) => Math.max(dataMax + 2, 1)];
+                  }
+                  const baseDate = getBaseDate();
+                  let domainStart: number;
+                  let domainEnd: number;
+                  if (timeUnit === 'semanas') {
+                    const filterStartWeek = startOfWeek(startDate, {
+                      locale: ptBR
+                    });
+                    const filterEndWeek = startOfWeek(endDate, {
+                      locale: ptBR
+                    });
+                    domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
+                    domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
+                  } else if (timeUnit === 'meses') {
+                    const filterStartMonth = startOfMonth(startDate);
+                    const filterEndMonth = startOfMonth(endDate);
+                    domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
+                    domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
+                  } else {
+                    domainStart = differenceInDays(startOfDay(startDate), baseDate);
+                    domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
+                  }
+                  return [domainStart, domainEnd];
+                })()} tickFormatter={formatXAxisTick} tick={{
+                  fontSize: 12
+                }} />
+                  <YAxis type="category" dataKey="name" hide />
+                  <Tooltip content={<CustomTooltip />} />
+                  
+                  {/* Linha indicando hoje */}
+                  {todayPosition !== null && todayPosition >= 0 && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
+                  value: "Hoje",
+                  position: "top",
+                  fill: "hsl(var(--destructive))"
+                }} />}
+                  
+                  {/* Barra invisível para posicionar o início */}
+                  <Bar dataKey="start" stackId="gantt" fill="transparent" />
+                  
+                  {/* Barra colorida para a duração */}
+                  <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
+                    {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
         
