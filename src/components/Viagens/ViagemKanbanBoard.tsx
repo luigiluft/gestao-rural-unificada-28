@@ -185,20 +185,19 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     
     if (!newDate) return
 
-    // Não permitir mover para data anterior à data de início
-    const dataInicio = parseISO(viagem.data_inicio)
-    if (newDate < dataInicio) {
-      return
-    }
-
-    // Calcular nova data de fim baseada na diferença original
+    // Calcular duração original da viagem
+    const dataInicioOriginal = parseISO(viagem.data_inicio)
     const dataFimOriginal = parseISO(viagem.data_fim)
-    const diasOriginais = differenceInDays(dataFimOriginal, dataInicio)
-    const novaDataFim = addDays(newDate, diasOriginais)
+    const duracaoOriginal = differenceInDays(dataFimOriginal, dataInicioOriginal)
+
+    // A nova data será a data de início, e calculamos a nova data de fim
+    const novaDataInicio = format(newDate, 'yyyy-MM-dd')
+    const novaDataFim = format(addDays(newDate, duracaoOriginal), 'yyyy-MM-dd')
 
     updateViagemData.mutate({
       viagemId: viagem.id,
-      data_fim: format(novaDataFim, 'yyyy-MM-dd')
+      data_inicio: novaDataInicio,
+      data_fim: novaDataFim
     })
   }
 

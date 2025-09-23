@@ -4,7 +4,8 @@ import { useToast } from "@/hooks/use-toast"
 
 interface UpdateViagemDataParams {
   viagemId: string
-  data_fim: string
+  data_inicio?: string
+  data_fim?: string
 }
 
 export const useUpdateViagemData = () => {
@@ -12,15 +13,19 @@ export const useUpdateViagemData = () => {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: async ({ viagemId, data_fim }: UpdateViagemDataParams) => {
+    mutationFn: async ({ viagemId, data_inicio, data_fim }: UpdateViagemDataParams) => {
+      const updateData: any = {}
+      if (data_inicio) updateData.data_inicio = data_inicio
+      if (data_fim) updateData.data_fim = data_fim
+
       const { error } = await supabase
         .from("viagens")
-        .update({ data_fim })
+        .update(updateData)
         .eq("id", viagemId)
 
       if (error) throw error
 
-      return { viagemId, data_fim }
+      return { viagemId, data_inicio, data_fim }
     },
     onSuccess: () => {
       toast({
