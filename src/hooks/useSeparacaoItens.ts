@@ -222,42 +222,10 @@ export function useSeparacaoItens() {
         }
       }
 
-      // STEP 3: Re-validar contra o banco após flush
-      console.log('🔍 Re-validando contra o banco após sincronização...');
-      const { data: itens, error: itensError } = await supabase
-        .from('saida_itens')
-        .select('id, quantidade, quantidade_separada')
-        .eq('saida_id', saidaId)
+      // STEP 3: Removido - não revalidar contra o banco (usar apenas validação do front)
+      // Mantemos somente a validação local e o flush acima.
 
-      if (itensError) throw itensError
-
-      console.log('📊 Itens no banco após flush:', itens?.map(item => ({
-        id: item.id,
-        quantidade: item.quantidade,
-        quantidade_separada: item.quantidade_separada
-      })));
-
-      const todosSeparados = itens?.every((item: any) => {
-        const quantidadeSeparada = item.quantidade_separada || 0;
-        const quantidadeTotal = item.quantidade;
-        console.log(`🔍 Verificando item: ${quantidadeSeparada}/${quantidadeTotal} = ${quantidadeSeparada >= quantidadeTotal}`);
-        return quantidadeSeparada >= quantidadeTotal;
-      })
-
-      if (!todosSeparados) {
-        const itensIncompletos = itens?.filter(item => 
-          (item.quantidade_separada || 0) < item.quantidade
-        );
-        console.log('❌ Itens ainda não completamente separados no banco:', itensIncompletos?.map(item => ({
-          id: item.id,
-          separado: item.quantidade_separada || 0,
-          total: item.quantidade,
-          faltando: item.quantidade - (item.quantidade_separada || 0)
-        })));
-        throw new Error('Nem todos os itens foram separados completamente')
-      }
-
-      console.log('✅ Todos os itens foram separados, atualizando status...');
+      console.log('✅ Itens validados localmente e sincronizados. Atualizando status...');
 
       // STEP 4: Atualizar status da saída para "separado"
       const { data, error } = await supabase
