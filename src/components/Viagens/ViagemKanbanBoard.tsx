@@ -265,9 +265,9 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
       </div>
 
       {/* Timeline Kanban Container Responsivo */}
-      <div className="w-full">
+      <div className="w-full max-w-full">
         <div className="border rounded-lg bg-background overflow-hidden">
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-background">
+          <div className="overflow-x-auto overflow-y-hidden h-[600px] scrollbar-thin scrollbar-thumb-border scrollbar-track-background">
             <div className="min-w-max">
               {/* Header com datas */}
               <div className="flex border-b bg-muted/50">

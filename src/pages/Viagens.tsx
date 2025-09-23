@@ -46,7 +46,7 @@ const Viagens = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full overflow-y-auto max-w-full">
       <div>
         <h1 className="text-3xl font-bold">Viagens</h1>
         <p className="text-muted-foreground">
