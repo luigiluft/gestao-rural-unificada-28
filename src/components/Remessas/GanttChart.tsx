@@ -375,13 +375,17 @@ const GanttChart: React.FC<GanttChartProps> = ({
       <CardContent>
         <div className="h-96">
           {/* Título "Remessas" acima do gráfico */}
-          {onToggleSelection}
+          {onToggleSelection && (
+            <div className="absolute z-10 text-sm font-medium text-muted-foreground" style={{ left: '20px', top: '35px' }}>
+              Remessas
+            </div>
+          )}
           
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={ganttData} layout="vertical" margin={{
-            top: 30,
+            top: 20,
             right: 30,
-            left: onToggleSelection ? 130 : 100,
+            left: onToggleSelection ? 110 : 80,
             bottom: 5
           }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -413,10 +417,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
               return [domainStart, domainEnd];
             })()} tickFormatter={formatXAxisTick} tick={{
               fontSize: 12
-            }} label={{
-              value: getXAxisLabel(),
-              position: 'insideTopLeft',
-              offset: 10
             }} />
               <YAxis type="category" dataKey="name" width={onToggleSelection ? 130 : 90} tick={<CustomYAxisTick />} />
               <Tooltip content={<CustomTooltip />} />
