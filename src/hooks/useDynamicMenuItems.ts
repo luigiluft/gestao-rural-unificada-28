@@ -78,6 +78,7 @@ const iconMap = {
   "proof-of-delivery": FileText,
   ocorrencias: AlertTriangle,
   "tabelas-frete": Calculator,
+  "tabela-frete": FileText,
   veiculos: Truck,
   motoristas: Users
 }
@@ -119,6 +120,7 @@ const menuLabels = {
   "proof-of-delivery": "Proof of Delivery",
   ocorrencias: "Ocorrências",
   "tabelas-frete": "Tabelas de Frete",
+  "tabela-frete": "Tabela de Frete",
   veiculos: "Veículos",
   motoristas: "Motoristas"
 }
@@ -169,7 +171,8 @@ export const useDynamicMenuItems = () => {
       'tracking',
       'proof-of-delivery',
       'ocorrencias',
-      'tabelas-frete'
+      'tabelas-frete',
+      'tabela-frete'
     ]
 
     // Adicionar itens na ordem especificada

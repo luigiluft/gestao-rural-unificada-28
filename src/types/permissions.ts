@@ -13,7 +13,7 @@ export type PermissionCode =
   | 'remessas.view' | 'planejamento.view' | 'viagens.view' | 'agenda.view'
   | 'tracking.view' | 'proof-of-delivery.view' | 'ocorrencias.view' | 'tabelas-frete.view'
   | 'veiculos.view' | 'veiculos.manage' | 'motoristas.view' | 'motoristas.manage'
-  | 'instrucoes.view' | 'configuracoes.view' | 'controle-acesso.view';
+  | 'instrucoes.view' | 'configuracoes.view' | 'controle-acesso.view' | 'tabela-frete.view';
 
 // Template de permissões para criar perfis de funcionários/subcontas
 export interface PermissionTemplate {
@@ -57,6 +57,7 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'proof-of-delivery.view', label: 'Proof of Delivery' },
   { code: 'ocorrencias.view', label: 'Ocorrências' },
   { code: 'tabelas-frete.view', label: 'Tabelas de Frete' },
+  { code: 'tabela-frete.view', label: 'Tabela de Frete' },
   { code: 'veiculos.view', label: 'Visualizar Veículos' },
   { code: 'veiculos.manage', label: 'Gerenciar Veículos' },
   { code: 'motoristas.view', label: 'Visualizar Motoristas' },

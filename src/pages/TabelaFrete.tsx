@@ -22,6 +22,13 @@ const TabelaFrete = () => {
   const { data: tabelasFrete = [], isLoading } = useTabelasFrete();
   const deleteTabelaMutation = useDeleteTabelaFrete();
   
+  // If no ID provided, redirect to first table
+  React.useEffect(() => {
+    if (!id && tabelasFrete.length > 0 && !isLoading) {
+      navigate(`/tabela-frete/${tabelasFrete[0].id}`, { replace: true });
+    }
+  }, [id, tabelasFrete, isLoading, navigate]);
+  
   const tabela = tabelasFrete.find(t => t.id === id);
 
   const tiposBadges = {
