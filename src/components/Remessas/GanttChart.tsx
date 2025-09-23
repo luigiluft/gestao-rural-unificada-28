@@ -29,33 +29,73 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
   const prepareGanttData = (): GanttDataPoint[] => {
     if (!remessas.length) return [];
 
+    // Filtrar remessas com datas válidas
+    const remessasValidas = remessas.filter(r => {
+      if (!r.data_inicio_janela || !r.data_fim_janela) return false;
+      
+      try {
+        const startDate = parseISO(r.data_inicio_janela);
+        const endDate = parseISO(r.data_fim_janela);
+        
+        // Verificar se as datas são válidas
+        return !isNaN(startDate.getTime()) && !isNaN(endDate.getTime()) && startDate <= endDate;
+      } catch (error) {
+        console.warn('Data inválida encontrada:', r);
+        return false;
+      }
+    });
+
+    if (!remessasValidas.length) return [];
+
     // Encontrar as datas mínima e máxima para definir o range
-    const allDates = remessas.flatMap(r => [
-      parseISO(r.data_inicio_janela),
-      parseISO(r.data_fim_janela)
-    ]);
+    const allDates = remessasValidas.flatMap(r => {
+      try {
+        return [parseISO(r.data_inicio_janela), parseISO(r.data_fim_janela)];
+      } catch (error) {
+        return [];
+      }
+    }).filter(date => !isNaN(date.getTime()));
+    
+    if (!allDates.length) return [];
     
     const minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
     
-    return remessas.map((remessa, index) => {
-      const startDate = parseISO(remessa.data_inicio_janela);
-      const endDate = parseISO(remessa.data_fim_janela);
-      
-      // Calcular posição inicial em dias desde a data mínima
-      const start = differenceInDays(startOfDay(startDate), minDate);
-      
-      // Calcular duração em dias
-      const duration = differenceInDays(endOfDay(endDate), startOfDay(startDate)) + 1;
-      
-      return {
-        name: `#${remessa.id.slice(0, 8)}`,
-        start,
-        duration,
-        startDate: format(startDate, 'dd/MM/yyyy', { locale: ptBR }),
-        endDate: format(endDate, 'dd/MM/yyyy', { locale: ptBR }),
-        status: remessa.status
-      };
-    });
+    return remessasValidas.map((remessa, index) => {
+      try {
+        const startDate = parseISO(remessa.data_inicio_janela);
+        const endDate = parseISO(remessa.data_fim_janela);
+        
+        // Calcular posição inicial em dias desde a data mínima
+        const start = differenceInDays(startOfDay(startDate), minDate);
+        
+        // Calcular duração em dias
+        const duration = differenceInDays(endOfDay(endDate), startOfDay(startDate)) + 1;
+        
+        // Garantir que os valores são números válidos
+        const validStart = isNaN(start) ? 0 : Math.max(0, start);
+        const validDuration = isNaN(duration) ? 1 : Math.max(1, duration);
+        
+        return {
+          name: `#${remessa.id.slice(0, 8)}`,
+          start: validStart,
+          duration: validDuration,
+          startDate: format(startDate, 'dd/MM/yyyy', { locale: ptBR }),
+          endDate: format(endDate, 'dd/MM/yyyy', { locale: ptBR }),
+          status: remessa.status
+        };
+      } catch (error) {
+        console.warn('Erro ao processar remessa:', remessa, error);
+        // Retornar dados padrão em caso de erro
+        return {
+          name: `#${remessa.id.slice(0, 8)}`,
+          start: 0,
+          duration: 1,
+          startDate: 'Data inválida',
+          endDate: 'Data inválida',
+          status: remessa.status
+        };
+      }
+    }).filter(item => !isNaN(item.start) && !isNaN(item.duration));
   };
 
   const ganttData = prepareGanttData();
@@ -91,19 +131,32 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
 
   // Função para formatar os ticks do eixo X (dias)
   const formatXAxisTick = (value: number) => {
-    if (ganttData.length === 0) return '';
+    if (ganttData.length === 0 || isNaN(value)) return '';
     
-    // Encontrar a data mínima novamente para calcular a data do tick
-    const allDates = remessas.flatMap(r => [
-      parseISO(r.data_inicio_janela),
-      parseISO(r.data_fim_janela)
-    ]);
-    const minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
-    
-    const tickDate = new Date(minDate);
-    tickDate.setDate(tickDate.getDate() + value);
-    
-    return format(tickDate, 'dd/MM', { locale: ptBR });
+    try {
+      // Encontrar a data mínima novamente para calcular a data do tick
+      const remessasValidas = remessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
+      if (!remessasValidas.length) return '';
+      
+      const allDates = remessasValidas.flatMap(r => {
+        try {
+          return [parseISO(r.data_inicio_janela), parseISO(r.data_fim_janela)];
+        } catch {
+          return [];
+        }
+      }).filter(date => !isNaN(date.getTime()));
+      
+      if (!allDates.length) return '';
+      
+      const minDate = startOfDay(new Date(Math.min(...allDates.map(d => d.getTime()))));
+      
+      const tickDate = new Date(minDate);
+      tickDate.setDate(tickDate.getDate() + value);
+      
+      return format(tickDate, 'dd/MM', { locale: ptBR });
+    } catch (error) {
+      return '';
+    }
   };
 
   if (!remessas.length) {
@@ -143,7 +196,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 type="number" 
-                domain={[0, 'dataMax + 2']}
+                domain={[0, (dataMax: number) => Math.max(dataMax + 2, 1)]}
                 tickFormatter={formatXAxisTick}
                 tick={{ fontSize: 12 }}
                 label={{ value: 'Período (dias)', position: 'insideBottom', offset: -10 }}
