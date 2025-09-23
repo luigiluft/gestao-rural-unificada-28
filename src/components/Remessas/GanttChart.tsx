@@ -177,6 +177,24 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
     );
   }
 
+  if (ganttData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Cronograma de Entregas</CardTitle>
+          <CardDescription>
+            Não há remessas com janelas de entrega válidas para exibir
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            Adicione ou corrija as datas de janela para visualizar o gráfico
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -190,7 +208,7 @@ const GanttChart: React.FC<GanttChartProps> = ({ remessas }) => {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={ganttData}
-              layout="horizontal"
+              layout="vertical"
               margin={{ top: 20, right: 30, left: 100, bottom: 20 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
