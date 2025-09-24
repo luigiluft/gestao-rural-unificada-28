@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
-import { SimuladorFrete } from "./SimuladorFrete"
+
 import { useProfile, useProdutoresComEstoqueNaFranquia, useFazendas } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
@@ -371,20 +371,6 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
           />
         </div>
       </CardContent>
-
-      {/* Simulador de Frete - apenas para entrega na fazenda */}
-      {dados.tipo_saida === 'entrega_fazenda' && dados.fazenda_id && pesoTotal > 0 && (
-        <div className="mt-6">
-          <SimuladorFrete 
-            pesoTotal={pesoTotal}
-            franquiaCoords={franquiaCoords || undefined}
-            fazendaCoords={fazendaCoords || undefined}
-            franquiaNome={franquiaNome}
-            fazendaNome={fazendas.find(f => f.id === dados.fazenda_id)?.nome}
-            onFreteCalculado={handleFreteCalculado}
-          />
-        </div>
-      )}
     </Card>
   )
 }

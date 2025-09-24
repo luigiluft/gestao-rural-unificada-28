@@ -53,14 +53,14 @@ export function SimuladorFrete({
 
   const handleCalcular = async () => {
     console.log("Tentando calcular frete:", { 
-      origem: simulacao.origem, 
-      destino: simulacao.destino, 
+      franquiaNome, 
+      fazendaNome, 
       distancia: simulacao.distancia, 
       pesoTotal 
     })
     
-    if (!simulacao.origem || !simulacao.destino || !simulacao.distancia || pesoTotal <= 0) {
-      toast.error("Preencha todos os campos para calcular o frete")
+    if (!simulacao.distancia || pesoTotal <= 0) {
+      toast.error("Informe a distância para calcular o frete")
       return
     }
 
@@ -70,6 +70,8 @@ export function SimuladorFrete({
       // Usar peso total dos itens
       const simulacaoComPeso = {
         ...simulacao,
+        origem: franquiaNome || 'Franquia',
+        destino: fazendaNome || 'Fazenda',
         peso: pesoTotal.toString()
       }
       setSimulacao(simulacaoComPeso)
@@ -106,33 +108,11 @@ export function SimuladorFrete({
           Simulador de Frete
         </CardTitle>
         <CardDescription>
-          Calcule o frete baseado na tabela configurada para sua franquia
+          Calcule o frete para entrega na fazenda. Origem: {franquiaNome || 'Franquia'} → Destino: {fazendaNome || 'Fazenda'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="origem">Origem</Label>
-            <Input
-              id="origem"
-              placeholder="Ex: São Paulo - SP"
-              value={franquiaNome ? `${franquiaNome} (Franquia)` : simulacao.origem}
-              onChange={(e) => setSimulacao(prev => ({ ...prev, origem: e.target.value }))}
-              disabled={!!franquiaNome}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="destino">Destino</Label>
-            <Input
-              id="destino"
-              placeholder="Ex: Curitiba - PR"
-              value={fazendaNome ? `${fazendaNome} (Fazenda)` : simulacao.destino}
-              onChange={(e) => setSimulacao(prev => ({ ...prev, destino: e.target.value }))}
-              disabled={!!fazendaNome}
-            />
-          </div>
-          
           <div className="space-y-2">
             <Label htmlFor="distancia">Distância (km)</Label>
             <div className="flex gap-2">
@@ -151,6 +131,7 @@ export function SimuladorFrete({
                   onClick={handleCalcularDistancia}
                   disabled={isCalculatingDistance}
                   className="shrink-0"
+                  title="Calcular distância automaticamente"
                 >
                   {isCalculatingDistance ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -176,7 +157,7 @@ export function SimuladorFrete({
 
         <Button 
           onClick={handleCalcular} 
-          disabled={calculando || pesoTotal <= 0}
+          disabled={calculando || pesoTotal <= 0 || !simulacao.distancia || parseFloat(simulacao.distancia) <= 0}
           className="w-full"
         >
           {calculando ? (

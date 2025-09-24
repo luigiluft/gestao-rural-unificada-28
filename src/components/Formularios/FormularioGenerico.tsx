@@ -5,11 +5,17 @@ import { useFormularioValidation } from "./hooks/useFormularioValidation"
 import { DadosEntradaSection } from "./sections/DadosEntrada"
 import { DadosSaidaSection } from "./sections/DadosSaida"
 import { ItensComunsSection } from "./sections/ItensComuns"
+import { SimuladorFrete } from "./sections/SimuladorFrete"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { useCriarReserva } from "@/hooks/useReservasHorario"
+import { useState, useEffect } from "react"
+import type { Coordinates } from "@/services/routingService"
+import { useFazendas } from "@/hooks/useProfile"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: FormularioGenericoProps) {
+  const { user } = useAuth()
   const {
     dados,
     setDados,
@@ -24,15 +30,97 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
     produtosFallback,
     estoqueFEFO,
     profile,
-    user,
     isTutorialActive
   } = useFormularioLogic({ tipo, nfData })
+
+  const [franquiaCoords, setFranquiaCoords] = useState<Coordinates | null>(null)
+  const [fazendaCoords, setFazendaCoords] = useState<Coordinates | null>(null)
+  const [franquiaNome, setFranquiaNome] = useState<string>('')
+  
+  // Para saídas, buscar fazendas do produtor
+  const dadosSaida = dados as DadosSaida
+  const isProdutor = profile?.role === 'produtor'
+  const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
+  const { data: fazendas = [] } = useFazendas(targetProdutorId)
 
   const { validarFormulario, pesoMinimoMopp } = useFormularioValidation({ 
     tipo, 
     dados, 
     itens 
   })
+
+  // Buscar coordenadas da franquia do usuário logado
+  useEffect(() => {
+    const fetchFranquiaCoords = async () => {
+      if (!user?.id || tipo !== 'saida') return
+
+      try {
+        const { data: franquia } = await supabase
+          .from('franquias')
+          .select('latitude, longitude, nome')
+          .eq('master_franqueado_id', user.id)
+          .maybeSingle()
+
+        if (franquia?.latitude && franquia?.longitude) {
+          setFranquiaCoords({
+            latitude: Number(franquia.latitude),
+            longitude: Number(franquia.longitude)
+          })
+          setFranquiaNome(franquia.nome)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar coordenadas da franquia:', error)
+      }
+    }
+
+    fetchFranquiaCoords()
+  }, [user?.id, tipo])
+
+  // Buscar coordenadas da fazenda quando selecionada
+  useEffect(() => {
+    const fetchFazendaCoords = async () => {
+      if (!dadosSaida.fazenda_id || tipo !== 'saida') {
+        setFazendaCoords(null)
+        return
+      }
+
+      try {
+        const { data: fazenda } = await supabase
+          .from('fazendas')
+          .select('latitude, longitude, nome')
+          .eq('id', dadosSaida.fazenda_id)
+          .maybeSingle()
+
+        if (fazenda?.latitude && fazenda?.longitude) {
+          setFazendaCoords({
+            latitude: Number(fazenda.latitude),
+            longitude: Number(fazenda.longitude)
+          })
+        } else {
+          setFazendaCoords(null)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar coordenadas da fazenda:', error)
+        setFazendaCoords(null)
+      }
+    }
+
+    fetchFazendaCoords()
+  }, [dadosSaida.fazenda_id, tipo])
+
+  const handleFreteCalculado = (resultado: any) => {
+    const updatedDados = {
+      ...dadosSaida,
+      valor_frete_calculado: resultado.valor_total,
+      prazo_entrega_calculado: resultado.prazo_entrega,
+      frete_origem: franquiaNome,
+      frete_destino: fazendas.find(f => f.id === dadosSaida.fazenda_id)?.nome || '',
+      frete_distancia: resultado.faixa_aplicada ? 
+        (Number(resultado.faixa_aplicada.distancia_min) + Number(resultado.faixa_aplicada.distancia_max)) / 2 : 
+        undefined
+    }
+    setDados(updatedDados)
+  }
 
   const criarReserva = useCriarReserva()
 
@@ -191,6 +279,18 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         isTutorialActive={isTutorialActive}
         depositoId={dados.depositoId}
       />
+
+      {/* Simulador de Frete - apenas para saídas de entrega na fazenda */}
+      {tipo === 'saida' && dadosSaida.tipo_saida === 'entrega_fazenda' && dadosSaida.fazenda_id && calcularPesoTotal() > 0 && (
+        <SimuladorFrete 
+          pesoTotal={calcularPesoTotal()}
+          franquiaCoords={franquiaCoords || undefined}
+          fazendaCoords={fazendaCoords || undefined}
+          franquiaNome={franquiaNome}
+          fazendaNome={fazendas.find(f => f.id === dadosSaida.fazenda_id)?.nome}
+          onFreteCalculado={handleFreteCalculado}
+        />
+      )}
 
       {/* Botões de Ação */}
       <div className="flex justify-end gap-3">
