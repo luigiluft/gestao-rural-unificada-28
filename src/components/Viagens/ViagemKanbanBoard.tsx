@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Calendar, Truck, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import { useUpdateViagemData } from '@/hooks/useUpdateViagemData'
-import { format, addDays, subDays, isSameDay, differenceInDays, parse } from 'date-fns'
+import { format, addDays, subDays, isSameDay, differenceInDays, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 interface Viagem {
@@ -127,11 +127,11 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({ viagem, onClick
           <div className="space-y-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>Início: {format(parse(viagem.data_inicio, 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR })}</span>
+              <span>Início: {format(parseISO(viagem.data_inicio), 'dd/MM', { locale: ptBR })}</span>
             </div>
             <div className="flex items-center gap-1">
               <Truck className="h-3 w-3" />
-              <span>Entrega: {format(parse(viagem.data_fim, 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR })}</span>
+              <span>Entrega: {format(parseISO(viagem.data_fim), 'dd/MM', { locale: ptBR })}</span>
             </div>
           </div>
           
@@ -189,7 +189,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     dates.forEach(date => {
       const dateKey = format(date, 'yyyy-MM-dd')
       result[dateKey] = filteredViagens.filter(viagem => 
-        isSameDay(parse(viagem.data_inicio, 'yyyy-MM-dd', new Date()), date)
+        isSameDay(parseISO(viagem.data_inicio), date)
       )
     })
     
@@ -267,8 +267,8 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     })
 
     // Calcular duração original da viagem
-    const dataInicioOriginal = parse(viagem.data_inicio, 'yyyy-MM-dd', new Date())
-    const dataFimOriginal = parse(viagem.data_fim, 'yyyy-MM-dd', new Date())
+    const dataInicioOriginal = parseISO(viagem.data_inicio)
+    const dataFimOriginal = parseISO(viagem.data_fim)
     const duracaoOriginal = differenceInDays(dataFimOriginal, dataInicioOriginal)
 
     // A nova data será a data de início, e calculamos a nova data de fim
