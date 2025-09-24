@@ -173,8 +173,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             criado_por_franqueado: !isProdutor,
             status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente',
             produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario,
-            valor_frete_calculado: dadosSaida.valor_frete_calculado || null,
-            prazo_entrega_calculado: dadosSaida.prazo_entrega_calculado || null
+            valor_frete_calculado: dadosSaida.valor_frete_calculado || null
           })
           .select()
           .single()
