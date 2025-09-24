@@ -10,7 +10,11 @@ import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useState, useEffect } from "react"
 import type { Coordinates } from "@/services/routingService"
-import { getMinScheduleDate, isDateAfterBlockedBusinessDays } from "@/lib/business-days"
+import { 
+  getMinScheduleDateWithFreight, 
+  isDateAfterTotalBusinessDays,
+  calculateTotalBusinessDaysRequired 
+} from "@/lib/business-days"
 import { useDiasUteisExpedicao, useHorariosRetirada, useJanelaEntregaDias } from "@/hooks/useConfiguracoesSistema"
 import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
@@ -176,7 +180,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
               id="data_saida"
               type="date"
               value={dados.data_saida}
-              min={getMinScheduleDate(diasUteisExpedicao)}
+              min={getMinScheduleDateWithFreight(diasUteisExpedicao, dados.prazo_entrega_calculado)}
               onChange={(e) => handleChange('data_saida', e.target.value)}
             />
             {dados.data_saida && (
@@ -184,16 +188,28 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
                 <p className="text-xs text-primary font-medium">
                   Janela: {formatDeliveryWindowComplete(parseLocalDate(dados.data_saida), janelaEntregaDias)}
                 </p>
-                {!isDateAfterBlockedBusinessDays(parseLocalDate(dados.data_saida), diasUteisExpedicao) && (
+                {!isDateAfterTotalBusinessDays(
+                  parseLocalDate(dados.data_saida), 
+                  diasUteisExpedicao, 
+                  dados.prazo_entrega_calculado
+                ) && (
                   <p className="text-xs text-destructive">
-                    Mínimo: {diasUteisExpedicao} dias úteis ({getMinScheduleDate(diasUteisExpedicao)})
+                    Mínimo: {calculateTotalBusinessDaysRequired(diasUteisExpedicao, dados.prazo_entrega_calculado)} dias úteis
+                    {dados.prazo_entrega_calculado ? 
+                      ` (${diasUteisExpedicao} config + ${dados.prazo_entrega_calculado} frete)` : 
+                      ''
+                    }
                   </p>
                 )}
               </div>
             )}
             {!dados.data_saida && (
               <p className="text-xs text-muted-foreground">
-                Mínimo: {diasUteisExpedicao} dias úteis
+                Mínimo: {calculateTotalBusinessDaysRequired(diasUteisExpedicao, dados.prazo_entrega_calculado)} dias úteis
+                {dados.prazo_entrega_calculado ? 
+                  ` (${diasUteisExpedicao} config + ${dados.prazo_entrega_calculado} frete)` : 
+                  ''
+                }
               </p>
             )}
           </div>

@@ -44,6 +44,27 @@ export function getMinScheduleDate(businessDaysBlocked: number): string {
 }
 
 /**
+ * Calcula a data mínima considerando dias de configuração + prazo de frete
+ */
+export function getMinScheduleDateWithFreight(
+  businessDaysBlocked: number, 
+  freightDays?: number
+): string {
+  const totalDays = businessDaysBlocked + (freightDays || 0);
+  return getMinScheduleDate(totalDays);
+}
+
+/**
+ * Calcula o total de dias úteis necessários (configuração + frete)
+ */
+export function calculateTotalBusinessDaysRequired(
+  configDays: number,
+  freightDays?: number
+): number {
+  return configDays + (freightDays || 0);
+}
+
+/**
  * Verifica se uma data está A PARTIR do período de dias úteis bloqueados (inclusive)
  */
 export function isDateAfterBlockedBusinessDays(
@@ -60,4 +81,16 @@ export function isDateAfterBlockedBusinessDays(
   const minAllowedDate = addBusinessDays(today, businessDaysBlocked);
   
   return targetDateNormalized >= minAllowedDate;
+}
+
+/**
+ * Verifica se uma data está após o período total (configuração + frete)
+ */
+export function isDateAfterTotalBusinessDays(
+  targetDate: Date,
+  configDays: number,
+  freightDays?: number
+): boolean {
+  const totalDays = calculateTotalBusinessDaysRequired(configDays, freightDays);
+  return isDateAfterBlockedBusinessDays(targetDate, totalDays);
 }

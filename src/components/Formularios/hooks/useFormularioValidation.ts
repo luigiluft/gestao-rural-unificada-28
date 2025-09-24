@@ -1,7 +1,11 @@
 import { UseFormularioValidationProps, DadosEntrada, DadosSaida } from "../types/formulario.types"
 import { useToast } from "@/hooks/use-toast"
 import { usePesoMinimoMopp, useDiasUteisExpedicao } from "@/hooks/useConfiguracoesSistema"
-import { isDateAfterBlockedBusinessDays, getMinScheduleDate } from "@/lib/business-days"
+import { 
+  isDateAfterTotalBusinessDays, 
+  getMinScheduleDateWithFreight,
+  calculateTotalBusinessDaysRequired 
+} from "@/lib/business-days"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 
 export function useFormularioValidation({ tipo, dados, itens }: UseFormularioValidationProps) {
@@ -58,12 +62,23 @@ export function useFormularioValidation({ tipo, dados, itens }: UseFormularioVal
       return false
     }
 
-    // Validar data de saída após o período bloqueado de dias úteis
+    // Validar data de saída após o período total (configuração + frete)
     const dataSaida = new Date(dadosSaida.data_saida + 'T00:00:00')
-    if (!isDateAfterBlockedBusinessDays(dataSaida, diasUteisExpedicao)) {
+    const prazoFrete = dadosSaida.prazo_entrega_calculado || 0
+    const totalDias = calculateTotalBusinessDaysRequired(diasUteisExpedicao, prazoFrete)
+    
+    if (!isDateAfterTotalBusinessDays(dataSaida, diasUteisExpedicao, prazoFrete)) {
+      const minDate = getMinScheduleDateWithFreight(diasUteisExpedicao, prazoFrete)
+      let descricao = `Data de saída deve ser a partir de ${totalDias} dias úteis`
+      
+      if (prazoFrete > 0) {
+        descricao += ` (${diasUteisExpedicao} config + ${prazoFrete} frete)`
+      }
+      descricao += ` - mínimo: ${minDate}`
+      
       toast({ 
         title: "Erro", 
-        description: `Data de saída deve ser a partir de ${diasUteisExpedicao} dias úteis (mínimo: ${getMinScheduleDate(diasUteisExpedicao)})`, 
+        description: descricao,
         variant: "destructive" 
       })
       return false
