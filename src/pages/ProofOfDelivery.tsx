@@ -20,6 +20,8 @@ import {
 import { useComprovantesEntrega } from '@/hooks/useComprovantesEntrega';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DriverInvitationDialog } from '@/components/ProofOfDelivery/DriverInvitationDialog';
+import { DeliveryAssignment } from '@/components/ProofOfDelivery/DeliveryAssignment';
 
 const ProofOfDelivery = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,10 +60,13 @@ const ProofOfDelivery = () => {
           </p>
         </div>
         
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Comprovante
-        </Button>
+        <div className="flex gap-2">
+          <DriverInvitationDialog />
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Comprovante
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -222,6 +227,26 @@ const ProofOfDelivery = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Delivery Assignment Examples */}
+      {filteredComprovantes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Atribuição de Motoristas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {filteredComprovantes.slice(0, 2).map((comprovante) => (
+              <DeliveryAssignment
+                key={comprovante.id}
+                deliveryId={comprovante.id}
+                deliveryCode={comprovante.codigo}
+                clientName={comprovante.cliente_nome}
+                currentStatus={comprovante.status}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detalhes Expandidos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

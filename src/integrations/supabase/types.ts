@@ -189,6 +189,54 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string
+          comprovante_id: string
+          created_at: string
+          id: string
+          motorista_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by: string
+          comprovante_id: string
+          created_at?: string
+          id?: string
+          motorista_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string
+          comprovante_id?: string
+          created_at?: string
+          id?: string
+          motorista_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_assignments_comprovante_id_fkey"
+            columns: ["comprovante_id"]
+            isOneToOne: false
+            referencedRelation: "comprovantes_entrega"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_assignments_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       divergencias: {
         Row: {
           created_at: string
@@ -1398,6 +1446,7 @@ export type Database = {
       motoristas: {
         Row: {
           ativo: boolean
+          auth_user_id: string | null
           categoria_cnh: string | null
           cnh: string
           cpf: string
@@ -1412,6 +1461,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          auth_user_id?: string | null
           categoria_cnh?: string | null
           cnh: string
           cpf: string
@@ -1426,6 +1476,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          auth_user_id?: string | null
           categoria_cnh?: string | null
           cnh?: string
           cpf?: string
@@ -3103,6 +3154,10 @@ export type Database = {
       }
       is_subaccount: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      link_motorista_to_auth_user: {
+        Args: { p_auth_user_id: string; p_cpf: string }
         Returns: boolean
       }
       process_entrada_itens_without_produto: {

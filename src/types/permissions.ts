@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'franqueado' | 'produtor';
+export type UserRole = 'admin' | 'franqueado' | 'produtor' | 'motorista';
 
 // All possible permissions for pages and actions
 export type PermissionCode = 
@@ -13,6 +13,7 @@ export type PermissionCode =
   | 'remessas.view' | 'planejamento.view' | 'viagens.view' | 'agenda.view'
   | 'tracking.view' | 'proof-of-delivery.view' | 'ocorrencias.view' | 'tabelas-frete.view'
   | 'veiculos.view' | 'veiculos.manage' | 'motoristas.view' | 'motoristas.manage'
+  | 'motoristas.login' | 'proof-of-delivery.manage'
   | 'instrucoes.view' | 'configuracoes.view' | 'controle-acesso.view' | 'tabela-frete.view';
 
 // Template de permissões para criar perfis de funcionários/subcontas
@@ -62,6 +63,8 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'veiculos.manage', label: 'Gerenciar Veículos' },
   { code: 'motoristas.view', label: 'Visualizar Motoristas' },
   { code: 'motoristas.manage', label: 'Gerenciar Motoristas' },
+  { code: 'motoristas.login', label: 'Login de Motoristas' },
+  { code: 'proof-of-delivery.manage', label: 'Gerenciar Proof of Delivery' },
   { code: 'rastreio.view', label: 'Rastreamento' },
   { code: 'relatorios.view', label: 'Ver relatórios' },
   { code: 'produtores.view', label: 'Produtores' },

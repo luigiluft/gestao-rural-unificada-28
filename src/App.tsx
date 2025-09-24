@@ -43,6 +43,8 @@ import TabelasFrete from "./pages/TabelasFrete";
 import TabelaFrete from "./pages/TabelaFrete";
 import Veiculos from "./pages/Veiculos";
 import Motoristas from "./pages/Motoristas";
+import MotoristaLogin from "./pages/MotoristaLogin";
+import MotoristaDeliveries from "./pages/MotoristaDeliveries";
 import PlanejamentoPalletsPage from "./pages/PlanejamentoPallets";
 import Instrucoes from "./pages/Instrucoes";
 import InstrucoesAdmin from "./pages/InstrucoesAdmin";
@@ -78,6 +80,8 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/motorista/login" element={<MotoristaLogin />} />
+            <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
             <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastro /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
