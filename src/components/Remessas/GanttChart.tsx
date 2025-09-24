@@ -310,12 +310,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
         <CardHeader>
           <CardTitle>Cronograma de Entregas</CardTitle>
           <CardDescription>
-            Não há remessas com janelas de entrega válidas para exibir
+            As remessas expedidas ainda não possuem janelas de entrega definidas
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-64 text-muted-foreground">
-            Adicione ou corrija as datas de janela para visualizar o gráfico
+            Configure as janelas de entrega para visualizar o cronograma
           </div>
         </CardContent>
       </Card>;
