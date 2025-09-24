@@ -34,7 +34,19 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
   
   const requiredMopp = dados.tipo_saida === 'retirada_deposito' && pesoTotal >= pesoMinimoMopp
   const totalDias = calculateTotalBusinessDaysRequired(diasUteisExpedicao, dados.prazo_entrega_calculado)
-  const minDate = new Date(getMinScheduleDateWithFreight(diasUteisExpedicao, dados.prazo_entrega_calculado))
+  const minDateString = getMinScheduleDateWithFreight(diasUteisExpedicao, dados.prazo_entrega_calculado)
+  const minDate = new Date(minDateString)
+
+  // Se não há data selecionada, definir como a data mínima
+  const shouldSetMinDate = !dados.data_saida && dados.tipo_saida
+  if (shouldSetMinDate) {
+    const updatedDados = { 
+      ...dados, 
+      data_saida: minDateString,
+      janela_entrega_dias: janelaEntregaDias 
+    }
+    onDadosChange(updatedDados)
+  }
 
   // Hook para horários disponíveis
   const { data: horariosDisponiveis = [] } = useHorariosDisponiveis(

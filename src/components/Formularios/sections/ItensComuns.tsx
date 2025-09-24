@@ -261,17 +261,25 @@ export function ItensComunsSection({
 
             <div className="space-y-1">
               <Label className="text-xs">Unidade</Label>
-              <Select value={novoItem.unidade} onValueChange={(value) => onNovoItemChange('unidade', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Un" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sacas">Sacas</SelectItem>
-                  <SelectItem value="kg">Kg</SelectItem>
-                  <SelectItem value="litros">Litros</SelectItem>
-                  <SelectItem value="unidades">Unidades</SelectItem>
-                </SelectContent>
-              </Select>
+              {tipo === 'saida' ? (
+                <Input
+                  value={novoItem.unidade || ''}
+                  disabled
+                  className="bg-muted"
+                />
+              ) : (
+                <Select value={novoItem.unidade} onValueChange={(value) => onNovoItemChange('unidade', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Un" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sacas">Sacas</SelectItem>
+                    <SelectItem value="kg">Kg</SelectItem>
+                    <SelectItem value="litros">Litros</SelectItem>
+                    <SelectItem value="unidades">Unidades</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {tipo === 'entrada' && (
