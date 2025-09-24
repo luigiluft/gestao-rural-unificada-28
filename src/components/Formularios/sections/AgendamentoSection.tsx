@@ -18,7 +18,7 @@ import {
 import { useDiasUteisExpedicao, useJanelaEntregaDias } from "@/hooks/useConfiguracoesSistema"
 import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface AgendamentoSectionProps {
   dados: DadosSaida
@@ -37,16 +37,19 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
   const minDateString = getMinScheduleDateWithFreight(diasUteisExpedicao, dados.prazo_entrega_calculado)
   const minDate = new Date(minDateString)
 
-  // Se não há data selecionada, definir como a data mínima
-  const shouldSetMinDate = !dados.data_saida && dados.tipo_saida
-  if (shouldSetMinDate) {
-    const updatedDados = { 
-      ...dados, 
+// Ajuste automático da data: define a mínima quando vazio ou anterior ao mínimo
+useEffect(() => {
+  if (!dados.tipo_saida) return
+  const current = dados.data_saida ? new Date(dados.data_saida + 'T00:00:00') : undefined
+  if (!dados.data_saida || (current && current < minDate)) {
+    const updatedDados = {
+      ...dados,
       data_saida: minDateString,
-      janela_entrega_dias: janelaEntregaDias 
+      janela_entrega_dias: janelaEntregaDias,
     }
     onDadosChange(updatedDados)
   }
+}, [dados.data_saida, dados.tipo_saida, minDateString])
 
   // Hook para horários disponíveis
   const { data: horariosDisponiveis = [] } = useHorariosDisponiveis(

@@ -2168,6 +2168,10 @@ export type Database = {
           data_inicio_janela: string | null
           data_saida: string
           deposito_id: string
+          fazenda_id: string | null
+          frete_destino: string | null
+          frete_distancia: number | null
+          frete_origem: string | null
           id: string
           janela_entrega_dias: number | null
           janela_horario: string | null
@@ -2175,6 +2179,7 @@ export type Database = {
           nome_motorista: string | null
           observacoes: string | null
           observacoes_aprovacao: string | null
+          peso_total: number | null
           placa_veiculo: string | null
           produtor_destinatario_id: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
@@ -2183,6 +2188,7 @@ export type Database = {
           tipo_saida: string
           updated_at: string
           user_id: string
+          valor_frete_calculado: number | null
           valor_total: number | null
           viagem_id: string | null
         }
@@ -2195,6 +2201,10 @@ export type Database = {
           data_inicio_janela?: string | null
           data_saida: string
           deposito_id: string
+          fazenda_id?: string | null
+          frete_destino?: string | null
+          frete_distancia?: number | null
+          frete_origem?: string | null
           id?: string
           janela_entrega_dias?: number | null
           janela_horario?: string | null
@@ -2202,6 +2212,7 @@ export type Database = {
           nome_motorista?: string | null
           observacoes?: string | null
           observacoes_aprovacao?: string | null
+          peso_total?: number | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
@@ -2210,6 +2221,7 @@ export type Database = {
           tipo_saida: string
           updated_at?: string
           user_id: string
+          valor_frete_calculado?: number | null
           valor_total?: number | null
           viagem_id?: string | null
         }
@@ -2222,6 +2234,10 @@ export type Database = {
           data_inicio_janela?: string | null
           data_saida?: string
           deposito_id?: string
+          fazenda_id?: string | null
+          frete_destino?: string | null
+          frete_distancia?: number | null
+          frete_origem?: string | null
           id?: string
           janela_entrega_dias?: number | null
           janela_horario?: string | null
@@ -2229,6 +2245,7 @@ export type Database = {
           nome_motorista?: string | null
           observacoes?: string | null
           observacoes_aprovacao?: string | null
+          peso_total?: number | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
@@ -2237,6 +2254,7 @@ export type Database = {
           tipo_saida?: string
           updated_at?: string
           user_id?: string
+          valor_frete_calculado?: number | null
           valor_total?: number | null
           viagem_id?: string | null
         }
