@@ -166,12 +166,12 @@ export const useDynamicMenuItems = () => {
     const tmsPages = [
       'remessas',
       'viagens',
+      'proof-of-delivery',
+      'ocorrencias',
       'veiculos',
       'motoristas',
       'agenda',
       'tracking',
-      'proof-of-delivery',
-      'ocorrencias',
       'tabela-frete'
     ]
 
