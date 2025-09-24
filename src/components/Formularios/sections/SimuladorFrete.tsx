@@ -52,6 +52,13 @@ export function SimuladorFrete({
   }
 
   const handleCalcular = async () => {
+    console.log("Tentando calcular frete:", { 
+      origem: simulacao.origem, 
+      destino: simulacao.destino, 
+      distancia: simulacao.distancia, 
+      pesoTotal 
+    })
+    
     if (!simulacao.origem || !simulacao.destino || !simulacao.distancia || pesoTotal <= 0) {
       toast.error("Preencha todos os campos para calcular o frete")
       return
@@ -169,7 +176,7 @@ export function SimuladorFrete({
 
         <Button 
           onClick={handleCalcular} 
-          disabled={calculando || !simulacao.origem.trim() || !simulacao.destino.trim() || !simulacao.distancia.trim() || pesoTotal <= 0 || parseFloat(simulacao.distancia) <= 0}
+          disabled={calculando || pesoTotal <= 0}
           className="w-full"
         >
           {calculando ? (
