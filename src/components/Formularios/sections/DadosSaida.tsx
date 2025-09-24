@@ -173,46 +173,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="data_saida">Data de Entrega *</Label>
-            <Input
-              id="data_saida"
-              type="date"
-              value={dados.data_saida}
-              min={getMinScheduleDateWithFreight(diasUteisExpedicao, dados.prazo_entrega_calculado)}
-              onChange={(e) => handleChange('data_saida', e.target.value)}
-            />
-            {dados.data_saida && (
-              <div className="space-y-1">
-                <p className="text-xs text-primary font-medium">
-                  Janela: {formatDeliveryWindowComplete(parseLocalDate(dados.data_saida), janelaEntregaDias)}
-                </p>
-                {!isDateAfterTotalBusinessDays(
-                  parseLocalDate(dados.data_saida), 
-                  diasUteisExpedicao, 
-                  dados.prazo_entrega_calculado
-                ) && (
-                  <p className="text-xs text-destructive">
-                    Mínimo: {calculateTotalBusinessDaysRequired(diasUteisExpedicao, dados.prazo_entrega_calculado)} dias úteis
-                    {dados.prazo_entrega_calculado ? 
-                      ` (${diasUteisExpedicao} config + ${dados.prazo_entrega_calculado} frete)` : 
-                      ''
-                    }
-                  </p>
-                )}
-              </div>
-            )}
-            {!dados.data_saida && (
-              <p className="text-xs text-muted-foreground">
-                Mínimo: {calculateTotalBusinessDaysRequired(diasUteisExpedicao, dados.prazo_entrega_calculado)} dias úteis
-                {dados.prazo_entrega_calculado ? 
-                  ` (${diasUteisExpedicao} config + ${dados.prazo_entrega_calculado} frete)` : 
-                  ''
-                }
-              </p>
-            )}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
           <div className="space-y-2">
             <Label htmlFor="tipo_saida">Tipo de Saída *</Label>
@@ -289,92 +250,6 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
             </div>
           )}
         </div>
-
-        {/* Seção de transporte para retirada no depósito */}
-        {dados.tipo_saida === 'retirada_deposito' && (
-          <div className="space-y-4 pt-4 border-t">
-            <h4 className="font-medium text-sm">Dados do Transporte</h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="placa_veiculo">Placa do Veículo *</Label>
-                <Input
-                  id="placa_veiculo"
-                  value={dados.placa_veiculo}
-                  onChange={(e) => handleChange('placa_veiculo', e.target.value.toUpperCase())}
-                  placeholder="ABC-1234"
-                  maxLength={8}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nome_motorista">Nome do Motorista *</Label>
-                <Input
-                  id="nome_motorista"
-                  value={dados.nome_motorista}
-                  onChange={(e) => handleChange('nome_motorista', e.target.value)}
-                  placeholder="Nome completo"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telefone_motorista">Telefone do Motorista *</Label>
-                <Input
-                  id="telefone_motorista"
-                  value={dados.telefone_motorista}
-                  onChange={(e) => handleChange('telefone_motorista', e.target.value)}
-                  placeholder="(11) 99999-9999"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cpf_motorista">CPF do Motorista</Label>
-                <Input
-                  id="cpf_motorista"
-                  value={dados.cpf_motorista}
-                  onChange={(e) => handleChange('cpf_motorista', e.target.value)}
-                  placeholder="000.000.000-00"
-                />
-              </div>
-
-              {requiredMopp && (
-                <div className="space-y-2">
-                  <Label htmlFor="mopp_motorista">MOPP do Motorista *</Label>
-                  <Input
-                    id="mopp_motorista"
-                    value={dados.mopp_motorista}
-                    onChange={(e) => handleChange('mopp_motorista', e.target.value)}
-                    placeholder="Número do MOPP"
-                  />
-                  <p className="text-xs text-amber-600">
-                    MOPP obrigatório para cargas acima de {pesoMinimoMopp} Kg/L
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="janela_horario">Janela de Horário *</Label>
-                <Select value={dados.janela_horario} onValueChange={(value) => handleChange('janela_horario', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o horário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {horariosDisponiveis.map((horario) => (
-                      <SelectItem key={horario} value={horario}>
-                        {horario}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {horariosDisponiveis.length === 0 && (
-                  <p className="text-xs text-amber-600">
-                    Nenhum horário disponível para esta data
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="space-y-2">
           <Label htmlFor="observacoes">Observações</Label>

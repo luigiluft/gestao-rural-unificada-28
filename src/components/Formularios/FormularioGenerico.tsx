@@ -6,6 +6,7 @@ import { DadosEntradaSection } from "./sections/DadosEntrada"
 import { DadosSaidaSection } from "./sections/DadosSaida"
 import { ItensComunsSection } from "./sections/ItensComuns"
 import { SimuladorFrete } from "./sections/SimuladorFrete"
+import { AgendamentoSection } from "./sections/AgendamentoSection"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { useCriarReserva } from "@/hooks/useReservasHorario"
@@ -290,6 +291,20 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           fazendaNome={fazendas.find(f => f.id === dadosSaida.fazenda_id)?.nome}
           onFreteCalculado={handleFreteCalculado}
         />
+      )}
+
+      {/* Seção de Agendamento - após o simulador de frete */}
+      {tipo === 'saida' && (
+        (dadosSaida.tipo_saida === 'retirada_deposito' || 
+         (dadosSaida.tipo_saida === 'entrega_fazenda' && dadosSaida.prazo_entrega_calculado)
+        ) && (
+          <AgendamentoSection
+            dados={dadosSaida}
+            onDadosChange={setDados}
+            pesoTotal={calcularPesoTotal()}
+            pesoMinimoMopp={pesoMinimoMopp}
+          />
+        )
       )}
 
       {/* Botões de Ação */}
