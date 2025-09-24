@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import {
   DndContext,
-  pointerWithin,
+  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -94,8 +94,9 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({ viagem, onClick
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   }
 
   const statusConfig = statusBadges[viagem.status as keyof typeof statusBadges] || statusBadges.planejada
@@ -198,10 +199,28 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     
-    if (!over || !active.data.current) return
+    console.log('🎯 Drag End Event:', {
+      activeId: active.id,
+      overId: over?.id,
+      activeData: active.data.current,
+      overData: over?.data?.current
+    })
+    
+    if (!over || !active.data.current) {
+      console.log('❌ Drag cancelled: no over target or active data')
+      return
+    }
 
     const viagem = active.data.current.viagem as Viagem
+    const currentDateIndex = active.data.current.dateIndex as number
     const overId = String(over.id)
+    
+    console.log('📋 Viagem being dragged:', {
+      viagemId: viagem.id,
+      numero: viagem.numero,
+      currentDateIndex,
+      currentDate: dates[currentDateIndex] ? format(dates[currentDateIndex], 'yyyy-MM-dd') : 'unknown'
+    })
     
     // Identificar a coluna alvo
     let newDateIndex: number | null = null
@@ -209,19 +228,43 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     // Caso 1: soltou na coluna vazia (id: droppable-<idx>)
     if (overId.startsWith('droppable-')) {
       const parsed = parseInt(overId.replace('droppable-', ''), 10)
-      if (!Number.isNaN(parsed)) newDateIndex = parsed
+      if (!Number.isNaN(parsed)) {
+        newDateIndex = parsed
+        console.log('📍 Dropped on empty column:', newDateIndex)
+      }
     }
 
     // Caso 2: soltou sobre outro card (id: <uuid>-<idx>)
     if (newDateIndex === null) {
       const match = overId.match(/-(\d+)$/)
-      if (match) newDateIndex = parseInt(match[1], 10)
+      if (match) {
+        newDateIndex = parseInt(match[1], 10)
+        console.log('📍 Dropped on card in column:', newDateIndex)
+      }
     }
 
-    if (newDateIndex === null) return
+    if (newDateIndex === null || newDateIndex < 0 || newDateIndex >= dates.length) {
+      console.log('❌ Invalid date index:', newDateIndex, 'Available dates:', dates.length)
+      return
+    }
+
+    // Verificar se mudou de posição
+    if (newDateIndex === currentDateIndex) {
+      console.log('ℹ️ No position change, staying in same column')
+      return
+    }
     
     const newDate = dates[newDateIndex]
-    if (!newDate) return
+    if (!newDate) {
+      console.log('❌ New date not found for index:', newDateIndex)
+      return
+    }
+
+    console.log('📅 Date change:', {
+      from: format(dates[currentDateIndex], 'yyyy-MM-dd'),
+      to: format(newDate, 'yyyy-MM-dd'),
+      indexChange: `${currentDateIndex} → ${newDateIndex}`
+    })
 
     // Calcular duração original da viagem
     const dataInicioOriginal = parseISO(viagem.data_inicio)
@@ -231,6 +274,15 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     // A nova data será a data de início, e calculamos a nova data de fim
     const novaDataInicio = format(newDate, 'yyyy-MM-dd')
     const novaDataFim = format(addDays(newDate, duracaoOriginal), 'yyyy-MM-dd')
+
+    console.log('🔄 Updating viagem:', {
+      viagemId: viagem.id,
+      oldStart: viagem.data_inicio,
+      oldEnd: viagem.data_fim,
+      newStart: novaDataInicio,
+      newEnd: novaDataFim,
+      duration: duracaoOriginal + ' days'
+    })
 
     updateViagemData.mutate({
       viagemId: viagem.id,
@@ -336,7 +388,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
               {/* Área de drop das viagens */}
               <DndContext 
                 sensors={sensors}
-                collisionDetection={pointerWithin}
+                collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <div className="flex min-h-96" style={{ width: `${dates.length * 192}px` }}>
