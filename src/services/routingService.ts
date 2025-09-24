@@ -1,7 +1,9 @@
 /**
- * Serviço de roteirização usando OSRM API
+ * Serviço de roteirização usando DistanceMatrix.ai API
  * Calcula distâncias entre duas coordenadas geográficas
  */
+
+import { supabase } from "@/integrations/supabase/client"
 
 export interface RouteDistance {
   distance: number; // distância em metros
@@ -14,7 +16,7 @@ export interface Coordinates {
 }
 
 /**
- * Calcula a distância entre duas coordenadas usando a API OSRM
+ * Calcula a distância entre duas coordenadas usando a API DistanceMatrix.ai
  * @param origin - Coordenadas de origem
  * @param destination - Coordenadas de destino
  * @returns Distância em quilômetros
@@ -24,42 +26,47 @@ export async function calculateDistance(
   destination: Coordinates
 ): Promise<number> {
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=false&alternatives=false&steps=false`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
+    // Validate coordinates first
+    if (!validateCoordinates(origin) || !validateCoordinates(destination)) {
+      throw new Error('Coordenadas inválidas fornecidas');
+    }
+
+    console.log('Calculando distância:', { origin, destination });
+
+    // Call Supabase edge function
+    const { data, error } = await supabase.functions.invoke('calculate-distance', {
+      body: {
+        originLat: origin.latitude,
+        originLng: origin.longitude,
+        destinationLat: destination.latitude,
+        destinationLng: destination.longitude,
       },
-      mode: 'cors', // Explicitly set CORS mode
     });
 
-    if (!response.ok) {
-      throw new Error(`OSRM API error: ${response.status} ${response.statusText}`);
+    if (error) {
+      console.error('Erro na edge function:', error);
+      throw new Error(`Erro na comunicação com o serviço: ${error.message}`);
     }
 
-    const data = await response.json();
-    
-    if (!data.routes || data.routes.length === 0) {
-      throw new Error('Nenhuma rota encontrada entre os pontos informados');
+    if (!data.success) {
+      throw new Error(data.error || 'Erro desconhecido no cálculo da distância');
     }
 
-    // Retorna distância em quilômetros (OSRM retorna em metros)
-    const distanceInKm = data.routes[0].distance / 1000;
-    return Math.round(distanceInKm * 100) / 100; // Arredonda para 2 casas decimais
+    console.log('Distância calculada:', data.distance, 'km');
+    return data.distance;
+
   } catch (error) {
     console.error('Erro ao calcular distância:', error);
     
-    // Handle CORS and network errors gracefully
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Serviço de cálculo de distância temporariamente indisponível. Por favor, insira a distância manualmente.');
+    // Handle network and service errors gracefully
+    if (error instanceof Error) {
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        throw new Error('Serviço de cálculo de distância temporariamente indisponível. Por favor, insira a distância manualmente.');
+      }
+      throw new Error(`Erro ao calcular distância: ${error.message}`);
     }
     
-    throw new Error(
-      error instanceof Error 
-        ? `Erro ao calcular distância: ${error.message}`
-        : 'Erro desconhecido ao calcular distância'
-    );
+    throw new Error('Erro desconhecido ao calcular distância');
   }
 }
 
