@@ -46,7 +46,17 @@ export function ProtectedRoute({
     );
   }
 
-  if (!hasAccess) return null;
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold mb-2">Acesso Negado</h2>
+          <p className="text-muted-foreground mb-4">Você não tem permissão para acessar esta página.</p>
+          <a href="/" className="text-primary hover:underline">Voltar ao início</a>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

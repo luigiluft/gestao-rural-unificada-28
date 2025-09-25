@@ -21,45 +21,59 @@ export const useSimplifiedPermissions = (): UserPermissions => {
         return { permissions: [], isSubaccount: false }
       }
 
-      // Verificar se é subconta
-      const { data: hierarchyData } = await supabase
-        .from("user_hierarchy")
-        .select("parent_user_id")
-        .eq("child_user_id", user.id)
-        .maybeSingle()
-
-      const isSubaccount = !!hierarchyData?.parent_user_id
-
-      if (isSubaccount) {
-        // É subconta - buscar permissões via permission_templates
-        const { data: templateAssignment } = await supabase
-          .from("user_permission_templates")
-          .select(`
-            template_id,
-            permission_templates(permissions)
-          `)
-          .eq("user_id", user.id)
+      try {
+        // Verificar se é subconta
+        const { data: hierarchyData } = await supabase
+          .from("user_hierarchy")
+          .select("parent_user_id")
+          .eq("child_user_id", user.id)
           .maybeSingle()
 
-        if (templateAssignment?.permission_templates) {
+        const isSubaccount = !!hierarchyData?.parent_user_id
+
+        if (isSubaccount) {
+          // É subconta - buscar permissões via permission_templates
+          const { data: templateAssignment } = await supabase
+            .from("user_permission_templates")
+            .select(`
+              template_id,
+              permission_templates(permissions)
+            `)
+            .eq("user_id", user.id)
+            .maybeSingle()
+
+          if (templateAssignment?.permission_templates) {
+            return {
+              permissions: templateAssignment.permission_templates.permissions as PermissionCode[],
+              isSubaccount: true
+            }
+          }
+
+          return { permissions: [], isSubaccount: true }
+        } else {
+          // É usuário master - buscar permissões via page_permissions
+          const { data: pagePermissions } = await supabase
+            .from("page_permissions")
+            .select("page_key")
+            .eq("role", profile.role)
+            .eq("can_access", true)
+
+          const permissions = pagePermissions?.map(p => `${p.page_key}.view` as PermissionCode) || []
+
+          return { permissions, isSubaccount: false }
+        }
+      } catch (error) {
+        console.error('Error fetching simplified permissions:', error)
+        
+        // Fallback for motorista role in case of permission errors
+        if (profile.role === 'motorista') {
           return {
-            permissions: templateAssignment.permission_templates.permissions as PermissionCode[],
-            isSubaccount: true
+            permissions: ['proof-of-delivery.view', 'comprovantes.view'] as PermissionCode[],
+            isSubaccount: false
           }
         }
-
-        return { permissions: [], isSubaccount: true }
-      } else {
-        // É usuário master - buscar permissões via page_permissions
-        const { data: pagePermissions } = await supabase
-          .from("page_permissions")
-          .select("page_key")
-          .eq("role", profile.role)
-          .eq("can_access", true)
-
-        const permissions = pagePermissions?.map(p => `${p.page_key}.view` as PermissionCode) || []
-
-        return { permissions, isSubaccount: false }
+        
+        return { permissions: [], isSubaccount: false }
       }
     },
     enabled: !!user?.id && !!profile?.role,

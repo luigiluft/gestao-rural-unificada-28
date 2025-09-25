@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
 import Entradas from "./pages/Entradas";
 import Estoque from "./pages/Estoque";
@@ -101,7 +102,7 @@ const App = () => {
             <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
             <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastro /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-              <Route index element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
+              <Route index element={<Index />} />
               <Route path="catalogo" element={<RequirePageAccess pageKey="catalogo"><Catalogo /></RequirePageAccess>} />
               <Route path="entradas" element={<RequirePageAccess pageKey="entradas"><Entradas /></RequirePageAccess>} />
               <Route path="estoque" element={<RequirePageAccess pageKey="estoque"><Estoque /></RequirePageAccess>} />
