@@ -51,6 +51,11 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({ deliveryId, onPhotoUpl
         },
         (error) => {
           console.warn('Geolocation error:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000
         }
       );
     }

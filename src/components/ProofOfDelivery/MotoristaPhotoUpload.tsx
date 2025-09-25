@@ -116,7 +116,27 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         },
         (error) => {
           console.error('Erro ao obter localização:', error)
-          toast.error('Erro ao obter localização. Verifique as permissões.')
+          let errorMessage = 'Erro ao obter localização. '
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage += 'Permissão negada. Habilite a localização nas configurações do navegador.'
+              break
+            case error.POSITION_UNAVAILABLE:
+              errorMessage += 'Posição indisponível. Verifique sua conexão GPS.'
+              break
+            case error.TIMEOUT:
+              errorMessage += 'Tempo limite excedido. Tente novamente.'
+              break
+            default:
+              errorMessage += 'Verifique as permissões e tente novamente.'
+              break
+          }
+          toast.error(errorMessage)
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000
         }
       )
     } else {
