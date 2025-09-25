@@ -129,6 +129,8 @@ export function AppSidebar() {
         return notifications.subcontas || 0
       case "Viagens":
         return viagensCount || 0
+      case "Proof of Delivery":
+        return viagensCount || 0
       default:
         return 0
     }
