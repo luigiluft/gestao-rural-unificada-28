@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'franqueado' | 'produtor';
+export type UserRole = 'admin' | 'franqueado' | 'produtor' | 'motorista';
 
 // All possible permissions for pages and actions
 export type PermissionCode = 

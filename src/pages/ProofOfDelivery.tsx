@@ -2,117 +2,199 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-  CheckCircle, 
-  FileText, 
-  Camera, 
-  Signature, 
-  Plus,
-  Eye,
-  Download,
-  MapPin,
-  Clock,
-  User
+  Truck, 
+  MapPin, 
+  Clock, 
+  User,
+  Package
 } from 'lucide-react';
-import { useComprovantesEntrega } from '@/hooks/useComprovantesEntrega';
+import { useMotoristaViagens } from '@/hooks/useMotoristaViagens';
+import { useUserRole } from '@/hooks/useUserRole';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { DriverInvitationDialog } from '@/components/ProofOfDelivery/DriverInvitationDialog';
+import { ViagemCard } from '@/components/ProofOfDelivery/ViagemCard';
+import { MotoristaPhotoUpload } from '@/components/ProofOfDelivery/MotoristaPhotoUpload';
 
 const ProofOfDelivery = () => {
+  const [selectedViagemId, setSelectedViagemId] = useState<string | null>(null)
+  const [showPhotoUpload, setShowPhotoUpload] = useState<string | null>(null)
+  
+  const { userRole, isLoading: roleLoading } = useUserRole()
+  const { data: viagens = [], isLoading: viagensLoading } = useMotoristaViagens()
+  
+  const isLoading = roleLoading || viagensLoading
+
+  // Se não for motorista, mostrar mensagem
+  if (!isLoading && userRole !== 'motorista') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">Acesso Restrito</h3>
+            <p className="text-muted-foreground">
+              Esta página é exclusiva para motoristas. Entre em contato com o administrador se você deveria ter acesso.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return <LoadingState />
+  }
+
+  // Se está mostrando upload de fotos
+  if (showPhotoUpload) {
+    const viagem = viagens.find(v => v.id === showPhotoUpload)
+    if (!viagem) {
+      setShowPhotoUpload(null)
+      return null
+    }
+
+    return (
+      <MotoristaPhotoUpload
+        viagem={viagem}
+        onVoltar={() => setShowPhotoUpload(null)}
+      />
+    )
+  }
+
+  const viagensPendentes = viagens.filter(v => v.status === 'pendente')
+  const viagensEmAndamento = viagens.filter(v => v.status === 'em_andamento')
+  const viagensFinalizadas = viagens.filter(v => v.status === 'finalizada')
+  const viagensEntregues = viagens.filter(v => v.status === 'entregue')
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Proof of Delivery</h1>
-          <p className="text-muted-foreground">
-            Gerencie comprovantes de entrega e assinaturas digitais
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <DriverInvitationDialog />
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Comprovante
-          </Button>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-white border-b border-border">
+        <div className="max-w-6xl mx-auto p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Truck className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Minhas Viagens</h1>
+                <p className="text-muted-foreground">
+                  Gerencie suas viagens e envie comprovantes de entrega
+                </p>
+              </div>
+            </div>
+            
+            {/* Stats rápidas */}
+            <div className="flex gap-4 text-center">
+              <div className="px-3 py-2 bg-orange-50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">{viagensPendentes.length}</div>
+                <div className="text-xs text-orange-600">Pendentes</div>
+              </div>
+              <div className="px-3 py-2 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{viagensEmAndamento.length}</div>
+                <div className="text-xs text-blue-600">Em Andamento</div>
+              </div>
+              <div className="px-3 py-2 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{viagensEntregues.length}</div>
+                <div className="text-xs text-green-600">Entregues</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Sistema de Gerenciamento de Entregas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sistema de Gerenciamento de Entregas</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Gerencie motoristas, atribuições e configure o sistema de proof of delivery
-          </p>
-        </CardHeader>
-      </Card>
-
-
-      {/* Detalhes Expandidos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Funcionalidades</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
-              <Signature className="h-8 w-8 text-primary" />
-              <div className="flex-1">
-                <h4 className="font-semibold">Assinatura Digital</h4>
-                <p className="text-sm text-muted-foreground">
-                  Capture assinaturas digitais dos recebedores
-                </p>
+      {/* Conteúdo Principal */}
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {viagens.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Truck className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Nenhuma viagem atribuída</h3>
+              <p className="text-muted-foreground text-center">
+                Você não possui viagens atribuídas no momento. Entre em contato com o coordenador.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Viagens Pendentes */}
+            {viagensPendentes.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-orange-600" />
+                  <h2 className="text-xl font-semibold">Aguardando Início ({viagensPendentes.length})</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {viagensPendentes.map((viagem) => (
+                    <ViagemCard
+                      key={viagem.id}
+                      viagem={viagem}
+                      onVerFotos={(id) => setShowPhotoUpload(id)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
-              <Camera className="h-8 w-8 text-primary" />
-              <div className="flex-1">
-                <h4 className="font-semibold">Fotos de Entrega</h4>
-                <p className="text-sm text-muted-foreground">
-                  Documente entregas com fotos georreferenciadas
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 p-4 border rounded-lg">
-              <MapPin className="h-8 w-8 text-primary" />
-              <div className="flex-1">
-                <h4 className="font-semibold">Geolocalização</h4>
-                <p className="text-sm text-muted-foreground">
-                  Registre a localização exata da entrega
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Relatórios</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start">
-              <FileText className="h-4 w-4 mr-2" />
-              Relatório de Entregas Diário
-            </Button>
-            
-            <Button variant="outline" className="w-full justify-start">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar Comprovantes PDF
-            </Button>
-            
-            <Button variant="outline" className="w-full justify-start">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Relatório de Performance
-            </Button>
-          </CardContent>
-        </Card>
+            {/* Viagens Em Andamento */}
+            {viagensEmAndamento.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-blue-600" />
+                  <h2 className="text-xl font-semibold">Em Andamento ({viagensEmAndamento.length})</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {viagensEmAndamento.map((viagem) => (
+                    <ViagemCard
+                      key={viagem.id}
+                      viagem={viagem}
+                      onVerFotos={(id) => setShowPhotoUpload(id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Viagens Finalizadas */}
+            {viagensFinalizadas.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-purple-600" />
+                  <h2 className="text-xl font-semibold">Aguardando Comprovante ({viagensFinalizadas.length})</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {viagensFinalizadas.map((viagem) => (
+                    <ViagemCard
+                      key={viagem.id}
+                      viagem={viagem}
+                      onVerFotos={(id) => setShowPhotoUpload(id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Viagens Entregues */}
+            {viagensEntregues.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-green-600" />
+                  <h2 className="text-xl font-semibold">Concluídas ({viagensEntregues.length})</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {viagensEntregues.map((viagem) => (
+                    <ViagemCard
+                      key={viagem.id}
+                      viagem={viagem}
+                      onVerFotos={(id) => setShowPhotoUpload(id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
