@@ -72,7 +72,6 @@ const ProofOfDelivery = () => {
   }
 
   const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'pendente')
-  const viagensEmAndamento = viagens.filter(v => v.status === 'em_andamento')
   const viagensFinalizadas = viagens.filter(v => v.status === 'finalizada')
   const viagensEntregues = viagens.filter(v => v.status === 'entregue')
 
@@ -142,25 +141,7 @@ const ProofOfDelivery = () => {
               </div>
             )}
 
-            {/* Viagens Em Andamento */}
-            {viagensEmAndamento.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">Em Andamento ({viagensEmAndamento.length})</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {viagensEmAndamento.map((viagem) => (
-                    <ViagemCard
-                      key={viagem.id}
-                      viagem={viagem}
-                      onVerFotos={(id) => setShowPhotoUpload(id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
+            {/* Seção 'Em Andamento' removida conforme solicitação */}
             {/* Viagens Finalizadas */}
             {viagensFinalizadas.length > 0 && (
               <div className="space-y-4">

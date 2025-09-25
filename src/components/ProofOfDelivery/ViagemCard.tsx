@@ -177,17 +177,15 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
           {canStart && (
             <>
               {/* Botão simples para iniciar viagem */}
-              <Button 
-                className="flex-1" 
-                onClick={() => {
-                  iniciarViagemMutation.mutate({
-                    viagemId: viagem.id,
-                    hodometroInicio: undefined,
-                    combustivelInicio: undefined
-                  })
-                }}
-                disabled={iniciarViagemMutation.isPending}
-              >
+                 <Button 
+                  className="flex-1" 
+                  onClick={() => {
+                    iniciarViagemMutation.mutate({
+                      viagemId: viagem.id,
+                    })
+                  }}
+                  disabled={iniciarViagemMutation.isPending}
+                >
                 <Play className="h-4 w-4 mr-2" />
                 Iniciar Viagem
               </Button>

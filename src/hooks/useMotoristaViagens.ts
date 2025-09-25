@@ -42,7 +42,7 @@ export const useMotoristaViagens = () => {
         .from("motoristas")
         .select("id")
         .eq("auth_user_id", user.id)
-        .single()
+        .maybeSingle()
 
       if (motoristaError || !motorista) {
         console.log("❌ useMotoristaViagens: Motorista não encontrado para o usuário:", user.id, motoristaError)
@@ -75,7 +75,7 @@ export const useMotoristaViagens = () => {
             .from("veiculos")
             .select("id, placa, modelo")
             .eq("id", viagem.veiculo_id)
-            .single()
+            .maybeSingle()
           veiculo = veiculoData
         }
 
@@ -86,7 +86,7 @@ export const useMotoristaViagens = () => {
             .from("franquias")
             .select("id, nome")
             .eq("id", viagem.deposito_id)
-            .single()
+            .maybeSingle()
           deposito = depositoData
         }
 
@@ -129,6 +129,10 @@ export const useIniciarViagem = () => {
     },
     onSuccess: (_, variables) => {
       toast.success("Viagem iniciada com sucesso!")
+      // Optimistically update cache so UI reflects the change immediately
+      queryClient.setQueryData<ViagemMotorista[] | undefined>(["motorista-viagens", user?.id], (old) =>
+        old?.map(v => v.id === variables.viagemId ? { ...v, status: "em_andamento", data_inicio: new Date().toISOString() } : v)
+      )
       queryClient.invalidateQueries({ queryKey: ["motorista-viagens", user?.id] })
     },
     onError: (error: any) => {

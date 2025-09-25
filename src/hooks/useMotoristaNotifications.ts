@@ -15,7 +15,7 @@ export const useMotoristaNotifications = () => {
         .from("motoristas")
         .select("id")
         .eq("auth_user_id", user.id)
-        .single()
+        .maybeSingle()
 
       if (motoristaError || !motorista) {
         return 0
