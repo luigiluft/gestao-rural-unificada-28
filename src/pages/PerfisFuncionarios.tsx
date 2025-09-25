@@ -17,27 +17,76 @@ import { type PermissionTemplate, type PermissionCode, type UserRole } from "@/t
 const AVAILABLE_PERMISSIONS = {
   franqueado: [
     { code: 'dashboard.view', label: 'Dashboard' },
+    { code: 'catalogo.view', label: 'Catálogo' },
+    
+    // Gestão de Entrada
     { code: 'entradas.view', label: 'Visualizar Entradas' },
+    { code: 'entradas.manage', label: 'Gerenciar Entradas' },
+    
+    // Estoque
+    { code: 'estoque.view', label: 'Visualizar Estoque' },
+    { code: 'estoque.manage', label: 'Gerenciar Estoque' },
+    
+    // Gestão de Saída
+    { code: 'saidas.view', label: 'Visualizar Saídas' },
+    { code: 'saidas.manage', label: 'Gerenciar Saídas' },
+    
+    // WMS - Warehouse Management System
     { code: 'recebimento.view', label: 'Central de Recebimento' },
-    { code: 'alocacao.view', label: 'Central de Alocação' },
+    { code: 'alocacao-pallets.view', label: 'Alocação de Pallets' },
+    { code: 'gerenciar-posicoes.view', label: 'Gerenciar Posições' },
+    { code: 'inventario.view', label: 'Inventário' },
     { code: 'separacao.view', label: 'Central de Separação' },
     { code: 'expedicao.view', label: 'Central de Expedição' },
-    { code: 'estoque.view', label: 'Visualizar Estoque' },
-    { code: 'saidas.view', label: 'Visualizar Saídas' },
-    { code: 'inventario.view', label: 'Inventário' },
-    { code: 'relatorios.view', label: 'Relatórios' },
+    
+    // TMS - Transportation Management System
+    { code: 'remessas.view', label: 'Remessas' },
+    { code: 'viagens.view', label: 'Viagens' },
+    { code: 'agenda.view', label: 'Agenda' },
+    { code: 'tracking.view', label: 'Tracking' },
+    { code: 'proof-of-delivery.view', label: 'Proof of Delivery' },
+    { code: 'proof-of-delivery.manage', label: 'Gerenciar Proof of Delivery' },
+    { code: 'comprovantes.view', label: 'Comprovantes de Entrega' },
+    { code: 'ocorrencias.view', label: 'Ocorrências' },
+    { code: 'tabela-frete.view', label: 'Tabela de Frete' },
+    { code: 'tabelas-frete.view', label: 'Tabelas de Frete' },
+    { code: 'veiculos.view', label: 'Visualizar Veículos' },
+    { code: 'veiculos.manage', label: 'Gerenciar Veículos' },
+    { code: 'motoristas.view', label: 'Visualizar Motoristas' },
+    { code: 'motoristas.manage', label: 'Gerenciar Motoristas' },
     { code: 'motorista.deliveries.view', label: 'Entregas de Motorista' },
-    { code: 'proof-of-delivery.manage', label: 'Gerenciar Entregas' },
+    
+    // Relatórios e Rastreamento
+    { code: 'rastreio.view', label: 'Rastreamento' },
+    { code: 'relatorios.view', label: 'Relatórios' },
+    
+    // Gestão de Usuários e Produtores
+    { code: 'produtores.view', label: 'Produtores' },
+    { code: 'fazendas.view', label: 'Fazendas' },
+    { code: 'subcontas.view', label: 'Subcontas' },
+    { code: 'perfis-funcionarios.view', label: 'Perfis de Funcionários' },
+    
+    // Sistema
+    { code: 'perfil.view', label: 'Perfil' },
+    { code: 'instrucoes.view', label: 'Instruções' },
+    { code: 'suporte.view', label: 'Suporte' },
+    { code: 'configuracoes.view', label: 'Configurações' },
+    { code: 'controle-acesso.view', label: 'Controle de Acesso' },
   ],
   produtor: [
     { code: 'dashboard.view', label: 'Dashboard' },
+    { code: 'catalogo.view', label: 'Catálogo' },
     { code: 'entradas.view', label: 'Visualizar Entradas' },
     { code: 'entradas.manage', label: 'Gerenciar Entradas' },
+    { code: 'estoque.view', label: 'Visualizar Estoque' },
     { code: 'saidas.view', label: 'Visualizar Saídas' },
     { code: 'saidas.manage', label: 'Gerenciar Saídas' },
-    { code: 'estoque.view', label: 'Visualizar Estoque' },
     { code: 'rastreio.view', label: 'Rastreamento' },
     { code: 'relatorios.view', label: 'Relatórios' },
+    { code: 'fazendas.view', label: 'Fazendas' },
+    { code: 'perfil.view', label: 'Perfil' },
+    { code: 'suporte.view', label: 'Suporte' },
+    { code: 'instrucoes.view', label: 'Instruções' },
   ]
 }
 
