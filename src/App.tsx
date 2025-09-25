@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -72,8 +73,23 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  // Initialize PWA elements after React is ready
+  useEffect(() => {
+    const initializePWAElements = async () => {
+      try {
+        const { defineCustomElements } = await import('@ionic/pwa-elements/loader');
+        defineCustomElements(window);
+      } catch (error) {
+        console.warn('Failed to load PWA elements:', error);
+      }
+    };
+    
+    initializePWAElements();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <BrowserRouter>
         <TooltipProvider>
@@ -150,6 +166,7 @@ const App = () => (
       </BrowserRouter>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
