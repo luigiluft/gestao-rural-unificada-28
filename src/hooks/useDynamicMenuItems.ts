@@ -80,7 +80,8 @@ const iconMap = {
   "tabelas-frete": Calculator,
   "tabela-frete": FileText,
   veiculos: Truck,
-  motoristas: Users
+  motoristas: Users,
+  comprovantes: FileText
 }
 
 const menuLabels = {
@@ -122,7 +123,8 @@ const menuLabels = {
   "tabelas-frete": "Tabelas de Frete",
   "tabela-frete": "Tabela de Frete",
   veiculos: "Veículos",
-  motoristas: "Motoristas"
+  motoristas: "Motoristas",
+  comprovantes: "Comprovantes"
 }
 
 export const useDynamicMenuItems = () => {
@@ -167,6 +169,7 @@ export const useDynamicMenuItems = () => {
       'remessas',
       'viagens',
       'proof-of-delivery',
+      'comprovantes',
       'ocorrencias',
       'veiculos',
       'motoristas',

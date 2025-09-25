@@ -11,7 +11,7 @@ export type PermissionCode =
   | 'gerenciar-posicoes.view' | 'fazendas.view' | 'produtores.view'
   | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view'
   | 'remessas.view' | 'planejamento.view' | 'viagens.view' | 'agenda.view'
-  | 'tracking.view' | 'proof-of-delivery.view' | 'ocorrencias.view' | 'tabelas-frete.view'
+  | 'tracking.view' | 'proof-of-delivery.view' | 'comprovantes.view' | 'ocorrencias.view' | 'tabelas-frete.view'
   | 'veiculos.view' | 'veiculos.manage' | 'motoristas.view' | 'motoristas.manage'
   | 'motoristas.login' | 'proof-of-delivery.manage'
   | 'instrucoes.view' | 'configuracoes.view' | 'controle-acesso.view' | 'tabela-frete.view';
@@ -56,6 +56,7 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'agenda.view', label: 'Agenda' },
   { code: 'tracking.view', label: 'Tracking' },
   { code: 'proof-of-delivery.view', label: 'Proof of Delivery' },
+  { code: 'comprovantes.view', label: 'Comprovantes de Entrega' },
   { code: 'ocorrencias.view', label: 'Ocorrências' },
   { code: 'tabelas-frete.view', label: 'Tabelas de Frete' },
   { code: 'tabela-frete.view', label: 'Tabela de Frete' },

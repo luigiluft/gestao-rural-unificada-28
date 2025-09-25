@@ -24,31 +24,7 @@ import { DriverInvitationDialog } from '@/components/ProofOfDelivery/DriverInvit
 import { DeliveryAssignment } from '@/components/ProofOfDelivery/DeliveryAssignment';
 
 const ProofOfDelivery = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  const { data: comprovantes = [], isLoading, error } = useComprovantesEntrega({ status: statusFilter !== 'all' ? statusFilter : undefined });
-
-  const statusBadges = {
-    pendente: { label: 'Pendente', variant: 'secondary' as const },
-    confirmado: { label: 'Confirmado', variant: 'default' as const },
-    rejeitado: { label: 'Rejeitado', variant: 'destructive' as const }
-  };
-
-  const filteredComprovantes = comprovantes.filter(comprovante => {
-    const matchesSearch = comprovante.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         comprovante.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         comprovante.recebido_por?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
-
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (error) {
-    return <div>Erro ao carregar comprovantes: {error.message}</div>;
-  }
+  return (
 
   return (
     <div className="space-y-6">
@@ -69,184 +45,39 @@ const ProofOfDelivery = () => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex gap-4">
-        <Input
-          placeholder="Buscar por código, cliente ou recebedor..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filtrar por status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="confirmado">Confirmado</SelectItem>
-            <SelectItem value="rejeitado">Rejeitado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Entregas Confirmadas</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {comprovantes.filter(c => c.status === 'confirmado').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Hoje</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Com Assinatura</CardTitle>
-            <Signature className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {comprovantes.filter(c => c.tem_assinatura).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Assinadas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Com Fotos</CardTitle>
-            <Camera className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {comprovantes.filter(c => c.total_fotos > 0).length}
-            </div>
-            <p className="text-xs text-muted-foreground">Fotografadas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Fotos</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {comprovantes.reduce((acc, c) => acc + c.total_fotos, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">Arquivos</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista de Comprovantes */}
+      {/* Sistema de Gerenciamento de Entregas */}
       <Card>
         <CardHeader>
-          <CardTitle>Comprovantes de Entrega</CardTitle>
+          <CardTitle>Sistema de Gerenciamento de Entregas</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Gerencie motoristas, atribuições e configure o sistema de proof of delivery
+          </p>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Recebido Por</TableHead>
-                <TableHead>Data/Hora</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Anexos</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-                <TableBody>
-                  {filteredComprovantes.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                        Nenhum comprovante encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredComprovantes.map((comprovante) => (
-                      <TableRow key={comprovante.id}>
-                        <TableCell className="font-medium">{comprovante.codigo}</TableCell>
-                        <TableCell>{comprovante.cliente_nome}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <User className="h-3 w-3" />
-                              <span className="text-sm">{comprovante.recebido_por || 'N/A'}</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Doc: {comprovante.documento_recebedor || 'N/A'}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3" />
-                            <span className="text-sm">
-                              {comprovante.data_entrega ? new Date(comprovante.data_entrega).toLocaleString() : 'N/A'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={statusBadges[comprovante.status as keyof typeof statusBadges]?.variant || 'secondary'}>
-                            {statusBadges[comprovante.status as keyof typeof statusBadges]?.label || comprovante.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1">
-                              <Signature className="h-3 w-3" />
-                              <span className={comprovante.tem_assinatura ? "text-green-600" : "text-gray-400"}>
-                                {comprovante.tem_assinatura ? "Sim" : "Não"}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Camera className="h-3 w-3" />
-                              <span>{comprovante.total_fotos}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-            </TableBody>
-          </Table>
-        </CardContent>
       </Card>
 
-      {/* Delivery Assignment Examples */}
-      {filteredComprovantes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Atribuição de Motoristas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {filteredComprovantes.slice(0, 2).map((comprovante) => (
-              <DeliveryAssignment
-                key={comprovante.id}
-                deliveryId={comprovante.id}
-                deliveryCode={comprovante.codigo}
-                clientName={comprovante.cliente_nome}
-                currentStatus={comprovante.status}
-              />
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      {/* Atribuição de Motoristas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Atribuição de Motoristas</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Configure atribuições automáticas para entregas
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <DeliveryAssignment
+            deliveryId="demo-1"
+            deliveryCode="ENT-001"
+            clientName="Cliente Demo"
+            currentStatus="pendente"
+          />
+          <DeliveryAssignment
+            deliveryId="demo-2"
+            deliveryCode="ENT-002"
+            clientName="Cliente Exemplo"
+            currentStatus="confirmado"
+          />
+        </CardContent>
+      </Card>
 
       {/* Detalhes Expandidos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
