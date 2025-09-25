@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems"
 import { useNotifications } from "@/hooks/useNotifications"
+import { useViagensNotifications } from "@/hooks/useViagensNotifications"
 import { TutorialButton } from "@/components/Tutorial/TutorialButton"
 import { useTutorial } from "@/contexts/TutorialContext"
 
@@ -52,6 +53,7 @@ export function AppSidebar() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   
   const { data: notifications } = useNotifications()
+  const { data: viagensNotificationCount } = useViagensNotifications()
   const { menuItems, isLoading: menuLoading } = useDynamicMenuItems()
   const { isActive: isTutorialActive } = useTutorial()
 
@@ -125,6 +127,8 @@ export function AppSidebar() {
         return notifications.suporte || 0
       case "Subcontas":
         return notifications.subcontas || 0
+      case "Viagens":
+        return viagensNotificationCount || 0
       default:
         return 0
     }
