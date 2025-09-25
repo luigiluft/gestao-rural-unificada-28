@@ -26,6 +26,7 @@ import { Calendar, Truck, User, Package, DollarSign, MapPin } from 'lucide-react
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMotoristas } from '@/hooks/useMotoristas';
+import { useUpdateViagem } from '@/hooks/useUpdateViagem';
 
 const viagemSchema = z.object({
   numero: z.string().min(1, 'Número da viagem é obrigatório'),
@@ -47,7 +48,8 @@ interface ViagemDetailsDialogProps {
 const statusBadges = {
   planejada: { label: 'Planejada', variant: 'secondary' as const },
   em_andamento: { label: 'Em Andamento', variant: 'default' as const },
-  concluida: { label: 'Concluída', variant: 'outline' as const },
+  finalizada: { label: 'Finalizada', variant: 'outline' as const },
+  entregue: { label: 'Entregue', variant: 'outline' as const },
   cancelada: { label: 'Cancelada', variant: 'destructive' as const }
 };
 
@@ -70,9 +72,17 @@ export const ViagemDetailsDialog = ({
     } : undefined,
   });
 
+  const updateViagem = useUpdateViagem();
+
   const onSubmit = (data: ViagemFormData) => {
-    // Aqui você pode implementar a lógica de atualização
-    console.log('Dados da viagem atualizados:', data);
+    updateViagem.mutate({
+      id: viagem.id,
+      numero: data.numero,
+      data_inicio: data.data_inicio || null,
+      data_fim: data.data_fim || null,
+      observacoes: data.observacoes || null,
+      motorista_id: data.motorista_id || null,
+    });
     if (onUpdate) {
       onUpdate({ ...viagem, ...data });
     }

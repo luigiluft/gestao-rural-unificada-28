@@ -258,9 +258,8 @@ const Viagens = () => {
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
         viagem={selectedViagem}
-        onUpdate={(updatedViagem) => {
-          console.log('Viagem atualizada:', updatedViagem);
-          // Aqui você pode implementar a lógica de atualização
+         onUpdate={() => {
+          // Dados serão atualizados via React Query
         }}
       />
     </div>
