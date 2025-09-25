@@ -13,12 +13,15 @@ import {
   Clock,
   FileText,
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  FolderOpen
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { ViagemMotorista } from '@/hooks/useMotoristaViagens'
+import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { Capacitor } from '@capacitor/core'
 
 interface MotoristaPhotoUploadProps {
   viagem: ViagemMotorista
@@ -26,12 +29,16 @@ interface MotoristaPhotoUploadProps {
 }
 
 export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viagem, onVoltar }) => {
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [observacoes, setObservacoes] = useState('')
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null)
+  const [isCapturingPhoto, setIsCapturingPhoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
+
+  // Detectar se está rodando em dispositivo nativo
+  const isNative = Capacitor.isNativePlatform()
 
   // Buscar comprovante existente para esta viagem
   const { data: comprovante } = useQuery({
@@ -71,16 +78,64 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     }
   }
 
-  // Selecionar arquivos
+  // Função para tirar foto com câmera nativa
+  const takePhoto = async () => {
+    try {
+      setIsCapturingPhoto(true)
+      
+      const image = await CapacitorCamera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Camera,
+        width: 1200,
+        height: 1600
+      })
+
+      if (image.base64String) {
+        // Converter base64 para File
+        const response = await fetch(`data:image/jpeg;base64,${image.base64String}`)
+        const blob = await response.blob()
+        const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' })
+        
+        // Adicionar à lista de arquivos
+        const newFiles = [...selectedFiles, file]
+        setSelectedFiles(newFiles)
+        
+        // Criar preview
+        const newUrl = URL.createObjectURL(file)
+        setPreviewUrls(prev => [...prev, newUrl])
+        
+        toast.success('Foto capturada com sucesso!')
+      }
+    } catch (error) {
+      console.error('Erro ao capturar foto:', error)
+      toast.error('Erro ao capturar foto. Tente novamente.')
+    } finally {
+      setIsCapturingPhoto(false)
+    }
+  }
+
+  // Selecionar arquivos da galeria/sistema
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (files) {
-      setSelectedFiles(files)
+    const fileList = event.target.files
+    if (fileList) {
+      const filesArray = Array.from(fileList)
+      const newFiles = [...selectedFiles, ...filesArray]
+      setSelectedFiles(newFiles)
       
       // Criar previews
-      const urls = Array.from(files).map(file => URL.createObjectURL(file))
-      setPreviewUrls(urls)
+      const newUrls = filesArray.map(file => URL.createObjectURL(file))
+      setPreviewUrls(prev => [...prev, ...newUrls])
     }
+  }
+
+  // Função para limpar uma foto específica
+  const removePhoto = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index)
+    const newUrls = previewUrls.filter((_, i) => i !== index)
+    setSelectedFiles(newFiles)
+    setPreviewUrls(newUrls)
   }
 
   // Mutation para upload de fotos
@@ -116,7 +171,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       }
 
       // Upload das fotos
-      const uploadPromises = Array.from(selectedFiles).map(async (file, index) => {
+      const uploadPromises = selectedFiles.map(async (file, index) => {
         const fileExt = file.name.split('.').pop()
         const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
         const filePath = `comprovantes/${fileName}`
@@ -260,27 +315,49 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               )}
             </div>
 
-            {/* Seletor de arquivos */}
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+            {/* Botões de captura e seleção */}
+            <div className="space-y-3">
+              {/* Botão para tirar foto */}
               <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-24 border-dashed"
+                variant="default"
+                onClick={takePhoto}
+                disabled={isCapturingPhoto}
+                className="w-full h-16"
               >
-                <div className="text-center">
-                  <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm">Clique para selecionar fotos</p>
-                  <p className="text-xs text-muted-foreground">Múltiplas fotos permitidas</p>
-                </div>
+                {isCapturingPhoto ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Abrindo Câmera...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-5 w-5 mr-2" />
+                    📷 Tirar Foto
+                  </>
+                )}
               </Button>
+
+              {/* Botão para selecionar da galeria/arquivos */}
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-16"
+                >
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="h-5 w-5" />
+                    📁 Selecionar da Galeria
+                  </div>
+                </Button>
+              </div>
             </div>
 
             {/* Preview das fotos */}
@@ -289,7 +366,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
                 <Label>Fotos Selecionadas ({previewUrls.length})</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {previewUrls.map((url, index) => (
-                    <div key={index} className="relative">
+                    <div key={index} className="relative group">
                       <img
                         src={url}
                         alt={`Preview ${index + 1}`}
@@ -297,10 +374,18 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
                       />
                       <Badge 
                         variant="secondary" 
-                        className="absolute top-1 right-1 text-xs"
+                        className="absolute top-1 left-1 text-xs"
                       >
                         {index + 1}
                       </Badge>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removePhoto(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -322,7 +407,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             {/* Botão de envio */}
             <Button
               onClick={() => uploadPhotosMutation.mutate()}
-              disabled={!selectedFiles || selectedFiles.length === 0 || uploadPhotosMutation.isPending}
+              disabled={selectedFiles.length === 0 || uploadPhotosMutation.isPending}
               className="w-full"
             >
               {uploadPhotosMutation.isPending ? (
@@ -333,7 +418,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Enviar Comprovante ({selectedFiles?.length || 0} fotos)
+                  Enviar Comprovante ({selectedFiles.length} fotos)
                 </>
               )}
             </Button>
