@@ -60,24 +60,33 @@ export type Database = {
         Row: {
           comprovante_id: string
           created_at: string
+          data_foto: string | null
           descricao: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           tipo: string
           url_foto: string
         }
         Insert: {
           comprovante_id: string
           created_at?: string
+          data_foto?: string | null
           descricao?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           tipo: string
           url_foto: string
         }
         Update: {
           comprovante_id?: string
           created_at?: string
+          data_foto?: string | null
           descricao?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           tipo?: string
           url_foto?: string
         }
@@ -152,15 +161,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "comprovantes_entrega_tracking_id_fkey"
-            columns: ["tracking_id"]
-            isOneToOne: false
-            referencedRelation: "tracking_entregas"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       configuracoes_sistema: {
         Row: {
