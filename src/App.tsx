@@ -103,6 +103,7 @@ const App = () => {
             <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastro /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<Index />} />
+              <Route path="dashboard" element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
               <Route path="catalogo" element={<RequirePageAccess pageKey="catalogo"><Catalogo /></RequirePageAccess>} />
               <Route path="entradas" element={<RequirePageAccess pageKey="entradas"><Entradas /></RequirePageAccess>} />
               <Route path="estoque" element={<RequirePageAccess pageKey="estoque"><Estoque /></RequirePageAccess>} />
