@@ -43,11 +43,9 @@ export const useMotoristaViagens = () => {
         .single()
 
       if (motoristaError || !motorista) {
-        console.log("❌ useMotoristaViagens: Motorista não encontrado para o usuário:", user.id, motoristaError)
+        console.log("Motorista não encontrado para o usuário:", user.id)
         return []
       }
-
-      console.log("✅ useMotoristaViagens: Motorista encontrado:", motorista.id)
 
       const { data, error } = await supabase
         .from("viagens")
