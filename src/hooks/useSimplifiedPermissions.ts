@@ -60,6 +60,14 @@ export const useSimplifiedPermissions = (): UserPermissions => {
 
           const permissions = pagePermissions?.map(p => `${p.page_key}.view` as PermissionCode) || []
 
+          // Fallback seguro para motorista quando não houver permissões visíveis por RLS
+          if (permissions.length === 0 && profile.role === 'motorista') {
+            return {
+              permissions: ['proof-of-delivery.view', 'comprovantes.view'] as PermissionCode[],
+              isSubaccount: false
+            }
+          }
+
           return { permissions, isSubaccount: false }
         }
       } catch (error) {
