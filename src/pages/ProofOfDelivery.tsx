@@ -71,7 +71,7 @@ const ProofOfDelivery = () => {
     )
   }
 
-  const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'pendente')
+  const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'pendente' || v.status === 'em_andamento')
   const viagensFinalizadas = viagens.filter(v => v.status === 'finalizada')
   const viagensEntregues = viagens.filter(v => v.status === 'entregue')
 
@@ -127,7 +127,7 @@ const ProofOfDelivery = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-orange-600" />
-                  <h2 className="text-xl font-semibold">Aguardando Início ({viagensPendentes.length})</h2>
+                  <h2 className="text-xl font-semibold">Aguardando Ação ({viagensPendentes.length})</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {viagensPendentes.map((viagem) => (
