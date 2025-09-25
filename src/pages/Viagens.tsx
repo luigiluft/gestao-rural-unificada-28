@@ -12,10 +12,13 @@ import { useViagens } from '@/hooks/useViagens';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ViagemKanbanBoard } from '@/components/Viagens/ViagemKanbanBoard';
+import { ViagemDetailsDialog } from '@/components/Viagens/ViagemDetailsDialog';
 
 const Viagens = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedViagem, setSelectedViagem] = useState<any>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   const { data: viagens = [], isLoading, error } = useViagens();
 
@@ -35,6 +38,11 @@ const Viagens = () => {
 
   const calcularProgresso = (viagem: any) => {
     return viagem.progresso || 0;
+  };
+
+  const handleViagemClick = (viagem: any) => {
+    setSelectedViagem(viagem);
+    setDetailsDialogOpen(true);
   };
 
   if (isLoading) {
@@ -132,10 +140,7 @@ const Viagens = () => {
         <TabsContent value="kanban" className="space-y-4">
           <ViagemKanbanBoard 
             viagens={filteredViagens}
-            onViagemSelect={(viagem) => {
-              console.log('Viagem selecionada:', viagem)
-              // Aqui você pode implementar modal de detalhes ou navegação
-            }}
+            onViagemSelect={handleViagemClick}
           />
         </TabsContent>
 
@@ -148,7 +153,7 @@ const Viagens = () => {
               />
             ) : (
               filteredViagens.filter(v => v.status === 'em_andamento').map((viagem) => (
-                <Card key={viagem.id}>
+                <Card key={viagem.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViagemClick(viagem)}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="space-y-4 flex-1">
@@ -212,7 +217,7 @@ const Viagens = () => {
                     </TableRow>
                   ) : (
                     filteredViagens.map((viagem) => (
-                      <TableRow key={viagem.id}>
+                      <TableRow key={viagem.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViagemClick(viagem)}>
                         <TableCell className="font-medium">{viagem.numero}</TableCell>
                         <TableCell>{viagem.observacoes || 'Sem descrição'}</TableCell>
                         <TableCell>-</TableCell>
@@ -247,6 +252,17 @@ const Viagens = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de Detalhes da Viagem */}
+      <ViagemDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        viagem={selectedViagem}
+        onUpdate={(updatedViagem) => {
+          console.log('Viagem atualizada:', updatedViagem);
+          // Aqui você pode implementar a lógica de atualização
+        }}
+      />
     </div>
   );
 };
