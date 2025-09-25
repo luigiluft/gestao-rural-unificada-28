@@ -10,9 +10,8 @@ import {
   Package
 } from 'lucide-react';
 import { useMotoristaViagens } from '@/hooks/useMotoristaViagens';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useCanAccessPage } from '@/hooks/useSimplifiedPermissions';
 import { LoadingState } from '@/components/ui/loading-state';
-import { EmptyState } from '@/components/ui/empty-state';
 import { ViagemCard } from '@/components/ProofOfDelivery/ViagemCard';
 import { MotoristaPhotoUpload } from '@/components/ProofOfDelivery/MotoristaPhotoUpload';
 
@@ -20,13 +19,13 @@ const ProofOfDelivery = () => {
   const [selectedViagemId, setSelectedViagemId] = useState<string | null>(null)
   const [showPhotoUpload, setShowPhotoUpload] = useState<string | null>(null)
   
-  const { userRole, isLoading: roleLoading } = useUserRole()
+  const { canAccess, isLoading: permissionLoading } = useCanAccessPage('proof-of-delivery')
   const { data: viagens = [], isLoading: viagensLoading } = useMotoristaViagens()
   
-  const isLoading = roleLoading || viagensLoading
+  const isLoading = permissionLoading || viagensLoading
 
-  // Se não for motorista, mostrar mensagem
-  if (!isLoading && userRole !== 'motorista') {
+  // Se não tiver permissão, mostrar mensagem
+  if (!isLoading && !canAccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
@@ -34,7 +33,7 @@ const ProofOfDelivery = () => {
             <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2">Acesso Restrito</h3>
             <p className="text-muted-foreground">
-              Esta página é exclusiva para motoristas. Entre em contato com o administrador se você deveria ter acesso.
+              Você não tem permissão para acessar esta página. Entre em contato com o administrador.
             </p>
           </CardContent>
         </Card>
