@@ -127,11 +127,11 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({ viagem, onClick
           <div className="space-y-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>Início: {format(parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR })}</span>
+              <span>Início: {viagem.data_inicio ? format(parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR }) : 'Não definido'}</span>
             </div>
             <div className="flex items-center gap-1">
               <Truck className="h-3 w-3" />
-              <span>Entrega: {format(parse(viagem.data_fim.slice(0,10), 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR })}</span>
+              <span>Entrega: {viagem.data_fim ? format(parse(viagem.data_fim.slice(0,10), 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR }) : 'Não definido'}</span>
             </div>
           </div>
           
@@ -189,7 +189,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     dates.forEach(date => {
       const dateKey = format(date, 'yyyy-MM-dd')
       result[dateKey] = filteredViagens.filter(viagem => 
-        isSameDay(parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()), date)
+        viagem.data_inicio && isSameDay(parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()), date)
       )
     })
     
@@ -267,8 +267,8 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     })
 
     // Calcular duração original da viagem
-    const dataInicioOriginal = parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date())
-    const dataFimOriginal = parse(viagem.data_fim.slice(0,10), 'yyyy-MM-dd', new Date())
+    const dataInicioOriginal = viagem.data_inicio ? parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()) : new Date()
+    const dataFimOriginal = viagem.data_fim ? parse(viagem.data_fim.slice(0,10), 'yyyy-MM-dd', new Date()) : new Date()
     const duracaoOriginal = differenceInCalendarDays(dataFimOriginal, dataInicioOriginal)
 
     // A nova data será a data de início, e calculamos a nova data de fim
