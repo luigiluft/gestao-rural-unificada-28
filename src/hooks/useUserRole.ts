@@ -18,7 +18,7 @@ export const useUserRole = () => {
         .single()
 
       if (error) throw error
-      return data?.role || null
+      return (data?.role as UserRole) || null
     },
     enabled: !!user?.id,
   })
