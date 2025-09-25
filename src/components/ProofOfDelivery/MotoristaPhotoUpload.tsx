@@ -495,7 +495,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             <Button
               onClick={() => uploadPhotosMutation.mutate()}
               disabled={selectedPhotos.length === 0 || uploadPhotosMutation.isPending || isProcessingExif}
-              className="w-full"
+              className="w-full h-16"
             >
               {uploadPhotosMutation.isPending ? (
                 <>
