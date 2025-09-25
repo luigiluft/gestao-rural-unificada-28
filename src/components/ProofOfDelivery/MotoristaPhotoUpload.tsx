@@ -27,12 +27,23 @@ interface MotoristaPhotoUploadProps {
   onVoltar: () => void
 }
 
+interface PhotoWithExif {
+  file: File
+  previewUrl: string
+  exifData?: {
+    dateTime?: Date
+    latitude?: number
+    longitude?: number
+    address?: string
+  }
+}
+
 export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viagem, onVoltar }) => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  const [selectedPhotos, setSelectedPhotos] = useState<PhotoWithExif[]>([])
   const [observacoes, setObservacoes] = useState('')
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null)
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false)
+  const [isProcessingExif, setIsProcessingExif] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
 
@@ -52,6 +63,45 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       return data
     }
   })
+
+  // Função para extrair dados EXIF
+  const extractExifData = async (file: File): Promise<PhotoWithExif['exifData']> => {
+    try {
+      const exifr = await import('exifr')
+      const exifData = await exifr.parse(file, {
+        gps: true,
+        exif: true,
+        iptc: false,
+        icc: false
+      })
+
+      let dateTime: Date | undefined
+      let latitude: number | undefined
+      let longitude: number | undefined
+
+      // Extrair data e hora
+      if (exifData?.DateTimeOriginal) {
+        dateTime = new Date(exifData.DateTimeOriginal)
+      } else if (exifData?.DateTime) {
+        dateTime = new Date(exifData.DateTime)
+      }
+
+      // Extrair coordenadas GPS
+      if (exifData?.latitude && exifData?.longitude) {
+        latitude = exifData.latitude
+        longitude = exifData.longitude
+      }
+
+      return {
+        dateTime,
+        latitude,
+        longitude
+      }
+    } catch (error) {
+      console.warn('Erro ao extrair dados EXIF:', error)
+      return undefined
+    }
+  }
 
   // Obter localização atual
   const getCurrentLocation = () => {
@@ -94,14 +144,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         const blob = await response.blob()
         const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' })
         
-        // Adicionar à lista de arquivos
-        const newFiles = [...selectedFiles, file]
-        setSelectedFiles(newFiles)
-        
-        // Criar preview
-        const newUrl = URL.createObjectURL(file)
-        setPreviewUrls(prev => [...prev, newUrl])
-        
+        await addPhotoWithExif(file)
         toast.success('Foto capturada com sucesso!')
       }
     } catch (error) {
@@ -112,32 +155,49 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     }
   }
 
+  // Função para adicionar foto e processar EXIF
+  const addPhotoWithExif = async (file: File) => {
+    setIsProcessingExif(true)
+    
+    const previewUrl = URL.createObjectURL(file)
+    const exifData = await extractExifData(file)
+    
+    const newPhoto: PhotoWithExif = {
+      file,
+      previewUrl,
+      exifData
+    }
+    
+    setSelectedPhotos(prev => [...prev, newPhoto])
+    setIsProcessingExif(false)
+  }
+
   // Selecionar arquivos da galeria/sistema
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files
     if (fileList) {
+      setIsProcessingExif(true)
       const filesArray = Array.from(fileList)
-      const newFiles = [...selectedFiles, ...filesArray]
-      setSelectedFiles(newFiles)
       
-      // Criar previews
-      const newUrls = filesArray.map(file => URL.createObjectURL(file))
-      setPreviewUrls(prev => [...prev, ...newUrls])
+      // Processar cada arquivo individualmente
+      for (const file of filesArray) {
+        await addPhotoWithExif(file)
+      }
+      
+      setIsProcessingExif(false)
     }
   }
 
   // Função para limpar uma foto específica
   const removePhoto = (index: number) => {
-    const newFiles = selectedFiles.filter((_, i) => i !== index)
-    const newUrls = previewUrls.filter((_, i) => i !== index)
-    setSelectedFiles(newFiles)
-    setPreviewUrls(newUrls)
+    const newPhotos = selectedPhotos.filter((_, i) => i !== index)
+    setSelectedPhotos(newPhotos)
   }
 
   // Mutation para upload de fotos
   const uploadPhotosMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedFiles || selectedFiles.length === 0) {
+      if (!selectedPhotos || selectedPhotos.length === 0) {
         throw new Error('Selecione pelo menos uma foto')
       }
 
@@ -167,14 +227,14 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       }
 
       // Upload das fotos
-      const uploadPromises = selectedFiles.map(async (file, index) => {
-        const fileExt = file.name.split('.').pop()
+      const uploadPromises = selectedPhotos.map(async (photo, index) => {
+        const fileExt = photo.file.name.split('.').pop()
         const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
         const filePath = `comprovantes/${fileName}`
 
         const { error: uploadError } = await supabase.storage
           .from('comprovantes')
-          .upload(filePath, file)
+          .upload(filePath, photo.file)
 
         if (uploadError) throw uploadError
 
@@ -183,14 +243,17 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
           .from('comprovantes')
           .getPublicUrl(filePath)
 
-        // Salvar registro da foto
+        // Salvar registro da foto com dados EXIF
         const { error: fotoError } = await supabase
           .from('comprovante_fotos')
           .insert({
             comprovante_id: comprovanteId,
             url_foto: publicUrl,
             tipo: 'entrega',
-            descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`
+            descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
+            latitude: photo.exifData?.latitude,
+            longitude: photo.exifData?.longitude,
+            data_foto: photo.exifData?.dateTime?.toISOString()
           })
 
         if (fotoError) throw fotoError
@@ -206,7 +269,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         .update({
           status: 'confirmado',
           data_entrega: new Date().toISOString(),
-          total_fotos: selectedFiles.length,
+          total_fotos: selectedPhotos.length,
           observacoes: observacoes
         })
         .eq('id', comprovanteId)
@@ -356,32 +419,60 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               </div>
             </div>
 
-            {/* Preview das fotos */}
-            {previewUrls.length > 0 && (
-              <div className="space-y-2">
-                <Label>Fotos Selecionadas ({previewUrls.length})</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border"
-                      />
-                      <Badge 
-                        variant="secondary" 
-                        className="absolute top-1 left-1 text-xs"
-                      >
-                        {index + 1}
-                      </Badge>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removePhoto(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+            {/* Preview das fotos com dados EXIF */}
+            {selectedPhotos.length > 0 && (
+              <div className="space-y-4">
+                <Label>Fotos Selecionadas ({selectedPhotos.length})</Label>
+                {isProcessingExif && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processando dados da foto...
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {selectedPhotos.map((photo, index) => (
+                    <div key={index} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={photo.previewUrl}
+                          alt={`Preview ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                        />
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className="text-xs">
+                              Foto {index + 1}
+                            </Badge>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removePhoto(index)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          {/* Dados EXIF */}
+                          <div className="text-xs space-y-1">
+                            {photo.exifData?.dateTime && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span>Data: {photo.exifData.dateTime.toLocaleString('pt-BR')}</span>
+                              </div>
+                            )}
+                            {photo.exifData?.latitude && photo.exifData?.longitude && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                <span>GPS: {photo.exifData.latitude.toFixed(6)}, {photo.exifData.longitude.toFixed(6)}</span>
+                              </div>
+                            )}
+                            {!photo.exifData?.dateTime && !photo.exifData?.latitude && (
+                              <span className="text-muted-foreground">Sem dados EXIF disponíveis</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -403,7 +494,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             {/* Botão de envio */}
             <Button
               onClick={() => uploadPhotosMutation.mutate()}
-              disabled={selectedFiles.length === 0 || uploadPhotosMutation.isPending}
+              disabled={selectedPhotos.length === 0 || uploadPhotosMutation.isPending || isProcessingExif}
               className="w-full"
             >
               {uploadPhotosMutation.isPending ? (
@@ -414,7 +505,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Enviar Comprovante ({selectedFiles.length} fotos)
+                  Enviar Comprovante ({selectedPhotos.length} fotos)
                 </>
               )}
             </Button>
