@@ -1,30 +1,36 @@
-import React, { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  FileText,
+  Package,
   Truck,
   MapPin,
   Clock,
-  Package,
   Play,
   Square,
   Camera,
-  FileText,
-  Fuel,
-  Gauge
-} from 'lucide-react'
-import { ViagemMotorista, useIniciarViagem, useFinalizarViagem } from '@/hooks/useMotoristaViagens'
-import { formatDistanceToNow } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+  Gauge,
+  Fuel
+} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useIniciarViagem, useFinalizarViagem, ViagemMotorista } from '@/hooks/useMotoristaViagens';
 
 interface ViagemCardProps {
-  viagem: ViagemMotorista
-  onVerFotos: (viagemId: string) => void
+  viagem: ViagemMotorista;
+  onVerFotos: (viagemId: string) => void;
 }
 
 export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) => {
@@ -169,57 +175,75 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
         {/* Ações */}
         <div className="flex gap-2 pt-2">
           {canStart && (
-            <Dialog open={showIniciarDialog} onOpenChange={setShowIniciarDialog}>
-              <DialogTrigger asChild>
-                <Button className="flex-1" disabled={iniciarViagemMutation.isPending}>
-                  <Play className="h-4 w-4 mr-2" />
-                  Iniciar Viagem
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Iniciar Viagem #{viagem.numero}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="hodometro-inicio">Hodômetro Inicial (km)</Label>
-                    <div className="flex items-center gap-2">
-                      <Gauge className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="hodometro-inicio"
-                        type="number"
-                        placeholder="Ex: 45230"
-                        value={hodometroInicio}
-                        onChange={(e) => setHodometroInicio(e.target.value)}
-                      />
+            <>
+              {/* Botão simples para iniciar viagem */}
+              <Button 
+                className="flex-1" 
+                onClick={() => {
+                  iniciarViagemMutation.mutate({
+                    viagemId: viagem.id,
+                    hodometroInicio: undefined,
+                    combustivelInicio: undefined
+                  })
+                }}
+                disabled={iniciarViagemMutation.isPending}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar Viagem
+              </Button>
+
+              {/* Diálogo com detalhes (opcional) */}
+              <Dialog open={showIniciarDialog} onOpenChange={setShowIniciarDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={iniciarViagemMutation.isPending}>
+                    <Gauge className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Iniciar Viagem #{viagem.numero}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="hodometro-inicio">Hodômetro Inicial (km)</Label>
+                      <div className="flex items-center gap-2">
+                        <Gauge className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="hodometro-inicio"
+                          type="number"
+                          placeholder="Ex: 45230"
+                          value={hodometroInicio}
+                          onChange={(e) => setHodometroInicio(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="combustivel-inicio">Combustível Inicial (%)</Label>
+                      <div className="flex items-center gap-2">
+                        <Fuel className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="combustivel-inicio"
+                          type="number"
+                          min="0"
+                          max="100"
+                          placeholder="Ex: 80"
+                          value={combustivelInicio}
+                          onChange={(e) => setCombustivelInicio(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => setShowIniciarDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleIniciarViagem} disabled={iniciarViagemMutation.isPending}>
+                        Iniciar com Detalhes
+                      </Button>
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="combustivel-inicio">Combustível Inicial (%)</Label>
-                    <div className="flex items-center gap-2">
-                      <Fuel className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="combustivel-inicio"
-                        type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Ex: 80"
-                        value={combustivelInicio}
-                        onChange={(e) => setCombustivelInicio(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowIniciarDialog(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleIniciarViagem} disabled={iniciarViagemMutation.isPending}>
-                      Iniciar Viagem
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
 
           {canFinalize && (
