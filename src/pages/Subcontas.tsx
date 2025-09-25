@@ -46,7 +46,7 @@ export default function Subcontas() {
   const [selectedUserName, setSelectedUserName] = useState<string>("")
   
   // Hooks para perfis de funcionários e convites
-  const { profiles, isLoading: isLoadingProfiles } = useEmployeeProfiles(profile?.role)
+  const { profiles, isLoading: isLoadingProfiles } = useEmployeeProfiles(profile?.role as any)
   const { assignTemplate, removeTemplate } = useUserPermissionTemplates()
   const { cleanupSubaccountPermissions } = useCleanupPermissions()
   const { 
@@ -107,12 +107,15 @@ export default function Subcontas() {
         `)
         .in("user_id", subaccountProfiles.map(s => s.user_id))
 
-      return subaccountProfiles.map(subaccount => ({
-        ...subaccount,
-        employee_profile: templateAssignments?.find(
-          (ta: any) => ta.user_id === subaccount.user_id
-        )?.permission_templates || undefined
-      }))
+      return subaccountProfiles.map(subaccount => {
+        const assignment = templateAssignments?.find(
+          (ta: any) => ta.user_id === subaccount.user_id && ta.permission_templates?.target_role !== 'motorista'
+        )
+        return {
+          ...subaccount,
+          employee_profile: assignment?.permission_templates as PermissionTemplate || undefined
+        }
+      })
     },
   })
 

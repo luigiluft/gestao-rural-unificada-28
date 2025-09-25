@@ -36,7 +36,13 @@ export const usePermissionTemplates = (userRole?: UserRole, includeHierarchy?: b
       const { data, error } = await query
 
       if (error) throw error
-      return data || []
+      
+      // Filter out 'motorista' records as this role no longer exists
+      const filteredData = (data || []).filter((template: any) => 
+        template.target_role !== 'motorista'
+      ) as PermissionTemplate[]
+      
+      return filteredData
     },
     enabled: !!user?.id,
   })
