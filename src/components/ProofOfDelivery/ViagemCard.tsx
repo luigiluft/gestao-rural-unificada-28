@@ -41,6 +41,7 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
 
   const getStatusVariant = (status: string) => {
     switch (status) {
+      case 'planejada': return 'secondary'
       case 'pendente': return 'secondary'
       case 'em_andamento': return 'default'
       case 'finalizada': return 'outline'
@@ -51,6 +52,7 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'planejada': return Clock
       case 'pendente': return Clock
       case 'em_andamento': return Truck
       case 'finalizada': return Square
@@ -61,6 +63,7 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
 
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case 'planejada': return 'Aguardando Início'
       case 'pendente': return 'Aguardando Início'
       case 'em_andamento': return 'Em Andamento'
       case 'finalizada': return 'Finalizada'
@@ -94,7 +97,7 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
   }
 
   const StatusIcon = getStatusIcon(viagem.status)
-  const canStart = viagem.status === 'pendente'
+  const canStart = viagem.status === 'planejada' || viagem.status === 'pendente'
   const canFinalize = viagem.status === 'em_andamento'
   const canViewPhotos = viagem.status === 'em_andamento' || viagem.status === 'finalizada'
 

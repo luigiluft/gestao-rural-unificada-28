@@ -100,10 +100,6 @@ const ProofOfDelivery = () => {
                 <div className="text-2xl font-bold text-orange-600">{viagensPendentes.length}</div>
                 <div className="text-xs text-orange-600">Pendentes</div>
               </div>
-              <div className="px-3 py-2 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{viagensEmAndamento.length}</div>
-                <div className="text-xs text-blue-600">Em Andamento</div>
-              </div>
               <div className="px-3 py-2 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">{viagensEntregues.length}</div>
                 <div className="text-xs text-green-600">Entregues</div>
