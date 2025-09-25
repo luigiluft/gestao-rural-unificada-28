@@ -21,7 +21,6 @@ import { useComprovantesEntrega } from '@/hooks/useComprovantesEntrega';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DriverInvitationDialog } from '@/components/ProofOfDelivery/DriverInvitationDialog';
-import { DeliveryAssignment } from '@/components/ProofOfDelivery/DeliveryAssignment';
 
 const ProofOfDelivery = () => {
   return (
@@ -53,29 +52,6 @@ const ProofOfDelivery = () => {
         </CardHeader>
       </Card>
 
-      {/* Atribuição de Motoristas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Atribuição de Motoristas</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Configure atribuições automáticas para entregas
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <DeliveryAssignment
-            deliveryId="demo-1"
-            deliveryCode="ENT-001"
-            clientName="Cliente Demo"
-            currentStatus="pendente"
-          />
-          <DeliveryAssignment
-            deliveryId="demo-2"
-            deliveryCode="ENT-002"
-            clientName="Cliente Exemplo"
-            currentStatus="confirmado"
-          />
-        </CardContent>
-      </Card>
 
       {/* Detalhes Expandidos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

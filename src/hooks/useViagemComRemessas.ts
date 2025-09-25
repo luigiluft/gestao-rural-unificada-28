@@ -7,6 +7,7 @@ interface ViagemData {
   data_inicio: string;
   data_fim?: string;
   observacoes?: string;
+  motorista_id?: string;
 }
 
 interface CreateViagemComRemessasParams {
@@ -70,6 +71,7 @@ export const useViagemComRemessas = () => {
         data_inicio: viagemData.data_inicio,
         data_fim: viagemData.data_fim || null,
         observacoes: viagemData.observacoes || null,
+        motorista_id: viagemData.motorista_id || null,
         status: 'planejada',
         deposito_id: franquia?.id || '',
         user_id: user.id,

@@ -20,14 +20,17 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, Truck, DollarSign } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Package, Truck, DollarSign, User } from 'lucide-react';
 import { useViagemComRemessas } from '@/hooks/useViagemComRemessas';
+import { useMotoristas } from '@/hooks/useMotoristas';
 
 const viagemSchema = z.object({
   numero: z.string().min(1, 'Número da viagem é obrigatório'),
   data_inicio: z.string().min(1, 'Data de início é obrigatória'),
   data_fim: z.string().optional(),
   observacoes: z.string().optional(),
+  motorista_id: z.string().optional(),
 });
 
 type ViagemFormData = z.infer<typeof viagemSchema>;
@@ -52,6 +55,7 @@ export const NovaViagemComRemessasDialog = ({
   onSuccess 
 }: NovaViagemComRemessasDialogProps) => {
   const createViagemComRemessas = useViagemComRemessas();
+  const { data: motoristas = [] } = useMotoristas();
 
   const form = useForm<ViagemFormData>({
     resolver: zodResolver(viagemSchema),
@@ -60,6 +64,7 @@ export const NovaViagemComRemessasDialog = ({
       data_inicio: '',
       data_fim: '',
       observacoes: '',
+      motorista_id: '',
     },
   });
 
@@ -72,6 +77,7 @@ export const NovaViagemComRemessasDialog = ({
         data_inicio: data.data_inicio,
         data_fim: data.data_fim,
         observacoes: data.observacoes,
+        motorista_id: data.motorista_id,
       },
       remessasIds: remessasSelecionadas.map(r => r.id)
     }, {
@@ -168,6 +174,39 @@ export const NovaViagemComRemessasDialog = ({
                 )}
               />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="motorista_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Motorista (Opcional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar motorista..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {motoristas.map((motorista) => (
+                        <SelectItem key={motorista.id} value={motorista.id}>
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <div className="flex flex-col">
+                              <span>{motorista.nome}</span>
+                              <span className="text-xs text-muted-foreground">
+                                CPF: {motorista.cpf}
+                              </span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
