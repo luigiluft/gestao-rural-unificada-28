@@ -35,6 +35,8 @@ export const useMotoristaViagens = () => {
     queryFn: async (): Promise<ViagemMotorista[]> => {
       if (!user?.id) return []
 
+      console.log("🔍 useMotoristaViagens: Buscando motorista para auth_user_id:", user.id)
+
       // Buscar motorista pelo auth_user_id
       const { data: motorista, error: motoristaError } = await supabase
         .from("motoristas")
@@ -43,9 +45,13 @@ export const useMotoristaViagens = () => {
         .single()
 
       if (motoristaError || !motorista) {
-        console.log("Motorista não encontrado para o usuário:", user.id)
+        console.log("❌ useMotoristaViagens: Motorista não encontrado para o usuário:", user.id, motoristaError)
         return []
       }
+
+      console.log("✅ useMotoristaViagens: Motorista encontrado:", motorista.id)
+
+      console.log("🔍 useMotoristaViagens: Buscando viagens para motorista_id:", motorista.id)
 
       const { data, error } = await supabase
         .from("viagens")
@@ -54,9 +60,11 @@ export const useMotoristaViagens = () => {
         .order("created_at", { ascending: false })
 
       if (error) {
-        console.error("Erro ao buscar viagens do motorista:", error)
+        console.error("❌ useMotoristaViagens: Erro ao buscar viagens:", error)
         throw error
       }
+
+      console.log("✅ useMotoristaViagens: Viagens encontradas:", data?.length || 0, data)
 
       // Buscar dados relacionados separadamente para evitar problemas de tipo
       const viagensComDados = await Promise.all((data || []).map(async (viagem) => {
