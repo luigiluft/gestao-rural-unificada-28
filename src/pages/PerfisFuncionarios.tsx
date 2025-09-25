@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -189,8 +190,8 @@ export default function PerfisFuncionarios() {
               Novo Perfil
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-screen h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>
                 {editingProfile ? 'Editar Perfil' : 'Criar Novo Perfil'}
               </DialogTitle>
@@ -199,50 +200,58 @@ export default function PerfisFuncionarios() {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="nome">Nome do Perfil</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                  placeholder="Ex: Recebimento, Separação..."
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                  placeholder="Descreva as responsabilidades deste perfil..."
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <Label>Permissões</Label>
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  {availablePermissions.map((permission) => (
-                    <div key={permission.code} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={permission.code}
-                        checked={formData.permissions.includes(permission.code as PermissionCode)}
-                        onCheckedChange={(checked) => 
-                          handlePermissionChange(permission.code, checked as boolean)
-                        }
-                      />
-                      <Label htmlFor={permission.code} className="text-sm">
-                        {permission.label}
-                      </Label>
-                    </div>
-                  ))}
+            <ScrollArea className="flex-1 px-1">
+              <div className="space-y-6 pr-4">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="nome">Nome do Perfil</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                      placeholder="Ex: Recebimento, Separação..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      value={formData.descricao}
+                      onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                      placeholder="Descreva as responsabilidades deste perfil..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-base font-medium">Permissões</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Selecione as funcionalidades que este perfil terá acesso
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {availablePermissions.map((permission) => (
+                      <div key={permission.code} className="flex items-start space-x-2 p-2 rounded-md border border-border/50 hover:border-border transition-colors">
+                        <Checkbox
+                          id={permission.code}
+                          checked={formData.permissions.includes(permission.code as PermissionCode)}
+                          onCheckedChange={(checked) => 
+                            handlePermissionChange(permission.code, checked as boolean)
+                          }
+                          className="mt-0.5"
+                        />
+                        <Label htmlFor={permission.code} className="text-sm leading-5 cursor-pointer flex-1">
+                          {permission.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScrollArea>
             
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-4 border-t border-border/50 flex-shrink-0">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
