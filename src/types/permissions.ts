@@ -25,6 +25,7 @@ export interface PermissionTemplate {
   target_role: UserRole; // Role alvo para este template
   permissions: PermissionCode[];
   is_template: boolean;
+  default_route?: string; // Página inicial após login
   created_at: string;
   updated_at: string;
 }

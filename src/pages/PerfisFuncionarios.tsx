@@ -101,12 +101,13 @@ export default function PerfisFuncionarios() {
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
-    permissions: [] as PermissionCode[]
+    permissions: [] as PermissionCode[],
+    default_route: ''
   })
 
   const handleCreateProfile = () => {
     setEditingProfile(null)
-    setFormData({ nome: '', descricao: '', permissions: [] })
+    setFormData({ nome: '', descricao: '', permissions: [], default_route: '' })
     setIsDialogOpen(true)
   }
 
@@ -115,7 +116,8 @@ export default function PerfisFuncionarios() {
     setFormData({
       nome: profile.nome,
       descricao: profile.descricao || '',
-      permissions: profile.permissions
+      permissions: profile.permissions,
+      default_route: profile.default_route || ''
     })
     setIsDialogOpen(true)
   }
@@ -130,6 +132,7 @@ export default function PerfisFuncionarios() {
       permissions: formData.permissions,
       target_role: userRole,
       is_template: true,
+      default_route: formData.default_route || null,
     }
 
     if (editingProfile) {
@@ -222,6 +225,31 @@ export default function PerfisFuncionarios() {
                       placeholder="Descreva as responsabilidades deste perfil..."
                       rows={3}
                     />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="default_route">Página Inicial após Login</Label>
+                    <select
+                      id="default_route"
+                      value={formData.default_route}
+                      onChange={(e) => setFormData(prev => ({ ...prev, default_route: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Selecione uma página (opcional)</option>
+                      <option value="/dashboard">Dashboard</option>
+                      <option value="/proof-of-delivery">Comprovantes de Entrega</option>
+                      <option value="/entradas">Entradas</option>
+                      <option value="/saidas">Saídas</option>
+                      <option value="/estoque">Estoque</option>
+                      <option value="/recebimento">Central de Recebimento</option>
+                      <option value="/alocacao-pallets">Alocação de Pallets</option>
+                      <option value="/separacao">Central de Separação</option>
+                      <option value="/viagens">Viagens</option>
+                      <option value="/motorista-deliveries">Entregas do Motorista</option>
+                    </select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Página para onde o usuário será redirecionado após fazer login
+                    </p>
                   </div>
                 </div>
                 
