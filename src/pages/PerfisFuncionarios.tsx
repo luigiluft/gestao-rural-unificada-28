@@ -26,6 +26,8 @@ const AVAILABLE_PERMISSIONS = {
     { code: 'saidas.view', label: 'Visualizar Saídas' },
     { code: 'inventario.view', label: 'Inventário' },
     { code: 'relatorios.view', label: 'Relatórios' },
+    { code: 'motorista.deliveries.view', label: 'Entregas de Motorista' },
+    { code: 'proof-of-delivery.manage', label: 'Gerenciar Entregas' },
   ],
   produtor: [
     { code: 'dashboard.view', label: 'Dashboard' },
