@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import { ViagemMotorista } from '@/hooks/useMotoristaViagens'
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'
 import { Capacitor } from '@capacitor/core'
+import { CameraCapture } from './CameraCapture'
 
 interface MotoristaPhotoUploadProps {
   viagem: ViagemMotorista
@@ -34,6 +35,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
   const [observacoes, setObservacoes] = useState('')
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null)
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false)
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
 
@@ -78,42 +80,57 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     }
   }
 
-  // Função para tirar foto com câmera nativa
+  // Função para tirar foto - mobile nativo ou desktop
   const takePhoto = async () => {
-    try {
-      setIsCapturingPhoto(true)
-      
-      const image = await CapacitorCamera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.Base64,
-        source: CameraSource.Camera,
-        width: 1200,
-        height: 1600
-      })
+    if (isNative) {
+      // Mobile: usar Capacitor Camera
+      try {
+        setIsCapturingPhoto(true)
+        
+        const image = await CapacitorCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Camera,
+          width: 1200,
+          height: 1600
+        })
 
-      if (image.base64String) {
-        // Converter base64 para File
-        const response = await fetch(`data:image/jpeg;base64,${image.base64String}`)
-        const blob = await response.blob()
-        const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' })
-        
-        // Adicionar à lista de arquivos
-        const newFiles = [...selectedFiles, file]
-        setSelectedFiles(newFiles)
-        
-        // Criar preview
-        const newUrl = URL.createObjectURL(file)
-        setPreviewUrls(prev => [...prev, newUrl])
-        
-        toast.success('Foto capturada com sucesso!')
+        if (image.base64String) {
+          // Converter base64 para File
+          const response = await fetch(`data:image/jpeg;base64,${image.base64String}`)
+          const blob = await response.blob()
+          const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' })
+          
+          addPhotoToList(file)
+          toast.success('Foto capturada com sucesso!')
+        }
+      } catch (error) {
+        console.error('Erro ao capturar foto:', error)
+        toast.error('Erro ao capturar foto. Tente novamente.')
+      } finally {
+        setIsCapturingPhoto(false)
       }
-    } catch (error) {
-      console.error('Erro ao capturar foto:', error)
-      toast.error('Erro ao capturar foto. Tente novamente.')
-    } finally {
-      setIsCapturingPhoto(false)
+    } else {
+      // Desktop: abrir modal da câmera
+      setIsCameraOpen(true)
     }
+  }
+
+  // Função para adicionar foto à lista
+  const addPhotoToList = (file: File) => {
+    const newFiles = [...selectedFiles, file]
+    setSelectedFiles(newFiles)
+    
+    // Criar preview
+    const newUrl = URL.createObjectURL(file)
+    setPreviewUrls(prev => [...prev, newUrl])
+  }
+
+  // Callback para quando foto é capturada no desktop
+  const handleCameraCapture = (file: File) => {
+    addPhotoToList(file)
+    toast.success('Foto capturada com sucesso!')
   }
 
   // Selecionar arquivos da galeria/sistema
@@ -435,6 +452,13 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             )}
           </CardContent>
         </Card>
+
+        {/* Camera Modal para Desktop */}
+        <CameraCapture
+          isOpen={isCameraOpen}
+          onClose={() => setIsCameraOpen(false)}
+          onCapture={handleCameraCapture}
+        />
       </div>
     </div>
   )
