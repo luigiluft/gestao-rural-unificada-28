@@ -22,7 +22,7 @@ const ProofOfDelivery = () => {
   const [showPhotoUpload, setShowPhotoUpload] = useState<string | null>(null)
   
   const { canAccess, isLoading: permissionLoading } = useCanAccessPage('proof-of-delivery')
-  const { data: viagens = [], isLoading: viagensLoading } = useMotoristaViagens()
+  const { data: viagens = [], isLoading: viagensLoading, refetch } = useMotoristaViagens()
   const updateNotificationView = useUpdateNotificationView()
 
   const isLoading = permissionLoading || viagensLoading
@@ -75,6 +75,12 @@ const ProofOfDelivery = () => {
   const viagensFinalizadas = viagens.filter(v => v.status === 'finalizada')
   const viagensEntregues = viagens.filter(v => v.status === 'entregue')
 
+  // Debug logging
+  console.log('🚛 Total viagens:', viagens.length)
+  console.log('🚛 Viagens por status:', viagens.map(v => ({ id: v.id, status: v.status, numero: v.numero })))
+  console.log('🚛 Viagens pendentes:', viagensPendentes.length)
+  console.log('🚛 Viagens finalizadas:', viagensFinalizadas.length)
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -94,14 +100,22 @@ const ProofOfDelivery = () => {
             </div>
             
             {/* Stats rápidas */}
-            <div className="flex gap-4 text-center">
-              <div className="px-3 py-2 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">{viagensPendentes.length}</div>
-                <div className="text-xs text-orange-600">Pendentes</div>
-              </div>
-              <div className="px-3 py-2 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{viagensEntregues.length}</div>
-                <div className="text-xs text-green-600">Entregues</div>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => refetch()} 
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+              >
+                🔄 Atualizar
+              </button>
+              <div className="flex gap-4 text-center">
+                <div className="px-3 py-2 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600">{viagensPendentes.length}</div>
+                  <div className="text-xs text-orange-600">Pendentes</div>
+                </div>
+                <div className="px-3 py-2 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{viagensEntregues.length}</div>
+                  <div className="text-xs text-green-600">Entregues</div>
+                </div>
               </div>
             </div>
           </div>

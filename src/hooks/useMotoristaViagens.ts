@@ -129,10 +129,9 @@ export const useIniciarViagem = () => {
     },
     onSuccess: (_, variables) => {
       toast.success("Viagem iniciada com sucesso!")
-      // Optimistically update cache so UI reflects the change immediately
-      queryClient.setQueryData<ViagemMotorista[] | undefined>(["motorista-viagens", user?.id], (old) =>
-        old?.map(v => v.id === variables.viagemId ? { ...v, status: "em_andamento", data_inicio: new Date().toISOString() } : v)
-      )
+      console.log('🎯 Iniciando viagem - variáveis:', variables)
+      
+      // Invalidar queries primeiro para garantir dados atualizados
       queryClient.invalidateQueries({ queryKey: ["motorista-viagens", user?.id] })
       queryClient.invalidateQueries({ queryKey: ["viagens-notifications", user?.id] })
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
