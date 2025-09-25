@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useMotoristaNotifications } from "./useMotoristaNotifications"
 
 export const useNotifications = () => {
   const { user } = useAuth()
+  const { data: motoristaNotifications = 0 } = useMotoristaNotifications()
   
   return useQuery({
     queryKey: ["notifications", user?.id],
@@ -17,6 +19,7 @@ export const useNotifications = () => {
         remessas: 0,
         suporte: 0,
         subcontas: 0,
+        viagens: 0,
       }
 
       // Get user profile to determine role
@@ -236,6 +239,7 @@ export const useNotifications = () => {
         remessas,
         suporte,
         subcontas,
+        viagens: motoristaNotifications,
       }
     },
     enabled: !!user?.id,

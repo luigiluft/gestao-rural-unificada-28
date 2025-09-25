@@ -14,6 +14,8 @@ import { useCanAccessPage } from '@/hooks/useSimplifiedPermissions';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ViagemCard } from '@/components/ProofOfDelivery/ViagemCard';
 import { MotoristaPhotoUpload } from '@/components/ProofOfDelivery/MotoristaPhotoUpload';
+import { useUpdateNotificationView } from '@/hooks/useNotificationViews';
+import { useEffect } from 'react';
 
 const ProofOfDelivery = () => {
   const [selectedViagemId, setSelectedViagemId] = useState<string | null>(null)
@@ -21,8 +23,16 @@ const ProofOfDelivery = () => {
   
   const { canAccess, isLoading: permissionLoading } = useCanAccessPage('proof-of-delivery')
   const { data: viagens = [], isLoading: viagensLoading } = useMotoristaViagens()
-  
+  const updateNotificationView = useUpdateNotificationView()
+
   const isLoading = permissionLoading || viagensLoading
+
+  // Mark viagens notifications as viewed when page loads
+  useEffect(() => {
+    if (!isLoading && canAccess && viagens.length > 0) {
+      updateNotificationView.mutate('viagens')
+    }
+  }, [isLoading, canAccess, viagens.length])
 
   // Se não tiver permissão, mostrar mensagem
   if (!isLoading && !canAccess) {
@@ -61,7 +71,7 @@ const ProofOfDelivery = () => {
     )
   }
 
-  const viagensPendentes = viagens.filter(v => v.status === 'pendente')
+  const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'pendente')
   const viagensEmAndamento = viagens.filter(v => v.status === 'em_andamento')
   const viagensFinalizadas = viagens.filter(v => v.status === 'finalizada')
   const viagensEntregues = viagens.filter(v => v.status === 'entregue')
