@@ -42,14 +42,17 @@ export function AppHeader() {
     const loadRole = async () => {
       if (!user) { setRoleLabel("Produtor"); return }
       try {
-        const [adminRes, franqRes] = await Promise.all([
+        const [adminRes, franqRes, motoristaRes] = await Promise.all([
           supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
           supabase.rpc('has_role', { _user_id: user.id, _role: 'franqueado' }),
+          supabase.rpc('has_role', { _user_id: user.id, _role: 'motorista' }),
         ])
         const isAdmin = adminRes.data === true
         const isFranqueado = franqRes.data === true
+        const isMotorista = motoristaRes.data === true
         if (isAdmin) setRoleLabel('Admin')
         else if (isFranqueado) setRoleLabel('Franqueado')
+        else if (isMotorista) setRoleLabel('Motorista')
         else setRoleLabel('Produtor')
       } catch {
         setRoleLabel('Produtor')

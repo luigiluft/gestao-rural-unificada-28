@@ -42,14 +42,29 @@ export const useSimplifiedPermissions = (): UserPermissions => {
             .eq("user_id", user.id)
             .maybeSingle()
 
-          if (templateAssignment?.permission_templates) {
-            return {
-              permissions: templateAssignment.permission_templates.permissions as PermissionCode[],
-              isSubaccount: true
+          let permissions: PermissionCode[] = []
+
+          if (templateAssignment?.permission_templates?.permissions) {
+            permissions = templateAssignment.permission_templates.permissions as PermissionCode[]
+          } else if (templateAssignment?.template_id) {
+            // Fallback: buscar template diretamente se o join falhou
+            const { data: template } = await supabase
+              .from("permission_templates")
+              .select("permissions")
+              .eq("id", templateAssignment.template_id)
+              .maybeSingle()
+            
+            if (template?.permissions) {
+              permissions = template.permissions as PermissionCode[]
             }
           }
 
-          return { permissions: [], isSubaccount: true }
+          // Fallback específico para motoristas
+          if (permissions.length === 0 && profile.role === 'motorista') {
+            permissions = ['proof-of-delivery.view', 'comprovantes.view'] as PermissionCode[]
+          }
+
+          return { permissions, isSubaccount: true }
         } else {
           // É usuário master - buscar permissões via page_permissions
           const { data: pagePermissions } = await supabase
