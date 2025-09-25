@@ -14,8 +14,13 @@ export const useLoginRedirect = () => {
   useEffect(() => {
     if (!user || !profile) return
 
+    console.log('🚀 useLoginRedirect - user:', user.email, 'profile role:', profile.role, 'current path:', location.pathname)
+
     // Não redirecionar se já estamos em uma página específica (exceto auth)
-    if (location.pathname !== '/' && location.pathname !== '/auth') return
+    if (location.pathname !== '/' && location.pathname !== '/auth') {
+      console.log('🚫 Not redirecting - already on specific page:', location.pathname)
+      return
+    }
 
     // Verificar se o usuário tem um template com rota padrão
     if (userTemplate?.permission_templates?.default_route) {
@@ -23,6 +28,8 @@ export const useLoginRedirect = () => {
       navigate(userTemplate.permission_templates.default_route, { replace: true })
       return
     }
+
+    console.log('🔍 No user template found, using role-based redirect. Template data:', userTemplate)
 
     // Redirecionamento baseado no role do usuário (fallback)
     const roleRedirects = {
@@ -34,7 +41,7 @@ export const useLoginRedirect = () => {
 
     const defaultRoute = roleRedirects[profile.role as keyof typeof roleRedirects]
     if (defaultRoute && location.pathname === '/') {
-      console.log('🚀 Redirecting to role default route:', defaultRoute)
+      console.log('🚀 Redirecting to role default route:', defaultRoute, 'for role:', profile.role)
       navigate(defaultRoute, { replace: true })
     }
   }, [user, userTemplate, profile, location.pathname, navigate])
