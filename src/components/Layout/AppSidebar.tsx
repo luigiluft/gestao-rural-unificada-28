@@ -105,7 +105,7 @@ export function AppSidebar() {
       : "hover:bg-secondary/50 transition-all duration-200"
   }
 
-  const getNotificationCount = (title: string, notifications: any) => {
+  const getNotificationCount = (title: string, notifications: any, viagensCount: number = 0) => {
     if (!notifications) return 0
     
     switch (title) {
@@ -128,7 +128,7 @@ export function AppSidebar() {
       case "Subcontas":
         return notifications.subcontas || 0
       case "Viagens":
-        return viagensNotificationCount || 0
+        return viagensCount || 0
       default:
         return 0
     }
@@ -138,7 +138,7 @@ export function AppSidebar() {
     if (!notifications || !subItems) return 0
     
     return subItems.reduce((total, item) => {
-      return total + getNotificationCount(item.label, notifications)
+      return total + getNotificationCount(item.label, notifications, viagensNotificationCount || 0)
     }, 0)
   }
 
@@ -247,12 +247,12 @@ export function AppSidebar() {
                                 >
                                   <div className="relative">
                                     {subItem.icon && <subItem.icon className="w-4 h-4 flex-shrink-0" />}
-                                    {notifications && getNotificationCount(subItem.label, notifications) > 0 && (
+                                    {notifications && getNotificationCount(subItem.label, notifications, viagensNotificationCount || 0) > 0 && (
                                       <Badge 
                                         variant="destructive" 
                                         className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
                                       >
-                                        {getNotificationCount(subItem.label, notifications)}
+                                        {getNotificationCount(subItem.label, notifications, viagensNotificationCount || 0)}
                                       </Badge>
                                     )}
                                   </div>
@@ -277,12 +277,12 @@ export function AppSidebar() {
                        >
                           <div className="relative">
                             {item.icon && <item.icon className="w-5 h-5 flex-shrink-0" />}
-                           {notifications && getNotificationCount(item.label, notifications) > 0 && (
+                           {notifications && getNotificationCount(item.label, notifications, viagensNotificationCount || 0) > 0 && (
                              <Badge 
                                variant="destructive" 
                                className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
                              >
-                               {getNotificationCount(item.label, notifications)}
+                               {getNotificationCount(item.label, notifications, viagensNotificationCount || 0)}
                              </Badge>
                            )}
                          </div>
