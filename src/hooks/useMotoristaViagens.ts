@@ -134,6 +134,8 @@ export const useIniciarViagem = () => {
         old?.map(v => v.id === variables.viagemId ? { ...v, status: "em_andamento", data_inicio: new Date().toISOString() } : v)
       )
       queryClient.invalidateQueries({ queryKey: ["motorista-viagens", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["viagens-notifications", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
     onError: (error: any) => {
       console.error("Erro ao iniciar viagem:", error)
@@ -170,6 +172,8 @@ export const useFinalizarViagem = () => {
     onSuccess: (_, variables) => {
       toast.success("Viagem finalizada com sucesso!")
       queryClient.invalidateQueries({ queryKey: ["motorista-viagens", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["viagens-notifications", user?.id] })
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
     onError: (error: any) => {
       console.error("Erro ao finalizar viagem:", error)
