@@ -30,7 +30,7 @@ const viagemSchema = z.object({
   data_inicio: z.string().min(1, 'Data de início é obrigatória'),
   data_fim: z.string().optional(),
   observacoes: z.string().optional(),
-  motorista_id: z.string().optional(),
+  motorista_id: z.string().min(1, 'Motorista é obrigatório'),
 });
 
 type ViagemFormData = z.infer<typeof viagemSchema>;
@@ -64,7 +64,7 @@ export const NovaViagemComRemessasDialog = ({
       data_inicio: '',
       data_fim: '',
       observacoes: '',
-      motorista_id: '',
+      motorista_id: undefined,
     },
   });
 
@@ -180,7 +180,7 @@ export const NovaViagemComRemessasDialog = ({
               name="motorista_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Motorista (Opcional)</FormLabel>
+                  <FormLabel>Motorista *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
