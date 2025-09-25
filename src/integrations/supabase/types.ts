@@ -3223,6 +3223,25 @@ export type Database = {
         | "veiculos.manage"
         | "motoristas.view"
         | "motoristas.manage"
+        | "remessas.view"
+        | "viagens.view"
+        | "agenda.view"
+        | "tracking.view"
+        | "proof-of-delivery.view"
+        | "proof-of-delivery.manage"
+        | "comprovantes.view"
+        | "ocorrencias.view"
+        | "tabela-frete.view"
+        | "tabelas-frete.view"
+        | "motorista.deliveries.view"
+        | "produtores.view"
+        | "fazendas.view"
+        | "subcontas.view"
+        | "perfil.view"
+        | "instrucoes.view"
+        | "suporte.view"
+        | "configuracoes.view"
+        | "controle-acesso.view"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -3385,6 +3404,25 @@ export const Constants = {
         "veiculos.manage",
         "motoristas.view",
         "motoristas.manage",
+        "remessas.view",
+        "viagens.view",
+        "agenda.view",
+        "tracking.view",
+        "proof-of-delivery.view",
+        "proof-of-delivery.manage",
+        "comprovantes.view",
+        "ocorrencias.view",
+        "tabela-frete.view",
+        "tabelas-frete.view",
+        "motorista.deliveries.view",
+        "produtores.view",
+        "fazendas.view",
+        "subcontas.view",
+        "perfil.view",
+        "instrucoes.view",
+        "suporte.view",
+        "configuracoes.view",
+        "controle-acesso.view",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
