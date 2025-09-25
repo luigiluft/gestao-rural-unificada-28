@@ -33,7 +33,7 @@ const ProofOfDelivery = () => {
             <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2">Acesso Restrito</h3>
             <p className="text-muted-foreground">
-              Você não tem permissão para acessar esta página. Entre em contato com o administrador.
+              Você não tem permissão para acessar a página de Proof of Delivery. Entre em contato com o administrador.
             </p>
           </CardContent>
         </Card>

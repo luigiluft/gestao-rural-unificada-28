@@ -18,8 +18,11 @@ export const useSimplifiedPermissions = (): UserPermissions => {
     queryKey: ["simplified-permissions", user?.id],
     queryFn: async (): Promise<{ permissions: PermissionCode[]; isSubaccount: boolean }> => {
       if (!user?.id || !profile?.role) {
+        console.log('❌ useSimplifiedPermissions: User or profile not available', { userId: user?.id, role: profile?.role })
         return { permissions: [], isSubaccount: false }
       }
+
+      console.log('🔍 useSimplifiedPermissions: Starting permission check for user', user.id)
 
       // Verificar se é subconta
       const { data: hierarchyData } = await supabase
@@ -29,6 +32,7 @@ export const useSimplifiedPermissions = (): UserPermissions => {
         .maybeSingle()
 
       const isSubaccount = !!hierarchyData?.parent_user_id
+      console.log('🔍 useSimplifiedPermissions: User hierarchy check', { isSubaccount, parentId: hierarchyData?.parent_user_id })
 
       if (isSubaccount) {
         // É subconta - buscar permissões via permission_templates
@@ -42,12 +46,15 @@ export const useSimplifiedPermissions = (): UserPermissions => {
           .maybeSingle()
 
         if (templateAssignment?.permission_templates) {
+          const permissions = templateAssignment.permission_templates.permissions as PermissionCode[]
+          console.log('✅ useSimplifiedPermissions: Found permissions from template', { permissions })
           return {
-            permissions: templateAssignment.permission_templates.permissions as PermissionCode[],
+            permissions,
             isSubaccount: true
           }
         }
 
+        console.log('❌ useSimplifiedPermissions: No template assignment found for subaccount')
         return { permissions: [], isSubaccount: true }
       } else {
         // É usuário master - buscar permissões via page_permissions
@@ -76,6 +83,8 @@ export const useCanAccessPage = (pageKey: string) => {
   const { permissions, isLoading } = useSimplifiedPermissions()
   
   const canAccess = permissions.includes(`${pageKey}.view` as PermissionCode)
+  
+  console.log('🔍 useCanAccessPage:', { pageKey, permissions, canAccess, checkingFor: `${pageKey}.view` })
   
   return { canAccess, isLoading }
 }
