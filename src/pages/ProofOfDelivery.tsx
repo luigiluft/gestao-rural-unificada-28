@@ -85,35 +85,29 @@ const ProofOfDelivery = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-white border-b border-border">
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Truck className="h-6 w-6 text-primary" />
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Truck className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Minhas Viagens</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-xl sm:text-2xl font-bold">Minhas Viagens</h1>
+                <p className="text-sm sm:text-base text-muted-foreground hidden sm:block">
                   Gerencie suas viagens e envie comprovantes de entrega
                 </p>
               </div>
             </div>
             
             {/* Stats rápidas */}
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => refetch()} 
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-              >
-                🔄 Atualizar
-              </button>
-              <div className="flex gap-4 text-center">
-                <div className="px-3 py-2 bg-orange-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">{viagensPendentes.length}</div>
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+              <div className="flex gap-2 sm:gap-4 text-center">
+                <div className="px-2 py-1 sm:px-3 sm:py-2 bg-orange-50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-orange-600">{viagensPendentes.length}</div>
                   <div className="text-xs text-orange-600">Pendentes</div>
                 </div>
-                <div className="px-3 py-2 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{viagensEntregues.length}</div>
+                <div className="px-2 py-1 sm:px-3 sm:py-2 bg-green-50 rounded-lg">
+                  <div className="text-lg sm:text-2xl font-bold text-green-600">{viagensEntregues.length}</div>
                   <div className="text-xs text-green-600">Entregues</div>
                 </div>
               </div>
@@ -123,7 +117,7 @@ const ProofOfDelivery = () => {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
         {viagens.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -143,7 +137,7 @@ const ProofOfDelivery = () => {
                   <Clock className="h-5 w-5 text-orange-600" />
                   <h2 className="text-xl font-semibold">Aguardando Ação ({viagensPendentes.length})</h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {viagensPendentes.map((viagem) => (
                     <ViagemCard
                       key={viagem.id}
@@ -163,7 +157,7 @@ const ProofOfDelivery = () => {
                   <Package className="h-5 w-5 text-purple-600" />
                   <h2 className="text-xl font-semibold">Aguardando Comprovante ({viagensFinalizadas.length})</h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {viagensFinalizadas.map((viagem) => (
                     <ViagemCard
                       key={viagem.id}
@@ -182,7 +176,7 @@ const ProofOfDelivery = () => {
                   <Package className="h-5 w-5 text-green-600" />
                   <h2 className="text-xl font-semibold">Concluídas ({viagensEntregues.length})</h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {viagensEntregues.map((viagem) => (
                     <ViagemCard
                       key={viagem.id}
