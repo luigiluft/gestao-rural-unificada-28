@@ -68,7 +68,7 @@ export default function Entradas() {
   const { data: entradas, isLoading } = useEntradas(dateRange)
   const { isAdmin, isFranqueado } = useUserRole()
 
-  // Column visibility state
+  // Column visibility and width state
   const [columns, setColumns] = useState<ColumnConfig[]>([
     // Basic Info
     { key: "numero_nfe", label: "NFe", visible: true, category: "Básico" },
@@ -138,6 +138,36 @@ export default function Entradas() {
     { key: "observacoes", label: "Observações", visible: false, category: "Sistema" },
     { key: "observacoes_franqueado", label: "Obs. Franqueado", visible: false, category: "Sistema" },
   ])
+
+  // Column widths state
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({})
+  
+  // Resize functionality
+  const [isResizing, setIsResizing] = useState(false)
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null)
+
+  const handleMouseDown = (columnKey: string, e: React.MouseEvent) => {
+    setIsResizing(true)
+    setResizingColumn(columnKey)
+    
+    const startX = e.clientX
+    const startWidth = columnWidths[columnKey] || 120
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(80, startWidth + (e.clientX - startX))
+      setColumnWidths(prev => ({ ...prev, [columnKey]: newWidth }))
+    }
+    
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      setResizingColumn(null)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+    
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
 
   const getCellContent = (entrada: any, column: ColumnConfig) => {
     switch (column.key) {
@@ -317,14 +347,33 @@ export default function Entradas() {
               </div>
             ) : entradas && entradas.length > 0 ? (
               <div className="w-full max-w-full overflow-x-auto">
-                <Table className="table-auto w-max min-w-max">
+                <Table className="table-fixed w-max min-w-max">
                   <TableHeader className="sticky top-0 bg-background border-b z-10">
                     <TableRow>
-                      {columns.filter(col => col.visible).map((column) => (
-                        <TableHead key={column.key} className="min-w-[120px] text-xs lg:text-sm whitespace-nowrap px-2">
-                          {column.label}
-                        </TableHead>
-                      ))}
+                      {columns.filter(col => col.visible).map((column, index) => {
+                        const width = columnWidths[column.key] || 120
+                        const visibleColumns = columns.filter(col => col.visible)
+                        const isLastColumn = index === visibleColumns.length - 1
+                        
+                        return (
+                          <TableHead 
+                            key={column.key} 
+                            className="text-xs lg:text-sm whitespace-nowrap px-2 relative"
+                            style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="truncate">{column.label}</span>
+                              {!isLastColumn && (
+                                <div
+                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/40 transition-colors"
+                                  onMouseDown={(e) => handleMouseDown(column.key, e)}
+                                  style={{ userSelect: 'none' }}
+                                />
+                              )}
+                            </div>
+                          </TableHead>
+                        )
+                      })}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -333,9 +382,14 @@ export default function Entradas() {
                         {columns.filter(col => col.visible).map((column) => {
                           const content = getCellContent(entrada, column)
                           const isAction = column.key === "actions" || column.key === "status_aprovacao"
+                          const width = columnWidths[column.key] || 120
                           
                           return (
-                            <TableCell key={column.key} className="text-xs lg:text-sm min-w-[120px] whitespace-nowrap px-2">
+                            <TableCell 
+                              key={column.key} 
+                              className="text-xs lg:text-sm whitespace-nowrap px-2"
+                              style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
+                            >
                               {isAction ? content : (
                                 <span 
                                   className="truncate block" 
