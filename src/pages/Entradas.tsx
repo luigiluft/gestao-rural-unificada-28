@@ -754,8 +754,8 @@ export default function Entradas() {
                 ))}
               </div>
             ) : entradas && entradas.length > 0 ? (
-              <div className="h-full p-6">
-                <div className="max-w-full overflow-x-auto">
+              <div className="h-full overflow-hidden">
+                <div className="h-full overflow-auto p-6">
                   <Table className="min-w-[1200px]">
                     <TableHeader>
                       <TableRow>
