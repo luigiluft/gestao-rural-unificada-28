@@ -19,18 +19,23 @@ interface DateRangeFilterProps {
 }
 
 export function DateRangeFilter({ dateRange, onDateRangeChange, className }: DateRangeFilterProps) {
-  const handleFromDateChange = (date: Date | undefined) => {
-    onDateRangeChange({
-      from: date,
-      to: dateRange.to
-    })
+  const handleDateRangeSelect = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
+    if (range) {
+      onDateRangeChange(range)
+    } else {
+      onDateRangeChange({ from: undefined, to: undefined })
+    }
   }
 
-  const handleToDateChange = (date: Date | undefined) => {
-    onDateRangeChange({
-      from: dateRange.from,
-      to: date
-    })
+  const formatDateRange = () => {
+    if (dateRange.from && dateRange.to) {
+      return `${format(dateRange.from, "dd/MM/yyyy")} - ${format(dateRange.to, "dd/MM/yyyy")}`
+    } else if (dateRange.from) {
+      return `A partir de ${format(dateRange.from, "dd/MM/yyyy")}`
+    } else if (dateRange.to) {
+      return `Até ${format(dateRange.to, "dd/MM/yyyy")}`
+    }
+    return "Selecione o período"
   }
 
   return (
@@ -39,75 +44,38 @@ export function DateRangeFilter({ dateRange, onDateRangeChange, className }: Dat
         <CardTitle className="text-lg">Filtro por Período</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Data Inicial */}
-          <div className="space-y-2">
-            <Label htmlFor="data-inicial">Data Inicial</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="data-inicial"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateRange.from && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? (
-                    format(dateRange.from, "dd/MM/yyyy")
-                  ) : (
-                    <span>Selecione a data inicial</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.from}
-                  onSelect={handleFromDateChange}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Data Final */}
-          <div className="space-y-2">
-            <Label htmlFor="data-final">Data Final</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="data-final"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dateRange.to && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.to ? (
-                    format(dateRange.to, "dd/MM/yyyy")
-                  ) : (
-                    <span>Selecione a data final</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.to}
-                  onSelect={handleToDateChange}
-                  disabled={(date) => {
-                    return dateRange.from ? date < dateRange.from : false
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+        {/* Seletor de Período Unificado */}
+        <div className="space-y-2">
+          <Label htmlFor="data-range">Período</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="data-range"
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !dateRange.from && !dateRange.to && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {formatDateRange()}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={{
+                  from: dateRange.from,
+                  to: dateRange.to,
+                }}
+                onSelect={handleDateRangeSelect}
+                numberOfMonths={2}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         
         {/* Botões de Atalho */}
