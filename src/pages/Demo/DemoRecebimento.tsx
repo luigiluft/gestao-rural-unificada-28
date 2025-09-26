@@ -44,6 +44,7 @@ interface Divergencia {
   lote: string
   quantidade_esperada: number
   quantidade_recebida: number
+  quantidade_danificada?: number
   tipo_divergencia: 'quantidade' | 'dano'
   motivo: string
   acao_tomada: string
@@ -247,7 +248,8 @@ export default function DemoRecebimento() {
       produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
       lote: item?.lote || `LT${Date.now().toString().slice(-6)}`,
       quantidade_esperada: item ? item.quantidade || 0 : 0,
-      quantidade_recebida: item ? item.quantidade || 0 : 0,
+      quantidade_recebida: 0,
+      quantidade_danificada: 0,
       tipo_divergencia: 'quantidade' as const,
       motivo: '',
       acao_tomada: ''
@@ -500,7 +502,7 @@ export default function DemoRecebimento() {
                           </div>
                           
                           <div>
-                            <Label htmlFor={`tipo-${index}`}>Tipo de Divergência</Label>
+                            <Label htmlFor={`tipo-${index}`}>Motivo da Divergência</Label>
                             <Select
                               value={div.tipo_divergencia}
                               onValueChange={(value) => updateDivergencia(index, 'tipo_divergencia', value as 'quantidade' | 'dano')}
@@ -509,8 +511,8 @@ export default function DemoRecebimento() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="quantidade">Divergência de Quantidade</SelectItem>
-                                <SelectItem value="dano">Produto Danificado</SelectItem>
+                                <SelectItem value="quantidade">Quantidade</SelectItem>
+                                <SelectItem value="dano">Dano</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -536,23 +538,35 @@ export default function DemoRecebimento() {
                                 className="bg-muted"
                               />
                             </div>
-                            <div>
-                              <Label htmlFor={`recebida-${index}`}>Quantidade Recebida</Label>
-                              <Input
-                                id={`recebida-${index}`}
-                                type="number"
-                                value={div.quantidade_recebida}
-                                onChange={(e) => updateDivergencia(index, 'quantidade_recebida', Number(e.target.value))}
-                              />
-                            </div>
+                            {div.tipo_divergencia === 'quantidade' ? (
+                              <div>
+                                <Label htmlFor={`recebida-${index}`}>Quantidade Recebida</Label>
+                                <Input
+                                  id={`recebida-${index}`}
+                                  type="number"
+                                  value={div.quantidade_recebida}
+                                  onChange={(e) => updateDivergencia(index, 'quantidade_recebida', Number(e.target.value))}
+                                />
+                              </div>
+                            ) : (
+                              <div>
+                                <Label htmlFor={`danificada-${index}`}>Quantidade Danificada</Label>
+                                <Input
+                                  id={`danificada-${index}`}
+                                  type="number"
+                                  value={div.quantidade_danificada || 0}
+                                  onChange={(e) => updateDivergencia(index, 'quantidade_danificada', Number(e.target.value))}
+                                />
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <Label htmlFor={`motivo-${index}`}>Motivo da Divergência</Label>
+                            <Label htmlFor={`motivo-desc-${index}`}>Descrição do Motivo</Label>
                             <Textarea
-                              id={`motivo-${index}`}
+                              id={`motivo-desc-${index}`}
                               value={div.motivo}
                               onChange={(e) => updateDivergencia(index, 'motivo', e.target.value)}
-                              placeholder="Descreva o motivo da divergência"
+                              placeholder="Descreva detalhadamente o motivo da divergência"
                             />
                           </div>
                           <div>
