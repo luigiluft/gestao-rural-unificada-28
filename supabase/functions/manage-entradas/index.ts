@@ -65,16 +65,19 @@ serve(async (req) => {
 
 async function createEntrada(supabase: any, userId: string, data: any) {
   // Validate required fields
-  if (!data.data_entrada || !data.itens || data.itens.length === 0) {
+  if (!data.data_entrada) {
     throw new Error('Missing required fields')
   }
+
+  // Extract itens from data to save separately
+  const { itens, ...entradaData } = data
 
   // Start transaction
   const { data: entrada, error: entradaError } = await supabase
     .from('entradas')
     .insert({
       user_id: userId,
-      ...data,
+      ...entradaData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -83,25 +86,36 @@ async function createEntrada(supabase: any, userId: string, data: any) {
 
   if (entradaError) throw entradaError
 
-  // Insert items
-  const itemsWithEntradaId = data.itens.map((item: any) => ({
-    ...item,
-    entrada_id: entrada.id,
-    user_id: userId,
-    created_at: new Date().toISOString()
-  }))
+  try {
+    // Insert items if provided
+    if (itens && itens.length > 0) {
+      const itemsWithEntradaId = itens.map((item: any) => ({
+        ...item,
+        entrada_id: entrada.id,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      }))
 
-  const { error: itemsError } = await supabase
-    .from('entrada_itens')
-    .insert(itemsWithEntradaId)
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('entrada_itens')
+        .insert(itemsWithEntradaId)
+        .select()
 
-  if (itemsError) {
-    // Rollback entrada
+      if (itemsError) {
+        // Rollback entrada
+        await supabase.from('entradas').delete().eq('id', entrada.id)
+        throw itemsError
+      }
+
+      return { ...entrada, itens: itemsData }
+    }
+
+    return entrada
+  } catch (error) {
+    // If any error occurs after entrada creation, clean up
     await supabase.from('entradas').delete().eq('id', entrada.id)
-    throw itemsError
+    throw error
   }
-
-  return entrada
 }
 
 async function updateEntrada(supabase: any, userId: string, data: any) {
