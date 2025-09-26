@@ -358,16 +358,17 @@ export default function Entradas() {
                         return (
                           <TableHead 
                             key={column.key} 
-                            className="text-xs lg:text-sm whitespace-nowrap px-2 relative"
+                            className="text-xs lg:text-sm whitespace-nowrap px-2 relative border-r"
                             style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
                           >
                             <div className="flex items-center justify-between">
                               <span className="truncate">{column.label}</span>
                               {!isLastColumn && (
                                 <div
-                                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/40 transition-colors"
+                                  className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize bg-border/50 hover:bg-primary/30 active:bg-primary/50 transition-colors z-20"
                                   onMouseDown={(e) => handleMouseDown(column.key, e)}
                                   style={{ userSelect: 'none' }}
+                                  title="Arraste para redimensionar coluna"
                                 />
                               )}
                             </div>
