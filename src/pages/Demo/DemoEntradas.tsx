@@ -171,7 +171,7 @@ export default function DemoEntradas() {
                 Nova Entrada
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full" id="entrada-modal">
+            <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full" id="entrada-modal">
               <DialogHeader>
                 <DialogTitle>Registrar Nova Entrada</DialogTitle>
                 <DialogDescription>

@@ -203,9 +203,14 @@ export function ItensComunsSection({
       <CardContent className="space-y-4">
         {/* Adicionar Novo Item */}
         <div className="border rounded-lg p-4 bg-muted/30">
-          <div className={`grid gap-3 ${tipo === 'entrada' ? 'grid-cols-7' : 'grid-cols-6'}`}>
-            <div className="space-y-1 col-span-2">
-              <Label className="text-xs">Produto</Label>
+          {/* Layout responsivo melhorado */}
+          <div className={`grid gap-3 items-end ${
+            tipo === 'entrada' 
+              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7' 
+              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+          }`}>
+            <div className={`space-y-1 ${tipo === 'entrada' ? 'lg:col-span-2' : 'lg:col-span-2'}`}>
+              <Label className="text-xs font-medium">Produto</Label>
               {tipo === 'saida' ? (
                 <Select 
                   value={novoItem.produto_id || ''} 
@@ -240,7 +245,7 @@ export function ItensComunsSection({
 
             {tipo === 'entrada' && (
               <div className="space-y-1">
-                <Label className="text-xs">Lote</Label>
+                <Label className="text-xs font-medium">Lote</Label>
                 <Input
                   placeholder="Lote"
                   value={novoItem.lote}
@@ -250,7 +255,7 @@ export function ItensComunsSection({
             )}
 
             <div className="space-y-1">
-              <Label className="text-xs">Qtd</Label>
+              <Label className="text-xs font-medium">Qtd</Label>
               <Input
                 type="number"
                 placeholder="0"
@@ -260,7 +265,7 @@ export function ItensComunsSection({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Unidade</Label>
+              <Label className="text-xs font-medium">Unidade</Label>
               {tipo === 'saida' ? (
                 <Input
                   value={novoItem.unidade || ''}
@@ -284,7 +289,7 @@ export function ItensComunsSection({
 
             {tipo === 'entrada' && (
               <div className="space-y-1">
-                <Label className="text-xs">Depósito</Label>
+                <Label className="text-xs font-medium">Depósito</Label>
                 <Select value={novoItem.deposito || ''} onValueChange={(value) => onNovoItemChange('deposito', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Depósito" />
@@ -300,7 +305,7 @@ export function ItensComunsSection({
 
             {tipo === 'entrada' && (
               <div className="space-y-1">
-                <Label className="text-xs">Valor Unit.</Label>
+                <Label className="text-xs font-medium">Valor Unit.</Label>
                 <Input
                   type="number"
                   placeholder="0,00"
@@ -312,11 +317,11 @@ export function ItensComunsSection({
             )}
 
             <div className="space-y-1">
-              <Label className="text-xs">Ação</Label>
+              <Label className="text-xs font-medium">Ação</Label>
               <Button 
                 onClick={onAdicionarItem} 
                 size="sm" 
-                className="w-full"
+                className="w-full h-10"
                 data-tutorial="adicionar-item-btn"
               >
                 <Plus className="w-4 h-4" />
