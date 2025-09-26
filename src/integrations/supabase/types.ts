@@ -56,6 +56,113 @@ export type Database = {
         }
         Relationships: []
       }
+      comprovante_fotos: {
+        Row: {
+          comprovante_id: string
+          created_at: string
+          data_foto: string | null
+          descricao: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          tipo: string
+          url_foto: string
+        }
+        Insert: {
+          comprovante_id: string
+          created_at?: string
+          data_foto?: string | null
+          descricao?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          tipo: string
+          url_foto: string
+        }
+        Update: {
+          comprovante_id?: string
+          created_at?: string
+          data_foto?: string | null
+          descricao?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          tipo?: string
+          url_foto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comprovante_fotos_comprovante_id_fkey"
+            columns: ["comprovante_id"]
+            isOneToOne: false
+            referencedRelation: "comprovantes_entrega"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comprovantes_entrega: {
+        Row: {
+          cliente_nome: string
+          codigo: string
+          created_at: string
+          data_entrega: string | null
+          documento_recebedor: string | null
+          id: string
+          latitude: number | null
+          localizacao: string | null
+          longitude: number | null
+          observacoes: string | null
+          produto_descricao: string | null
+          recebido_por: string | null
+          status: string
+          tem_assinatura: boolean
+          total_fotos: number
+          tracking_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_nome: string
+          codigo: string
+          created_at?: string
+          data_entrega?: string | null
+          documento_recebedor?: string | null
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          observacoes?: string | null
+          produto_descricao?: string | null
+          recebido_por?: string | null
+          status?: string
+          tem_assinatura?: boolean
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_nome?: string
+          codigo?: string
+          created_at?: string
+          data_entrega?: string | null
+          documento_recebedor?: string | null
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          observacoes?: string | null
+          produto_descricao?: string | null
+          recebido_por?: string | null
+          status?: string
+          tem_assinatura?: boolean
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       configuracoes_sistema: {
         Row: {
           chave: string
@@ -82,6 +189,54 @@ export type Database = {
           valor?: string
         }
         Relationships: []
+      }
+      delivery_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string
+          comprovante_id: string
+          created_at: string
+          id: string
+          motorista_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by: string
+          comprovante_id: string
+          created_at?: string
+          id?: string
+          motorista_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string
+          comprovante_id?: string
+          created_at?: string
+          id?: string
+          motorista_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_assignments_comprovante_id_fkey"
+            columns: ["comprovante_id"]
+            isOneToOne: false
+            referencedRelation: "comprovantes_entrega"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_assignments_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       divergencias: {
         Row: {
@@ -164,42 +319,6 @@ export type Database = {
           updated_at?: string
           user_id?: string
           valor_impacto?: number | null
-        }
-        Relationships: []
-      }
-      employee_profiles: {
-        Row: {
-          created_at: string
-          descricao: string | null
-          id: string
-          is_template: boolean
-          nome: string
-          permissions: Database["public"]["Enums"]["permission_code"][]
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          descricao?: string | null
-          id?: string
-          is_template?: boolean
-          nome: string
-          permissions?: Database["public"]["Enums"]["permission_code"][]
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          descricao?: string | null
-          id?: string
-          is_template?: boolean
-          nome?: string
-          permissions?: Database["public"]["Enums"]["permission_code"][]
-          role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -1086,7 +1205,9 @@ export type Database = {
           estado: string | null
           id: string
           inscricao_estadual: string | null
+          latitude: number | null
           layout_armazem: string | null
+          longitude: number | null
           master_franqueado_id: string
           nome: string
           numero: string | null
@@ -1110,7 +1231,9 @@ export type Database = {
           estado?: string | null
           id?: string
           inscricao_estadual?: string | null
+          latitude?: number | null
           layout_armazem?: string | null
+          longitude?: number | null
           master_franqueado_id: string
           nome: string
           numero?: string | null
@@ -1134,7 +1257,9 @@ export type Database = {
           estado?: string | null
           id?: string
           inscricao_estadual?: string | null
+          latitude?: number | null
           layout_armazem?: string | null
+          longitude?: number | null
           master_franqueado_id?: string
           nome?: string
           numero?: string | null
@@ -1143,53 +1268,49 @@ export type Database = {
         }
         Relationships: []
       }
-      inventario_divergencias: {
+      frete_faixas: {
         Row: {
           created_at: string
-          diferenca: number
+          distancia_max: number
+          distancia_min: number
           id: string
-          inventario_id: string
-          justificativa: string | null
-          lote: string | null
-          posicao_id: string
-          produto_id: string | null
-          quantidade_encontrada: number
-          quantidade_sistema: number
-          status: string
-          tipo_divergencia: string
-          valor_impacto: number | null
+          pedagio_por_ton: number
+          prazo_dias: number
+          tabela_frete_id: string
+          valor_ate_300kg: number
+          valor_por_kg_301_999: number
         }
         Insert: {
           created_at?: string
-          diferenca: number
+          distancia_max: number
+          distancia_min: number
           id?: string
-          inventario_id: string
-          justificativa?: string | null
-          lote?: string | null
-          posicao_id: string
-          produto_id?: string | null
-          quantidade_encontrada: number
-          quantidade_sistema: number
-          status?: string
-          tipo_divergencia: string
-          valor_impacto?: number | null
+          pedagio_por_ton: number
+          prazo_dias: number
+          tabela_frete_id: string
+          valor_ate_300kg: number
+          valor_por_kg_301_999: number
         }
         Update: {
           created_at?: string
-          diferenca?: number
+          distancia_max?: number
+          distancia_min?: number
           id?: string
-          inventario_id?: string
-          justificativa?: string | null
-          lote?: string | null
-          posicao_id?: string
-          produto_id?: string | null
-          quantidade_encontrada?: number
-          quantidade_sistema?: number
-          status?: string
-          tipo_divergencia?: string
-          valor_impacto?: number | null
+          pedagio_por_ton?: number
+          prazo_dias?: number
+          tabela_frete_id?: string
+          valor_ate_300kg?: number
+          valor_por_kg_301_999?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_frete_faixas_tabela"
+            columns: ["tabela_frete_id"]
+            isOneToOne: false
+            referencedRelation: "tabelas_frete"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventario_itens: {
         Row: {
@@ -1323,6 +1444,54 @@ export type Database = {
         }
         Relationships: []
       }
+      motoristas: {
+        Row: {
+          ativo: boolean
+          auth_user_id: string | null
+          categoria_cnh: string | null
+          cnh: string
+          cpf: string
+          created_at: string
+          data_vencimento_cnh: string | null
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          auth_user_id?: string | null
+          categoria_cnh?: string | null
+          cnh: string
+          cpf: string
+          created_at?: string
+          data_vencimento_cnh?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          auth_user_id?: string | null
+          categoria_cnh?: string | null
+          cnh?: string
+          cpf?: string
+          created_at?: string
+          data_vencimento_cnh?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           created_at: string
@@ -1375,6 +1544,128 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_fotos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          ocorrencia_id: string
+          url_foto: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ocorrencia_id: string
+          url_foto: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ocorrencia_id?: string
+          url_foto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_fotos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias_transporte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencias_transporte: {
+        Row: {
+          acao_corretiva: string | null
+          cliente_nome: string | null
+          created_at: string
+          data_resolucao: string | null
+          descricao: string
+          id: string
+          latitude: number | null
+          localizacao: string | null
+          longitude: number | null
+          numero: string
+          prioridade: string
+          responsavel_id: string | null
+          severidade: string
+          status: string
+          tempo_resolucao: unknown | null
+          tipo: string
+          titulo: string
+          total_fotos: number
+          tracking_id: string | null
+          updated_at: string
+          user_id: string
+          viagem_id: string | null
+        }
+        Insert: {
+          acao_corretiva?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_resolucao?: string | null
+          descricao: string
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          numero: string
+          prioridade?: string
+          responsavel_id?: string | null
+          severidade?: string
+          status?: string
+          tempo_resolucao?: unknown | null
+          tipo: string
+          titulo: string
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id: string
+          viagem_id?: string | null
+        }
+        Update: {
+          acao_corretiva?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          data_resolucao?: string | null
+          descricao?: string
+          id?: string
+          latitude?: number | null
+          localizacao?: string | null
+          longitude?: number | null
+          numero?: string
+          prioridade?: string
+          responsavel_id?: string | null
+          severidade?: string
+          status?: string
+          tempo_resolucao?: unknown | null
+          tipo?: string
+          titulo?: string
+          total_fotos?: number
+          tracking_id?: string | null
+          updated_at?: string
+          user_id?: string
+          viagem_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_transporte_tracking_id_fkey"
+            columns: ["tracking_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_transporte_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
             referencedColumns: ["id"]
           },
         ]
@@ -1464,6 +1755,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          expires_at: string | null
           franquia_id: string | null
           id: string
           invite_token: string | null
@@ -1476,6 +1768,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          expires_at?: string | null
           franquia_id?: string | null
           id?: string
           invite_token?: string | null
@@ -1488,6 +1781,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          expires_at?: string | null
           franquia_id?: string | null
           id?: string
           invite_token?: string | null
@@ -1506,6 +1800,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      permission_templates: {
+        Row: {
+          created_at: string
+          default_route: string | null
+          descricao: string | null
+          id: string
+          is_template: boolean
+          nome: string
+          permissions: Database["public"]["Enums"]["permission_code"][]
+          target_role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_route?: string | null
+          descricao?: string | null
+          id?: string
+          is_template?: boolean
+          nome: string
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          target_role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_route?: string | null
+          descricao?: string | null
+          id?: string
+          is_template?: boolean
+          nome?: string
+          permissions?: Database["public"]["Enums"]["permission_code"][]
+          target_role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       produtores: {
         Row: {
@@ -1886,14 +2219,22 @@ export type Database = {
           created_at: string
           criado_por_franqueado: boolean | null
           data_aprovacao_produtor: string | null
+          data_fim_janela: string | null
+          data_inicio_janela: string | null
           data_saida: string
           deposito_id: string
+          fazenda_id: string | null
+          frete_destino: string | null
+          frete_distancia: number | null
+          frete_origem: string | null
           id: string
+          janela_entrega_dias: number | null
           janela_horario: string | null
           mopp_motorista: string | null
           nome_motorista: string | null
           observacoes: string | null
           observacoes_aprovacao: string | null
+          peso_total: number | null
           placa_veiculo: string | null
           produtor_destinatario_id: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
@@ -1902,21 +2243,31 @@ export type Database = {
           tipo_saida: string
           updated_at: string
           user_id: string
+          valor_frete_calculado: number | null
           valor_total: number | null
+          viagem_id: string | null
         }
         Insert: {
           cpf_motorista?: string | null
           created_at?: string
           criado_por_franqueado?: boolean | null
           data_aprovacao_produtor?: string | null
+          data_fim_janela?: string | null
+          data_inicio_janela?: string | null
           data_saida: string
           deposito_id: string
+          fazenda_id?: string | null
+          frete_destino?: string | null
+          frete_distancia?: number | null
+          frete_origem?: string | null
           id?: string
+          janela_entrega_dias?: number | null
           janela_horario?: string | null
           mopp_motorista?: string | null
           nome_motorista?: string | null
           observacoes?: string | null
           observacoes_aprovacao?: string | null
+          peso_total?: number | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
@@ -1925,21 +2276,31 @@ export type Database = {
           tipo_saida: string
           updated_at?: string
           user_id: string
+          valor_frete_calculado?: number | null
           valor_total?: number | null
+          viagem_id?: string | null
         }
         Update: {
           cpf_motorista?: string | null
           created_at?: string
           criado_por_franqueado?: boolean | null
           data_aprovacao_produtor?: string | null
+          data_fim_janela?: string | null
+          data_inicio_janela?: string | null
           data_saida?: string
           deposito_id?: string
+          fazenda_id?: string | null
+          frete_destino?: string | null
+          frete_distancia?: number | null
+          frete_origem?: string | null
           id?: string
+          janela_entrega_dias?: number | null
           janela_horario?: string | null
           mopp_motorista?: string | null
           nome_motorista?: string | null
           observacoes?: string | null
           observacoes_aprovacao?: string | null
+          peso_total?: number | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
@@ -1948,7 +2309,9 @@ export type Database = {
           tipo_saida?: string
           updated_at?: string
           user_id?: string
+          valor_frete_calculado?: number | null
           valor_total?: number | null
+          viagem_id?: string | null
         }
         Relationships: [
           {
@@ -1956,6 +2319,13 @@ export type Database = {
             columns: ["deposito_id"]
             isOneToOne: false
             referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
             referencedColumns: ["id"]
           },
         ]
@@ -1999,6 +2369,246 @@ export type Database = {
           reservado_por_wave_id?: string | null
           reservado_temporariamente?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tabela_frete_regras: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          faixa_fim: number | null
+          faixa_inicio: number
+          id: string
+          tabela_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          faixa_fim?: number | null
+          faixa_inicio?: number
+          id?: string
+          tabela_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          faixa_fim?: number | null
+          faixa_inicio?: number
+          id?: string
+          tabela_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tabela_frete_regras_tabela_id_fkey"
+            columns: ["tabela_id"]
+            isOneToOne: false
+            referencedRelation: "tabelas_frete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tabelas_frete: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_vencimento: string | null
+          data_vigencia: string
+          franqueado_id: string | null
+          id: string
+          nome: string
+          origem: string | null
+          tipo: string
+          unidade: string
+          updated_at: string
+          user_id: string
+          valor_base: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_vencimento?: string | null
+          data_vigencia: string
+          franqueado_id?: string | null
+          id?: string
+          nome: string
+          origem?: string | null
+          tipo: string
+          unidade?: string
+          updated_at?: string
+          user_id: string
+          valor_base?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_vencimento?: string | null
+          data_vigencia?: string
+          franqueado_id?: string | null
+          id?: string
+          nome?: string
+          origem?: string | null
+          tipo?: string
+          unidade?: string
+          updated_at?: string
+          user_id?: string
+          valor_base?: number
+        }
+        Relationships: []
+      }
+      tracking_entregas: {
+        Row: {
+          cliente_nome: string
+          codigo_rastreamento: string
+          created_at: string
+          data_entrega: string | null
+          data_partida: string | null
+          distancia_percorrida: number | null
+          distancia_total: number | null
+          id: string
+          localizacao_atual: string | null
+          observacoes: string | null
+          previsao_chegada: string | null
+          produto_descricao: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          viagem_id: string | null
+        }
+        Insert: {
+          cliente_nome: string
+          codigo_rastreamento: string
+          created_at?: string
+          data_entrega?: string | null
+          data_partida?: string | null
+          distancia_percorrida?: number | null
+          distancia_total?: number | null
+          id?: string
+          localizacao_atual?: string | null
+          observacoes?: string | null
+          previsao_chegada?: string | null
+          produto_descricao?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          viagem_id?: string | null
+        }
+        Update: {
+          cliente_nome?: string
+          codigo_rastreamento?: string
+          created_at?: string
+          data_entrega?: string | null
+          data_partida?: string | null
+          distancia_percorrida?: number | null
+          distancia_total?: number | null
+          id?: string
+          localizacao_atual?: string | null
+          observacoes?: string | null
+          previsao_chegada?: string | null
+          produto_descricao?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          viagem_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_entregas_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_eventos: {
+        Row: {
+          created_at: string
+          descricao: string
+          hora: string
+          id: string
+          latitude: number | null
+          local: string
+          longitude: number | null
+          tracking_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          hora: string
+          id?: string
+          latitude?: number | null
+          local: string
+          longitude?: number | null
+          tracking_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          hora?: string
+          id?: string
+          latitude?: number | null
+          local?: string
+          longitude?: number | null
+          tracking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_eventos_tracking_id_fkey"
+            columns: ["tracking_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_entregas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transportadoras: {
+        Row: {
+          ativo: boolean
+          cnpj: string
+          contato: string | null
+          created_at: string
+          email: string | null
+          especialidade: string | null
+          id: string
+          nome: string
+          regiao_atendimento: string | null
+          updated_at: string
+          user_id: string
+          valor_km: number | null
+          valor_minimo: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          cnpj: string
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          especialidade?: string | null
+          id?: string
+          nome: string
+          regiao_atendimento?: string | null
+          updated_at?: string
+          user_id: string
+          valor_km?: number | null
+          valor_minimo?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          cnpj?: string
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          especialidade?: string | null
+          id?: string
+          nome?: string
+          regiao_atendimento?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_km?: number | null
+          valor_minimo?: number | null
         }
         Relationships: []
       }
@@ -2112,35 +2722,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_employee_profiles: {
-        Row: {
-          assigned_at: string | null
-          assigned_by: string | null
-          profile_id: string | null
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          profile_id?: string | null
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          assigned_by?: string | null
-          profile_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_employee_profiles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "employee_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_hierarchy: {
         Row: {
           child_user_id: string
@@ -2189,6 +2770,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_permission_templates: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_employee_profiles_profile_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           created_at: string
@@ -2231,6 +2841,123 @@ export type Database = {
         }
         Relationships: []
       }
+      veiculos: {
+        Row: {
+          ano: number | null
+          ativo: boolean
+          capacidade_peso: number | null
+          capacidade_volume: number | null
+          created_at: string
+          id: string
+          marca: string | null
+          modelo: string | null
+          placa: string
+          tipo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ano?: number | null
+          ativo?: boolean
+          capacidade_peso?: number | null
+          capacidade_volume?: number | null
+          created_at?: string
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          placa: string
+          tipo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ano?: number | null
+          ativo?: boolean
+          capacidade_peso?: number | null
+          capacidade_volume?: number | null
+          created_at?: string
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          placa?: string
+          tipo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      viagens: {
+        Row: {
+          combustivel_fim: number | null
+          combustivel_inicio: number | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          deposito_id: string
+          distancia_percorrida: number
+          distancia_total: number
+          hodometro_fim: number | null
+          hodometro_inicio: number | null
+          id: string
+          motorista_id: string | null
+          numero: string
+          observacoes: string | null
+          peso_total: number | null
+          remessas_entregues: number
+          status: string
+          total_remessas: number
+          updated_at: string
+          user_id: string
+          veiculo_id: string | null
+        }
+        Insert: {
+          combustivel_fim?: number | null
+          combustivel_inicio?: number | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          deposito_id: string
+          distancia_percorrida?: number
+          distancia_total?: number
+          hodometro_fim?: number | null
+          hodometro_inicio?: number | null
+          id?: string
+          motorista_id?: string | null
+          numero: string
+          observacoes?: string | null
+          peso_total?: number | null
+          remessas_entregues?: number
+          status?: string
+          total_remessas?: number
+          updated_at?: string
+          user_id: string
+          veiculo_id?: string | null
+        }
+        Update: {
+          combustivel_fim?: number | null
+          combustivel_inicio?: number | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          deposito_id?: string
+          distancia_percorrida?: number
+          distancia_total?: number
+          hodometro_fim?: number | null
+          hodometro_inicio?: number | null
+          id?: string
+          motorista_id?: string | null
+          numero?: string
+          observacoes?: string | null
+          peso_total?: number | null
+          remessas_entregues?: number
+          status?: string
+          total_remessas?: number
+          updated_at?: string
+          user_id?: string
+          veiculo_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2251,6 +2978,10 @@ export type Database = {
       auto_allocate_positions: {
         Args: { p_wave_id: string }
         Returns: boolean
+      }
+      calculate_viagem_peso_total: {
+        Args: { p_viagem_id: string }
+        Returns: number
       }
       can_create_role: {
         Args: {
@@ -2296,8 +3027,8 @@ export type Database = {
         Returns: boolean
       }
       complete_invite_signup: {
-        Args: { _email: string; _user_id: string }
-        Returns: boolean
+        Args: { _email: string } | { _email: string; _user_id: string }
+        Returns: Json
       }
       complete_pallet_allocation_and_create_stock: {
         Args: {
@@ -2317,6 +3048,10 @@ export type Database = {
       define_wave_positions: {
         Args: { p_wave_id: string }
         Returns: Json
+      }
+      diagnose_user_signup: {
+        Args: { _email: string }
+        Returns: string
       }
       find_or_create_produto: {
         Args: {
@@ -2348,7 +3083,7 @@ export type Database = {
         Returns: number
       }
       franqueado_can_view_producer: {
-        Args: { franqueado_id: string; producer_id: string }
+        Args: { _franqueado_id: string; _produtor_id: string }
         Returns: boolean
       }
       generate_inventory_number: {
@@ -2365,7 +3100,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      get_estoque_seguro: {
+      get_estoque_from_movimentacoes: {
         Args: Record<PropertyKey, never>
         Returns: {
           deposito_id: string
@@ -2381,6 +3116,10 @@ export type Database = {
           user_id: string
           valor_total_estoque: number
         }[]
+      }
+      get_invite_email: {
+        Args: { _invite_token: string }
+        Returns: string
       }
       get_producer_available_deposits: {
         Args: { _producer_id: string }
@@ -2421,9 +3160,17 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      link_motorista_to_auth_user: {
+        Args: { p_auth_user_id: string; p_cpf: string }
+        Returns: boolean
+      }
       process_entrada_itens_without_produto: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      process_orphaned_invites: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       process_saida_items: {
         Args: { p_saida_id: string }
@@ -2437,9 +3184,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      refresh_estoque_with_retry: {
+      refresh_estoque_simple: {
         Args: Record<PropertyKey, never>
-        Returns: boolean
+        Returns: undefined
       }
       reset_wave_positions: {
         Args: { p_wave_id: string }
@@ -2447,7 +3194,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "franqueado" | "produtor"
+      app_role: "admin" | "franqueado" | "produtor" | "motorista"
       entrada_status:
         | "aguardando_transporte"
         | "em_transferencia"
@@ -2473,6 +3220,32 @@ export type Database = {
         | "relatorios.view"
         | "rastreio.view"
         | "perfis-funcionarios.view"
+        | "catalogo.view"
+        | "alocacao-pallets.view"
+        | "gerenciar-posicoes.view"
+        | "veiculos.view"
+        | "veiculos.manage"
+        | "motoristas.view"
+        | "motoristas.manage"
+        | "remessas.view"
+        | "viagens.view"
+        | "agenda.view"
+        | "tracking.view"
+        | "proof-of-delivery.view"
+        | "proof-of-delivery.manage"
+        | "comprovantes.view"
+        | "ocorrencias.view"
+        | "tabela-frete.view"
+        | "tabelas-frete.view"
+        | "motorista.deliveries.view"
+        | "produtores.view"
+        | "fazendas.view"
+        | "subcontas.view"
+        | "perfil.view"
+        | "instrucoes.view"
+        | "suporte.view"
+        | "configuracoes.view"
+        | "controle-acesso.view"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -2601,7 +3374,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "franqueado", "produtor"],
+      app_role: ["admin", "franqueado", "produtor", "motorista"],
       entrada_status: [
         "aguardando_transporte",
         "em_transferencia",
@@ -2628,6 +3401,32 @@ export const Constants = {
         "relatorios.view",
         "rastreio.view",
         "perfis-funcionarios.view",
+        "catalogo.view",
+        "alocacao-pallets.view",
+        "gerenciar-posicoes.view",
+        "veiculos.view",
+        "veiculos.manage",
+        "motoristas.view",
+        "motoristas.manage",
+        "remessas.view",
+        "viagens.view",
+        "agenda.view",
+        "tracking.view",
+        "proof-of-delivery.view",
+        "proof-of-delivery.manage",
+        "comprovantes.view",
+        "ocorrencias.view",
+        "tabela-frete.view",
+        "tabelas-frete.view",
+        "motorista.deliveries.view",
+        "produtores.view",
+        "fazendas.view",
+        "subcontas.view",
+        "perfil.view",
+        "instrucoes.view",
+        "suporte.view",
+        "configuracoes.view",
+        "controle-acesso.view",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },

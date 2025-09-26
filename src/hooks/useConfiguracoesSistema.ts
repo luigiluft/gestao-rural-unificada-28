@@ -88,3 +88,9 @@ export const useDiasUteisExpedicao = () => {
   const { valor } = useConfiguracao("dias_uteis_expedicao")
   return parseInt(valor || "5")
 }
+
+// Hook para obter janela de entrega
+export const useJanelaEntregaDias = () => {
+  const { valor } = useConfiguracao("janela_entrega_dias")
+  return parseInt(valor || "3")
+}

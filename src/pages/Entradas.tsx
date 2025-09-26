@@ -605,15 +605,8 @@ export default function Entradas() {
 
       console.log('=== DELEÇÃO CONCLUÍDA COM SUCESSO ===')
       
-      // Force refresh of estoque materialized view
-      try {
-        console.log('STEP 8: Forçando refresh do estoque...')
-        const { data: refreshResult } = await supabase.rpc('refresh_estoque_with_retry')
-        console.log('Refresh do estoque:', refreshResult ? 'Sucesso' : 'Falhou')
-      } catch (refreshError) {
-        console.error('Erro no refresh do estoque:', refreshError)
-        // Don't fail the entire operation for this
-      }
+      // Estoque agora é calculado em tempo real - não precisa de refresh manual
+      console.log('STEP 8: Estoque é calculado automaticamente das movimentações')
 
       toast({
         title: "Entrada deletada",
@@ -634,27 +627,28 @@ export default function Entradas() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Entradas</h1>
-          <p className="text-muted-foreground">
-            Gerencie e registre as entradas de produtos no estoque
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto"
-                data-tutorial="nova-entrada-btn"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Entrada
-              </Button>
-            </DialogTrigger>
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Page Header - Fixed */}
+      <div className="flex-shrink-0 p-6 border-b bg-background">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Entradas</h1>
+            <p className="text-muted-foreground">
+              Gerencie e registre as entradas de produtos no estoque
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto"
+                  data-tutorial="nova-entrada-btn"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Entrada
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
               <DialogHeader>
                 <DialogTitle>Registrar Nova Entrada</DialogTitle>
@@ -733,212 +727,222 @@ export default function Entradas() {
         </div>
       </div>
 
-      {/* Filters */}
-      <DateRangeFilter
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
+      </div>
 
-      {/* Entradas Table */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Lista de Entradas</CardTitle>
-          <CardDescription>
-            {entradas?.length || 0} entradas registradas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : entradas && entradas.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table className="min-w-[750px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[80px]">Número NFe</TableHead>
-                    <TableHead className="min-w-[60px]">Série</TableHead>
-                    <TableHead className="min-w-[120px]">Chave NFe</TableHead>
-                    <TableHead className="min-w-[120px]">Emitente</TableHead>
-                    <TableHead className="min-w-[100px]">CNPJ/CPF</TableHead>
-                    <TableHead className="min-w-[80px]">Data Emissão</TableHead>
-                    <TableHead className="min-w-[80px]">Data Entrada</TableHead>
-                    <TableHead className="min-w-[100px]">Nat. Operação</TableHead>
-                    <TableHead className="min-w-[80px]">Itens</TableHead>
-                    <TableHead className="min-w-[80px]">Depósito</TableHead>
-                    <TableHead className="min-w-[80px]">Status</TableHead>
-                    <TableHead className="min-w-[100px]">Valor Total</TableHead>
-                    <TableHead className="min-w-[80px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entradas.map((entrada) => (
-                    <TableRow key={entrada.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground text-sm">
-                          {entrada.serie || 'N/A'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-muted-foreground text-xs font-mono">
-                          {entrada.chave_nfe ? entrada.chave_nfe.substring(0, 16) + '...' : 'N/A'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[150px]">
-                          <span className="text-sm font-medium truncate block">
-                            {(entrada as any).emitente_nome || entrada.fornecedores?.nome || 'N/A'}
-                          </span>
-                          {(entrada.fornecedores as any)?.nome_fantasia && (
-                            <span className="text-xs text-muted-foreground truncate block">
-                              {(entrada.fornecedores as any).nome_fantasia}
+      {/* Filters */}
+      <div className="flex-shrink-0 px-6 py-4 border-b">
+        <DateRangeFilter
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
+      </div>
+
+      {/* Entradas Table - Scrollable area */}
+      <div className="flex-1 p-6 overflow-hidden">
+        <Card className="shadow-card h-full flex flex-col">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle>Lista de Entradas</CardTitle>
+            <CardDescription>
+              {entradas?.length || 0} entradas registradas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden p-0">
+            {isLoading ? (
+              <div className="space-y-4 p-6">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : entradas && entradas.length > 0 ? (
+              <div className="h-full overflow-hidden">
+                <div className="h-full overflow-auto p-6">
+                  <Table className="min-w-[1200px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[100px]">Número NFe</TableHead>
+                        <TableHead className="min-w-[70px]">Série</TableHead>
+                        <TableHead className="min-w-[130px]">Chave NFe</TableHead>
+                        <TableHead className="min-w-[140px]">Emitente</TableHead>
+                        <TableHead className="min-w-[120px]">CNPJ/CPF</TableHead>
+                        <TableHead className="min-w-[100px]">Data Emissão</TableHead>
+                        <TableHead className="min-w-[100px]">Data Entrada</TableHead>
+                        <TableHead className="min-w-[120px]">Nat. Operação</TableHead>
+                        <TableHead className="min-w-[80px]">Itens</TableHead>
+                        <TableHead className="min-w-[100px]">Depósito</TableHead>
+                        <TableHead className="min-w-[120px]">Status</TableHead>
+                        <TableHead className="min-w-[100px]">Valor Total</TableHead>
+                        <TableHead className="min-w-[80px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {entradas.map((entrada) => (
+                        <TableRow key={entrada.id} className="hover:bg-muted/50">
+                          <TableCell className="font-medium">
+                            {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground text-sm">
+                              {entrada.serie || 'N/A'}
                             </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm font-mono">
-                          {(entrada as any).emitente_cnpj || (entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {entrada.data_emissao 
-                            ? new Date(entrada.data_emissao).toLocaleDateString('pt-BR')
-                            : 'N/A'
-                          }
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[120px]">
-                          <span className="text-xs text-muted-foreground truncate block">
-                            {entrada.natureza_operacao || 'N/A'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <Package className="w-4 h-4 text-primary" />
-                          </div>
-                          <span className="text-sm">
-                            {entrada.entrada_itens?.length || 0} itens
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {(entrada as any).franquias?.nome || 'N/A'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={entrada.status_aprovacao} />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {entrada.valor_total 
-                          ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                          : 'N/A'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            {entrada.xml_content && (
-                              <DropdownMenuItem>
-                                <Download className="w-4 h-4 mr-2" />
-                                Download XML
-                              </DropdownMenuItem>
-                            )}
-                            
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem 
-                                  className="text-destructive focus:text-destructive"
-                                  onSelect={(e) => e.preventDefault()}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Deletar
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-muted-foreground text-xs font-mono">
+                              {entrada.chave_nfe ? entrada.chave_nfe.substring(0, 16) + '...' : 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-[130px]">
+                              <span className="text-sm font-medium truncate block">
+                                {(entrada as any).emitente_nome || entrada.fornecedores?.nome || 'N/A'}
+                              </span>
+                              {(entrada.fornecedores as any)?.nome_fantasia && (
+                                <span className="text-xs text-muted-foreground truncate block">
+                                  {(entrada.fornecedores as any).nome_fantasia}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm font-mono">
+                              {(entrada as any).emitente_cnpj || (entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {entrada.data_emissao 
+                                ? new Date(entrada.data_emissao).toLocaleDateString('pt-BR')
+                                : 'N/A'
+                              }
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-[110px]">
+                              <span className="text-xs text-muted-foreground truncate block">
+                                {entrada.natureza_operacao || 'N/A'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <Package className="w-4 h-4 text-primary" />
+                              </div>
+                              <span className="text-sm">
+                                {entrada.entrada_itens?.length || 0}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {(entrada as any).franquias?.nome || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={entrada.status_aprovacao} />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {entrada.valor_total 
+                              ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : 'N/A'
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  Visualizar
                                 </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja deletar a entrada{" "}
-                                    <strong>
-                                      {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
-                                    </strong>?
-                                    <br />
-                                    <br />
-                                    Esta ação é irreversível e irá remover:
-                                    <ul className="list-disc list-inside mt-2 space-y-1">
-                                      <li>A entrada e todos os seus itens</li>
-                                      <li>Movimentações de estoque relacionadas</li>
-                                      <li>Histórico de status</li>
-                                      <li>Dados de alocação em ondas (se houver)</li>
-                                      <li>Registros de estoque criados a partir desta entrada</li>
-                                    </ul>
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    onClick={() => handleDeleteEntrada(
-                                      entrada.id, 
-                                      entrada.numero_nfe || undefined
-                                    )}
-                                  >
-                                    Deletar Entrada
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <EmptyState
-              icon={<Package className="w-8 h-8 text-muted-foreground" />}
-              title="Nenhuma entrada registrada"
-              description="Registre sua primeira entrada importando uma NFe ou preenchendo o formulário manual."
-              action={{
-                label: "Registrar Primeira Entrada",
-                onClick: () => setIsNewEntryOpen(true)
-              }}
-            />
-          )}
-        </CardContent>
-      </Card>
+                                <DropdownMenuItem>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                {entrada.xml_content && (
+                                  <DropdownMenuItem>
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Download XML
+                                  </DropdownMenuItem>
+                                )}
+                                
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem 
+                                      className="text-destructive focus:text-destructive"
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Deletar
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tem certeza que deseja deletar a entrada{" "}
+                                        <strong>
+                                          {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                                        </strong>?
+                                        <br />
+                                        <br />
+                                        Esta ação é irreversível e irá remover:
+                                        <ul className="list-disc list-inside mt-2 space-y-1">
+                                          <li>A entrada e todos os seus itens</li>
+                                          <li>Movimentações de estoque relacionadas</li>
+                                          <li>Histórico de status</li>
+                                          <li>Dados de alocação em ondas (se houver)</li>
+                                          <li>Registros de estoque criados a partir desta entrada</li>
+                                        </ul>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        onClick={() => handleDeleteEntrada(
+                                          entrada.id, 
+                                          entrada.numero_nfe || undefined
+                                        )}
+                                      >
+                                        Deletar Entrada
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    </Table>
+                  </div>
+                </div>
+            ) : (
+              <div className="flex items-center justify-center h-full p-6">
+                <EmptyState
+                  icon={<Package className="w-8 h-8 text-muted-foreground" />}
+                  title="Nenhuma entrada registrada"
+                  description="Registre sua primeira entrada importando uma NFe ou preenchendo o formulário manual."
+                  action={{
+                    label: "Registrar Primeira Entrada",
+                    onClick: () => setIsNewEntryOpen(true)
+                  }}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

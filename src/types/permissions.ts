@@ -9,18 +9,30 @@ export type PermissionCode =
   | 'relatorios.view' | 'rastreio.view' | 'perfis-funcionarios.view'
   | 'catalogo.view' | 'alocacao-pallets.view' | 'gerenciar-alocacoes.view'
   | 'gerenciar-posicoes.view' | 'fazendas.view' | 'produtores.view'
-  | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view';
+  | 'perfil.view' | 'subcontas.view' | 'suporte.view' | 'transporte.view'
+  | 'remessas.view' | 'planejamento.view' | 'viagens.view' | 'agenda.view'
+  | 'tracking.view' | 'proof-of-delivery.view' | 'comprovantes.view' | 'ocorrencias.view' | 'tabelas-frete.view'
+  | 'veiculos.view' | 'veiculos.manage' | 'motoristas.view' | 'motoristas.manage'
+  | 'motorista.deliveries.view' | 'proof-of-delivery.manage'
+  | 'instrucoes.view' | 'configuracoes.view' | 'controle-acesso.view' | 'tabela-frete.view';
 
-export interface EmployeeProfile {
+// Template de permissões para criar perfis de funcionários/subcontas
+export interface PermissionTemplate {
   id: string;
   user_id: string;
   nome: string;
   descricao?: string;
-  role: UserRole;
+  target_role: UserRole; // Role alvo para este template
   permissions: PermissionCode[];
   is_template: boolean;
+  default_route?: string; // Página inicial após login
   created_at: string;
   updated_at: string;
+}
+
+// Backward compatibility - será removido após migração completa
+export interface EmployeeProfile extends PermissionTemplate {
+  role: UserRole; // Alias para target_role
 }
 
 export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
@@ -39,6 +51,22 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'separacao.view', label: 'Central de Separação' },
   { code: 'expedicao.view', label: 'Central de Expedição' },
   { code: 'transporte.view', label: 'Transporte' },
+  { code: 'remessas.view', label: 'Remessas' },
+  { code: 'planejamento.view', label: 'Planejamento' },
+  { code: 'viagens.view', label: 'Viagens' },
+  { code: 'agenda.view', label: 'Agenda' },
+  { code: 'tracking.view', label: 'Tracking' },
+  { code: 'proof-of-delivery.view', label: 'Proof of Delivery' },
+  { code: 'comprovantes.view', label: 'Comprovantes de Entrega' },
+  { code: 'ocorrencias.view', label: 'Ocorrências' },
+  { code: 'tabelas-frete.view', label: 'Tabelas de Frete' },
+  { code: 'tabela-frete.view', label: 'Tabela de Frete' },
+  { code: 'veiculos.view', label: 'Visualizar Veículos' },
+  { code: 'veiculos.manage', label: 'Gerenciar Veículos' },
+  { code: 'motoristas.view', label: 'Visualizar Motoristas' },
+  { code: 'motoristas.manage', label: 'Gerenciar Motoristas' },
+  { code: 'motorista.deliveries.view', label: 'Entregas de Motorista' },
+  { code: 'proof-of-delivery.manage', label: 'Gerenciar Proof of Delivery' },
   { code: 'rastreio.view', label: 'Rastreamento' },
   { code: 'relatorios.view', label: 'Ver relatórios' },
   { code: 'produtores.view', label: 'Produtores' },
@@ -47,4 +75,7 @@ export const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
   { code: 'subcontas.view', label: 'Subcontas' },
   { code: 'perfis-funcionarios.view', label: 'Perfis de Funcionários' },
   { code: 'suporte.view', label: 'Suporte' },
+  { code: 'instrucoes.view', label: 'Instruções' },
+  { code: 'configuracoes.view', label: 'Configurações' },
+  { code: 'controle-acesso.view', label: 'Controle de Acesso' },
 ];

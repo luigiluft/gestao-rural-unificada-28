@@ -40,38 +40,66 @@ export const TutorialOverlay = () => {
       if (element) {
         setTargetElement(element);
 
-        // Calculate modal position based on element position and step position
+        // Calculate modal position based on element position with smart collision avoidance
         const rect = element.getBoundingClientRect();
         const modalWidth = 400;
         const modalHeight = 300;
-        let top = 0;
-        let left = 0;
-        switch (currentStepData.position) {
-          case 'top':
-            top = rect.top - modalHeight - 20;
-            left = rect.left + rect.width / 2 - modalWidth / 2;
-            break;
-          case 'bottom':
-            top = rect.bottom + 20;
-            left = rect.left + rect.width / 2 - modalWidth / 2;
-            break;
-          case 'left':
-            top = rect.top + rect.height / 2 - modalHeight / 2;
-            left = rect.left - modalWidth - 20;
-            break;
-          case 'right':
-            top = rect.top + rect.height / 2 - modalHeight / 2;
-            left = rect.right + 20;
-            break;
+
+        const computePos = (placement: 'top' | 'bottom' | 'left' | 'right') => {
+          switch (placement) {
+            case 'top':
+              return { top: rect.top - modalHeight - 20, left: rect.left + rect.width / 2 - modalWidth / 2 };
+            case 'bottom':
+              return { top: rect.bottom + 20, left: rect.left + rect.width / 2 - modalWidth / 2 };
+            case 'left':
+              return { top: rect.top + rect.height / 2 - modalHeight / 2, left: rect.left - modalWidth - 20 };
+            case 'right':
+            default:
+              return { top: rect.top + rect.height / 2 - modalHeight / 2, left: rect.right + 20 };
+          }
+        };
+
+        const placements: Array<'top' | 'bottom' | 'left' | 'right'> = (() => {
+          const p = currentStepData.position as 'top' | 'bottom' | 'left' | 'right' | undefined;
+          const base: Array<'top' | 'bottom' | 'left' | 'right'> = ['right', 'left', 'bottom', 'top'];
+          return p ? [p, ...base.filter(x => x !== p)] : base;
+        })();
+
+        const overlaps = (pos: { top: number; left: number }) => {
+          const m = { top: pos.top, left: pos.left, right: pos.left + modalWidth, bottom: pos.top + modalHeight };
+          return !(m.right < rect.left || m.left > rect.right || m.bottom < rect.top || m.top > rect.bottom);
+        };
+
+        const inViewport = (pos: { top: number; left: number }) =>
+          pos.left >= 20 && pos.top >= 20 &&
+          pos.left + modalWidth <= window.innerWidth - 20 &&
+          pos.top + modalHeight <= window.innerHeight - 20;
+
+        let chosen = computePos(placements[0]);
+        if (overlaps(chosen) || !inViewport(chosen)) {
+          for (const p of placements.slice(1)) {
+            const candidate = computePos(p);
+            if (!overlaps(candidate) && inViewport(candidate)) {
+              chosen = candidate;
+              break;
+            }
+          }
+        }
+
+        // If still overlapping, nudge away from target
+        if (overlaps(chosen)) {
+          // Prefer pushing below if overlapping vertically
+          if (chosen.top + modalHeight > rect.top && chosen.top < rect.bottom) {
+            chosen.top = rect.bottom + 16;
+          } else if (chosen.left + modalWidth > rect.left && chosen.left < rect.right) {
+            chosen.left = rect.right + 16;
+          }
         }
 
         // Ensure modal stays within viewport
-        top = Math.max(20, Math.min(top, window.innerHeight - modalHeight - 20));
-        left = Math.max(20, Math.min(left, window.innerWidth - modalWidth - 20));
-        setModalPosition({
-          top,
-          left
-        });
+        let top = Math.max(20, Math.min(chosen.top, window.innerHeight - modalHeight - 20));
+        let left = Math.max(20, Math.min(chosen.left, window.innerWidth - modalWidth - 20));
+        setModalPosition({ top, left });
       }
     };
 
@@ -154,9 +182,15 @@ export const TutorialOverlay = () => {
     currentStepData.id === 'navigate-separacao' ||
     currentStepData.id === 'navigate-transporte' ||
     // Steps that show general page info without specific targets
-    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation) ||
-    // Steps that introduce a page (no action, just presenting the page)
-    (!currentStepData.action && currentStepData.autoNavigation === false && currentStepData.targetElement)
+    (!currentStepData.targetElement && !currentStepData.action && currentStepData.autoNavigation)
+  );
+
+  // Check if current step is a card spotlight step
+  const isCardSpotlight = (
+    currentStepData.id === 'recebimento-overview' ||
+    currentStepData.id === 'card-em-transferencia' ||
+    currentStepData.id === 'card-aguardando-conferencia' ||
+    currentStepData.id === 'card-planejamento'
   );
 
   // Check if we should show sidebar backdrop (from step 2 onwards, excluding welcome)
@@ -171,8 +205,8 @@ export const TutorialOverlay = () => {
   }
   
   return <>
-      {/* Dark overlay - only show for steps with specific targets, not for page presentations */}
-      {shouldShowOverlay() && !isPagePresentation && currentStepData.id !== 'selecionar-arquivo-nf' && currentStepData.id !== 'formulario-preenchido-com-backdrop' && (targetElement && currentStepData.action === 'click'
+      {/* Dark overlay - only show for steps with specific targets, not for page presentations or card spotlights */}
+      {shouldShowOverlay() && !isPagePresentation && !isCardSpotlight && !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entradas-tabela'].includes(currentStepData.id) && (targetElement && currentStepData.action === 'click'
         ? <>
             {/* Mask the whole screen except the target to keep it clickable */}
             {(() => {
@@ -181,7 +215,7 @@ export const TutorialOverlay = () => {
               const leftW = Math.max(0, r.left);
               const rightW = Math.max(0, window.innerWidth - r.right);
               const bottomH = Math.max(0, window.innerHeight - r.bottom);
-              const z = isInModal ? 'z-[19999]' : 'z-40';
+              const z = isInModal ? 'z-[19999]' : 'z-[9998]';
               return (
                 <>
                   {/* Top strip */}
@@ -196,11 +230,45 @@ export const TutorialOverlay = () => {
               );
             })()}
           </>
-        : <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-40'}`} />
+        : <div className={`fixed inset-0 bg-black/50 ${isInModal ? 'z-[19999]' : 'z-[9998]'}`} />
+      )}
+
+      {/* Card spotlight effect - preserve card colors with subtle highlight */}
+      {isCardSpotlight && targetElement && (
+        <>
+          {(() => {
+            const r = targetElement.getBoundingClientRect();
+            const topH = Math.max(0, r.top);
+            const leftW = Math.max(0, r.left);
+            const rightW = Math.max(0, window.innerWidth - r.right);
+            const bottomH = Math.max(0, window.innerHeight - r.bottom);
+            const z = isInModal ? 'z-[19999]' : 'z-[9998]';
+            return (
+              <>
+                {/* Dark overlay around the card */}
+                <div className={`fixed ${z} bg-black/30`} style={{ top: 0, left: 0, right: 0, height: topH }} />
+                <div className={`fixed ${z} bg-black/30`} style={{ top: r.top, left: 0, width: leftW, height: r.height }} />
+                <div className={`fixed ${z} bg-black/30`} style={{ top: r.top, left: r.right, width: rightW, height: r.height }} />
+                <div className={`fixed ${z} bg-black/30`} style={{ top: r.bottom, left: 0, right: 0, height: bottomH }} />
+                {/* Subtle highlight border around the card */}
+                <div
+                  className={`fixed pointer-events-none border-2 border-primary/80 rounded-lg ${z}`}
+                  style={{
+                    top: r.top - 2,
+                    left: r.left - 2,
+                    width: r.width + 4,
+                    height: r.height + 4,
+                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)'
+                  }}
+                />
+              </>
+            );
+          })()}
+        </>
       )}
       
       {/* Partial overlay for sidebar only during page presentations (excluding welcome step) */}
-      {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-40" />}
+      {shouldShowSidebarBackdrop && <div className="fixed left-0 top-0 bottom-0 w-64 bg-black/50 z-[9990]" />}
       
       {/* Special backdrop with cut-out for "Selecionar Arquivo" button in selecionar-arquivo-nf step */}
       {currentStepData.id === 'selecionar-arquivo-nf' && (
@@ -214,7 +282,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -224,7 +292,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: 0,
@@ -234,7 +302,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -244,7 +312,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -254,7 +322,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Blue border around the button */}
                   <div
-                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.left - 4,
@@ -281,7 +349,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -291,7 +359,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                    <div
-                     className={`fixed pointer-events-none bg-black/40 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                     className={`fixed pointer-events-none bg-black/40 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                      style={{
                        top: rect.top - 4,
                        left: 0,
@@ -301,7 +369,7 @@ export const TutorialOverlay = () => {
                    />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -311,7 +379,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -321,7 +389,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Blue border around the button */}
                   <div
-                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.left - 4,
@@ -348,7 +416,7 @@ export const TutorialOverlay = () => {
                 <>
                   {/* Top backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: 0,
                       left: 0,
@@ -358,7 +426,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Left backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: 0,
@@ -368,7 +436,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Right backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.right + 4,
@@ -378,7 +446,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Bottom backdrop */}
                   <div
-                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none bg-black/35 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.bottom + 4,
                       left: 0,
@@ -388,7 +456,7 @@ export const TutorialOverlay = () => {
                   />
                   {/* Blue border around the button */}
                   <div
-                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-50'}`}
+                    className={`fixed pointer-events-none border-4 border-primary rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
                     style={{
                       top: rect.top - 4,
                       left: rect.left - 4,
@@ -405,10 +473,77 @@ export const TutorialOverlay = () => {
         </>
       )}
 
+      {/* Special backdrop for entradas-tabela step - covers entire page except the table */}
+      {currentStepData.id === 'entradas-tabela' && (
+        <>
+          {(() => {
+            const table = document.querySelector('[data-tutorial="tabela-entradas"]');
+            if (table) {
+              const rect = table.getBoundingClientRect();
+              return (
+                <>
+                  {/* Top backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: rect.top - 4
+                    }}
+                  />
+                  {/* Left backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: 0,
+                      width: rect.left - 4,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Right backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.right + 4,
+                      right: 0,
+                      height: rect.height + 8
+                    }}
+                  />
+                  {/* Bottom backdrop */}
+                  <div
+                    className={`fixed pointer-events-none bg-black/50 ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.bottom + 4,
+                      left: 0,
+                      right: 0,
+                      bottom: 0
+                    }}
+                  />
+                  {/* Subtle blue border around the table */}
+                  <div
+                    className={`fixed pointer-events-none border-2 border-primary/30 rounded ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
+                    style={{
+                      top: rect.top - 4,
+                      left: rect.left - 4,
+                      width: rect.width + 8,
+                      height: rect.height + 8
+                    }}
+                  />
+                </>
+              );
+            }
+            return null;
+          })()}
+        </>
+      )}
+
       {/* Spotlight effect on target element - only for non-page-presentation steps */}
-      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido-sem-backdrop','formulario-preenchido','registrar-entrada'].includes(currentStepData.id) && (
+      {targetElement && !isPagePresentation && !['selecionar-arquivo-nf','formulario-preenchido-sem-backdrop','formulario-preenchido','registrar-entrada','entradas-tabela'].includes(currentStepData.id) && (
         <div
-          className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-50'}`}
+          className={`fixed pointer-events-none ${isInModal ? 'z-[20000]' : 'z-[9998]'}`}
           style={{
             top: targetElement.getBoundingClientRect().top - 4,
             left: targetElement.getBoundingClientRect().left - 4,
@@ -421,7 +556,7 @@ export const TutorialOverlay = () => {
       )}
       
       {/* Tutorial modal */}
-      <Card className={`fixed w-96 shadow-xl border-primary/20 pointer-events-auto ${isInModal ? 'z-[20001]' : 'z-50'}`} style={{
+      <Card className={`fixed w-96 shadow-xl border-primary/20 pointer-events-auto ${isInModal ? 'z-[20001]' : 'z-[9999]'}`} style={{
       top: targetElement ? modalPosition.top : '50%',
       left: targetElement ? modalPosition.left : '50%',
       transform: targetElement ? 'none' : 'translate(-50%, -50%)'
@@ -485,8 +620,8 @@ export const TutorialOverlay = () => {
               
               
               {currentStepData.action !== 'click' && 
-               currentStepData.id !== 'selecionar-arquivo-nf' &&
-               currentStepData.id !== 'formulario-preenchido-com-backdrop' &&
+               currentStepData.showNextButton !== false &&
+               !['selecionar-arquivo-nf', 'formulario-preenchido-com-backdrop', 'entrada-aguardando-transporte', 'confirmar-em-transferencia', 'entrada-em-transferencia', 'confirmar-aguardando-conferencia', 'conferencia-opcoes', 'finalizar-conferencia'].includes(currentStepData.id) &&
                <Button size="sm" onClick={handleNextClick} className="gap-1 cursor-pointer pointer-events-auto">
                   {currentStep === totalSteps - 1 ? 'Finalizar' : 'Próximo'}
                   <ChevronRight className="h-3 w-3" />

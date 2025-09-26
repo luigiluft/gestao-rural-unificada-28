@@ -1,131 +1,120 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
-import { UserRole, PermissionCode, type EmployeeProfile } from "@/types/permissions"
+import { PermissionTemplate, UserRole } from "@/types/permissions"
 
+// Hook mantido para backward compatibility - use usePermissionTemplates
 export const useEmployeeProfiles = (userRole?: UserRole, includeHierarchy?: boolean) => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
-  const { data: profiles, isLoading } = useQuery({
-    queryKey: ["employee-profiles", user?.id, userRole, includeHierarchy],
-    queryFn: async () => {
-      if (!user?.id || !userRole) return []
-      
-      let query = supabase
-        .from("employee_profiles")
-        .select("*")
-        .eq("is_template", true)
-        .order("nome")
+  // Buscar templates de permissões (migrados da antiga tabela employee_profiles)
+  const profilesQuery = useQuery({
+    queryKey: ["employee-profiles", userRole, includeHierarchy],
+    queryFn: async (): Promise<PermissionTemplate[]> => {
+      if (!user?.id) return []
 
-      // Se includeHierarchy é true e o usuário é franqueado, inclui perfis de produtores
+      let query = supabase
+        .from("permission_templates")
+        .select("*")
+        .order("nome", { ascending: true })
+
+      // Filtrar por target_role se especificado
+      if (userRole) {
+        query = query.eq("target_role", userRole)
+      }
+
+      // Se incluir hierarquia e for franqueado, incluir templates de produtores também
       if (includeHierarchy && userRole === 'franqueado') {
-        query = query.in("role", ['franqueado', 'produtor'])
-      } else {
-        query = query.eq("role", userRole)
+        query = supabase
+          .from("permission_templates")
+          .select("*")
+          .in("target_role", ['franqueado', 'produtor'])
+          .order("nome", { ascending: true })
       }
 
       const { data, error } = await query
 
       if (error) throw error
-      return data as EmployeeProfile[]
+      
+      // Filter out 'motorista' records as this role no longer exists
+      const filteredData = (data || []).filter((template: any) => 
+        template.target_role !== 'motorista'
+      ) as PermissionTemplate[]
+      
+      return filteredData
     },
-    enabled: !!user?.id && !!userRole,
+    enabled: !!user?.id,
   })
 
+  // Criar template de permissões
   const createProfileMutation = useMutation({
-    mutationFn: async (profile: Omit<EmployeeProfile, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
-      const { data, error } = await supabase
-        .from("employee_profiles")
-        .insert({
-          nome: profile.nome,
-          descricao: profile.descricao,
-          role: profile.role,
-          permissions: profile.permissions as any, // Type cast to work with Supabase
-          is_template: profile.is_template,
-          user_id: user!.id,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employee-profiles"] })
-      toast.success("Perfil criado com sucesso!")
-    },
-    onError: (error) => {
-      console.error("Erro ao criar perfil:", error)
-      toast.error("Erro ao criar perfil")
-    },
-  })
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async ({ id, nome, descricao, permissions, role, is_template }: { 
-      id: string 
-      nome?: string
-      descricao?: string
-      permissions?: PermissionCode[]
-      role?: UserRole
-      is_template?: boolean
-    }) => {
-      const updateData: any = {}
-      if (nome !== undefined) updateData.nome = nome
-      if (descricao !== undefined) updateData.descricao = descricao
-      if (permissions !== undefined) updateData.permissions = permissions as any // Type cast
-      if (role !== undefined) updateData.role = role
-      if (is_template !== undefined) updateData.is_template = is_template
-
-      const { data, error } = await supabase
-        .from("employee_profiles")
-        .update(updateData)
-        .eq("id", id)
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employee-profiles"] })
-      toast.success("Perfil atualizado com sucesso!")
-    },
-    onError: (error) => {
-      console.error("Erro ao atualizar perfil:", error)
-      toast.error("Erro ao atualizar perfil")
-    },
-  })
-
-  const deleteProfileMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (profile: Omit<PermissionTemplate, 'id' | 'created_at' | 'updated_at'>) => {
       const { error } = await supabase
-        .from("employee_profiles")
-        .delete()
+        .from("permission_templates")
+        .insert(profile as any) // Type cast to handle Supabase types
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employee-profiles", "permission-templates"] })
+      toast.success("Template criado com sucesso!")
+    },
+    onError: (error) => {
+      console.error("Erro ao criar template:", error)
+      toast.error("Erro ao criar template")
+    }
+  })
+
+  // Atualizar template de permissões
+  const updateProfileMutation = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<PermissionTemplate> & { id: string }) => {
+      const { error } = await supabase
+        .from("permission_templates")
+        .update(updates as any) // Type cast to handle Supabase types
         .eq("id", id)
 
       if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employee-profiles"] })
-      toast.success("Perfil removido com sucesso!")
+      queryClient.invalidateQueries({ queryKey: ["employee-profiles", "permission-templates"] })
+      toast.success("Template atualizado com sucesso!")
     },
     onError: (error) => {
-      console.error("Erro ao remover perfil:", error)
-      toast.error("Erro ao remover perfil")
+      console.error("Erro ao atualizar template:", error)
+      toast.error("Erro ao atualizar template")
+    }
+  })
+
+  // Deletar template de permissões
+  const deleteProfileMutation = useMutation({
+    mutationFn: async (profileId: string) => {
+      const { error } = await supabase
+        .from("permission_templates")
+        .delete()
+        .eq("id", profileId)
+
+      if (error) throw error
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employee-profiles", "permission-templates"] })
+      toast.success("Template removido com sucesso!")
+    },
+    onError: (error) => {
+      console.error("Erro ao remover template:", error)
+      toast.error("Erro ao remover template")
+    }
   })
 
   return {
-    profiles: profiles || [],
-    isLoading,
+    profiles: profilesQuery.data || [],
+    isLoading: profilesQuery.isLoading,
     createProfile: createProfileMutation.mutate,
-    updateProfile: updateProfileMutation.mutate,
-    deleteProfile: deleteProfileMutation.mutate,
     isCreating: createProfileMutation.isPending,
+    updateProfile: updateProfileMutation.mutate,
     isUpdating: updateProfileMutation.isPending,
-    isDeleting: deleteProfileMutation.isPending,
+    deleteProfile: deleteProfileMutation.mutate,
+    isDeleting: deleteProfileMutation.isPending
   }
 }

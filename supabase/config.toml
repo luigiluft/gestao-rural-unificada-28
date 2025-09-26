@@ -1,1 +1,34 @@
 project_id = "fejvckhuhflndcjuoppy"
+
+[functions.calculate-distance]
+verify_jwt = false
+
+[functions.send-invite]
+verify_jwt = false
+
+[functions.manage-entradas]
+verify_jwt = true
+
+[functions.manage-saidas]
+verify_jwt = true
+
+[functions.manage-estoque]
+verify_jwt = true
+
+[functions.manage-usuarios]
+verify_jwt = true
+
+[functions.manage-inventario]
+verify_jwt = true
+
+[functions.manage-viagens]
+verify_jwt = true
+
+[functions.manage-configuracoes]
+verify_jwt = true
+
+[functions.manage-comprovantes]
+verify_jwt = true
+
+[functions.manage-notifications]
+verify_jwt = true

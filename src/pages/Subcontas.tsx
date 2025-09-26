@@ -11,19 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { UserPlus, Settings, Users, Trash2 } from "lucide-react"
+import { UserPlus, Settings, Users, Trash2, Clock, Send, X, AlertTriangle, Copy } from "lucide-react"
 import { useProfile } from "@/hooks/useProfile"
 import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
-import { useUserEmployeeProfiles } from "@/hooks/useUserEmployeeProfiles"
+import { useUserPermissionTemplates } from "@/hooks/useUserPermissionTemplates"
 import { useCleanupPermissions } from "@/hooks/useCleanupPermissions"
+import { usePendingInvites } from "@/hooks/usePendingInvites"
+import { useInviteLink } from "@/hooks/useInviteLink"
 import { EmptyState } from "@/components/ui/empty-state"
-import { EmployeeProfile } from "@/types/permissions"
+import { PermissionTemplate } from "@/types/permissions"
 
 interface SubaccountProfile {
   user_id: string
   nome: string | null
   email: string | null
-  employee_profile?: EmployeeProfile
+  employee_profile?: PermissionTemplate
 }
 
 export default function Subcontas() {
@@ -36,55 +38,84 @@ export default function Subcontas() {
   const [createEmail, setCreateEmail] = useState("")
   const [selectedProfileId, setSelectedProfileId] = useState("")
   const [createFranquia, setCreateFranquia] = useState("")
-  const [createdCredentials, setCreatedCredentials] = useState<{email: string, password: string} | null>(null)
+  const [createdCredentials, setCreatedCredentials] = useState<{email: string, inviteLink?: string} | null>(null)
   
   // Estados para gerenciar perfil de subconta
   const [profileManageOpen, setProfileManageOpen] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [selectedUserName, setSelectedUserName] = useState<string>("")
   
-  // Hooks para perfis de funcionários
-  const { profiles, isLoading: isLoadingProfiles } = useEmployeeProfiles(profile?.role)
-  const { assignProfile, removeProfile } = useUserEmployeeProfiles()
+  // Hooks para perfis de funcionários e convites
+  const { profiles, isLoading: isLoadingProfiles } = useEmployeeProfiles(profile?.role as any)
+  const { assignTemplate, removeTemplate } = useUserPermissionTemplates()
   const { cleanupSubaccountPermissions } = useCleanupPermissions()
+  const { 
+    pendingInvites, 
+    isLoading: loadingInvites, 
+    cancelInvite, 
+    isCanceling,
+    resendInvite,
+    isResending,
+    refetch: refetchInvites 
+  } = usePendingInvites()
 
-  // Buscar subcontas do usuário
+  // Buscar subcontas do usuário - usando estratégia de duas queries para evitar problemas de RLS
   const { data: subaccounts = [], refetch: refetchSubaccounts, isLoading: loadingSubaccounts } = useQuery({
     queryKey: ["subaccounts-simplified", user?.id],
     enabled: !!user,
     queryFn: async (): Promise<SubaccountProfile[]> => {
-      const { data, error } = await supabase
+      // Primeiro, buscar IDs dos filhos na hierarquia
+      const { data: hierarchyData, error: hierarchyError } = await supabase
         .from("user_hierarchy")
-        .select(`
-          child_user_id,
-          profiles!inner(user_id, nome, email)
-        `)
+        .select("child_user_id")
         .eq("parent_user_id", user!.id)
 
-      if (error) throw error
+      if (hierarchyError) {
+        console.error('Erro ao buscar hierarquia:', hierarchyError)
+        throw hierarchyError
+      }
 
-      const subaccountProfiles = (data ?? []).map((item: any) => ({
-        user_id: item.profiles.user_id,
-        nome: item.profiles.nome,
-        email: item.profiles.email,
+      if (!hierarchyData || hierarchyData.length === 0) {
+        return []
+      }
+
+      const childUserIds = hierarchyData.map(h => h.child_user_id)
+
+      // Depois, buscar perfis desses usuários
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, nome, email")
+        .in("user_id", childUserIds)
+
+      if (profilesError) {
+        console.error('Erro ao buscar perfis:', profilesError)
+        throw profilesError
+      }
+
+      const subaccountProfiles = (profilesData ?? []).map(profile => ({
+        user_id: profile.user_id,
+        nome: profile.nome,
+        email: profile.email,
       }))
 
-      // Buscar perfis de funcionário para cada subconta
-      const { data: profileAssignments } = await supabase
-        .from("user_employee_profiles")
+      // Buscar templates de permissões para cada subconta
+      const { data: templateAssignments } = await supabase
+        .from("user_permission_templates")
         .select(`
           user_id,
-          employee_profiles(*)
+          permission_templates(*)
         `)
         .in("user_id", subaccountProfiles.map(s => s.user_id))
 
-      // Combinar dados
-      return subaccountProfiles.map(subaccount => ({
-        ...subaccount,
-        employee_profile: profileAssignments?.find(
-          (pa: any) => pa.user_id === subaccount.user_id
-        )?.employee_profiles || undefined
-      }))
+      return subaccountProfiles.map(subaccount => {
+        const assignment = templateAssignments?.find(
+          (ta: any) => ta.user_id === subaccount.user_id && ta.permission_templates?.target_role !== 'motorista'
+        )
+        return {
+          ...subaccount,
+          employee_profile: assignment?.permission_templates as PermissionTemplate || undefined
+        }
+      })
     },
   })
 
@@ -124,7 +155,7 @@ export default function Subcontas() {
       let parentUserId = user?.id
       let franquiaId = null
 
-      if (profile?.role === 'admin' && selectedProfile.role === 'produtor') {
+      if (profile?.role === 'admin' && selectedProfile.target_role === 'produtor') {
         if (!createFranquia) {
           throw new Error("Selecione uma franquia para o produtor")
         }
@@ -135,41 +166,49 @@ export default function Subcontas() {
         }
       }
 
-      const userData = {
-        email: createEmail,
-        inviter_user_id: user?.id,
-        parent_user_id: parentUserId,
-        role: selectedProfile.role,
-        permissions: selectedProfile.permissions,
-        ...(franquiaId && { franquia_id: franquiaId })
+      // Em vez de usar a edge function, vamos criar o convite diretamente no banco
+      console.log('Criando convite pendente para:', createEmail)
+
+      const { data: inviteData, error: inviteError } = await supabase
+        .from('pending_invites')
+        .insert({
+          email: createEmail,
+          inviter_user_id: user?.id,
+          parent_user_id: parentUserId,
+          role: selectedProfile.target_role,
+          permissions: selectedProfile.permissions as any,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          ...(franquiaId && { franquia_id: franquiaId })
+        })
+        .select()
+        .single()
+
+      if (inviteError) {
+        console.error('Erro ao criar convite:', inviteError)
+        throw new Error('Erro ao criar convite pendente')
       }
 
-      console.log('Sending to edge function:', userData)
+      console.log('Convite criado com sucesso:', inviteData)
 
-      const { data, error } = await supabase.functions.invoke('send-invite', {
-        body: userData
-      })
-
-      if (error) {
-        console.error('Edge function error:', error)
-        throw new Error(`Erro na função: ${error.message}`)
+      // Retornar dados simulando o formato da edge function
+      return { 
+        success: true, 
+        message: 'Convite criado com sucesso!',
+        invite_id: inviteData.id,
+        invite_token: inviteData.invite_token
       }
-      
-      if (!data?.success) {
-        console.error('Edge function returned error:', data)
-        throw new Error(data?.error || 'Erro ao criar usuário')
-      }
-
-      console.log('Edge function response:', data)
-      return data
     },
     onSuccess: (data) => {
+      // Gerar link do convite
+      const inviteLink = `${window.location.origin}/auth?invite_token=${data.invite_token || ''}`
+      
       setCreatedCredentials({
         email: createEmail,
-        password: data.default_password
+        inviteLink: inviteLink
       })
-      toast.success("Usuário criado com sucesso!")
+      toast.success("Convite criado! Link disponível para compartilhamento.")
       refetchSubaccounts()
+      refetchInvites()
       setCreateEmail("")
       setSelectedProfileId("")
       setCreateFranquia("")
@@ -200,14 +239,14 @@ export default function Subcontas() {
     }
   })
 
-  const handleAssignProfile = (profileId: string) => {
-    assignProfile({ userId: selectedUserId, profileId })
+  const handleAssignProfile = (templateId: string) => {
+    assignTemplate({ userId: selectedUserId, templateId })
     setProfileManageOpen(false)
     refetchSubaccounts()
   }
 
   const handleRemoveProfile = () => {
-    removeProfile(selectedUserId)
+    removeTemplate(selectedUserId)
     setProfileManageOpen(false)
     refetchSubaccounts()
   }
@@ -241,24 +280,43 @@ export default function Subcontas() {
               <DialogHeader>
                 <DialogTitle>Criar Nova Subconta</DialogTitle>
                 <DialogDescription>
-                  O usuário será criado com uma senha temporária
+                  Crie um convite para que o usuário complete o cadastro
                 </DialogDescription>
               </DialogHeader>
               
               {createdCredentials ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Usuário criado com sucesso!</h3>
-                    <div className="space-y-2 text-sm">
+                    <h3 className="font-medium text-green-800 dark:text-green-200 mb-2">Convite criado com sucesso!</h3>
+                    <div className="space-y-3 text-sm">
                       <div>
                         <span className="font-medium">Email:</span> {createdCredentials.email}
                       </div>
-                      <div>
-                        <span className="font-medium">Senha temporária:</span> {createdCredentials.password}
-                      </div>
+                      {createdCredentials.inviteLink && (
+                        <div className="space-y-2">
+                          <span className="font-medium">Link do convite:</span>
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              value={createdCredentials.inviteLink}
+                              readOnly
+                              className="text-xs"
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                navigator.clipboard.writeText(createdCredentials.inviteLink!)
+                                toast.success("Link copiado!")
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-green-700 dark:text-green-300 mt-2">
-                      O usuário deverá alterar a senha no primeiro login.
+                    <p className="text-xs text-green-700 dark:text-green-300 mt-3">
+                      Compartilhe este link com o usuário para que ele possa completar o cadastro e definir sua senha.
                     </p>
                   </div>
                   <div className="flex justify-end">
@@ -292,13 +350,13 @@ export default function Subcontas() {
                         <SelectContent>
                           {profiles?.map((profile) => (
                             <SelectItem key={profile.id} value={profile.id}>
-                              {profile.nome} ({profile.role})
+                              {profile.nome}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.role === 'produtor' && (
+                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.target_role === 'produtor' && (
                       <div className="grid gap-2">
                         <Label htmlFor="franquia">Franquia</Label>
                         <Select value={createFranquia} onValueChange={setCreateFranquia}>
@@ -410,6 +468,114 @@ export default function Subcontas() {
         </CardContent>
       </Card>
 
+      {/* Card de Convites Pendentes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Convites Pendentes
+            {pendingInvites.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {pendingInvites.length}
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Convites enviados que ainda não foram aceitos pelos usuários
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingInvites ? (
+            <div className="text-center py-4">Carregando...</div>
+          ) : pendingInvites.length === 0 ? (
+            <EmptyState
+              icon={<Clock className="h-8 w-8" />}
+              title="Nenhum convite pendente"
+              description="Todos os convites foram aceitos ou não há convites ativos"
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead>Franquia</TableHead>
+                  <TableHead>Enviado em</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingInvites.map((invite) => {
+                  const isExpired = new Date(invite.created_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days
+                  return (
+                    <TableRow key={invite.id}>
+                      <TableCell className="font-medium">
+                        {invite.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {invite.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {invite.franquia_nome || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(invite.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell>
+                        {isExpired ? (
+                          <Badge variant="destructive" className="flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Expirado
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">
+                            Pendente
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInvite(invite)}
+                            disabled={isResending}
+                            title="Reenviar convite"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInvite(invite)}
+                            disabled={isResending}
+                            title="Reenviar convite"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => cancelInvite(invite.id)}
+                            disabled={isCanceling}
+                            title="Cancelar convite"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Dialog para gerenciar perfil */}
       <Dialog open={profileManageOpen} onOpenChange={setProfileManageOpen}>
         <DialogContent>
@@ -429,7 +595,7 @@ export default function Subcontas() {
                 <SelectContent>
                   {profiles?.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
-                      {profile.nome} ({profile.role})
+                      {profile.nome} ({profile.target_role})
                     </SelectItem>
                   ))}
                 </SelectContent>

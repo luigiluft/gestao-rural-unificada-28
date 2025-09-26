@@ -46,7 +46,7 @@ function AppLayoutContent({ children }: { children?: ReactNode }) {
       <AppSidebar />
       <div className="flex-1 flex flex-col">
         <AppHeader />
-        <main className="flex-1 p-4 lg:p-6 overflow-auto transition-all duration-500">
+        <main className="flex-1 p-4 lg:p-6 overflow-hidden transition-all duration-500 w-full max-w-full">
           {children ?? <Outlet />}
         </main>
       </div>

@@ -3,7 +3,8 @@ import {
   LogOut,
   HelpCircle,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import logoImg from "@/assets/agrohub-logo.svg"
@@ -17,6 +18,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems"
 import { useNotifications } from "@/hooks/useNotifications"
+import { useViagensNotifications } from "@/hooks/useViagensNotifications"
 import { TutorialButton } from "@/components/Tutorial/TutorialButton"
 import { useTutorial } from "@/contexts/TutorialContext"
 
@@ -45,8 +50,10 @@ export function AppSidebar() {
   const { user, logout } = useAuth()
   const [displayName, setDisplayName] = useState<string>("")
   const [customLogo, setCustomLogo] = useState<string | null>(null)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   
   const { data: notifications } = useNotifications()
+  const { data: viagensNotificationCount } = useViagensNotifications()
   const { menuItems, isLoading: menuLoading } = useDynamicMenuItems()
   const { isActive: isTutorialActive } = useTutorial()
 
@@ -98,7 +105,7 @@ export function AppSidebar() {
       : "hover:bg-secondary/50 transition-all duration-200"
   }
 
-  const getNotificationCount = (title: string, notifications: any) => {
+  const getNotificationCount = (title: string, notifications: any, viagensCount: number = 0) => {
     if (!notifications) return 0
     
     switch (title) {
@@ -112,15 +119,39 @@ export function AppSidebar() {
         return notifications.separacao || 0
       case "Expedição":
         return notifications.expedicao || 0
+      case "Remessas":
+        return notifications.remessas || 0
       case "Transporte":
-        return notifications.transporte || 0
+        return 0 // Transporte não tem mais notificações
       case "Suporte":
         return notifications.suporte || 0
       case "Subcontas":
         return notifications.subcontas || 0
+      case "Viagens":
+        return viagensCount || 0
+      case "Proof of Delivery":
+        return viagensCount || 0
       default:
         return 0
     }
+  }
+
+  const getWmsNotificationCount = (subItems: any[], notifications: any) => {
+    if (!notifications || !subItems) return 0
+    
+    return subItems.reduce((total, item) => {
+      return total + getNotificationCount(item.label, notifications, viagensNotificationCount || 0)
+    }, 0)
+  }
+
+  const toggleExpanded = (itemPath: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(itemPath)) {
+      newExpanded.delete(itemPath)
+    } else {
+      newExpanded.add(itemPath)
+    }
+    setExpandedItems(newExpanded)
   }
 
   // Convert regular paths to demo paths during tutorial
@@ -132,7 +163,8 @@ export function AppSidebar() {
       '/dashboard': '/demo/dashboard',
       '/entradas': '/demo/entradas',
       '/estoque': '/demo/estoque', 
-      '/saidas': '/demo/saidas'
+      '/saidas': '/demo/saidas',
+      '/recebimento': '/demo/recebimento'
     }
     
     return demoRoutes[path as keyof typeof demoRoutes] || path
@@ -174,29 +206,92 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton asChild>
-                     <NavLink 
-                       to={convertToTutorialPath(item.path)} 
-                       end={item.path === "/"}
-                       data-tutorial={item.label === "Entradas" ? "entradas-link" : undefined}
-                       className={({ isActive }) => 
-                         `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
-                       }
-                     >
+                  {item.subItems ? (
+                    // Item com submenu (WMS)
+                    <>
+                      <SidebarMenuButton 
+                        onClick={() => !collapsed && toggleExpanded(item.path)}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-secondary/50 cursor-pointer`}
+                      >
                         <div className="relative">
                           {item.icon && <item.icon className="w-5 h-5 flex-shrink-0" />}
-                         {notifications && getNotificationCount(item.label, notifications) > 0 && (
-                           <Badge 
-                             variant="destructive" 
-                             className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
-                           >
-                             {getNotificationCount(item.label, notifications)}
-                           </Badge>
-                         )}
-                       </div>
-                       {!collapsed && <span className="font-medium">{item.label}</span>}
-                     </NavLink>
-                  </SidebarMenuButton>
+                          {notifications && getWmsNotificationCount(item.subItems, notifications) > 0 && (
+                            <Badge 
+                              variant="destructive" 
+                              className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                            >
+                              {getWmsNotificationCount(item.subItems, notifications)}
+                            </Badge>
+                          )}
+                        </div>
+                        {!collapsed && (
+                          <>
+                            <span className="font-medium flex-1">{item.label}</span>
+                            <ChevronRight 
+                              className={`h-4 w-4 transition-transform duration-200 ${
+                                expandedItems.has(item.path) ? 'rotate-90' : ''
+                              }`} 
+                            />
+                          </>
+                        )}
+                      </SidebarMenuButton>
+                      {!collapsed && expandedItems.has(item.path) && (
+                        <SidebarMenuSub>
+                          {item.subItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.label}>
+                              <SidebarMenuSubButton asChild>
+                                <NavLink 
+                                  to={convertToTutorialPath(subItem.path)}
+                                  data-tutorial={subItem.label === "Recebimento" ? "menu-recebimento" : undefined}
+                                  className={({ isActive }) => 
+                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
+                                  }
+                                >
+                                  <div className="relative">
+                                    {subItem.icon && <subItem.icon className="w-4 h-4 flex-shrink-0" />}
+                                    {notifications && getNotificationCount(subItem.label, notifications, viagensNotificationCount || 0) > 0 && (
+                                      <Badge 
+                                        variant="destructive" 
+                                        className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                                      >
+                                        {getNotificationCount(subItem.label, notifications, viagensNotificationCount || 0)}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <span className="font-medium">{subItem.label}</span>
+                                </NavLink>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      )}
+                    </>
+                  ) : (
+                    // Item normal sem submenu
+                    <SidebarMenuButton asChild>
+                       <NavLink 
+                         to={convertToTutorialPath(item.path)} 
+                         end={item.path === "/"}
+                         data-tutorial={item.label === "Entradas" ? "entradas-link" : undefined}
+                         className={({ isActive }) => 
+                           `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
+                         }
+                       >
+                          <div className="relative">
+                            {item.icon && <item.icon className="w-5 h-5 flex-shrink-0" />}
+                           {notifications && getNotificationCount(item.label, notifications, viagensNotificationCount || 0) > 0 && (
+                             <Badge 
+                               variant="destructive" 
+                               className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                             >
+                               {getNotificationCount(item.label, notifications, viagensNotificationCount || 0)}
+                             </Badge>
+                           )}
+                         </div>
+                         {!collapsed && <span className="font-medium">{item.label}</span>}
+                       </NavLink>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

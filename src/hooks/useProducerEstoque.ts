@@ -9,7 +9,7 @@ export const useProducerEstoque = () => {
       if (!user.user) throw new Error("User not authenticated")
 
       const { data: estoqueData, error } = await supabase
-        .rpc("get_estoque_seguro")
+        .rpc("get_estoque_from_movimentacoes")
 
       if (error) throw error
 

@@ -1,289 +1,164 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Loader2, User, Mail, Lock } from "lucide-react";
 
 export default function CompletarCadastro() {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
-    telefone: "",
-    empresa: "",
-    senha: "",
-    confirmarSenha: "",
-    email: "",
+    password: "",
+    confirmPassword: ""
   });
-
-  useEffect(() => {
-    document.title = "Completar Cadastro | AgroStock";
-    const metaDesc = document.querySelector('meta[name="description"]');
-    const content = "Complete seu cadastro no AgroStock definindo sua senha e informações.";
-    if (metaDesc) {
-      metaDesc.setAttribute("content", content);
-    } else {
-      const m = document.createElement("meta");
-      m.name = "description";
-      m.content = content;
-      document.head.appendChild(m);
-    }
-  }, []);
-
-  // Check if user came from invite confirmation and pre-fill email
-  useEffect(() => {
-    const token = searchParams.get('token');
-    const type = searchParams.get('type');
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    console.log('URL params:', { token, type, accessToken, refreshToken });
-    
-    // Allow access if coming from invite or already has tokens
-    if (!token && !accessToken && type !== 'invite') {
-      console.log('No valid tokens found, redirecting to auth');
-      navigate('/auth');
-      return;
-    }
-
-    // Try to get email from session or URL for pre-filling
-    const getEmailFromInvite = async () => {
-      try {
-        // First try to get from current session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (currentSession?.user?.email) {
-          setFormData(prev => ({ ...prev, email: currentSession.user.email || '' }));
-          return;
-        }
-
-        // If no session yet, try to get from access token in URL
-        if (accessToken) {
-          const { data: { user: tokenUser } } = await supabase.auth.getUser(accessToken);
-          if (tokenUser?.email) {
-            setFormData(prev => ({ ...prev, email: tokenUser.email || '' }));
-          }
-        }
-      } catch (error) {
-        console.log('Could not get email for pre-filling:', error);
-      }
-    };
-
-    getEmailFromInvite();
-  }, [searchParams, navigate]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.senha !== formData.confirmarSenha) {
-      toast({
-        title: "Senhas não coincidem",
-        description: "Digite a mesma senha nos dois campos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.senha.length < 6) {
-      toast({
-        title: "Senha muito curta",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.nome) {
-      toast({
-        title: "Nome obrigatório",
-        description: "Digite seu nome completo.",
-        variant: "destructive",
-      });
-      return;
-    }
+    setLoading(true);
 
     try {
-      setLoading(true);
-
-      const token = searchParams.get('token');
-      const type = searchParams.get('type');
-      const accessToken = searchParams.get('access_token');
-
-      console.log('Starting signup process...', { token, type, accessToken });
-
-      // If we have access tokens, user is already authenticated from invite
-      if (accessToken) {
-        console.log('User already authenticated via access token');
-      } else if (token && type === 'invite') {
-        // Complete the signup process with the token
-        const { error: signUpError } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'invite'
-        });
-
-        if (signUpError) {
-          console.error('Signup error:', signUpError);
-          throw signUpError;
-        }
+      // Validar senhas
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("As senhas não coincidem");
+        return;
       }
 
-      // Update user password
+      if (formData.password.length < 6) {
+        toast.error("A senha deve ter pelo menos 6 caracteres");
+        return;
+      }
+
+      // Atualizar senha do usuário
       const { error: passwordError } = await supabase.auth.updateUser({
-        password: formData.senha
+        password: formData.password
       });
 
-      if (passwordError) throw passwordError;
-
-      // Update profile information
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
-      if (currentUser) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            nome: formData.nome,
-            telefone: formData.telefone || null,
-            empresa: formData.empresa || null,
-          })
-          .eq('user_id', currentUser.id);
-
-        if (profileError) throw profileError;
+      if (passwordError) {
+        console.error('Erro ao atualizar senha:', passwordError);
+        toast.error("Erro ao definir senha");
+        return;
       }
 
-      // Sign out the user so they need to login manually
-      await supabase.auth.signOut();
+      // Atualizar perfil com nome
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          nome: formData.nome.trim() || 'Usuário'
+        })
+        .eq('user_id', user?.id);
 
-      toast({
-        title: "Cadastro completado!",
-        description: "Agora você pode fazer login com seu email e senha.",
-      });
+      if (profileError) {
+        console.error('Erro ao atualizar perfil:', profileError);
+        toast.error("Erro ao atualizar perfil");
+        return;
+      }
 
-      navigate('/auth');
-    } catch (err: any) {
-      toast({
-        title: "Erro ao completar cadastro",
-        description: err.message || "Tente novamente.",
-        variant: "destructive",
-      });
+      toast.success("Cadastro completado com sucesso!");
+      
+      // Recarregar a página para atualizar as permissões
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      toast.error("Erro inesperado ao completar cadastro");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Completar Cadastro</CardTitle>
+          <CardTitle className="text-2xl font-bold">Completar Cadastro</CardTitle>
           <CardDescription>
-            Finalize seu cadastro definindo uma senha e suas informações
+            Para acessar o sistema, complete seu cadastro definindo uma senha
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="seu.email@exemplo.com"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={!!formData.email}
-                className="disabled:opacity-60"
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={user?.email || ""}
+                  disabled
+                  className="pl-10"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nome">Nome completo *</Label>
-              <Input
-                id="nome"
-                name="nome"
-                type="text"
-                placeholder="Digite seu nome completo"
-                value={formData.nome}
-                onChange={handleChange}
-                required
-              />
+              <Label htmlFor="nome">Nome Completo</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="nome"
+                  type="text"
+                  placeholder="Digite seu nome completo"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                  className="pl-10"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                name="telefone"
-                type="tel"
-                placeholder="(11) 99999-9999"
-                value={formData.telefone}
-                onChange={handleChange}
-              />
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Digite sua senha"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="pl-10"
+                  required
+                  minLength={6}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="empresa">Empresa</Label>
-              <Input
-                id="empresa"
-                name="empresa"
-                type="text"
-                placeholder="Nome da empresa"
-                value={formData.empresa}
-                onChange={handleChange}
-              />
+              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirme sua senha"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  className="pl-10"
+                  required
+                  minLength={6}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="senha">Nova senha *</Label>
-              <Input
-                id="senha"
-                name="senha"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={formData.senha}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmarSenha">Confirmar senha *</Label>
-              <Input
-                id="confirmarSenha"
-                name="confirmarSenha"
-                type="password"
-                placeholder="Digite a senha novamente"
-                value={formData.confirmarSenha}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Finalizando...
+                  Completando cadastro...
                 </>
               ) : (
-                "Finalizar Cadastro"
+                "Completar Cadastro"
               )}
             </Button>
           </form>

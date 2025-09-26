@@ -74,10 +74,22 @@ export default function DemoEntradas() {
   const navigate = useNavigate()
   const { isActive, nextStep, currentStepData } = useTutorial()
   
+  
   useEffect(() => {
     if (!isActive) return;
     const id = currentStepData?.id;
-    const shouldOpen = id === 'formulario-preenchido-sem-backdrop' || id === 'formulario-preenchido-com-backdrop' || id === 'registrar-entrada';
+
+    // Fechar modal nos passos pós-registro
+    if (id === 'entradas-tabela' || id === 'navigate-recebimento') {
+      if (isNewEntryOpen) setIsNewEntryOpen(false);
+      return;
+    }
+
+    // Abrir modal nos passos de formulário
+    const shouldOpen =
+      id === 'formulario-preenchido-sem-backdrop' ||
+      id === 'formulario-preenchido-com-backdrop';
+
     if (shouldOpen) {
       if (!isNewEntryOpen) setIsNewEntryOpen(true);
       if (activeTab !== 'manual') setActiveTab('manual');
@@ -88,10 +100,13 @@ export default function DemoEntradas() {
 
   const handleNFDataParsed = (data: any) => {
     setActiveTab("manual")
-    toast({
-      title: "NFe processada com sucesso",
-      description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens?.length || 0} itens.`,
-    })
+    // Não mostrar toast durante o tutorial
+    if (!isActive) {
+      toast({
+        title: "NFe processada com sucesso",
+        description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens?.length || 0} itens.`,
+      })
+    }
   }
 
   const handleUploadError = (message: string) => {
@@ -107,15 +122,13 @@ export default function DemoEntradas() {
       title: "Entrada registrada",
       description: "A entrada foi registrada com sucesso no sistema de demonstração.",
     })
-    
+
     setIsNewEntryOpen(false)
     setActiveTab("upload")
-    
-    // Se estamos no tutorial, avançar para próximo passo
+
+    // Avança explicitamente o tutorial para o passo da tabela
     if (isActive) {
-      setTimeout(() => {
-        nextStep()
-      }, 1000)
+      nextStep()
     }
   }
 
@@ -203,7 +216,7 @@ export default function DemoEntradas() {
       </div>
 
       {/* Entradas Table */}
-      <Card className="shadow-card">
+      <Card className="shadow-card" data-tutorial="tabela-entradas">
         <CardHeader>
           <CardTitle>Entradas Registradas</CardTitle>
           <CardDescription>
@@ -317,6 +330,7 @@ export default function DemoEntradas() {
           </div>
         </CardContent>
       </Card>
+
     </div>
   )
 }

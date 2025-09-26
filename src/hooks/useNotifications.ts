@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useMotoristaNotifications } from "./useMotoristaNotifications"
 
 export const useNotifications = () => {
   const { user } = useAuth()
+  const { data: motoristaNotifications = 0 } = useMotoristaNotifications()
   
   return useQuery({
     queryKey: ["notifications", user?.id],
@@ -14,9 +16,10 @@ export const useNotifications = () => {
         alocacoes: 0,
         separacao: 0,
         expedicao: 0,
-        transporte: 0,
+        remessas: 0,
         suporte: 0,
         subcontas: 0,
+        viagens: 0,
       }
 
       // Get user profile to determine role
@@ -35,7 +38,7 @@ export const useNotifications = () => {
       let alocacoes = 0
       let separacao = 0
       let expedicao = 0
-      let transporte = 0
+      let remessas = 0
       let suporte = 0
       let subcontas = 0
 
@@ -171,12 +174,13 @@ export const useNotifications = () => {
           expedicao = saidasCount || 0
         }
 
-        // TRANSPORTE: For franqueados - saídas expedidas awaiting delivery
+        // REMESSAS: For franqueados - saidas expedidas pending trip planning
         if (isFranqueado || isAdmin) {
-          let transporteQuery = supabase
+          let remessasQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
             .eq("status", "expedido")
+            .is("viagem_id", null) // Only saídas that are not allocated to trips
 
           if (!isAdmin) {
             // Filter by franquias owned by this franqueado
@@ -187,12 +191,12 @@ export const useNotifications = () => {
             
             const franquiaIds = franquias?.map(f => f.id) || []
             if (franquiaIds.length > 0) {
-              transporteQuery = transporteQuery.in("deposito_id", franquiaIds)
+              remessasQuery = remessasQuery.in("deposito_id", franquiaIds)
             }
           }
 
-          const { count: transporteCount } = await transporteQuery
-          transporte = transporteCount || 0
+          const { count: remessasCount } = await remessasQuery
+          remessas = remessasCount || 0
         }
 
         // SUPORTE: Open support tickets for current user
@@ -204,12 +208,15 @@ export const useNotifications = () => {
 
         suporte = suporteCount || 0
 
-        // SUBCONTAS: For admins and franqueados - pending invites
+        // SUBCONTAS: For admins and franqueados - recent pending invites (last 30 days)
         if (isAdmin || isFranqueado) {
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+          
           let subcountQuery = supabase
             .from("pending_invites")
             .select("id", { count: "exact" })
             .is("used_at", null)
+            .gte("created_at", thirtyDaysAgo) // Only count recent invites
 
           if (!isAdmin) {
             subcountQuery = subcountQuery.eq("inviter_user_id", user.id)
@@ -229,9 +236,10 @@ export const useNotifications = () => {
         alocacoes,
         separacao,
         expedicao,
-        transporte,
+        remessas,
         suporte,
         subcontas,
+        viagens: motoristaNotifications,
       }
     },
     enabled: !!user?.id,

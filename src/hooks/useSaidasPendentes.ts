@@ -25,7 +25,8 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
             )
           )
         `)
-        .in("status", ["separacao_pendente", "separado", "expedido"])
+        .in("status", ["separacao_pendente", "separado", "expedido", "entregue"])
+        .is("viagem_id", null) // Only saidas not yet in any viagem
         
       // Apply date filters if provided
       if (dateRange?.from) {

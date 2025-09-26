@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Clock, Scan, AlertTriangle } from "lucide-react"
+import { Clock } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"
@@ -84,9 +84,10 @@ export default function Separacao() {
     return descriptions[status as keyof typeof descriptions] || 'Não há pedidos neste status no momento.'
   }
 
-  // Filtrar saídas apenas para separação pendente
+  // Filtrar saídas para separação pendente e separadas
   const saidasPorStatus = {
-    separacao_pendente: saidas?.filter(s => s.status === 'separacao_pendente') || []
+    separacao_pendente: saidas?.filter(s => s.status === 'separacao_pendente') || [],
+    separado: saidas?.filter(s => s.status === 'separado') || []
   }
 
   const formatCurrency = (value: number | null) => {
@@ -227,21 +228,21 @@ export default function Separacao() {
 
                   <Separator />
 
-                  {/* Ações */}
-                  <div className="flex justify-end">
-                    <div className="flex gap-2">
-                      {saida.status === 'separacao_pendente' && (
-                        <Button
-                          onClick={() => handleSeparacaoIndividual(saida)}
-                          size="sm"
-                          className="bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
-                        >
-                          <Scan className="h-4 w-4" />
-                          Iniciar Separação
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                   {/* Ações */}
+                   <div className="flex justify-end">
+                     <div className="flex gap-2">
+                        {saida.status === 'separacao_pendente' && (
+                          <Button
+                            onClick={() => handleSeparacaoIndividual(saida)}
+                            size="sm"
+                            className="bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
+                          >
+                            <Clock className="h-4 w-4" />
+                            Iniciar Separação
+                          </Button>
+                        )}
+                     </div>
+                   </div>
                 </CardContent>
               </Card>
             ))}

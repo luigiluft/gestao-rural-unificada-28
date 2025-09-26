@@ -22,68 +22,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ensureProfile = async (u: User) => {
+    const checkProfile = async (u: User) => {
       try {
-        const { data: existing, error } = await supabase
+        console.log('🔍 Checking profile for user:', u.id, u.email);
+        
+        // Check if profile exists
+        const { data: profile, error } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, nome, email, role')
           .eq('user_id', u.id)
           .maybeSingle();
+          
         if (error) {
-          console.error('Erro ao buscar perfil:', error);
+          console.error('❌ Error fetching profile:', error);
           return;
         }
-        if (!existing) {
-          const displayName = (u.user_metadata as any)?.nome || (u.email?.split('@')[0] || 'Usuário');
-          await supabase.from('profiles').insert({
-            user_id: u.id,
-            nome: displayName,
-            email: u.email ?? null,
-            role: 'produtor', // role padrão
-          });
+
+        if (!profile) {
+          console.log('⏳ Profile not found, waiting for trigger to create...');
+          // Profile should be created by trigger, wait a bit and try again
+          setTimeout(() => checkProfile(u), 1000);
+          return;
         }
 
-        // TODO: Reativar no futuro - Check and process pending invites after creating/finding profile
-        /*
-        try {
-          console.log('Checking for pending invites for user:', u.email);
-          const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_invite_signup', {
-            _user_id: u.id,
-            _email: u.email || ''
-          });
-          
-          console.log('Invite processing result:', { rpcResult, rpcError });
-          
-          if (rpcResult) {
-            console.log('Invite processed successfully for user:', u.email);
-            // Force a page reload to update the role in the UI
-            setTimeout(() => window.location.reload(), 100);
-          }
-        } catch (inviteError) {
-          console.error('Error processing invite:', inviteError);
+        console.log('✅ Profile found:', profile);
+
+        // Check if user needs to complete registration
+        const hasDefaultName = !profile.nome || profile.nome === u.email?.split('@')[0];
+        const needsCompletion = hasDefaultName;
+
+        if (needsCompletion && window.location.pathname !== '/completar-cadastro') {
+          console.log('🔄 Redirecting to complete registration');
+          setTimeout(() => {
+            window.location.href = '/completar-cadastro';
+          }, 100);
+          return;
         }
-        */
+
+        // Sistema agora é 100% automático - invite processing acontece no backend via trigger
+        console.log('✅ Profile check completed successfully');
+        
       } catch (e) {
-        console.error('Falha ao garantir perfil', e);
+        console.error('❌ Profile check failed:', e);
       }
     };
 
     // Listen first to avoid missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log('🔄 Auth state change:', event, newSession?.user?.email);
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
-        setTimeout(() => ensureProfile(newSession.user as User), 0);
+        setTimeout(() => checkProfile(newSession.user as User), 0);
       }
       if (loading) setLoading(false);
     });
 
     // Then get current session
     supabase.auth.getSession().then(({ data }) => {
+      console.log('🔍 Getting current session:', data.session?.user?.email);
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
-        setTimeout(() => ensureProfile(data.session!.user as User), 0);
+        setTimeout(() => checkProfile(data.session!.user as User), 0);
       }
       setLoading(false);
     });

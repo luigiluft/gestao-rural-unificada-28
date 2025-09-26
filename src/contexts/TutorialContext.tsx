@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { tutorialSteps } from '@/data/tutorialSteps'
+import { tutorialsByPage, getTutorialByPageKey, PageTutorial } from '@/data/tutorialsByPage'
 
 export interface TutorialStep {
   id: string
@@ -16,6 +17,7 @@ export interface TutorialStep {
   requiresProducer?: boolean
   modalTarget?: boolean
   fieldValue?: string
+  showNextButton?: boolean
 }
 
 interface TutorialContextType {
@@ -23,8 +25,10 @@ interface TutorialContextType {
   currentStep: number
   totalSteps: number
   currentStepData: TutorialStep | null
+  currentTutorial: PageTutorial | null
   progress: number
   startTutorial: () => void
+  startPageTutorial: (tutorialId: string) => void
   nextStep: () => void
   previousStep: () => void
   endTutorial: () => void
@@ -53,6 +57,7 @@ interface TutorialProviderProps {
 export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const [isActive, setIsActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [currentTutorialId, setCurrentTutorialId] = useState<string | null>(null)
   const [isPaused, setIsPaused] = useState(false)
   const [waitingForElement, setWaitingForElement] = useState(false)
   const waitModalAdvanceRef = useRef<number | null>(null)
@@ -60,10 +65,18 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const navigate = useNavigate()
   const location = useLocation()
 
-
-  const steps = useMemo(() => tutorialSteps.filter(s => s.id !== 'aguardar-modal-entrada'), [])
+  // Get current tutorial and steps
+  const currentTutorial = currentTutorialId ? getTutorialByPageKey(currentTutorialId) : null
+  const steps = useMemo(() => {
+    if (currentTutorial) {
+      return currentTutorial.steps
+    }
+    // Fallback to legacy tutorial for backward compatibility
+    return tutorialSteps.filter(s => s.id !== 'aguardar-modal-entrada')
+  }, [currentTutorial])
+  
   const totalSteps = steps.length
-  const currentStepData = isActive ? steps[currentStep] : null
+  const currentStepData = isActive && steps[currentStep] ? steps[currentStep] : null
   const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0
 
   // Load tutorial state from localStorage - DISABLED for manual start only
@@ -81,11 +94,15 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   // Save tutorial state to localStorage
   useEffect(() => {
     if (isActive) {
-      localStorage.setItem('tutorial-state', JSON.stringify({ isActive, currentStep }))
+      localStorage.setItem('tutorial-state', JSON.stringify({ 
+        isActive, 
+        currentStep, 
+        currentTutorialId 
+      }))
     } else {
       localStorage.removeItem('tutorial-state')
     }
-  }, [isActive, currentStep])
+  }, [isActive, currentStep, currentTutorialId])
 
   // Auto-navigate when step changes
   // Navigation based on current step with demo route handling
@@ -104,7 +121,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       // Convert regular routes to demo routes during tutorial
       const demoRoutes = {
         '/dashboard': '/demo/dashboard',
-        '/entradas': '/demo/entradas', 
+        '/entradas': '/demo/entradas',
+        '/recebimento': '/demo/recebimento',
         '/estoque': '/demo/estoque',
         '/saidas': '/demo/saidas'
       }
@@ -124,7 +142,8 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   function nextStep() {
     if (advancingRef.current) return
     advancingRef.current = true
-    setTimeout(() => { advancingRef.current = false }, 500)
+    const delay = currentStepData?.modalTarget ? 800 : 200
+    setTimeout(() => { advancingRef.current = false }, delay)
 
     if (currentStep < totalSteps - 1) {
       setCurrentStep(prev => prev + 1)
@@ -149,6 +168,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   const endTutorial = () => {
     setIsActive(false)
     setCurrentStep(0)
+    setCurrentTutorialId(null)
     setIsPaused(false)
     localStorage.removeItem('tutorial-state')
   }
@@ -189,6 +209,7 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
           return
 
         }
+
         
         // Only advance for click actions
         if (currentStepData.action === 'click') {
@@ -304,8 +325,13 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       simulateNFUpload()
     }
 
-    // Add click listener to detect clicks on target elements
+    // Add click listener to detect clicks on target elements - DISABLED for modal steps
     const handleDocumentClick = (event: MouseEvent) => {
+      // Skip global click handling for modal interactions to prevent conflicts
+      if (currentStepData.modalTarget) {
+        return
+      }
+      
       const target = event.target as Element
       handleTargetClick(target)
     }
@@ -334,13 +360,18 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       })
     }
 
-    document.addEventListener('click', handleDocumentClick)
+    // Only add document click listener for non-modal steps
+    if (!currentStepData.modalTarget) {
+      document.addEventListener('click', handleDocumentClick)
+    }
     
     // Add highlight after a brief delay to ensure element exists
     const timer = setTimeout(addHighlight, 100)
     
     return () => {
-      document.removeEventListener('click', handleDocumentClick)
+      if (!currentStepData.modalTarget) {
+        document.removeEventListener('click', handleDocumentClick)
+      }
       document.removeEventListener('tutorial-trigger-nf-upload', handleTutorialTrigger)
       clearTimeout(timer)
       removeHighlight()
@@ -402,11 +433,69 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
   }, [isActive, currentStepData])
 
   const startTutorial = () => {
+    // Start legacy full tutorial (backward compatibility)
     setIsActive(true)
     setCurrentStep(0)
+    setCurrentTutorialId(null)
     setIsPaused(false)
     navigate('/')
   }
+
+  const startPageTutorial = (tutorialId: string) => {
+    const tutorial = getTutorialByPageKey(tutorialId)
+    if (!tutorial) {
+      console.error(`Tutorial not found: ${tutorialId}`)
+      return
+    }
+
+    setIsActive(true)
+    setCurrentStep(0)
+    setCurrentTutorialId(tutorialId)
+    setIsPaused(false)
+    
+    // Navigate to the first step's page if it exists
+    if (tutorial.steps.length > 0 && tutorial.steps[0].page) {
+      let targetPage = tutorial.steps[0].page
+      
+      // Convert to demo route if needed
+      const demoRoutes = {
+        '/dashboard': '/demo/dashboard',
+        '/entradas': '/demo/entradas',
+        '/recebimento': '/demo/recebimento',
+        '/estoque': '/demo/estoque',
+        '/saidas': '/demo/saidas'
+      }
+      
+      targetPage = demoRoutes[targetPage as keyof typeof demoRoutes] || targetPage
+      navigate(targetPage)
+    }
+  }
+
+  // Advance step automatically after NF upload is simulated via tutorial event
+  // This ensures step 5 (selecionar-arquivo-nf) progresses even when inside a modal
+  useEffect(() => {
+    if (!isActive || currentStepData?.id !== 'selecionar-arquivo-nf') return
+
+    const advanceOnUpload = () => {
+      if (waitModalAdvanceRef.current) {
+        clearTimeout(waitModalAdvanceRef.current)
+        waitModalAdvanceRef.current = null
+      }
+      waitModalAdvanceRef.current = window.setTimeout(() => {
+        nextStep()
+        waitModalAdvanceRef.current = null
+      }, 800)
+    }
+
+    document.addEventListener('tutorial-trigger-nf-upload', advanceOnUpload)
+    return () => {
+      document.removeEventListener('tutorial-trigger-nf-upload', advanceOnUpload)
+      if (waitModalAdvanceRef.current) {
+        clearTimeout(waitModalAdvanceRef.current)
+        waitModalAdvanceRef.current = null
+      }
+    }
+  }, [isActive, currentStepData])
 
   return (
     <TutorialContext.Provider value={{
@@ -414,8 +503,10 @@ export const TutorialProvider = ({ children }: TutorialProviderProps) => {
       currentStep,
       totalSteps,
       currentStepData,
+      currentTutorial,
       progress,
       startTutorial,
+      startPageTutorial,
       nextStep,
       previousStep,
       endTutorial,

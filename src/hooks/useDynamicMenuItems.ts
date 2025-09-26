@@ -24,7 +24,13 @@ import {
   Grid3X3,
   Clipboard,
   Package2,
-  BookOpen
+  BookOpen,
+  Warehouse,
+  Navigation,
+  Route,
+  Calendar as CalendarIcon,
+  AlertTriangle,
+  Calculator
 } from "lucide-react"
 
 export interface MenuItem {
@@ -56,13 +62,26 @@ const iconMap = {
   configuracoes: Settings,
   "controle-acesso": Shield,
   "alocacao-pallets": Waves,
-  "gerenciar-alocacoes": Grid3X3,
   "gerenciar-posicoes": Grid3X3,
   separacao: Clipboard,
   inventario: Package2,
   transporte: Truck,
   "perfis-funcionarios": Users,
-  instrucoes: BookOpen
+  instrucoes: BookOpen,
+  wms: Warehouse,
+  tms: Navigation,
+  remessas: Package,
+  planejamento: Route,
+  viagens: Truck,
+  agenda: CalendarIcon,
+  tracking: MapPin,
+  "proof-of-delivery": FileText,
+  ocorrencias: AlertTriangle,
+  "tabelas-frete": Calculator,
+  "tabela-frete": FileText,
+  veiculos: Truck,
+  motoristas: Users,
+  comprovantes: FileText
 }
 
 const menuLabels = {
@@ -86,13 +105,26 @@ const menuLabels = {
   configuracoes: "Configurações",
   "controle-acesso": "Controle de Acesso",
   "alocacao-pallets": "Alocações",
-  "gerenciar-alocacoes": "Gerenciar Posições",
   "gerenciar-posicoes": "Posições",
   separacao: "Separação",
   inventario: "Inventário",
   transporte: "Transporte",
   "perfis-funcionarios": "Perfis de Funcionários",
-  instrucoes: "Instruções"
+  instrucoes: "Instruções",
+  wms: "WMS",
+  tms: "TMS",
+  remessas: "Remessas",
+  planejamento: "Planejamento",
+  viagens: "Viagens",
+  agenda: "Agenda",
+  tracking: "Tracking",
+  "proof-of-delivery": "Proof of Delivery",
+  ocorrencias: "Ocorrências",
+  "tabelas-frete": "Tabelas de Frete",
+  "tabela-frete": "Tabela de Frete",
+  veiculos: "Veículos",
+  motoristas: "Motoristas",
+  comprovantes: "Comprovantes"
 }
 
 export const useDynamicMenuItems = () => {
@@ -108,17 +140,11 @@ export const useDynamicMenuItems = () => {
       'dashboard',
       'catalogo', 
       'entradas',
-      'recebimento',
-      'alocacao-pallets',
-      'gerenciar-alocacoes',
       'estoque',
-      'inventario',
       'saidas',
-      'separacao',
-      'expedicao',
-      'transporte',
       'rastreio',
       'relatorios',
+      'tabelas-frete',
       'produtores',
       'fazendas',
       'perfil',
@@ -126,6 +152,30 @@ export const useDynamicMenuItems = () => {
       'perfis-funcionarios',
       'instrucoes',
       'suporte'
+    ]
+
+    // Páginas do WMS
+    const wmsPages = [
+      'recebimento',
+      'alocacao-pallets',
+      'gerenciar-posicoes',
+      'inventario',
+      'separacao',
+      'expedicao'
+    ]
+
+    // Páginas do TMS
+    const tmsPages = [
+      'remessas',
+      'viagens',
+      'proof-of-delivery',
+      'comprovantes',
+      'ocorrencias',
+      'veiculos',
+      'motoristas',
+      'agenda',
+      'tracking',
+      'tabela-frete'
     ]
 
     // Adicionar itens na ordem especificada
@@ -146,6 +196,84 @@ export const useDynamicMenuItems = () => {
         })
       }
     })
+
+    // Verificar se tem permissão para pelo menos uma página do WMS
+    const hasWmsPermission = wmsPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasWmsPermission) {
+      const wmsSubItems: MenuItem[] = []
+      
+      wmsPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          wmsSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (wmsSubItems.length > 0) {
+        // Inserir WMS após saídas
+        const saidasIndex = items.findIndex(item => item.path === '/saidas')
+        const insertIndex = saidasIndex !== -1 ? saidasIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/wms',
+          label: 'WMS',
+          icon: iconMap.wms,
+          subItems: wmsSubItems
+        })
+      }
+    }
+
+    // Verificar se tem permissão para pelo menos uma página do TMS
+    const hasTmsPermission = tmsPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasTmsPermission) {
+      const tmsSubItems: MenuItem[] = []
+      
+      tmsPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          tmsSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (tmsSubItems.length > 0) {
+        // Inserir TMS após WMS
+        const wmsIndex = items.findIndex(item => item.path === '/wms')
+        const insertIndex = wmsIndex !== -1 ? wmsIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/tms',
+          label: 'TMS',
+          icon: iconMap.tms,
+          subItems: tmsSubItems
+        })
+      }
+    }
 
     return items
   }, [permissions, isLoading])
