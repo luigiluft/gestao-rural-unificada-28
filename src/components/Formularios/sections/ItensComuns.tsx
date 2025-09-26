@@ -203,129 +203,138 @@ export function ItensComunsSection({
       <CardContent className="space-y-4">
         {/* Adicionar Novo Item */}
         <div className="border rounded-lg p-4 bg-muted/30">
-          {/* Layout responsivo melhorado */}
-          <div className={`grid gap-3 items-end ${
-            tipo === 'entrada' 
-              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7' 
-              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
-          }`}>
-            <div className={`space-y-1 ${tipo === 'entrada' ? 'lg:col-span-2' : 'lg:col-span-2'}`}>
-              <Label className="text-xs font-medium">Produto</Label>
-              {tipo === 'saida' ? (
-                <Select 
-                  value={novoItem.produto_id || ''} 
-                  onValueChange={handleProdutoChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o produto" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50">
-                    {produtosDisponiveis.map((produto) => (
-                      <SelectItem key={produto.id} value={produto.id}>
-                        <div className="flex justify-between items-center w-full">
-                          <span className="truncate max-w-[200px]" title={produto.nome}>{produto.nome}</span>
-                          {tipo === 'saida' && produto.quantidade_total && (
-                            <span className="text-muted-foreground text-xs ml-2 flex-shrink-0">
-                              Disp: {produto.quantidade_total} {produto.unidade_medida || 'UN'}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  placeholder="Nome do produto"
-                  value={novoItem.produto}
-                  onChange={(e) => onNovoItemChange('produto', e.target.value)}
-                />
-              )}
-            </div>
-
-            {tipo === 'entrada' && (
-              <div className="space-y-1">
-                <Label className="text-xs font-medium">Lote</Label>
-                <Input
-                  placeholder="Lote"
-                  value={novoItem.lote}
-                  onChange={(e) => handleLoteChange(e.target.value)}
-                />
+          {/* Layout melhorado para manter todos os campos na mesma linha */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-12 gap-3 items-end">
+              {/* Produto - 3 colunas */}
+              <div className="col-span-12 md:col-span-3 space-y-1">
+                <Label className="text-xs font-medium">Produto</Label>
+                {tipo === 'saida' ? (
+                  <Select 
+                    value={novoItem.produto_id || ''} 
+                    onValueChange={handleProdutoChange}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecione o produto" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      {produtosDisponiveis.map((produto) => (
+                        <SelectItem key={produto.id} value={produto.id}>
+                          <div className="flex justify-between items-center w-full">
+                            <span className="truncate max-w-[200px]" title={produto.nome}>{produto.nome}</span>
+                            {tipo === 'saida' && produto.quantidade_total && (
+                              <span className="text-muted-foreground text-xs ml-2 flex-shrink-0">
+                                Disp: {produto.quantidade_total} {produto.unidade_medida || 'UN'}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="Nome do produto"
+                    value={novoItem.produto}
+                    onChange={(e) => onNovoItemChange('produto', e.target.value)}
+                    className="w-full"
+                  />
+                )}
               </div>
-            )}
 
-            <div className="space-y-1">
-              <Label className="text-xs font-medium">Qtd</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={novoItem.quantidade || ''}
-                onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-medium">Unidade</Label>
-              {tipo === 'saida' ? (
-                <Input
-                  value={novoItem.unidade || ''}
-                  disabled
-                  className="bg-muted"
-                />
-              ) : (
-                <Select value={novoItem.unidade} onValueChange={(value) => onNovoItemChange('unidade', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Un" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sacas">Sacas</SelectItem>
-                    <SelectItem value="kg">Kg</SelectItem>
-                    <SelectItem value="litros">Litros</SelectItem>
-                    <SelectItem value="unidades">Unidades</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Lote - 2 colunas (apenas para entrada) */}
+              {tipo === 'entrada' && (
+                <div className="col-span-12 md:col-span-2 space-y-1">
+                  <Label className="text-xs font-medium">Lote</Label>
+                  <Input
+                    placeholder="Lote"
+                    value={novoItem.lote}
+                    onChange={(e) => handleLoteChange(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
               )}
-            </div>
 
-            {tipo === 'entrada' && (
-              <div className="space-y-1">
-                <Label className="text-xs font-medium">Depósito</Label>
-                <Select value={novoItem.deposito || ''} onValueChange={(value) => onNovoItemChange('deposito', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Depósito" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Armazém A">Armazém A</SelectItem>
-                    <SelectItem value="Armazém B">Armazém B</SelectItem>
-                    <SelectItem value="Depósito Campo">Depósito Campo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {tipo === 'entrada' && (
-              <div className="space-y-1">
-                <Label className="text-xs font-medium">Valor Unit.</Label>
+              {/* Quantidade - 1 coluna */}
+              <div className={`col-span-12 md:col-span-1 space-y-1 ${tipo === 'saida' ? 'md:col-span-2' : ''}`}>
+                <Label className="text-xs font-medium">Qtd</Label>
                 <Input
                   type="number"
-                  placeholder="0,00"
-                  step="0.01"
-                  value={novoItem.valorUnitario || ''}
-                  onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  value={novoItem.quantidade || ''}
+                  onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
+                  className="w-full"
                 />
               </div>
-            )}
 
-            <div className="space-y-1">
-              <Label className="text-xs font-medium">Ação</Label>
-              <Button 
-                onClick={onAdicionarItem} 
-                size="sm" 
-                className="w-full h-10"
-                data-tutorial="adicionar-item-btn"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
+              {/* Unidade - 1 coluna */}
+              <div className={`col-span-12 md:col-span-1 space-y-1 ${tipo === 'saida' ? 'md:col-span-2' : ''}`}>
+                <Label className="text-xs font-medium">Unidade</Label>
+                {tipo === 'saida' ? (
+                  <Input
+                    value={novoItem.unidade || ''}
+                    disabled
+                    className="bg-muted w-full"
+                  />
+                ) : (
+                  <Select value={novoItem.unidade} onValueChange={(value) => onNovoItemChange('unidade', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Un" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sacas">Sacas</SelectItem>
+                      <SelectItem value="kg">Kg</SelectItem>
+                      <SelectItem value="litros">Litros</SelectItem>
+                      <SelectItem value="unidades">Unidades</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {/* Depósito - 2 colunas (apenas para entrada) */}
+              {tipo === 'entrada' && (
+                <div className="col-span-12 md:col-span-2 space-y-1">
+                  <Label className="text-xs font-medium">Depósito</Label>
+                  <Select value={novoItem.deposito || ''} onValueChange={(value) => onNovoItemChange('deposito', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Depósito" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Armazém A">Armazém A</SelectItem>
+                      <SelectItem value="Armazém B">Armazém B</SelectItem>
+                      <SelectItem value="Depósito Campo">Depósito Campo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Valor Unit. - 2 colunas (apenas para entrada) */}
+              {tipo === 'entrada' && (
+                <div className="col-span-12 md:col-span-2 space-y-1">
+                  <Label className="text-xs font-medium">Valor Unit.</Label>
+                  <Input
+                    type="number"
+                    placeholder="0,00"
+                    step="0.01"
+                    value={novoItem.valorUnitario || ''}
+                    onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {/* Ação - 1 coluna */}
+              <div className={`col-span-12 md:col-span-1 space-y-1 ${tipo === 'saida' ? 'md:col-span-5' : ''}`}>
+                <Label className="text-xs font-medium">Ação</Label>
+                <Button 
+                  onClick={onAdicionarItem} 
+                  size="sm" 
+                  className="w-full h-10"
+                  data-tutorial="adicionar-item-btn"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
