@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SeletorDeposito } from "@/components/Entradas/SeletorDeposito"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -282,10 +283,9 @@ export function ItensComunsSection({
                       <SelectValue placeholder="Un" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sacas">Sacas</SelectItem>
-                      <SelectItem value="kg">Kg</SelectItem>
-                      <SelectItem value="litros">Litros</SelectItem>
-                      <SelectItem value="unidades">Unidades</SelectItem>
+                      <SelectItem value="Kg">Kg</SelectItem>
+                      <SelectItem value="L">L</SelectItem>
+                      <SelectItem value="Un">Un</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -295,16 +295,10 @@ export function ItensComunsSection({
               {tipo === 'entrada' && (
                 <div className="col-span-12 md:col-span-2 space-y-1">
                   <Label className="text-xs font-medium">Depósito</Label>
-                  <Select value={novoItem.deposito || ''} onValueChange={(value) => onNovoItemChange('deposito', value)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Depósito" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Armazém A">Armazém A</SelectItem>
-                      <SelectItem value="Armazém B">Armazém B</SelectItem>
-                      <SelectItem value="Depósito Campo">Depósito Campo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SeletorDeposito
+                    value={novoItem.deposito}
+                    onValueChange={(value) => onNovoItemChange('deposito', value)}
+                  />
                 </div>
               )}
 
