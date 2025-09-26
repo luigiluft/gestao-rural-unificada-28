@@ -231,7 +231,7 @@ export default function Entradas() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Fixed Header */}
       <div className="flex-shrink-0 border-b bg-background">
         <div className="p-6">
@@ -303,8 +303,8 @@ export default function Entradas() {
                 ))}
               </div>
             ) : entradas && entradas.length > 0 ? (
-              <div className="h-full overflow-auto">
-                <Table className="table-auto">
+              <div className="w-full max-w-full overflow-x-auto">
+                <Table className="table-auto w-max min-w-max">
                   <TableHeader className="sticky top-0 bg-background border-b z-10">
                     <TableRow>
                       {columns.filter(col => col.visible).map((column) => (
