@@ -12,13 +12,23 @@ export const useCorrigirStatusSaida = () => {
     }: { 
       saidaId: string 
     }) => {
-      // Update saida status back to expedido
-      const { error: saidaError } = await supabase
-        .from("saidas")
-        .update({ status: "expedido" })
-        .eq("id", saidaId)
+      const { data, error } = await supabase.functions.invoke('manage-saidas', {
+        body: {
+          action: 'update_status',
+          data: {
+            id: saidaId,
+            status: "expedido"
+          }
+        }
+      })
 
-      if (saidaError) throw saidaError
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao corrigir status da saída')
+      }
 
       return { saidaId }
     },

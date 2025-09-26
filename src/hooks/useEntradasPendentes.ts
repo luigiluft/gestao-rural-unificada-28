@@ -121,6 +121,7 @@ export const useAtualizarStatusEntrada = () => {
       divergencias?: any[]
     }) => {
       const updateData: any = {
+        id: entradaId,
         status_aprovacao: novoStatus,
       }
 
@@ -132,24 +133,19 @@ export const useAtualizarStatusEntrada = () => {
         updateData.divergencias = divergencias
       }
 
-      if (novoStatus === 'confirmado') {
-        updateData.data_aprovacao = new Date().toISOString()
-        const { data: userData } = await supabase.auth.getUser()
-        updateData.aprovado_por = userData?.user?.id
-      }
-
-      const { data, error } = await supabase
-        .from("entradas")
-        .update(updateData)
-        .eq("id", entradaId)
-        .select()
+      const { data, error } = await supabase.functions.invoke('manage-entradas', {
+        body: {
+          action: 'update_status',
+          data: updateData
+        }
+      })
 
       if (error) {
         throw error
       }
 
-      if (!data || data.length === 0) {
-        throw new Error('Nenhum registro foi atualizado. Verifique se você tem permissão para editar esta entrada.')
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao atualizar status da entrada')
       }
 
       return { entradaId, novoStatus }
