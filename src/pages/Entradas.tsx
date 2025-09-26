@@ -231,7 +231,7 @@ export default function Entradas() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col">
       {/* Fixed Header */}
       <div className="flex-shrink-0 border-b bg-background">
         <div className="p-6">
@@ -289,13 +289,13 @@ export default function Entradas() {
         </div>
       </div>
 
-      {/* Entradas Table - Scrollable area with horizontal scroll */}
-      <div className="flex-1 overflow-hidden p-6">
+      {/* Entradas Table - Fixed width with internal horizontal scroll */}
+      <div className="flex-1 p-6 min-h-0">
         <Card className="shadow-card h-full flex flex-col">
           <CardHeader className="flex-shrink-0">
             <CardTitle>Lista de Entradas</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0">
+          <CardContent className="flex-1 min-h-0 p-0">
             {isLoading ? (
               <div className="space-y-3 p-6">
                 {[...Array(5)].map((_, i) => (
@@ -303,43 +303,41 @@ export default function Entradas() {
                 ))}
               </div>
             ) : entradas && entradas.length > 0 ? (
-              <div className="h-full overflow-hidden">
-                <div className="overflow-x-auto overflow-y-auto h-full">
-                  <Table className="table-auto min-w-full">
-                    <TableHeader className="sticky top-0 bg-background border-b z-10">
-                      <TableRow>
-                        {columns.filter(col => col.visible).map((column) => (
-                          <TableHead key={column.key} className="min-w-[120px] text-xs lg:text-sm whitespace-nowrap px-2">
-                            {column.label}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {entradas.map((entrada) => (
-                        <TableRow key={entrada.id} className="hover:bg-muted/50">
-                          {columns.filter(col => col.visible).map((column) => {
-                            const content = getCellContent(entrada, column)
-                            const isAction = column.key === "actions" || column.key === "status_aprovacao"
-                            
-                            return (
-                              <TableCell key={column.key} className="text-xs lg:text-sm min-w-[120px] whitespace-nowrap px-2">
-                                {isAction ? content : (
-                                  <span 
-                                    className="truncate block" 
-                                    title={typeof content === 'string' ? content : ''}
-                                  >
-                                    {content}
-                                  </span>
-                                )}
-                              </TableCell>
-                            )
-                          })}
-                        </TableRow>
+              <div className="h-full overflow-auto">
+                <Table className="table-auto">
+                  <TableHeader className="sticky top-0 bg-background border-b z-10">
+                    <TableRow>
+                      {columns.filter(col => col.visible).map((column) => (
+                        <TableHead key={column.key} className="min-w-[120px] text-xs lg:text-sm whitespace-nowrap px-2">
+                          {column.label}
+                        </TableHead>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entradas.map((entrada) => (
+                      <TableRow key={entrada.id} className="hover:bg-muted/50">
+                        {columns.filter(col => col.visible).map((column) => {
+                          const content = getCellContent(entrada, column)
+                          const isAction = column.key === "actions" || column.key === "status_aprovacao"
+                          
+                          return (
+                            <TableCell key={column.key} className="text-xs lg:text-sm min-w-[120px] whitespace-nowrap px-2">
+                              {isAction ? content : (
+                                <span 
+                                  className="truncate block" 
+                                  title={typeof content === 'string' ? content : ''}
+                                >
+                                  {content}
+                                </span>
+                              )}
+                            </TableCell>
+                          )
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6">
