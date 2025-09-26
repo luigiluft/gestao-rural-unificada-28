@@ -483,7 +483,7 @@ export default function DemoRecebimento() {
 
                 {divergencias.length > 0 && (
                   <div>
-                    <h4 className="font-medium mb-2">Divergências:</h4>
+                    <h4 className="font-medium mb-2">Divergências Registradas:</h4>
                     <div className="space-y-2">
                       {divergencias.map((div, index) => (
                         <div key={index} className="border rounded p-3 space-y-2">
