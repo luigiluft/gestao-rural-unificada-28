@@ -8,7 +8,10 @@ import {
   Trash2,
   Check,
   X,
-  GripVertical
+  GripVertical,
+  Save,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import {
   DndContext,
@@ -65,6 +68,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormularioSaida } from "@/components/Saidas/FormularioSaida"
 import { useSaidas } from "@/hooks/useSaidas"
 import { useAprovarSaida } from "@/hooks/useSaidasAprovacao"
@@ -154,6 +158,41 @@ const Saidas = () => {
     { key: "acoes", label: "Ações", visible: true, category: "Ações" },
   ])
 
+  // Data fetching
+  const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
+  const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useProfilesForSaidas(saidas)
+  const aprovarSaida = useAprovarSaida()
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [recordsPerPage, setRecordsPerPage] = useState(25)
+
+  // Calculate pagination
+  const totalRecords = saidas.length
+  const totalPages = Math.ceil(totalRecords / recordsPerPage)
+  const startIndex = (currentPage - 1) * recordsPerPage
+  const endIndex = Math.min(startIndex + recordsPerPage, totalRecords)
+  const paginatedSaidas = saidas.slice(startIndex, endIndex)
+
+  // Reset to first page when data changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [saidas])
+
+  // Save table view
+  const saveTableView = () => {
+    const settings = {
+      columnOrder,
+      columns,
+      recordsPerPage,
+    }
+    localStorage.setItem('saidas-table-settings', JSON.stringify(settings))
+    toast({
+      title: "Visualização salva",
+      description: "As configurações da tabela foram salvas com sucesso.",
+    })
+  }
+
   // Sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -167,9 +206,10 @@ const Saidas = () => {
     const savedSettings = localStorage.getItem('saidas-table-settings')
     if (savedSettings) {
       try {
-        const { columnOrder: savedOrder, columns: savedColumns } = JSON.parse(savedSettings)
+        const { columnOrder: savedOrder, columns: savedColumns, recordsPerPage: savedRecordsPerPage } = JSON.parse(savedSettings)
         if (savedOrder) setColumnOrder(savedOrder)
         if (savedColumns) setColumns(savedColumns)
+        if (savedRecordsPerPage) setRecordsPerPage(savedRecordsPerPage)
       } catch (error) {
         console.error('Error loading table settings:', error)
       }
@@ -177,10 +217,11 @@ const Saidas = () => {
   }, [])
 
   // Save view settings
-  const saveViewSettings = (newColumnOrder?: string[], newColumns?: ColumnConfig[]) => {
+  const saveViewSettings = (newColumnOrder?: string[], newColumns?: ColumnConfig[], newRecordsPerPage?: number) => {
     const settings = {
       columnOrder: newColumnOrder || columnOrder,
       columns: newColumns || columns,
+      recordsPerPage: newRecordsPerPage || recordsPerPage,
     }
     localStorage.setItem('saidas-table-settings', JSON.stringify(settings))
   }
@@ -412,9 +453,6 @@ const Saidas = () => {
     }
   }
   
-  const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
-  const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useProfilesForSaidas(saidas)
-  const aprovarSaida = useAprovarSaida()
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -642,17 +680,41 @@ const Saidas = () => {
         </div>
       </div>
       
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+      {/* Filters and Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <DateRangeFilter
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
         />
-        <ColumnVisibilityControl
-          columns={columns}
-          onVisibilityChange={handleVisibilityChange}
-          onResetDefault={handleResetDefault}
-        />
+        
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <ColumnVisibilityControl
+            columns={columns}
+            onVisibilityChange={handleVisibilityChange}
+            onResetDefault={handleResetDefault}
+          />
+          
+          <Button variant="outline" size="sm" onClick={saveTableView} className="gap-2">
+            <Save className="h-4 w-4" />
+            Salvar Visualização
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Registros por página:</span>
+            <Select value={recordsPerPage.toString()} onValueChange={(value) => setRecordsPerPage(Number(value))}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Saidas Table */}
@@ -708,7 +770,7 @@ const Saidas = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {saidas.map((saida) => (
+                    {paginatedSaidas.map((saida) => (
                       <TableRow key={saida.id} className="hover:bg-muted/50">
                         {visibleColumns.map((column) => (
                           <TableCell key={column.key} className="overflow-hidden">
@@ -720,6 +782,40 @@ const Saidas = () => {
                   </TableBody>
                 </Table>
               </DndContext>
+            </div>
+          )}
+          
+          {/* Pagination Controls */}
+          {totalRecords > 0 && (
+            <div className="flex items-center justify-between p-6 border-t">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                  disabled={currentPage === 1} 
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <span className="text-sm">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
+                  disabled={currentPage === totalPages} 
+                  className="gap-1"
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
