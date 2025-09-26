@@ -330,7 +330,6 @@ export default function Configuracoes() {
               </Button>
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   )
