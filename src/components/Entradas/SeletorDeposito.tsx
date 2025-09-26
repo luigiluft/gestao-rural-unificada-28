@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
+import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface SeletorDepositoProps {
@@ -11,7 +11,7 @@ interface SeletorDepositoProps {
 
 export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepositoProps) {
   const { user } = useAuth()
-  const { data: depositos, isLoading } = useTodasFranquias()
+  const { data: depositos, isLoading } = useDepositosDisponiveis(user?.id)
 
   if (isLoading) {
     return (
@@ -30,12 +30,12 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
           <SelectValue placeholder="Selecione uma franquia" />
         </SelectTrigger>
         <SelectContent>
-          {depositos?.map((franquia) => (
-            <SelectItem key={franquia.id} value={franquia.id}>
+          {depositos?.map((item) => (
+            <SelectItem key={item.deposito_id} value={item.deposito_id}>
               <div className="flex flex-col">
-                <span>{franquia.nome}</span>
+                <span>{item.deposito_nome}</span>
                 <span className="text-sm text-muted-foreground">
-                  {franquia.cidade}, {franquia.estado}
+                  Franqueado: {item.franqueado_nome}
                 </span>
               </div>
             </SelectItem>
