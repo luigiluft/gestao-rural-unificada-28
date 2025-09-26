@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
+import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { exportToCSV } from "@/utils/csvExport";
 const StatusBadge = ({
   status
 }: {
@@ -474,6 +475,71 @@ export default function Entradas() {
     });
   };
 
+  // Export to CSV function
+  const handleExportCSV = () => {
+    try {
+      if (!entradas || entradas.length === 0) {
+        toast({
+          title: "Nenhum dado para exportar",
+          description: "Não há entradas para exportar.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Custom formatters for specific columns
+      const customFormatters = {
+        status_aprovacao: (value: any) => {
+          const statusMap: Record<string, string> = {
+            'aguardando_transporte': 'Aguardando Transporte',
+            'em_transferencia': 'Em Transferência',
+            'aguardando_conferencia': 'Aguardando Conferência',
+            'conferencia_completa': 'Conferência Completa',
+            'confirmado': 'Confirmado',
+            'rejeitado': 'Rejeitado',
+            'processando': 'Processando'
+          };
+          return statusMap[value] || value || 'Desconhecido';
+        },
+        valor_total: (value: any) => {
+          if (!value) return 'R$ 0,00';
+          return `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        },
+        itens_count: (entrada: any) => {
+          return String(entrada.entrada_itens?.length || 0);
+        },
+        emitente_nome: (entrada: any) => {
+          return entrada.emitente_nome || entrada.fornecedores?.nome || 'N/A';
+        },
+        deposito_nome: (entrada: any) => {
+          return entrada.franquias?.nome || 'N/A';
+        },
+        actions: () => '' // Remove actions column from export
+      };
+
+      const filename = `entradas-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`;
+      
+      exportToCSV({
+        data: entradas,
+        columns: columns.filter(col => col.key !== 'actions'), // Exclude actions from export
+        filename,
+        customFormatters
+      });
+
+      toast({
+        title: "Exportação concluída",
+        description: `${entradas.length} entradas exportadas para ${filename}.csv`
+      });
+    } catch (error) {
+      console.error('Erro na exportação CSV:', error);
+      toast({
+        title: "Erro na exportação",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao exportar dados.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Handle column reordering
   const handleDragEnd = (event: DragEndEvent) => {
     const {
@@ -653,6 +719,10 @@ export default function Entradas() {
               <Button variant="outline" size="sm" onClick={saveTableView} className="gap-2">
                 <Save className="h-4 w-4" />
                 Salvar Visualização
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar CSV
               </Button>
             </div>
             

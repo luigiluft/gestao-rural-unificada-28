@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Package, Eye, Edit, MoreHorizontal, Trash2, Check, X, GripVertical, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Package, Eye, Edit, MoreHorizontal, Trash2, Check, X, GripVertical, Save, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
@@ -74,6 +74,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { exportToCSV } from "@/utils/csvExport";
 
 // Default columns configuration
 const defaultColumns: ColumnConfig[] = [{
@@ -524,6 +525,89 @@ const Saidas = () => {
       currency: 'BRL'
     }).format(value);
   };
+
+  // Export to CSV function
+  const handleExportCSV = () => {
+    try {
+      if (!saidas || saidas.length === 0) {
+        toast({
+          title: "Nenhum dado para exportar",
+          description: "Não há saídas para exportar.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Custom formatters for specific columns
+      const customFormatters = {
+        origem: (saida: any) => {
+          return saida.criado_por_franqueado ? 'Franqueado' : 'Própria';
+        },
+        criadoPor: (saida: any) => {
+          return saida.criado_por_franqueado ? 
+            (profilesData?.criadores[saida.user_id]?.nome || "Carregando...") : 
+            "Própria";
+        },
+        destinatario: (saida: any) => {
+          return profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "Carregando...";
+        },
+        produtos: (saida: any) => {
+          const items = saida.saida_itens || [];
+          return items.map((item: any) => 
+            `${item.produtos?.nome || "Nome não disponível"} (${item.quantidade || 0} ${item.produtos?.unidade_medida || "un"})`
+          ).join('; ');
+        },
+        data: (saida: any) => {
+          return new Date(saida.data_saida).toLocaleDateString('pt-BR');
+        },
+        tipo: (saida: any) => {
+          return saida.tipo_saida || "Não definido";
+        },
+        status: (saida: any) => {
+          const statusMap: Record<string, string> = {
+            'separacao_pendente': 'Separação Pendente',
+            'separado': 'Separado',
+            'expedido': 'Expedido',
+            'entregue': 'Entregue'
+          };
+          return statusMap[saida.status] || saida.status || "Separação Pendente";
+        },
+        aprovacao: (saida: any) => {
+          const approvalMap: Record<string, string> = {
+            'aprovado': 'Aprovado',
+            'reprovado': 'Reprovado',
+            'pendente': 'Pendente'
+          };
+          return approvalMap[saida.status_aprovacao_produtor] || 'Aprovado';
+        },
+        valorTotal: (saida: any) => {
+          return formatCurrency(saida.valor_total);
+        },
+        acoes: () => '' // Remove actions column from export
+      };
+
+      const filename = `saidas-${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`;
+      
+      exportToCSV({
+        data: saidas,
+        columns: tableState.columns.filter(col => col.key !== 'acoes'), // Exclude actions from export
+        filename,
+        customFormatters
+      });
+
+      toast({
+        title: "Exportação concluída",
+        description: `${saidas.length} saídas exportadas para ${filename}.csv`
+      });
+    } catch (error) {
+      console.error('Erro na exportação CSV:', error);
+      toast({
+        title: "Erro na exportação",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao exportar dados.",
+        variant: "destructive"
+      });
+    }
+  };
   return <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Title Section */}
       <div className="flex-shrink-0 border-b bg-background">
@@ -575,6 +659,10 @@ const Saidas = () => {
               <Button variant="outline" size="sm" onClick={tableState.saveTableView} className="gap-2">
                 <Save className="h-4 w-4" />
                 Salvar Visualização
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar CSV
               </Button>
             </div>
             
