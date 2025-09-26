@@ -223,9 +223,9 @@ export const useDynamicMenuItems = () => {
       })
 
       if (wmsSubItems.length > 0) {
-        // Inserir WMS após estoque
-        const estoqueIndex = items.findIndex(item => item.path === '/estoque')
-        const insertIndex = estoqueIndex !== -1 ? estoqueIndex + 1 : items.length
+        // Inserir WMS após saídas
+        const saidasIndex = items.findIndex(item => item.path === '/saidas')
+        const insertIndex = saidasIndex !== -1 ? saidasIndex + 1 : items.length
         
         items.splice(insertIndex, 0, {
           path: '/wms',
@@ -262,9 +262,9 @@ export const useDynamicMenuItems = () => {
       })
 
       if (tmsSubItems.length > 0) {
-        // Inserir TMS após saídas
-        const saidasIndex = items.findIndex(item => item.path === '/saidas')
-        const insertIndex = saidasIndex !== -1 ? saidasIndex + 1 : items.length
+        // Inserir TMS após WMS
+        const wmsIndex = items.findIndex(item => item.path === '/wms')
+        const insertIndex = wmsIndex !== -1 ? wmsIndex + 1 : items.length
         
         items.splice(insertIndex, 0, {
           path: '/tms',
