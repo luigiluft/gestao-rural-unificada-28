@@ -583,16 +583,16 @@ export default function Entradas() {
                             return (
                               <TableCell 
                                 key={column.key} 
-                                className="text-xs lg:text-sm whitespace-nowrap px-2"
+                                className="text-xs lg:text-sm whitespace-nowrap px-2 overflow-hidden"
                                 style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
                               >
                                 {isAction ? content : (
-                                  <span 
-                                    className="truncate block" 
-                                    title={typeof content === 'string' ? content : ''}
+                                  <div 
+                                    className="truncate w-full max-w-full" 
+                                    title={typeof content === "string" ? content : ""}
                                   >
                                     {content}
-                                  </span>
+                                  </div>
                                 )}
                               </TableCell>
                             )
