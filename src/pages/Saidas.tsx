@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   Plus, 
   Package,
@@ -7,8 +7,28 @@ import {
   MoreHorizontal,
   Trash2,
   Check,
-  X
+  X,
+  GripVertical
 } from "lucide-react"
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable"
+import {
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +46,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ColumnVisibilityControl, ColumnConfig } from "@/components/Entradas/ColumnVisibilityControl"
 import {
   Dialog,
   DialogContent,
@@ -57,6 +78,52 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
 
+// Sortable header component
+const SortableTableHead = ({ 
+  id, 
+  children, 
+  className = "" 
+}: { 
+  id: string; 
+  children: React.ReactNode; 
+  className?: string 
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <TableHead
+      ref={setNodeRef}
+      style={style}
+      className={`relative group ${className}`}
+      {...attributes}
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex-1">{children}</div>
+        <button
+          {...listeners}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded cursor-grab active:cursor-grabbing"
+          aria-label="Arrastar coluna"
+        >
+          <GripVertical className="h-3 w-3" />
+        </button>
+      </div>
+    </TableHead>
+  )
+}
+
 const Saidas = () => {
   const { user } = useAuth()
   const { data: userProfile } = useProfile()
@@ -66,6 +133,284 @@ const Saidas = () => {
   const [saidaToDelete, setSaidaToDelete] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const { toast } = useToast()
+
+  // Column management state
+  const [columnOrder, setColumnOrder] = useState<string[]>([
+    "id", "origem", "criadoPor", "destinatario", "produtos", 
+    "data", "tipo", "status", "aprovacao", "valorTotal", "acoes"
+  ])
+  
+  const [columns, setColumns] = useState<ColumnConfig[]>([
+    { key: "id", label: "ID", visible: true, category: "Identificação" },
+    { key: "origem", label: "Origem", visible: true, category: "Identificação" },
+    { key: "criadoPor", label: "Criado por", visible: true, category: "Identificação" },
+    { key: "destinatario", label: "Destinatário", visible: true, category: "Destino" },
+    { key: "produtos", label: "Produtos", visible: true, category: "Produtos" },
+    { key: "data", label: "Data", visible: true, category: "Data" },
+    { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
+    { key: "status", label: "Status", visible: true, category: "Status" },
+    { key: "aprovacao", label: "Aprovação", visible: true, category: "Status" },
+    { key: "valorTotal", label: "Valor Total", visible: true, category: "Financeiro" },
+    { key: "acoes", label: "Ações", visible: true, category: "Ações" },
+  ])
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Load saved view settings
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('saidas-table-settings')
+    if (savedSettings) {
+      try {
+        const { columnOrder: savedOrder, columns: savedColumns } = JSON.parse(savedSettings)
+        if (savedOrder) setColumnOrder(savedOrder)
+        if (savedColumns) setColumns(savedColumns)
+      } catch (error) {
+        console.error('Error loading table settings:', error)
+      }
+    }
+  }, [])
+
+  // Save view settings
+  const saveViewSettings = (newColumnOrder?: string[], newColumns?: ColumnConfig[]) => {
+    const settings = {
+      columnOrder: newColumnOrder || columnOrder,
+      columns: newColumns || columns,
+    }
+    localStorage.setItem('saidas-table-settings', JSON.stringify(settings))
+  }
+
+  // Handle column reordering
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = columnOrder.indexOf(active.id as string)
+      const newIndex = columnOrder.indexOf(over.id as string)
+      
+      const newOrder = arrayMove(columnOrder, oldIndex, newIndex)
+      setColumnOrder(newOrder)
+      saveViewSettings(newOrder, columns)
+    }
+  }
+
+  // Handle column visibility
+  const handleVisibilityChange = (columnKey: string, visible: boolean) => {
+    const updatedColumns = columns.map(col => 
+      col.key === columnKey ? { ...col, visible } : col
+    )
+    setColumns(updatedColumns)
+    saveViewSettings(columnOrder, updatedColumns)
+  }
+
+  // Reset to default view
+  const handleResetDefault = () => {
+    const defaultOrder = [
+      "id", "origem", "criadoPor", "destinatario", "produtos", 
+      "data", "tipo", "status", "aprovacao", "valorTotal", "acoes"
+    ]
+    const defaultColumns = [
+      { key: "id", label: "ID", visible: true, category: "Identificação" },
+      { key: "origem", label: "Origem", visible: true, category: "Identificação" },
+      { key: "criadoPor", label: "Criado por", visible: true, category: "Identificação" },
+      { key: "destinatario", label: "Destinatário", visible: true, category: "Destino" },
+      { key: "produtos", label: "Produtos", visible: true, category: "Produtos" },
+      { key: "data", label: "Data", visible: true, category: "Data" },
+      { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
+      { key: "status", label: "Status", visible: true, category: "Status" },
+      { key: "aprovacao", label: "Aprovação", visible: true, category: "Status" },
+      { key: "valorTotal", label: "Valor Total", visible: true, category: "Financeiro" },
+      { key: "acoes", label: "Ações", visible: true, category: "Ações" },
+    ]
+    
+    setColumnOrder(defaultOrder)
+    setColumns(defaultColumns)
+    saveViewSettings(defaultOrder, defaultColumns)
+  }
+
+  // Get visible columns in order
+  const visibleColumns = columnOrder
+    .map(key => columns.find(col => col.key === key))
+    .filter((col): col is ColumnConfig => col !== undefined && col.visible)
+
+  // Column content mapping
+  const renderColumnContent = (columnKey: string, saida: any) => {
+    switch (columnKey) {
+      case "id":
+        return (
+          <div className="w-full max-w-full">
+            <div className="font-medium truncate">
+              SAI{saida.id.slice(-3).toUpperCase()}
+            </div>
+          </div>
+        )
+      case "origem":
+        return (
+          <div className="w-full max-w-full">
+            {saida.criado_por_franqueado ? (
+              <Badge variant="secondary" className="text-xs">
+                Franqueado
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                Própria
+              </Badge>
+            )}
+          </div>
+        )
+      case "criadoPor":
+        return (
+          <div className="w-full max-w-full">
+            <div className="truncate">
+              {saida.criado_por_franqueado ? (
+                profilesData?.criadores[saida.user_id]?.nome || "Carregando..."
+              ) : (
+                "Própria"
+              )}
+            </div>
+          </div>
+        )
+      case "destinatario":
+        return (
+          <div className="w-full max-w-full">
+            <div className="truncate">
+              {profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "Carregando..."}
+            </div>
+          </div>
+        )
+      case "produtos":
+        return (
+          <div className="w-full max-w-full">
+            <div className="flex flex-col gap-1">
+              {saida.saida_itens?.slice(0, 2).map((item: any, idx: number) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
+                    <Package className="w-3 h-3 text-primary" />
+                  </div>
+                  <span className="text-sm truncate">
+                    {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
+                  </span>
+                </div>
+              ))}
+              {(saida.saida_itens?.length || 0) > 2 && (
+                <span className="text-xs text-muted-foreground">
+                  +{(saida.saida_itens?.length || 0) - 2} mais
+                </span>
+              )}
+            </div>
+          </div>
+        )
+      case "data":
+        return (
+          <div className="w-full max-w-full">
+            <div className="truncate">
+              {new Date(saida.data_saida).toLocaleDateString('pt-BR')}
+            </div>
+          </div>
+        )
+      case "tipo":
+        return (
+          <div className="w-full max-w-full">
+            <Badge variant="outline" className="truncate">
+              {saida.tipo_saida || "Não definido"}
+            </Badge>
+          </div>
+        )
+      case "status":
+        return (
+          <div className="w-full max-w-full">
+            <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"} className="truncate">
+              {saida.status === 'separacao_pendente' ? 'Separação Pendente' : 
+               saida.status === 'separado' ? 'Separado' :
+               saida.status === 'expedido' ? 'Expedido' :
+               saida.status === 'entregue' ? 'Entregue' : 
+               saida.status || "Separação Pendente"}
+            </Badge>
+          </div>
+        )
+      case "aprovacao":
+        return (
+          <div className="w-full max-w-full">
+            <div className="flex items-center gap-2">
+              <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"} className="truncate">
+                {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' :
+                 saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' :
+                 saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
+              </Badge>
+               {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
+                 <div className="flex gap-1 ml-2">
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                     onClick={() => handleApproval(saida.id, true)}
+                     disabled={aprovarSaida.isPending}
+                     title="Aprovar saída"
+                   >
+                     <Check className="w-3 h-3" />
+                   </Button>
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                     onClick={() => handleApproval(saida.id, false)}
+                     disabled={aprovarSaida.isPending}
+                     title="Reprovar saída"
+                   >
+                     <X className="w-3 h-3" />
+                   </Button>
+                 </div>
+               )}
+            </div>
+          </div>
+        )
+      case "valorTotal":
+        return (
+          <div className="w-full max-w-full">
+            <div className="font-medium truncate">
+              {formatCurrency(saida.valor_total)}
+            </div>
+          </div>
+        )
+      case "acoes":
+        return (
+          <div className="w-full max-w-full">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Abrir menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Visualizar
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => handleDeleteClick(saida.id)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Deletar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
   
   const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
   const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useProfilesForSaidas(saidas)
@@ -297,11 +642,18 @@ const Saidas = () => {
         </div>
       </div>
       
-      {/* Date Range Filter */}
-      <DateRangeFilter
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-      />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <DateRangeFilter
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
+        <ColumnVisibilityControl
+          columns={columns}
+          onVisibilityChange={handleVisibilityChange}
+          onResetDefault={handleResetDefault}
+        />
+      </div>
 
       {/* Saidas Table */}
       <Card className="shadow-card">
@@ -331,148 +683,43 @@ const Saidas = () => {
             />
           ) : (
             <div className="overflow-x-auto">
-              <Table className="min-w-[1000px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Origem</TableHead>
-                    <TableHead>Criado por</TableHead>
-                    <TableHead>Destinatário</TableHead>
-                    <TableHead>Produtos</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Aprovação</TableHead>
-                    <TableHead>Valor Total</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {saidas.map((saida) => (
-                    <TableRow key={saida.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        SAI{saida.id.slice(-3).toUpperCase()}
-                      </TableCell>
-                      <TableCell>
-                        {saida.criado_por_franqueado ? (
-                          <Badge variant="secondary" className="text-xs">
-                            Franqueado
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            Própria
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {saida.criado_por_franqueado ? (
-                          profilesData?.criadores[saida.user_id]?.nome || "Carregando..."
-                        ) : (
-                          "Própria"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "Carregando..."}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {saida.saida_itens?.slice(0, 2).map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                                <Package className="w-3 h-3 text-primary" />
-                              </div>
-                              <span className="text-sm">
-                                {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
-                              </span>
-                            </div>
-                          ))}
-                          {(saida.saida_itens?.length || 0) > 2 && (
-                            <span className="text-xs text-muted-foreground">
-                              +{(saida.saida_itens?.length || 0) - 2} mais
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{saida.tipo_saida || "Não definido"}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"}>
-                          {saida.status === 'separacao_pendente' ? 'Separação Pendente' : 
-                           saida.status === 'separado' ? 'Separado' :
-                           saida.status === 'expedido' ? 'Expedido' :
-                           saida.status === 'entregue' ? 'Entregue' : 
-                           saida.status || "Separação Pendente"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"}>
-                            {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' :
-                             saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' :
-                             saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
-                          </Badge>
-                           {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
-                             <div className="flex gap-1 ml-2">
-                               <Button
-                                 size="sm"
-                                 variant="outline"
-                                 className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                                 onClick={() => handleApproval(saida.id, true)}
-                                 disabled={aprovarSaida.isPending}
-                                 title="Aprovar saída"
-                               >
-                                 <Check className="w-3 h-3" />
-                               </Button>
-                               <Button
-                                 size="sm"
-                                 variant="outline"
-                                 className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-                                 onClick={() => handleApproval(saida.id, false)}
-                                 disabled={aprovarSaida.isPending}
-                                 title="Reprovar saída"
-                               >
-                                 <X className="w-3 h-3" />
-                               </Button>
-                             </div>
-                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(saida.valor_total)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => handleDeleteClick(saida.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Deletar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <Table className="min-w-[1000px]">
+                  <TableHeader>
+                    <TableRow>
+                      <SortableContext
+                        items={columnOrder}
+                        strategy={horizontalListSortingStrategy}
+                      >
+                        {visibleColumns.map((column) => (
+                          <SortableTableHead
+                            key={column.key}
+                            id={column.key}
+                            className={column.key === "acoes" ? "w-[100px]" : ""}
+                          >
+                            {column.label}
+                          </SortableTableHead>
+                        ))}
+                      </SortableContext>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {saidas.map((saida) => (
+                      <TableRow key={saida.id} className="hover:bg-muted/50">
+                        {visibleColumns.map((column) => (
+                          <TableCell key={column.key} className="overflow-hidden">
+                            {renderColumnContent(column.key, saida)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </DndContext>
             </div>
           )}
         </CardContent>
