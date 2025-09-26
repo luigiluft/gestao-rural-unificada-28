@@ -631,6 +631,10 @@ export default function Entradas() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <DateRangeFilter
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
             <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
               <DialogTrigger asChild>
                 <Button 
@@ -721,16 +725,8 @@ export default function Entradas() {
 
       </div>
 
-      {/* Filters */}
-      <div className="flex-shrink-0 px-6 py-4 border-b">
-        <DateRangeFilter
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
-      </div>
-
       {/* Entradas Table - Scrollable area */}
-      <div className="flex-1 p-6 overflow-hidden">
+      <div className="flex-1 overflow-hidden p-6">
         <Card className="shadow-card h-full flex flex-col">
           <CardHeader className="flex-shrink-0">
             <CardTitle>Lista de Entradas</CardTitle>
@@ -746,27 +742,26 @@ export default function Entradas() {
                 ))}
               </div>
             ) : entradas && entradas.length > 0 ? (
-              <div className="h-full overflow-hidden">
-                <div className="w-full overflow-auto p-4">
-                  <Table className="table-fixed">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-20">NFe</TableHead>
-                        <TableHead className="w-14">Série</TableHead>
-                        <TableHead className="hidden 2xl:table-cell w-20">Chave</TableHead>
-                        <TableHead className="w-24">Emitente</TableHead>
-                        <TableHead className="hidden 2xl:table-cell w-16">CNPJ/CPF</TableHead>
-                        <TableHead className="w-24">Data</TableHead>
-                        <TableHead className="hidden 2xl:table-cell w-24">Entrada</TableHead>
-                        <TableHead className="hidden 2xl:table-cell w-20">Operação</TableHead>
-                        <TableHead className="hidden md:table-cell w-16">Itens</TableHead>
-                        <TableHead className="hidden 2xl:table-cell w-24">Depósito</TableHead>
-                        <TableHead className="w-20">Status</TableHead>
-                        <TableHead className="w-20">Valor</TableHead>
-                        <TableHead className="w-16">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+              <div className="h-full overflow-y-auto">
+                <Table className="table-fixed">
+                  <TableHeader className="sticky top-0 bg-background border-b z-10">
+                    <TableRow>
+                      <TableHead className="w-20">NFe</TableHead>
+                      <TableHead className="w-14">Série</TableHead>
+                      <TableHead className="hidden 2xl:table-cell w-20">Chave</TableHead>
+                      <TableHead className="w-24">Emitente</TableHead>
+                      <TableHead className="hidden 2xl:table-cell w-16">CNPJ/CPF</TableHead>
+                      <TableHead className="w-24">Data</TableHead>
+                      <TableHead className="hidden 2xl:table-cell w-24">Entrada</TableHead>
+                      <TableHead className="hidden 2xl:table-cell w-20">Operação</TableHead>
+                      <TableHead className="hidden md:table-cell w-16">Itens</TableHead>
+                      <TableHead className="hidden 2xl:table-cell w-24">Depósito</TableHead>
+                      <TableHead className="w-20">Status</TableHead>
+                      <TableHead className="w-20">Valor</TableHead>
+                      <TableHead className="w-16">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                       {entradas.map((entrada) => (
                         <TableRow key={entrada.id} className="hover:bg-muted/50">
                           <TableCell className="font-medium text-xs lg:text-sm">
@@ -927,8 +922,7 @@ export default function Entradas() {
                         </TableRow>
                       ))}
                     </TableBody>
-                    </Table>
-                  </div>
+                  </Table>
                 </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6">
