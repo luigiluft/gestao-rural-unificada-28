@@ -232,7 +232,7 @@ export default function Entradas() {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
-      {/* Fixed Header */}
+      {/* Title Section */}
       <div className="flex-shrink-0 border-b bg-background">
         <div className="p-6">
           <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
@@ -243,49 +243,62 @@ export default function Entradas() {
               </p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <DateRangeFilter
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
-              />
-              <ColumnVisibilityControl
-                columns={columns}
-                onVisibilityChange={(columnKey, visible) => {
-                  setColumns(prev => prev.map(col => 
-                    col.key === columnKey ? { ...col, visible } : col
-                  ))
-                }}
-                onResetDefault={() => {
-                  setColumns(prev => prev.map(col => ({
-                    ...col,
-                    visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
-                  })))
-                }}
-              />
-              <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="gap-2"
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Nova Entrada
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-                  <DialogHeader>
-                    <DialogTitle>Registrar Nova Entrada</DialogTitle>
-                    <DialogDescription>
-                      Importe uma NFe ou preencha os dados manualmente
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="p-4">
-                    <p>Formulário em desenvolvimento...</p>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+            <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova Entrada
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                <DialogHeader>
+                  <DialogTitle>Registrar Nova Entrada</DialogTitle>
+                  <DialogDescription>
+                    Importe uma NFe ou preencha os dados manualmente
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="p-4">
+                  <p>Formulário em desenvolvimento...</p>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
+        </div>
+      </div>
+
+      {/* Filter Section */}
+      <div className="flex-shrink-0 bg-background">
+        <div className="p-6 border-b">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-semibold">Filtro por Período</h2>
+            <DateRangeFilter
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Column Control Section */}
+      <div className="flex-shrink-0 bg-background">
+        <div className="px-6 py-4">
+          <ColumnVisibilityControl
+            columns={columns}
+            onVisibilityChange={(columnKey, visible) => {
+              setColumns(prev => prev.map(col => 
+                col.key === columnKey ? { ...col, visible } : col
+              ))
+            }}
+            onResetDefault={() => {
+              setColumns(prev => prev.map(col => ({
+                ...col,
+                visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
+              })))
+            }}
+          />
         </div>
       </div>
 
