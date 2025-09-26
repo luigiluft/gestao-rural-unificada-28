@@ -79,39 +79,65 @@ async function createSaida(supabase: any, userId: string, data: any) {
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
 
+  // Create saida data excluding itens and reserva_id
+  const { itens, reserva_id, ...saidaFields } = data
+  const saidaData = {
+    user_id: userId,
+    ...saidaFields,
+    peso_total: pesoTotal,
+    status: 'separacao_pendente',
+    status_aprovacao_produtor: userId === data.produtor_destinatario_id ? 'nao_aplicavel' : 'pendente',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+
   const { data: saida, error: saidaError } = await supabase
     .from('saidas')
-    .insert({
-      user_id: userId,
-      ...data,
-      peso_total: pesoTotal,
-      status: 'separacao_pendente',
-      status_aprovacao_produtor: userId === data.produtor_destinatario ? 'nao_aplicavel' : 'pendente',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
+    .insert(saidaData)
     .select()
     .single()
 
   if (saidaError) throw saidaError
 
-  // Insert items
-  const itemsWithSaidaId = data.itens.map((item: any) => ({
-    ...item,
-    saida_id: saida.id,
-    created_at: new Date().toISOString()
-  }))
+  try {
+    // Update reservation if provided
+    if (reserva_id) {
+      const { error: reservaError } = await supabase
+        .from('reservas_horario')
+        .update({ saida_id: saida.id })
+        .eq('id', reserva_id)
+      
+      if (reservaError) {
+        console.error('Error updating reservation:', reservaError)
+        // Don't fail the entire operation for reservation update error
+      }
+    }
 
-  const { error: itemsError } = await supabase
-    .from('saida_itens')
-    .insert(itemsWithSaidaId)
+    // Insert items
+    const itemsWithSaidaId = data.itens.map((item: any) => ({
+      ...item,
+      saida_id: saida.id,
+      user_id: userId,
+      created_at: new Date().toISOString()
+    }))
 
-  if (itemsError) {
+    const { data: itensInseridos, error: itemsError } = await supabase
+      .from('saida_itens')
+      .insert(itemsWithSaidaId)
+      .select()
+
+    if (itemsError) {
+      // Rollback saida
+      await supabase.from('saidas').delete().eq('id', saida.id)
+      throw itemsError
+    }
+
+    return { ...saida, itens: itensInseridos }
+  } catch (error) {
+    // If any error occurs after saida creation, clean up
     await supabase.from('saidas').delete().eq('id', saida.id)
-    throw itemsError
+    throw error
   }
-
-  return saida
 }
 
 async function updateSaida(supabase: any, userId: string, data: any) {

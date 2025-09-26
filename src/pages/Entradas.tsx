@@ -338,38 +338,27 @@ export default function Entradas() {
         destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj
       });
 
-      // Criar a entrada
-      const { data: entrada, error: entradaError } = await supabase
-        .from('entradas')
-        .insert({
-          user_id: entradaUserId, // Usar o user_id do produtor identificado
-          numero_nfe: dados.numeroNF || null,
-          serie: dados.serie || null,
-          chave_nfe: dados.chaveNFe || null,
-          natureza_operacao: dados.naturezaOperacao || null,
-          data_entrada: dados.dataEntrada,
-          data_emissao: dados.dataEmissao || dados.dataEntrada,
-          valor_total: dados.valorTotal,
-          deposito_id: dados.depositoId || null,
-          fornecedor_id: fornecedorId,
-          observacoes: dados.observacoes,
-          status_aprovacao: 'aguardando_transporte',
-          xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
-          emitente_nome: nfData?.emitente?.nome || null,
-          emitente_cnpj: nfData?.emitente?.cnpj || null,
-          emitente_endereco: nfData?.emitente?.endereco || null,
-          destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj || null
-        })
-        .select()
-        .single()
-
-      if (entradaError) throw entradaError
-
-      // Criar os itens da entrada
-      if (dados.itens && dados.itens.length > 0) {
-        const itensEntrada = dados.itens.map((item: any) => ({
+      // Criar a entrada usando edge function
+      const entradaData = {
+        user_id: entradaUserId, // Usar o user_id do produtor identificado
+        numero_nfe: dados.numeroNF || null,
+        serie: dados.serie || null,
+        chave_nfe: dados.chaveNFe || null,
+        natureza_operacao: dados.naturezaOperacao || null,
+        data_entrada: dados.dataEntrada,
+        data_emissao: dados.dataEmissao || dados.dataEntrada,
+        valor_total: dados.valorTotal,
+        deposito_id: dados.depositoId || null,
+        fornecedor_id: fornecedorId,
+        observacoes: dados.observacoes,
+        status_aprovacao: 'aguardando_transporte',
+        xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
+        emitente_nome: nfData?.emitente?.nome || null,
+        emitente_cnpj: nfData?.emitente?.cnpj || null,
+        emitente_endereco: nfData?.emitente?.endereco || null,
+        destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj || null,
+        itens: dados.itens && dados.itens.length > 0 ? dados.itens.map((item: any) => ({
           user_id: entradaUserId, // Usar o mesmo user_id da entrada
-          entrada_id: entrada.id,
           produto_id: null, // Por enquanto nulo, depois pode implementar busca/criação de produtos
           quantidade: item.quantidade,
           valor_unitario: item.valorUnitario,
@@ -383,14 +372,17 @@ export default function Entradas() {
           codigo_ean: item.codigoEAN || null, // Usar código EAN separadamente (cEAN do XML)
           unidade_comercial: item.unidade || 'UN', // Adicionar unidade de medida do XML
           descricao_produto: item.descricao || item.produto // Adicionar descrição do produto
-        }))
-
-        const { error: itensError } = await supabase
-          .from('entrada_itens')
-          .insert(itensEntrada)
-
-        if (itensError) throw itensError
+        })) : []
       }
+
+      const { data: response, error: entradaError } = await supabase.functions.invoke('manage-entradas', {
+        body: { action: 'create', data: entradaData }
+      })
+
+      if (entradaError) throw entradaError
+      if (!response?.success) throw new Error(response?.error || 'Erro ao criar entrada')
+
+      const entrada = response.data
 
       const successMessage = produtorIdentificado 
         ? `Entrada registrada para o produtor ${produtorIdentificado.nome}`

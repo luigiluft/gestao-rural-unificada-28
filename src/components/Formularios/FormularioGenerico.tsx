@@ -153,30 +153,53 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           reservaId = reserva.id
         }
 
-        // 2. Criar a saída
+        // 2. Criar a saída usando edge function
         const isProdutor = profile?.role === 'produtor'
-        const { data: saida, error: saidaError } = await supabase
-          .from("saidas")
-          .insert({
+        
+        // 4. Validar que existe pelo menos um item
+        if (itens.length === 0) {
+          throw new Error("Uma saída deve ter pelo menos um item")
+        }
+
+        // 5. Validar itens antes de criar saída
+        const itensInvalidos = itens.filter(item => !item.produto_id || !item.quantidade || item.quantidade <= 0)
+        if (itensInvalidos.length > 0) {
+          throw new Error(`${itensInvalidos.length} itens têm dados inválidos (produto ou quantidade)`)
+        }
+
+        const saidaData = {
+          user_id: user?.id,
+          data_saida: dadosSaida.data_saida,
+          tipo_saida: dadosSaida.tipo_saida,
+          observacoes: dadosSaida.observacoes,
+          deposito_id: dados.depositoId,
+          status: 'separacao_pendente',
+          placa_veiculo: dadosSaida.placa_veiculo || null,
+          nome_motorista: dadosSaida.nome_motorista || null,
+          telefone_motorista: dadosSaida.telefone_motorista || null,
+          cpf_motorista: dadosSaida.cpf_motorista || null,
+          mopp_motorista: dadosSaida.mopp_motorista || null,
+          janela_horario: dadosSaida.janela_horario || null,
+          criado_por_franqueado: !isProdutor,
+          status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente',
+          produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario,
+          valor_frete_calculado: dadosSaida.valor_frete_calculado || null,
+          reserva_id: reservaId,
+          itens: itens.map(item => ({
             user_id: user?.id,
-            data_saida: dadosSaida.data_saida,
-            tipo_saida: dadosSaida.tipo_saida,
-            observacoes: dadosSaida.observacoes,
-            deposito_id: dados.depositoId,
-            status: 'separacao_pendente',
-            placa_veiculo: dadosSaida.placa_veiculo || null,
-            nome_motorista: dadosSaida.nome_motorista || null,
-            telefone_motorista: dadosSaida.telefone_motorista || null,
-            cpf_motorista: dadosSaida.cpf_motorista || null,
-            mopp_motorista: dadosSaida.mopp_motorista || null,
-            janela_horario: dadosSaida.janela_horario || null,
-            criado_por_franqueado: !isProdutor,
-            status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente',
-            produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario,
-            valor_frete_calculado: dadosSaida.valor_frete_calculado || null
-          })
-          .select()
-          .single()
+            produto_id: item.produto_id,
+            quantidade: item.quantidade,
+            lote: item.lote || null,
+            valor_unitario: item.valorUnitario || 0,
+            valor_total: (item.quantidade || 0) * (item.valorUnitario || 0)
+          }))
+        }
+
+        console.log("Criando saída via edge function:", saidaData)
+
+        const { data: response, error: saidaError } = await supabase.functions.invoke('manage-saidas', {
+          body: { action: 'create', data: saidaData }
+        })
 
         if (saidaError) {
           // Se erro ao criar saída, remover reserva se foi criada
@@ -186,52 +209,20 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           throw saidaError
         }
 
-        // 3. Atualizar reserva com o ID da saída
-        if (reservaId) {
-          await supabase
-            .from("reservas_horario")
-            .update({ saida_id: saida.id })
-            .eq("id", reservaId)
+        if (!response?.success) {
+          // Se erro ao criar saída, remover reserva se foi criada
+          if (reservaId && dadosSaida.tipo_saida === 'retirada_deposito') {
+            await supabase.from("reservas_horario").delete().eq("id", reservaId)
+          }
+          throw new Error(response?.error || 'Erro ao criar saída')
         }
 
-        // 4. Validar que existe pelo menos um item
-        if (itens.length === 0) {
-          // Deletar a saída criada se não há itens
-          await supabase.from("saidas").delete().eq("id", saida.id)
-          throw new Error("Uma saída deve ter pelo menos um item")
-        }
+        const saida = response.data
+        const itensInseridos = saida.itens || []
 
-        // 5. Validar itens antes de inserir
-        const itensInvalidos = itens.filter(item => !item.produto_id || !item.quantidade || item.quantidade <= 0)
-        if (itensInvalidos.length > 0) {
-          // Deletar a saída criada se há itens inválidos
-          await supabase.from("saidas").delete().eq("id", saida.id)
-          throw new Error(`${itensInvalidos.length} itens têm dados inválidos (produto ou quantidade)`)
-        }
-
-        // 6. Criar os itens da saída com validação adicional
-        const itensComSaidaId = itens.map(item => ({
-          user_id: user?.id,
-          saida_id: saida.id,
-          produto_id: item.produto_id,
-          quantidade: item.quantidade,
-          lote: item.lote || null,
-          valor_unitario: item.valorUnitario || 0,
-          valor_total: (item.quantidade || 0) * (item.valorUnitario || 0)
-        }))
-
-        console.log("Inserindo itens:", itensComSaidaId)
-
-        const { data: itensInseridos, error: itensError } = await supabase
-          .from("saida_itens")
-          .insert(itensComSaidaId)
-          .select()
-
-        if (itensError) {
-          console.error("Erro ao inserir itens:", itensError)
-          // Deletar a saída criada se falhou ao inserir itens
-          await supabase.from("saidas").delete().eq("id", saida.id)
-          throw new Error(`Erro ao inserir itens: ${itensError.message}`)
+        if (!itensInseridos || itensInseridos.length === 0) {
+          console.error("Erro: nenhum item foi criado na saída")
+          throw new Error("Erro ao inserir itens: nenhum item foi criado")
         }
 
         console.log(`${itensInseridos?.length || 0} itens inseridos com sucesso`)
