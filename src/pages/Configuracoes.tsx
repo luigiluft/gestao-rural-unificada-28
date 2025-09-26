@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, Plus, RefreshCw } from "lucide-react"
-import { RequireAdmin } from "@/components/Auth/RequireAdmin"
+
 import { useConfiguracoesSistema, useUpdateConfiguracao } from "@/hooks/useConfiguracoesSistema"
 import { useToast } from "@/hooks/use-toast"
 
@@ -141,8 +141,7 @@ export default function Configuracoes() {
   }
 
   return (
-    <RequireAdmin>
-      <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Configurações do Sistema</h1>
           <p className="text-muted-foreground">
@@ -333,6 +332,6 @@ export default function Configuracoes() {
           </Card>
         </div>
       </div>
-    </RequireAdmin>
+    </div>
   )
 }
