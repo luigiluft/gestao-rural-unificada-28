@@ -76,21 +76,42 @@ import { useProfilesForSaidas } from "@/hooks/useProfilesForSaidas"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
+import { TablePageLayout } from "@/components/ui/table-page-layout"
+import { useTableState } from "@/hooks/useTableState"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
 
+// Default columns configuration
+const defaultColumns: ColumnConfig[] = [
+  { key: "id", label: "ID", visible: true, category: "Identificação" },
+  { key: "origem", label: "Origem", visible: true, category: "Identificação" },
+  { key: "criadoPor", label: "Criado por", visible: true, category: "Identificação" },
+  { key: "destinatario", label: "Destinatário", visible: true, category: "Destino" },
+  { key: "produtos", label: "Produtos", visible: true, category: "Produtos" },
+  { key: "data", label: "Data", visible: true, category: "Data" },
+  { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
+  { key: "status", label: "Status", visible: true, category: "Status" },
+  { key: "aprovacao", label: "Aprovação", visible: true, category: "Status" },
+  { key: "valorTotal", label: "Valor Total", visible: true, category: "Financeiro" },
+  { key: "acoes", label: "Ações", visible: true, category: "Ações" },
+]
+
 // Sortable header component
 const SortableTableHead = ({ 
   id, 
   children, 
-  className = "" 
+  className = "",
+  width,
+  onWidthChange
 }: { 
   id: string; 
   children: React.ReactNode; 
-  className?: string 
+  className?: string;
+  width?: number;
+  onWidthChange?: (width: number) => void;
 }) => {
   const {
     attributes,
@@ -105,6 +126,7 @@ const SortableTableHead = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    width: width ? `${width}px` : undefined,
   }
 
   return (
@@ -132,66 +154,34 @@ const Saidas = () => {
   const { user } = useAuth()
   const { data: userProfile } = useProfile()
   const [isNewSaidaOpen, setIsNewSaidaOpen] = useState(false)
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [saidaToDelete, setSaidaToDelete] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
-  // Column management state
-  const [columnOrder, setColumnOrder] = useState<string[]>([
-    "id", "origem", "criadoPor", "destinatario", "produtos", 
-    "data", "tipo", "status", "aprovacao", "valorTotal", "acoes"
-  ])
-  
-  const [columns, setColumns] = useState<ColumnConfig[]>([
-    { key: "id", label: "ID", visible: true, category: "Identificação" },
-    { key: "origem", label: "Origem", visible: true, category: "Identificação" },
-    { key: "criadoPor", label: "Criado por", visible: true, category: "Identificação" },
-    { key: "destinatario", label: "Destinatário", visible: true, category: "Destino" },
-    { key: "produtos", label: "Produtos", visible: true, category: "Produtos" },
-    { key: "data", label: "Data", visible: true, category: "Data" },
-    { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
-    { key: "status", label: "Status", visible: true, category: "Status" },
-    { key: "aprovacao", label: "Aprovação", visible: true, category: "Status" },
-    { key: "valorTotal", label: "Valor Total", visible: true, category: "Financeiro" },
-    { key: "acoes", label: "Ações", visible: true, category: "Ações" },
-  ])
+  // Use unified table state
+  const tableState = useTableState({
+    storageKey: 'saidas-table-config',
+    defaultColumns: defaultColumns,
+    defaultRecordsPerPage: 25
+  })
 
   // Data fetching
-  const { data: saidas = [], isLoading, refetch } = useSaidas(dateRange)
+  const { data: saidas = [], isLoading, refetch } = useSaidas(tableState.dateRange)
   const { data: profilesData, isLoading: isLoadingProfiles, error: profilesError } = useProfilesForSaidas(saidas)
   const aprovarSaida = useAprovarSaida()
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1)
-  const [recordsPerPage, setRecordsPerPage] = useState(25)
-
   // Calculate pagination
   const totalRecords = saidas.length
-  const totalPages = Math.ceil(totalRecords / recordsPerPage)
-  const startIndex = (currentPage - 1) * recordsPerPage
-  const endIndex = Math.min(startIndex + recordsPerPage, totalRecords)
+  const totalPages = Math.ceil(totalRecords / tableState.recordsPerPage)
+  const startIndex = (tableState.currentPage - 1) * tableState.recordsPerPage
+  const endIndex = Math.min(startIndex + tableState.recordsPerPage, totalRecords)
   const paginatedSaidas = saidas.slice(startIndex, endIndex)
 
   // Reset to first page when data changes
   useEffect(() => {
-    setCurrentPage(1)
+    tableState.setCurrentPage(1)
   }, [saidas])
-
-  // Save table view
-  const saveTableView = () => {
-    const settings = {
-      columnOrder,
-      columns,
-      recordsPerPage,
-    }
-    localStorage.setItem('saidas-table-settings', JSON.stringify(settings))
-    toast({
-      title: "Visualização salva",
-      description: "As configurações da tabela foram salvas com sucesso.",
-    })
-  }
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -201,83 +191,19 @@ const Saidas = () => {
     })
   )
 
-  // Load saved view settings
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('saidas-table-settings')
-    if (savedSettings) {
-      try {
-        const { columnOrder: savedOrder, columns: savedColumns, recordsPerPage: savedRecordsPerPage } = JSON.parse(savedSettings)
-        if (savedOrder) setColumnOrder(savedOrder)
-        if (savedColumns) setColumns(savedColumns)
-        if (savedRecordsPerPage) setRecordsPerPage(savedRecordsPerPage)
-      } catch (error) {
-        console.error('Error loading table settings:', error)
-      }
-    }
-  }, [])
-
-  // Save view settings
-  const saveViewSettings = (newColumnOrder?: string[], newColumns?: ColumnConfig[], newRecordsPerPage?: number) => {
-    const settings = {
-      columnOrder: newColumnOrder || columnOrder,
-      columns: newColumns || columns,
-      recordsPerPage: newRecordsPerPage || recordsPerPage,
-    }
-    localStorage.setItem('saidas-table-settings', JSON.stringify(settings))
-  }
-
   // Handle column reordering
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-
-    if (over && active.id !== over.id) {
-      const oldIndex = columnOrder.indexOf(active.id as string)
-      const newIndex = columnOrder.indexOf(over.id as string)
-      
-      const newOrder = arrayMove(columnOrder, oldIndex, newIndex)
-      setColumnOrder(newOrder)
-      saveViewSettings(newOrder, columns)
+    if (active.id !== over?.id) {
+      const oldIndex = tableState.columns.findIndex(col => col.key === active.id)
+      const newIndex = tableState.columns.findIndex(col => col.key === over?.id)
+      const newColumns = arrayMove(tableState.columns, oldIndex, newIndex)
+      tableState.handleColumnReorder(newColumns)
     }
   }
 
-  // Handle column visibility
-  const handleVisibilityChange = (columnKey: string, visible: boolean) => {
-    const updatedColumns = columns.map(col => 
-      col.key === columnKey ? { ...col, visible } : col
-    )
-    setColumns(updatedColumns)
-    saveViewSettings(columnOrder, updatedColumns)
-  }
-
-  // Reset to default view
-  const handleResetDefault = () => {
-    const defaultOrder = [
-      "id", "origem", "criadoPor", "destinatario", "produtos", 
-      "data", "tipo", "status", "aprovacao", "valorTotal", "acoes"
-    ]
-    const defaultColumns = [
-      { key: "id", label: "ID", visible: true, category: "Identificação" },
-      { key: "origem", label: "Origem", visible: true, category: "Identificação" },
-      { key: "criadoPor", label: "Criado por", visible: true, category: "Identificação" },
-      { key: "destinatario", label: "Destinatário", visible: true, category: "Destino" },
-      { key: "produtos", label: "Produtos", visible: true, category: "Produtos" },
-      { key: "data", label: "Data", visible: true, category: "Data" },
-      { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
-      { key: "status", label: "Status", visible: true, category: "Status" },
-      { key: "aprovacao", label: "Aprovação", visible: true, category: "Status" },
-      { key: "valorTotal", label: "Valor Total", visible: true, category: "Financeiro" },
-      { key: "acoes", label: "Ações", visible: true, category: "Ações" },
-    ]
-    
-    setColumnOrder(defaultOrder)
-    setColumns(defaultColumns)
-    saveViewSettings(defaultOrder, defaultColumns)
-  }
-
   // Get visible columns in order
-  const visibleColumns = columnOrder
-    .map(key => columns.find(col => col.key === key))
-    .filter((col): col is ColumnConfig => col !== undefined && col.visible)
+  const visibleColumns = tableState.columns.filter(col => col.visible)
 
   // Column content mapping
   const renderColumnContent = (columnKey: string, saida: any) => {
@@ -475,7 +401,7 @@ const Saidas = () => {
       case "reprovado":
         return "destructive"
       case "pendente":
-        return "secondary"  // Changed from outline to secondary for better visibility
+        return "secondary"
       default:
         return "outline"
     }
@@ -646,17 +572,11 @@ const Saidas = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-2">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Saídas</h1>
-            <p className="text-muted-foreground">
-              Registre e acompanhe as saídas de produtos do estoque
-            </p>
-          </div>
-          
+    <>
+      <TablePageLayout
+        title="Saídas"
+        description="Gerencie as saídas de produtos do sistema"
+        actionButton={
           <Dialog open={isNewSaidaOpen} onOpenChange={setIsNewSaidaOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary hover:bg-primary/90">
@@ -677,58 +597,82 @@ const Saidas = () => {
               />
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
-      
-      {/* Filters and Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <DateRangeFilter
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <ColumnVisibilityControl
-            columns={columns}
-            onVisibilityChange={handleVisibilityChange}
-            onResetDefault={handleResetDefault}
-          />
-          
-          <Button variant="outline" size="sm" onClick={saveTableView} className="gap-2">
-            <Save className="h-4 w-4" />
-            Salvar Visualização
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Registros por página:</span>
-            <Select value={recordsPerPage.toString()} onValueChange={(value) => setRecordsPerPage(Number(value))}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
+        }
+        filterSection={
+          <div className="flex items-center gap-4">
+            <DateRangeFilter
+              dateRange={tableState.dateRange}
+              onDateRangeChange={tableState.setDateRange}
+            />
           </div>
-        </div>
-      </div>
-
-      {/* Saidas Table */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Lista de Saídas</CardTitle>
-          <CardDescription>
-            {saidas?.length || 0} saídas registradas
-            {userProfile?.role === 'produtor' && ' (incluindo aprovações pendentes)'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-2">
+        }
+        columnControlSection={
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <ColumnVisibilityControl
+                columns={tableState.columns}
+                onVisibilityChange={tableState.handleColumnVisibilityChange}
+                onResetDefault={tableState.resetToDefault}
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={tableState.saveTableView}
+                className="flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Salvar Visualização
+              </Button>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Registros por página:</span>
+                <Select
+                  value={tableState.recordsPerPage.toString()}
+                  onValueChange={(value) => tableState.handleRecordsPerPageChange(Number(value))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => tableState.handlePageChange(Math.max(1, tableState.currentPage - 1))} 
+                  disabled={tableState.currentPage === 1} 
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <span className="text-sm">
+                  Página {tableState.currentPage} de {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => tableState.handlePageChange(Math.min(totalPages, tableState.currentPage + 1))} 
+                  disabled={tableState.currentPage === totalPages} 
+                  className="gap-1"
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        }
+        tableContent={
+          isLoading ? (
+            <div className="p-6 space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
@@ -744,83 +688,70 @@ const Saidas = () => {
               }}
             />
           ) : (
-            <div className="overflow-x-auto">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <Table className="min-w-[1000px]">
-                  <TableHeader>
-                    <TableRow>
-                      <SortableContext
-                        items={columnOrder}
-                        strategy={horizontalListSortingStrategy}
-                      >
-                        {visibleColumns.map((column) => (
-                          <SortableTableHead
-                            key={column.key}
-                            id={column.key}
-                            className={column.key === "acoes" ? "w-[100px]" : ""}
-                          >
-                            {column.label}
-                          </SortableTableHead>
-                        ))}
-                      </SortableContext>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedSaidas.map((saida) => (
-                      <TableRow key={saida.id} className="hover:bg-muted/50">
-                        {visibleColumns.map((column) => (
-                          <TableCell key={column.key} className="overflow-hidden">
-                            {renderColumnContent(column.key, saida)}
-                          </TableCell>
-                        ))}
+            <>
+              <div className="overflow-x-auto">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <Table className="min-w-[1000px]">
+                    <TableHeader>
+                      <TableRow>
+                        <SortableContext
+                          items={tableState.columns.filter(col => col.visible).map(col => col.key)}
+                          strategy={horizontalListSortingStrategy}
+                        >
+                          {visibleColumns.map((column) => (
+                            <SortableTableHead
+                              key={column.key}
+                              id={column.key}
+                              className={column.key === "acoes" ? "w-[100px]" : ""}
+                              width={tableState.columnWidths[column.key]}
+                              onWidthChange={(width) => tableState.handleColumnWidthChange(column.key, width)}
+                            >
+                              {column.label}
+                            </SortableTableHead>
+                          ))}
+                        </SortableContext>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </DndContext>
-            </div>
-          )}
-          
-          {/* Pagination Controls */}
-          {totalRecords > 0 && (
-            <div className="flex items-center justify-between p-6 border-t">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedSaidas.map((saida) => (
+                        <TableRow key={saida.id} className="hover:bg-muted/50">
+                          {visibleColumns.map((column) => (
+                            <TableCell 
+                              key={column.key} 
+                              className="overflow-hidden"
+                              style={tableState.columnWidths[column.key] ? { width: tableState.columnWidths[column.key] } : undefined}
+                            >
+                              {renderColumnContent(column.key, saida)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </DndContext>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
-                  disabled={currentPage === 1} 
-                  className="gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </Button>
-                <span className="text-sm">
-                  Página {currentPage} de {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
-                  disabled={currentPage === totalPages} 
-                  className="gap-1"
-                >
-                  Próxima
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
+              
+              {/* Pagination footer info */}
+              {totalRecords > 0 && (
+                <div className="flex items-center justify-between p-6 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {saidas?.length || 0} saídas registradas
+                    {userProfile?.role === 'produtor' && ' (incluindo aprovações pendentes)'}
+                  </div>
+                </div>
+              )}
+            </>
+          )
+        }
+      />
+      
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -846,7 +777,7 @@ const Saidas = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }
 
