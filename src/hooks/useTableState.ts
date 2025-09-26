@@ -101,6 +101,27 @@ export const useTableState = (config: TableStateConfig) => {
     setColumnWidths(prev => ({ ...prev, [columnKey]: width }))
   }, [])
 
+  // Mouse down handler for column resizing
+  const handleMouseDown = useCallback((columnKey: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = columnWidths[columnKey] || 120
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(80, startWidth + (e.clientX - startX))
+      setColumnWidths(prev => ({ ...prev, [columnKey]: newWidth }))
+    }
+    
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      saveTableView()
+    }
+    
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [columnWidths, saveTableView])
+
   // Pagination handlers
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
@@ -132,6 +153,7 @@ export const useTableState = (config: TableStateConfig) => {
     handleColumnWidthChange,
     handlePageChange,
     handleRecordsPerPageChange,
+    handleMouseDown,
 
     // Actions
     saveTableView,

@@ -572,43 +572,59 @@ const Saidas = () => {
   }
 
   return (
-    <>
-      <TablePageLayout
-        title="Saídas"
-        description="Gerencie as saídas de produtos do sistema"
-        actionButton={
-          <Dialog open={isNewSaidaOpen} onOpenChange={setIsNewSaidaOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Saída
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-              <DialogHeader>
-                <DialogTitle>Registrar Nova Saída</DialogTitle>
-                <DialogDescription>
-                  Preencha os dados da saída de produtos do estoque
-                </DialogDescription>
-              </DialogHeader>
-              <FormularioSaida
-                onSubmit={handleSaidaSubmit}
-                onCancel={() => setIsNewSaidaOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        }
-        filterSection={
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
+      {/* Title Section */}
+      <div className="flex-shrink-0 border-b bg-background">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Saídas</h1>
+              <p className="text-muted-foreground">
+                Gerencie e registre as saídas de produtos do estoque
+              </p>
+            </div>
+            
+            <Dialog open={isNewSaidaOpen} onOpenChange={setIsNewSaidaOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" size="sm">
+                  <Plus className="h-4 w-4" />
+                  Nova Saída
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+                <DialogHeader>
+                  <DialogTitle>Registrar Nova Saída</DialogTitle>
+                  <DialogDescription>
+                    Preencha os dados da saída de produtos do estoque
+                  </DialogDescription>
+                </DialogHeader>
+                <FormularioSaida
+                  onSubmit={handleSaidaSubmit}
+                  onCancel={() => setIsNewSaidaOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Section */}
+      <div className="flex-shrink-0 bg-background">
+        <div className="p-6 border-b">
+          <div className="flex flex-col gap-4">
             <DateRangeFilter
               dateRange={tableState.dateRange}
               onDateRangeChange={tableState.setDateRange}
             />
           </div>
-        }
-        columnControlSection={
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+        </div>
+      </div>
+
+      {/* Column Control Section */}
+      <div className="flex-shrink-0 bg-background">
+        <div className="px-6 py-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-3">
               <ColumnVisibilityControl
                 columns={tableState.columns}
                 onVisibilityChange={tableState.handleColumnVisibilityChange}
@@ -618,36 +634,141 @@ const Saidas = () => {
                 variant="outline" 
                 size="sm"
                 onClick={tableState.saveTableView}
-                className="flex items-center gap-2"
+                className="gap-2"
               >
                 <Save className="h-4 w-4" />
                 Salvar Visualização
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Registros por página:</span>
-                <Select
-                  value={tableState.recordsPerPage.toString()}
-                  onValueChange={(value) => tableState.handleRecordsPerPageChange(Number(value))}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Registros por página:</span>
+              <Select 
+                value={tableState.recordsPerPage.toString()} 
+                onValueChange={(value) => tableState.setRecordsPerPage(Number(value))}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Saidas Table - Fixed width with internal horizontal scroll */}
+      <div className="flex-1 p-6 min-h-0">
+        <Card className="shadow-card h-full flex flex-col">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle>Lista de Saídas</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1 min-h-0 p-0">
+            {isLoading ? (
+              <div className="space-y-3 p-6">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            ) : saidas && saidas.length > 0 ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="w-full max-w-full overflow-x-auto">
+                  <Table className="table-fixed w-max min-w-max">
+                    <TableHeader className="sticky top-0 bg-background border-b z-10">
+                      <TableRow>
+                        <SortableContext
+                          items={visibleColumns.map(col => col.key)}
+                          strategy={horizontalListSortingStrategy}
+                        >
+                          {visibleColumns.map((column, index) => {
+                            const width = tableState.columnWidths[column.key] || 120
+                            const isLastColumn = index === visibleColumns.length - 1
+                            return (
+                              <SortableTableHeader
+                                key={column.key}
+                                column={column}
+                                width={width}
+                                isLastColumn={isLastColumn}
+                                onMouseDown={tableState.handleMouseDown}
+                              />
+                            )
+                          })}
+                        </SortableContext>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedSaidas.map((saida) => (
+                        <TableRow key={saida.id} className="hover:bg-muted/50">
+                          {visibleColumns.map((column) => {
+                            const content = renderColumnContent(column.key, saida)
+                            const isAction = column.key === "actions"
+                            const width = tableState.columnWidths[column.key] || 120
+                            return (
+                              <TableCell
+                                key={column.key}
+                                className="text-xs lg:text-sm whitespace-nowrap px-2 overflow-hidden"
+                                style={{
+                                  width: `${width}px`,
+                                  minWidth: `${width}px`,
+                                  maxWidth: `${width}px`
+                                }}
+                              >
+                                {isAction ? (
+                                  content
+                                ) : (
+                                  <div
+                                    className="truncate w-full max-w-full"
+                                    title={typeof content === "string" ? content : ""}
+                                  >
+                                    {content}
+                                  </div>
+                                )}
+                              </TableCell>
+                            )
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DndContext>
+            ) : (
+              <div className="flex items-center justify-center h-full p-6">
+                <EmptyState
+                  icon={<Package className="w-8 h-8 text-muted-foreground" />}
+                  title="Nenhuma saída registrada"
+                  description="Registre sua primeira saída preenchendo o formulário."
+                  action={{
+                    label: "Registrar Primeira Saída",
+                    onClick: () => setIsNewSaidaOpen(true)
+                  }}
+                />
+              </div>
+            )}
+          </CardContent>
+
+          {/* Pagination Controls */}
+          {totalRecords > 0 && (
+            <div className="flex items-center justify-between p-6 border-t">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
               </div>
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => tableState.handlePageChange(Math.max(1, tableState.currentPage - 1))} 
-                  disabled={tableState.currentPage === 1} 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => tableState.setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={tableState.currentPage === 1}
                   className="gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -656,11 +777,11 @@ const Saidas = () => {
                 <span className="text-sm">
                   Página {tableState.currentPage} de {totalPages}
                 </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => tableState.handlePageChange(Math.min(totalPages, tableState.currentPage + 1))} 
-                  disabled={tableState.currentPage === totalPages} 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => tableState.setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={tableState.currentPage === totalPages}
                   className="gap-1"
                 >
                   Próxima
@@ -668,89 +789,9 @@ const Saidas = () => {
                 </Button>
               </div>
             </div>
-          </div>
-        }
-        tableContent={
-          isLoading ? (
-            <div className="p-6 space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : !saidas || saidas.length === 0 ? (
-            <EmptyState
-              icon={<Package className="w-8 h-8 text-muted-foreground" />}
-              title="Nenhuma saída encontrada"
-              description="Não há saídas registradas no sistema."
-              action={{
-                label: "Registrar Primeira Saída",
-                onClick: () => setIsNewSaidaOpen(true)
-              }}
-            />
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <Table className="min-w-[1000px]">
-                    <TableHeader>
-                      <TableRow>
-                        <SortableContext
-                          items={tableState.columns.filter(col => col.visible).map(col => col.key)}
-                          strategy={horizontalListSortingStrategy}
-                        >
-                          {visibleColumns.map((column) => (
-                            <SortableTableHead
-                              key={column.key}
-                              id={column.key}
-                              className={column.key === "acoes" ? "w-[100px]" : ""}
-                              width={tableState.columnWidths[column.key]}
-                              onWidthChange={(width) => tableState.handleColumnWidthChange(column.key, width)}
-                            >
-                              {column.label}
-                            </SortableTableHead>
-                          ))}
-                        </SortableContext>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedSaidas.map((saida) => (
-                        <TableRow key={saida.id} className="hover:bg-muted/50">
-                          {visibleColumns.map((column) => (
-                            <TableCell 
-                              key={column.key} 
-                              className="overflow-hidden"
-                              style={tableState.columnWidths[column.key] ? { width: tableState.columnWidths[column.key] } : undefined}
-                            >
-                              {renderColumnContent(column.key, saida)}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </DndContext>
-              </div>
-              
-              {/* Pagination footer info */}
-              {totalRecords > 0 && (
-                <div className="flex items-center justify-between p-6 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {saidas?.length || 0} saídas registradas
-                    {userProfile?.role === 'produtor' && ' (incluindo aprovações pendentes)'}
-                  </div>
-                </div>
-              )}
-            </>
-          )
-        }
-      />
+          )}
+        </Card>
+      </div>
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -777,7 +818,7 @@ const Saidas = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }
 
