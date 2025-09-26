@@ -641,7 +641,7 @@ export default function Entradas() {
                   Nova Entrada
                 </Button>
               </DialogTrigger>
-            <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+            <DialogContent className="w-[95vw] max-w-[1400px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Registrar Nova Entrada</DialogTitle>
                 <DialogDescription>
@@ -747,99 +747,110 @@ export default function Entradas() {
               </div>
             ) : entradas && entradas.length > 0 ? (
               <div className="h-full overflow-hidden">
-                <div className="h-full overflow-auto p-6">
-                  <Table className="min-w-[1200px]">
+                <div className="w-full overflow-auto p-6">
+                  <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[100px]">Número NFe</TableHead>
-                        <TableHead className="min-w-[70px]">Série</TableHead>
-                        <TableHead className="min-w-[130px]">Chave NFe</TableHead>
-                        <TableHead className="min-w-[140px]">Emitente</TableHead>
-                        <TableHead className="min-w-[120px]">CNPJ/CPF</TableHead>
-                        <TableHead className="min-w-[100px]">Data Emissão</TableHead>
-                        <TableHead className="min-w-[100px]">Data Entrada</TableHead>
-                        <TableHead className="min-w-[120px]">Nat. Operação</TableHead>
-                        <TableHead className="min-w-[80px]">Itens</TableHead>
-                        <TableHead className="min-w-[100px]">Depósito</TableHead>
-                        <TableHead className="min-w-[120px]">Status</TableHead>
-                        <TableHead className="min-w-[100px]">Valor Total</TableHead>
-                        <TableHead className="min-w-[80px]">Ações</TableHead>
+                        <TableHead className="w-24 lg:w-28">NFe</TableHead>
+                        <TableHead className="w-16 lg:w-20">Série</TableHead>
+                        <TableHead className="hidden lg:table-cell w-32">Chave</TableHead>
+                        <TableHead className="w-32 lg:w-40">Emitente</TableHead>
+                        <TableHead className="hidden md:table-cell w-28">CNPJ/CPF</TableHead>
+                        <TableHead className="w-20 lg:w-24">Data</TableHead>
+                        <TableHead className="hidden lg:table-cell w-24">Entrada</TableHead>
+                        <TableHead className="hidden xl:table-cell w-28">Operação</TableHead>
+                        <TableHead className="w-16 lg:w-20">Itens</TableHead>
+                        <TableHead className="hidden lg:table-cell w-24">Depósito</TableHead>
+                        <TableHead className="w-24 lg:w-28">Status</TableHead>
+                        <TableHead className="w-20 lg:w-24">Valor</TableHead>
+                        <TableHead className="w-16 lg:w-20">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {entradas.map((entrada) => (
                         <TableRow key={entrada.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium">
-                            {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                          <TableCell className="font-medium text-xs lg:text-sm">
+                            <div className="truncate max-w-20 lg:max-w-24" title={entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}>
+                              {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            <span className="text-muted-foreground text-sm">
+                            <span className="text-muted-foreground text-xs lg:text-sm">
                               {entrada.serie || 'N/A'}
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <span className="text-muted-foreground text-xs font-mono">
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-muted-foreground text-xs font-mono truncate max-w-28" title={entrada.chave_nfe}>
                               {entrada.chave_nfe ? entrada.chave_nfe.substring(0, 16) + '...' : 'N/A'}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="max-w-[130px]">
-                              <span className="text-sm font-medium truncate block">
+                            <div>
+                              <div className="text-xs lg:text-sm font-medium truncate max-w-28 lg:max-w-36" title={(entrada as any).emitente_nome || entrada.fornecedores?.nome}>
                                 {(entrada as any).emitente_nome || entrada.fornecedores?.nome || 'N/A'}
-                              </span>
+                              </div>
                               {(entrada.fornecedores as any)?.nome_fantasia && (
-                                <span className="text-xs text-muted-foreground truncate block">
+                                <div className="text-xs text-muted-foreground truncate max-w-28 lg:max-w-36" title={(entrada.fornecedores as any)?.nome_fantasia}>
                                   {(entrada.fornecedores as any).nome_fantasia}
-                                </span>
+                                </div>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <span className="text-sm font-mono">
+                          <TableCell className="hidden md:table-cell">
+                            <span className="text-xs font-mono">
                               {(entrada as any).emitente_cnpj || (entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
                             </span>
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm">
+                            <span className="text-xs lg:text-sm">
                               {entrada.data_emissao 
-                                ? new Date(entrada.data_emissao).toLocaleDateString('pt-BR')
+                                ? new Date(entrada.data_emissao).toLocaleDateString('pt-BR', { 
+                                    day: '2-digit', 
+                                    month: '2-digit'
+                                  })
                                 : 'N/A'
                               }
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <span className="text-sm">
-                              {new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-xs lg:text-sm">
+                              {new Date(entrada.data_entrada).toLocaleDateString('pt-BR', { 
+                                day: '2-digit', 
+                                month: '2-digit'
+                              })}
                             </span>
                           </TableCell>
-                          <TableCell>
-                            <div className="max-w-[110px]">
-                              <span className="text-xs text-muted-foreground truncate block">
+                          <TableCell className="hidden xl:table-cell">
+                            <div className="max-w-24">
+                              <span className="text-xs text-muted-foreground truncate block" title={entrada.natureza_operacao}>
                                 {entrada.natureza_operacao || 'N/A'}
                               </span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                                <Package className="w-4 h-4 text-primary" />
+                            <div className="flex items-center gap-1 lg:gap-2">
+                              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <Package className="w-3 h-3 lg:w-4 lg:h-4 text-primary" />
                               </div>
-                              <span className="text-sm">
+                              <span className="text-xs lg:text-sm">
                                 {entrada.entrada_itens?.length || 0}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <span className="text-sm">
+                          <TableCell className="hidden lg:table-cell">
+                            <span className="text-xs lg:text-sm truncate max-w-20" title={(entrada as any).franquias?.nome}>
                               {(entrada as any).franquias?.nome || 'N/A'}
                             </span>
                           </TableCell>
                           <TableCell>
                             <StatusBadge status={entrada.status_aprovacao} />
                           </TableCell>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-xs lg:text-sm">
                             {entrada.valor_total 
-                              ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { 
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0
+                                })}`
                               : 'N/A'
                             }
                           </TableCell>

@@ -171,7 +171,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
+    <Sidebar className={collapsed ? "w-16" : "w-56 lg:w-64"} collapsible="icon">
       <SidebarContent className="bg-gradient-card">
         {/* Logo/Brand */}
         <div className="p-4 border-b border-border">

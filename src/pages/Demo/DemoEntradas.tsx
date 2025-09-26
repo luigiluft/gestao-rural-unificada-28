@@ -171,7 +171,7 @@ export default function DemoEntradas() {
                 Nova Entrada
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full" id="entrada-modal">
+            <DialogContent className="w-[95vw] max-w-[1400px] max-h-[90vh] overflow-y-auto" id="entrada-modal">
               <DialogHeader>
                 <DialogTitle>Registrar Nova Entrada</DialogTitle>
                 <DialogDescription>
@@ -224,17 +224,17 @@ export default function DemoEntradas() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table className="min-w-[1000px]">
+          <div className="w-full overflow-auto">
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>NFe</TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Produtos</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead className="w-20 lg:w-24">NFe</TableHead>
+                  <TableHead className="w-32 lg:w-40">Fornecedor</TableHead>
+                  <TableHead className="w-20 lg:w-24">Data</TableHead>
+                  <TableHead className="w-20 lg:w-24">Valor</TableHead>
+                  <TableHead className="w-20 lg:w-24">Status</TableHead>
+                  <TableHead className="min-w-48 lg:min-w-56">Produtos</TableHead>
+                  <TableHead className="w-20 lg:w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
