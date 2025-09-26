@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EmptyState } from "@/components/ui/empty-state"
 import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Package } from "lucide-react"
 import { format } from "date-fns"
@@ -40,8 +41,10 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 interface Divergencia {
   produto: string
+  lote: string
   quantidade_esperada: number
   quantidade_recebida: number
+  tipo_divergencia: 'quantidade' | 'dano'
   motivo: string
   acao_tomada: string
 }
@@ -121,6 +124,7 @@ export default function DemoRecebimento() {
           unidade_comercial: 'SC',
           valor_unitario: 25.50,
           valor_total: 12750.00,
+          lote: 'LT202409001',
           produtos: { nome: 'Soja em Grãos Premium', codigo: 'SOJ001' }
         },
         { 
@@ -130,6 +134,7 @@ export default function DemoRecebimento() {
           unidade_comercial: 'KG',
           valor_unitario: 25.00,
           valor_total: 2500.00,
+          lote: 'LT202409002',
           produtos: { nome: 'Fertilizante NPK', codigo: 'FERT001' }
         }
       ]
@@ -240,8 +245,10 @@ export default function DemoRecebimento() {
   const addDivergencia = (item?: any) => {
     const novaDivergencia = {
       produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
+      lote: item?.lote || `LT${Date.now().toString().slice(-6)}`,
       quantidade_esperada: item ? item.quantidade || 0 : 0,
       quantidade_recebida: item ? item.quantidade || 0 : 0,
+      tipo_divergencia: 'quantidade' as const,
       motivo: '',
       acao_tomada: ''
     }
@@ -479,7 +486,10 @@ export default function DemoRecebimento() {
                       {divergencias.map((div, index) => (
                         <div key={index} className="border rounded p-3 space-y-2">
                           <div className="flex justify-between items-start">
-                            <span className="font-medium">{div.produto}</span>
+                            <div className="space-y-1">
+                              <span className="font-medium">{div.produto}</span>
+                              <div className="text-sm text-muted-foreground">Lote: {div.lote}</div>
+                            </div>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -488,14 +498,42 @@ export default function DemoRecebimento() {
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
+                          
+                          <div>
+                            <Label htmlFor={`tipo-${index}`}>Tipo de Divergência</Label>
+                            <Select
+                              value={div.tipo_divergencia}
+                              onValueChange={(value) => updateDivergencia(index, 'tipo_divergencia', value as 'quantidade' | 'dano')}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="quantidade">Divergência de Quantidade</SelectItem>
+                                <SelectItem value="dano">Produto Danificado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`lote-${index}`}>Lote</Label>
+                            <Input
+                              id={`lote-${index}`}
+                              value={div.lote}
+                              onChange={(e) => updateDivergencia(index, 'lote', e.target.value)}
+                              placeholder="Número do lote"
+                            />
+                          </div>
+
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <Label htmlFor={`esperada-${index}`}>Quantidade Esperada</Label>
+                              <Label htmlFor={`esperada-${index}`}>Quantidade Esperada (NFe)</Label>
                               <Input
                                 id={`esperada-${index}`}
                                 type="number"
                                 value={div.quantidade_esperada}
-                                onChange={(e) => updateDivergencia(index, 'quantidade_esperada', Number(e.target.value))}
+                                disabled
+                                className="bg-muted"
                               />
                             </div>
                             <div>
@@ -509,7 +547,7 @@ export default function DemoRecebimento() {
                             </div>
                           </div>
                           <div>
-                            <Label htmlFor={`motivo-${index}`}>Motivo</Label>
+                            <Label htmlFor={`motivo-${index}`}>Motivo da Divergência</Label>
                             <Textarea
                               id={`motivo-${index}`}
                               value={div.motivo}
