@@ -203,7 +203,7 @@ export function ItensComunsSection({
       <CardContent className="space-y-4">
         {/* Adicionar Novo Item */}
         <div className="border rounded-lg p-4 bg-muted/30">
-          <div className={`grid gap-3 mb-3 ${tipo === 'entrada' ? 'grid-cols-7' : 'grid-cols-6'}`}>
+          <div className={`grid gap-3 ${tipo === 'entrada' ? 'grid-cols-7' : 'grid-cols-6'}`}>
             <div className="space-y-1 col-span-2">
               <Label className="text-xs">Produto</Label>
               {tipo === 'saida' ? (
