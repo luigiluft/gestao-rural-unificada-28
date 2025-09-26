@@ -78,6 +78,53 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
 import { TablePageLayout } from "@/components/ui/table-page-layout"
 import { useTableState } from "@/hooks/useTableState"
+
+// Sortable Table Header Component
+function SortableTableHeader({
+  column,
+  width,
+  isLastColumn,
+  onMouseDown
+}: {
+  column: ColumnConfig;
+  width: number;
+  isLastColumn: boolean;
+  onMouseDown: (columnKey: string, e: React.MouseEvent) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id: column.key
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1000 : 1
+  };
+  return <TableHead ref={setNodeRef} style={{
+    ...style,
+    width: `${width}px`,
+    minWidth: `${width}px`,
+    maxWidth: `${width}px`
+  }} className={`text-xs lg:text-sm whitespace-nowrap px-2 relative border-r ${isDragging ? 'opacity-50' : ''}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 flex-1">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded" title="Arrastar para reordenar coluna">
+            <GripVertical className="h-3 w-3 text-muted-foreground" />
+          </div>
+          <span className="truncate flex-1">{column.label}</span>
+        </div>
+        {!isLastColumn && <div className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize bg-border/50 hover:bg-primary/30 active:bg-primary/50 transition-colors z-20" onMouseDown={e => onMouseDown(column.key, e)} style={{
+        userSelect: 'none'
+      }} title="Arraste para redimensionar coluna" />}
+      </div>
+    </TableHead>;
+}
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useQueryClient } from "@tanstack/react-query"
