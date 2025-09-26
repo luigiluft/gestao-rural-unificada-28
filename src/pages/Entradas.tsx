@@ -678,9 +678,7 @@ export default function Entradas() {
       {/* Entradas Table - Fixed width with internal horizontal scroll */}
       <div className="flex-1 p-6 min-h-0">
         <Card className="shadow-card h-full flex flex-col">
-          <CardHeader className="flex-shrink-0">
-            <CardTitle>Lista de Entradas</CardTitle>
-          </CardHeader>
+          
           <CardContent className="flex-1 min-h-0 p-0">
             {isLoading ? <div className="space-y-3 p-6">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
