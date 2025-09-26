@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileUpload } from "@/components/Entradas/FileUpload";
+import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada";
 import { useToast } from "@/hooks/use-toast";
 import { useEntradas } from "@/hooks/useEntradas";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +24,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalList
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { exportToCSV } from "@/utils/csvExport";
+
 const StatusBadge = ({
   status
 }: {
@@ -109,10 +113,13 @@ function SortableTableHeader({
       </div>
     </TableHead>;
 }
+
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false);
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("upload");
+  const [nfData, setNfData] = useState<any>(null);
   const [dateRange, setDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined
@@ -124,7 +131,8 @@ export default function Entradas() {
   } = useToast();
   const {
     data: entradas,
-    isLoading
+    isLoading,
+    refetch
   } = useEntradas(dateRange);
   const {
     isAdmin,
@@ -559,6 +567,46 @@ export default function Entradas() {
   useEffect(() => {
     setCurrentPage(1);
   }, [recordsPerPage]);
+
+  // Handle form submissions
+  const handleFileUpload = (uploadedNfData: any) => {
+    setNfData(uploadedNfData);
+    setActiveTab("manual"); // Switch to manual tab after file upload
+    toast({
+      title: "NFe importada com sucesso",
+      description: "Revise os dados e complete o cadastro."
+    });
+  };
+
+  const handleFormSubmit = async (dados: any) => {
+    try {
+      // Here you would call your API to save the entrada
+      console.log('Dados da entrada:', dados);
+      
+      toast({
+        title: "Entrada registrada",
+        description: "A entrada foi registrada com sucesso."
+      });
+      
+      setIsNewEntryOpen(false);
+      setNfData(null);
+      setActiveTab("upload");
+      refetch(); // Refresh the entries list
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao registrar entrada.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFormCancel = () => {
+    setIsNewEntryOpen(false);
+    setNfData(null);
+    setActiveTab("upload");
+  };
+
   const handleMouseDown = (columnKey: string, e: React.MouseEvent) => {
     setIsResizing(true);
     setResizingColumn(columnKey);
@@ -580,6 +628,7 @@ export default function Entradas() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
+
   const getCellContent = (entrada: any, column: ColumnConfig) => {
     switch (column.key) {
       case "numero_nfe":
@@ -655,6 +704,7 @@ export default function Entradas() {
         return value || "N/A";
     }
   };
+
   return <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Title Section */}
       <div className="flex-shrink-0 border-b bg-background">
@@ -681,9 +731,31 @@ export default function Entradas() {
                     Importe uma NFe ou preencha os dados manualmente
                   </DialogDescription>
                 </DialogHeader>
-                <div className="p-4">
-                  <p>Formulário em desenvolvimento...</p>
-                </div>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="upload">Importar NFe</TabsTrigger>
+                    <TabsTrigger value="manual">Preenchimento Manual</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="upload" className="space-y-4">
+                    <FileUpload
+                      onNFDataParsed={handleFileUpload}
+                      onError={(message) => toast({
+                        title: "Erro",
+                        description: message,
+                        variant: "destructive"
+                      })}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="manual" className="space-y-4 max-h-[60vh] overflow-y-auto">
+                    <FormularioEntrada
+                      nfData={nfData}
+                      onSubmit={handleFormSubmit}
+                      onCancel={handleFormCancel}
+                    />
+                  </TabsContent>
+                </Tabs>
               </DialogContent>
             </Dialog>
           </div>
