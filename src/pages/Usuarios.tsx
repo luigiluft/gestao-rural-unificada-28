@@ -35,23 +35,22 @@ export default function Usuarios() {
     try {
       setSendingInvite(true);
 
-      // Save pending invite - subconta with hierarchy and default permissions
-      const { error: inviteError } = await supabase.from("pending_invites").insert({
-        email: inviteEmail,
-        inviter_user_id: user.id,
-        parent_user_id: user.id, // hierarchy: admin becomes parent
-        permissions: ['estoque.view'], // default permission for subconta
+      // Use edge function to send invite
+      const { data: response, error } = await supabase.functions.invoke('send-invite', {
+        body: { 
+          email: inviteEmail,
+          inviter_user_id: user.id,
+          parent_user_id: user.id, // hierarchy: admin becomes parent
+          permissions: ['estoque.view'], // default permission for subconta
+          redirect_url: `${window.location.origin}/`
+        }
       });
 
-      if (inviteError) throw inviteError;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email: inviteEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
       if (error) throw error;
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao enviar convite')
+      }
       toast({ title: "Convite enviado", description: "Enviamos um link de acesso para o email informado. A subconta será automaticamente vinculada." });
       setInviteOpen(false);
       setInviteEmail("");
@@ -75,12 +74,17 @@ export default function Usuarios() {
   const { data: profiles, isLoading: loadingProfiles } = useQuery({
     queryKey: ["profiles-all"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, nome, email")
-        .order("created_at", { ascending: true });
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { action: 'list_profiles' }
+      });
+
       if (error) throw error;
-      return (data ?? []) as ProfileRow[];
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao buscar profiles')
+      }
+
+      return (response.data ?? []) as ProfileRow[];
     },
   });
 
@@ -111,16 +115,26 @@ export default function Usuarios() {
   const makeAdmin = async (userId: string) => {
     const alreadyAdmin = roleMap?.get(userId) === "Admin";
     if (alreadyAdmin) return;
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: "admin" })
-      .eq("user_id", userId);
-    if (error) {
-      toast({ title: "Erro ao promover", description: error.message, variant: "destructive" });
-    } else {
+    
+    try {
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { 
+          action: 'update_role', 
+          data: { user_id: userId, role: 'admin' }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao promover usuário')
+      }
+
       toast({ title: "Usuário promovido", description: "Permissão de admin concedida." });
       await qc.invalidateQueries({ queryKey: ["computed-roles"] });
       await qc.invalidateQueries({ queryKey: ["profiles-all"] });
+    } catch (error: any) {
+      toast({ title: "Erro ao promover", description: error.message, variant: "destructive" });
     }
   };
 
@@ -138,12 +152,20 @@ export default function Usuarios() {
     queryKey: ["my-children", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_hierarchy")
-        .select("child_user_id")
-        .eq("parent_user_id", user!.id);
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { 
+          action: 'get_children', 
+          data: { parent_user_id: user!.id }
+        }
+      });
+
       if (error) throw error;
-      return new Set((data ?? []).map((r: any) => r.child_user_id as string));
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao buscar hierarquia')
+      }
+
+      return new Set((response.data ?? []).map((r: any) => r.child_user_id as string));
     },
   });
 
@@ -160,27 +182,49 @@ export default function Usuarios() {
 
   const linkChild = async (childId: string) => {
     if (!user) return;
-    const { error } = await supabase.from("user_hierarchy").insert({ parent_user_id: user.id, child_user_id: childId });
-    if (error) {
-      toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" });
-    } else {
+    
+    try {
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { 
+          action: 'link_child', 
+          data: { parent_user_id: user.id, child_user_id: childId }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao vincular usuário')
+      }
+
       toast({ title: "Subconta vinculada", description: "Agora você pode gerenciar as permissões." });
       await refetchChildren();
+    } catch (error: any) {
+      toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" });
     }
   };
 
   const unlinkChild = async (childId: string) => {
     if (!user) return;
-    const { error } = await supabase
-      .from("user_hierarchy")
-      .delete()
-      .eq("parent_user_id", user.id)
-      .eq("child_user_id", childId);
-    if (error) {
-      toast({ title: "Erro ao desvincular", description: error.message, variant: "destructive" });
-    } else {
+    
+    try {
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { 
+          action: 'unlink_child', 
+          data: { parent_user_id: user.id, child_user_id: childId }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao desvincular usuário')
+      }
+
       toast({ title: "Vínculo removido", description: "Subconta desvinculada." });
       await refetchChildren();
+    } catch (error: any) {
+      toast({ title: "Erro ao desvincular", description: error.message, variant: "destructive" });
     }
   };
 
@@ -189,12 +233,20 @@ export default function Usuarios() {
     setPermOpen(true);
     setLoadingPerms(true);
     try {
-      const { data, error } = await supabase
-        .from("user_permissions")
-        .select("permission")
-        .eq("user_id", profile.user_id);
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { 
+          action: 'get_permissions', 
+          data: { user_id: profile.user_id }
+        }
+      });
+
       if (error) throw error;
-      const current = new Set((data ?? []).map((r: any) => r.permission as PermissionCode));
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao carregar permissões')
+      }
+
+      const current = new Set((response.data ?? []).map((r: any) => r.permission as PermissionCode));
       setPermMap({
         'estoque.view': current.has('estoque.view'),
         'estoque.manage': current.has('estoque.manage'),
@@ -212,26 +264,27 @@ export default function Usuarios() {
     if (!permTarget) return;
     setSavingPerms(true);
     try {
-      const { data, error } = await supabase
-        .from("user_permissions")
-        .select("permission")
-        .eq("user_id", permTarget.id);
-      if (error) throw error;
-      const current = new Set((data ?? []).map((r: any) => r.permission as PermissionCode));
-      const desired = new Set(
-        (Object.entries(permMap) as [PermissionCode, boolean][]) // type hint
+      const desired = Array.from(
+        (Object.entries(permMap) as [PermissionCode, boolean][])
           .filter(([, v]) => v)
           .map(([k]) => k)
       );
-      const toAdd = Array.from(desired).filter((p) => !current.has(p));
-      const toRemove = Array.from(current).filter((p) => !desired.has(p));
 
-      await Promise.all([
-        ...toAdd.map((p) => supabase.from("user_permissions").insert({ user_id: permTarget.id, permission: p as any })),
-        ...toRemove.map((p) =>
-          supabase.from("user_permissions").delete().eq("user_id", permTarget.id).eq("permission", p as any)
-        ),
-      ]);
+      const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: { 
+          action: 'update_permissions', 
+          data: { 
+            user_id: permTarget.id, 
+            permissions: desired 
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao atualizar permissões')
+      }
 
       toast({ title: "Permissões atualizadas" });
       setPermOpen(false);

@@ -59,57 +59,51 @@ export function useSaidaSubmission() {
       const dataInicioJanela = parseLocalDate(dados.dataSaida);
       const dataFimJanela = calculateDeliveryWindowEnd(dataInicioJanela, janelaEntregaDias);
 
-      // 3. Iniciar transação criando a saída
-      const { data: saida, error: saidaError } = await supabase
-        .from("saidas")
-        .insert({
+      // 3. Preparar dados para a edge function
+      const saidaData = {
+        user_id: user!.id,
+        deposito_id: dados.deposito.id,
+        data_saida: dados.dataSaida,
+        tipo_saida: dados.tipoSaida,
+        observacoes: dados.observacoes || "",
+        criado_por_franqueado: true,
+        status_aprovacao_produtor: dados.produtorDestinatario ? "pendente" : "nao_aplicavel",
+        produtor_destinatario_id: dados.produtorDestinatario?.user_id || null,
+        data_inicio_janela: dataInicioJanela.toISOString().split('T')[0],
+        data_fim_janela: dataFimJanela.toISOString().split('T')[0],
+        janela_entrega_dias: janelaEntregaDias,
+        itens: itens.map(item => ({
           user_id: user!.id,
-          deposito_id: dados.deposito.id,
-          data_saida: dados.dataSaida,
-          tipo_saida: dados.tipoSaida,
-          observacoes: dados.observacoes || "",
-          criado_por_franqueado: true,
-          status_aprovacao_produtor: dados.produtorDestinatario ? "pendente" : "nao_aplicavel",
-          produtor_destinatario_id: dados.produtorDestinatario?.user_id || null,
-          data_inicio_janela: dataInicioJanela.toISOString().split('T')[0],
-          data_fim_janela: dataFimJanela.toISOString().split('T')[0],
-          janela_entrega_dias: janelaEntregaDias
-        })
-        .select()
-        .single()
+          produto_id: item.produto_id,
+          quantidade: item.quantidade,
+          lote: item.lote || null,
+          valor_unitario: item.valorUnitario || 0,
+          valor_total: (item.quantidade || 0) * (item.valorUnitario || 0)
+        }))
+      }
+
+      console.log("Criando saída via edge function:", saidaData)
+
+      // 4. Criar saída usando edge function
+      const { data: response, error: saidaError } = await supabase.functions.invoke('manage-saidas', {
+        body: { action: 'create', data: saidaData }
+      })
 
       if (saidaError) {
         console.error("Erro ao criar saída:", saidaError)
         throw new Error(`Erro ao criar saída: ${saidaError.message}`)
       }
 
-      if (!saida) {
-        throw new Error("Saída não foi criada - dados não retornados")
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao criar saída')
       }
 
-      console.log("Saída criada com sucesso:", saida.id)
+      const saida = response.data
+      const itensInseridos = saida.itens || []
 
-      // 4. Criar todos os itens da saída
-      const itensParaInserir = itens.map(item => ({
-        user_id: user!.id,
-        saida_id: saida.id,
-        produto_id: item.produto_id,
-        quantidade: item.quantidade,
-        lote: item.lote || null,
-        valor_unitario: item.valorUnitario || 0,
-        valor_total: (item.quantidade || 0) * (item.valorUnitario || 0)
-      }))
-
-      const { data: itensInseridos, error: itensError } = await supabase
-        .from("saida_itens")
-        .insert(itensParaInserir)
-        .select()
-
-      if (itensError) {
-        console.error("Erro ao inserir itens:", itensError)
-        // Tentar deletar a saída criada para manter consistência
-        await supabase.from("saidas").delete().eq("id", saida.id)
-        throw new Error(`Erro ao inserir itens: ${itensError.message}`)
+      if (!itensInseridos || itensInseridos.length === 0) {
+        console.error("Erro: nenhum item foi criado na saída")
+        throw new Error("Erro ao inserir itens: nenhum item foi criado")
       }
 
       console.log(`${itensInseridos?.length || 0} itens inseridos com sucesso`)

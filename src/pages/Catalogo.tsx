@@ -68,54 +68,55 @@ export default function Catalogo() {
       return
     }
     
-    // Verificar se já existe um produto com o mesmo nome e código
-    const { data: existingProduct } = await supabase
-      .from("produtos")
-      .select("id")
-      .eq("nome", values.nome.trim())
-      .eq("codigo", values.codigo?.trim() || null)
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .maybeSingle()
-    
-    if (existingProduct) {
+    try {
+      const { data: response, error } = await supabase.functions.invoke('manage-estoque', {
+        body: { 
+          action: 'create_produto', 
+          data: {
+            user_id: user.id,
+            nome: values.nome.trim(),
+            unidade_medida: values.unidade_medida,
+            codigo: values.codigo?.trim() || null,
+            descricao: values.descricao?.trim() || null,
+            ativo: values.ativo,
+          }
+        }
+      })
+
+      if (error) throw error
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao cadastrar produto')
+      }
+
+      toast({ description: "Produto cadastrado com sucesso." })
+      setOpen(false)
+      reset()
+      queryClient.invalidateQueries({ queryKey: ["produtos"] })
+    } catch (error: any) {
       toast({ 
         variant: "destructive", 
-        description: "Já existe um produto ativo com este nome e código." 
+        description: error.message || "Erro ao cadastrar produto." 
       })
-      return
     }
-    
-    const { error } = await supabase.from("produtos").insert({
-      user_id: user.id,
-      nome: values.nome.trim(),
-      unidade_medida: values.unidade_medida,
-      codigo: values.codigo?.trim() || null,
-      descricao: values.descricao?.trim() || null,
-      ativo: values.ativo,
-    })
-    if (error) {
-      toast({ variant: "destructive", description: "Erro ao cadastrar produto." })
-      return
-    }
-    toast({ description: "Produto cadastrado com sucesso." })
-    setOpen(false)
-    reset()
-    queryClient.invalidateQueries({ queryKey: ["produtos"] })
   }
   const { data: produtos = [], isLoading, error } = useQuery<Produto[]>({
     queryKey: ["produtos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("produtos")
-        .select("id, nome, codigo, unidade_medida, descricao, ativo")
-        .order("nome", { ascending: true })
+      const { data: response, error } = await supabase.functions.invoke('manage-estoque', {
+        body: { action: 'list_produtos' }
+      })
 
       if (error) {
         console.error("Erro ao buscar produtos:", error)
         throw error
       }
-      return data || []
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao buscar produtos')
+      }
+
+      return response.data || []
     },
   })
 

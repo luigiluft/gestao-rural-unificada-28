@@ -56,13 +56,17 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
       if (!user?.id || tipo !== 'saida') return
 
       try {
-        const { data: franquia } = await supabase
-          .from('franquias')
-          .select('latitude, longitude, nome')
-          .eq('master_franqueado_id', user.id)
-          .maybeSingle()
+        const { data: response, error } = await supabase.functions.invoke('manage-entradas', {
+          body: { 
+            action: 'get_franquia_coords', 
+            data: { user_id: user.id } 
+          }
+        })
 
-        if (franquia?.latitude && franquia?.longitude) {
+        if (error) throw error
+
+        if (response?.success && response.data) {
+          const franquia = response.data
           setFranquiaCoords({
             latitude: Number(franquia.latitude),
             longitude: Number(franquia.longitude)
@@ -86,13 +90,17 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
       }
 
       try {
-        const { data: fazenda } = await supabase
-          .from('fazendas')
-          .select('latitude, longitude, nome')
-          .eq('id', dadosSaida.fazenda_id)
-          .maybeSingle()
+        const { data: response, error } = await supabase.functions.invoke('manage-entradas', {
+          body: { 
+            action: 'get_fazenda_coords', 
+            data: { fazenda_id: dadosSaida.fazenda_id } 
+          }
+        })
 
-        if (fazenda?.latitude && fazenda?.longitude) {
+        if (error) throw error
+
+        if (response?.success && response.data) {
+          const fazenda = response.data
           setFazendaCoords({
             latitude: Number(fazenda.latitude),
             longitude: Number(fazenda.longitude)
@@ -204,7 +212,9 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         if (saidaError) {
           // Se erro ao criar saída, remover reserva se foi criada
           if (reservaId && dadosSaida.tipo_saida === 'retirada_deposito') {
-            await supabase.from("reservas_horario").delete().eq("id", reservaId)
+            await supabase.functions.invoke('manage-saidas', {
+              body: { action: 'delete_reserva', data: { reserva_id: reservaId } }
+            })
           }
           throw saidaError
         }
@@ -212,7 +222,9 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         if (!response?.success) {
           // Se erro ao criar saída, remover reserva se foi criada
           if (reservaId && dadosSaida.tipo_saida === 'retirada_deposito') {
-            await supabase.from("reservas_horario").delete().eq("id", reservaId)
+            await supabase.functions.invoke('manage-saidas', {
+              body: { action: 'delete_reserva', data: { reserva_id: reservaId } }
+            })
           }
           throw new Error(response?.error || 'Erro ao criar saída')
         }
