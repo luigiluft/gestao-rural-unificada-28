@@ -42,12 +42,22 @@ export const useUpdateConfiguracao = () => {
 
   return useMutation({
     mutationFn: async ({ chave, valor }: { chave: string; valor: string }) => {
-      const { error } = await supabase
-        .from("configuracoes_sistema")
-        .update({ valor })
-        .eq("chave", chave)
+      const { data, error } = await supabase.functions.invoke('manage-configuracoes', {
+        body: {
+          action: 'update',
+          data: { chave, valor }
+        }
+      })
 
-      if (error) throw error
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao atualizar configuração')
+      }
+
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes-sistema"] })

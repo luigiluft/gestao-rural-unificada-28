@@ -78,18 +78,25 @@ export const useAtualizarStatusSaida = () => {
       status: string
       observacoes?: string
     }) => {
-      const { data, error } = await supabase
-        .from("saidas")
-        .update({
-          status: status as "separacao_pendente" | "separado" | "expedido" | "entregue",
-          observacoes,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", saidaId)
-        .select()
-        .single()
+      const { data, error } = await supabase.functions.invoke('manage-saidas', {
+        body: {
+          action: 'update_status',
+          data: {
+            id: saidaId,
+            status: status as "separacao_pendente" | "separado" | "expedido" | "entregue",
+            observacoes
+          }
+        }
+      })
 
-      if (error) throw error
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao atualizar status da saída')
+      }
+
       return data
     },
     onSuccess: (data, variables) => {

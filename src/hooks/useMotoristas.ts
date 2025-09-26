@@ -31,20 +31,22 @@ export const useCreateMotorista = () => {
       email?: string
       data_vencimento_cnh?: string
     }) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Usuário não autenticado")
+      const { data, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: {
+          action: 'create_motorista',
+          data: motorista
+        }
+      })
 
-      const { data, error } = await supabase
-        .from("motoristas")
-        .insert({
-          ...motorista,
-          user_id: user.id,
-        })
-        .select()
-        .single()
+      if (error) {
+        throw error
+      }
 
-      if (error) throw error
-      return data
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao criar motorista')
+      }
+
+      return data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motoristas"] })
@@ -71,15 +73,22 @@ export const useUpdateMotorista = () => {
       data_vencimento_cnh: string
       ativo: boolean
     }>) => {
-      const { data, error } = await supabase
-        .from("motoristas")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single()
+      const { data, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: {
+          action: 'update_motorista',
+          data: { id, ...updates }
+        }
+      })
 
-      if (error) throw error
-      return data
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao atualizar motorista')
+      }
+
+      return data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motoristas"] })
@@ -97,12 +106,22 @@ export const useDeleteMotorista = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("motoristas")
-        .delete()
-        .eq("id", id)
+      const { data, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: {
+          action: 'delete_motorista',
+          data: { id }
+        }
+      })
 
-      if (error) throw error
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao remover motorista')
+      }
+
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["motoristas"] })

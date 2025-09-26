@@ -31,20 +31,22 @@ export const useCreateVeiculo = () => {
       capacidade_volume?: number
       tipo: string
     }) => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Usuário não autenticado")
+      const { data, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: {
+          action: 'create_veiculo',
+          data: veiculo
+        }
+      })
 
-      const { data, error } = await supabase
-        .from("veiculos")
-        .insert({
-          ...veiculo,
-          user_id: user.id,
-        })
-        .select()
-        .single()
+      if (error) {
+        throw error
+      }
 
-      if (error) throw error
-      return data
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao criar veículo')
+      }
+
+      return data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["veiculos"] })
@@ -71,15 +73,22 @@ export const useUpdateVeiculo = () => {
       tipo: string
       ativo: boolean
     }>) => {
-      const { data, error } = await supabase
-        .from("veiculos")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single()
+      const { data, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: {
+          action: 'update_veiculo',
+          data: { id, ...updates }
+        }
+      })
 
-      if (error) throw error
-      return data
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao atualizar veículo')
+      }
+
+      return data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["veiculos"] })
@@ -97,12 +106,22 @@ export const useDeleteVeiculo = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("veiculos")
-        .delete()
-        .eq("id", id)
+      const { data, error } = await supabase.functions.invoke('manage-usuarios', {
+        body: {
+          action: 'delete_veiculo',
+          data: { id }
+        }
+      })
 
-      if (error) throw error
+      if (error) {
+        throw error
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro ao remover veículo')
+      }
+
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["veiculos"] })
