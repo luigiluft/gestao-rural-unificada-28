@@ -42,9 +42,7 @@ import { TutorialButton } from "@/components/Tutorial/TutorialButton"
 import { useTutorial } from "@/contexts/TutorialContext"
 
 export function AppSidebar() {
-  const { state } = useSidebar()
   const location = useLocation()
-  const collapsed = state === "collapsed"
   const navigate = useNavigate()
 
   const { user, logout } = useAuth()
@@ -171,7 +169,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-56 lg:w-64"} collapsible="icon">
+    <Sidebar className="w-56 lg:w-64" collapsible="none">
       <SidebarContent className="bg-gradient-card">
         {/* Logo/Brand */}
         <div className="p-4 border-b border-border">
@@ -183,23 +181,19 @@ export function AppSidebar() {
                 className="w-8 h-8 object-contain" 
               />
             </div>
-            {!collapsed && (
-              <div>
-                <h2 className="font-bold text-foreground">AgroHub</h2>
-              </div>
-            )}
+            <div>
+              <h2 className="font-bold text-foreground">AgroHub</h2>
+            </div>
           </div>
         </div>
 
         {/* Tutorial Button */}
-        {!collapsed && (
-          <div className="px-4 pb-2">
-            <TutorialButton />
-          </div>
-        )}
+        <div className="px-4 pb-2">
+          <TutorialButton />
+        </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -210,7 +204,7 @@ export function AppSidebar() {
                     // Item com submenu (WMS)
                     <>
                       <SidebarMenuButton 
-                        onClick={() => !collapsed && toggleExpanded(item.path)}
+                        onClick={() => toggleExpanded(item.path)}
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-secondary/50 cursor-pointer`}
                       >
                         <div className="relative">
@@ -224,18 +218,14 @@ export function AppSidebar() {
                             </Badge>
                           )}
                         </div>
-                        {!collapsed && (
-                          <>
-                            <span className="font-medium flex-1">{item.label}</span>
-                            <ChevronRight 
-                              className={`h-4 w-4 transition-transform duration-200 ${
-                                expandedItems.has(item.path) ? 'rotate-90' : ''
-                              }`} 
-                            />
-                          </>
-                        )}
+                        <span className="font-medium flex-1">{item.label}</span>
+                        <ChevronRight 
+                          className={`h-4 w-4 transition-transform duration-200 ${
+                            expandedItems.has(item.path) ? 'rotate-90' : ''
+                          }`} 
+                        />
                       </SidebarMenuButton>
-                      {!collapsed && expandedItems.has(item.path) && (
+                      {expandedItems.has(item.path) && (
                         <SidebarMenuSub>
                           {item.subItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.label}>
@@ -288,7 +278,7 @@ export function AppSidebar() {
                              </Badge>
                            )}
                          </div>
-                         {!collapsed && <span className="font-medium">{item.label}</span>}
+                          <span className="font-medium">{item.label}</span>
                        </NavLink>
                     </SidebarMenuButton>
                   )}
@@ -300,66 +290,37 @@ export function AppSidebar() {
 
         {/* User menu at bottom */}
         <div className="mt-auto p-4 border-t border-border">
-          {!collapsed ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full flex items-center gap-3 h-auto p-2 justify-start">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-medium text-white">{initials}</span>
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-foreground truncate">{displayName || "Usuário"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/suporte")}>
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Suporte
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full flex items-center justify-center p-2">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                    <span className="text-xs font-medium text-white">{initials}</span>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/suporte")}>
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Suporte
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="w-full flex items-center gap-3 h-auto p-2 justify-start">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-medium text-white">{initials}</span>
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-medium text-foreground truncate">{displayName || "Usuário"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/configuracoes")}>
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/suporte")}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Suporte
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </SidebarContent>
     </Sidebar>
