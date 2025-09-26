@@ -1,11 +1,14 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
   Plus, 
   Eye,
   Edit,
   MoreHorizontal,
   Trash2,
-  Package
+  Package,
+  Save,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { ColumnVisibilityControl, type ColumnConfig } from "@/components/Entradas/ColumnVisibilityControl"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -64,11 +68,20 @@ export default function Entradas() {
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [recordsPerPage, setRecordsPerPage] = useState(10)
   const { toast } = useToast()
   const { data: entradas, isLoading } = useEntradas(dateRange)
   const { isAdmin, isFranqueado } = useUserRole()
 
-  // Column visibility and width state
+  // Pagination logic
+  const totalRecords = entradas?.length || 0
+  const totalPages = Math.ceil(totalRecords / recordsPerPage)
+  const startIndex = (currentPage - 1) * recordsPerPage
+  const endIndex = Math.min(startIndex + recordsPerPage, totalRecords)
+  const paginatedEntradas = entradas?.slice(startIndex, endIndex) || []
+
+  // Column visibility and width state with localStorage persistence
   const [columns, setColumns] = useState<ColumnConfig[]>([
     // Basic Info
     { key: "numero_nfe", label: "NFe", visible: true, category: "Básico" },
@@ -145,6 +158,40 @@ export default function Entradas() {
   // Resize functionality
   const [isResizing, setIsResizing] = useState(false)
   const [resizingColumn, setResizingColumn] = useState<string | null>(null)
+
+  // Load saved table view on component mount
+  useEffect(() => {
+    const savedView = localStorage.getItem('entradas-table-view')
+    if (savedView) {
+      try {
+        const { columns: savedColumns, columnWidths: savedWidths, recordsPerPage: savedRecordsPerPage } = JSON.parse(savedView)
+        if (savedColumns) setColumns(savedColumns)
+        if (savedWidths) setColumnWidths(savedWidths)
+        if (savedRecordsPerPage) setRecordsPerPage(savedRecordsPerPage)
+      } catch (error) {
+        console.error('Error loading saved table view:', error)
+      }
+    }
+  }, [])
+
+  // Save table view function
+  const saveTableView = () => {
+    const viewConfig = {
+      columns,
+      columnWidths,
+      recordsPerPage
+    }
+    localStorage.setItem('entradas-table-view', JSON.stringify(viewConfig))
+    toast({
+      title: "Visualização salva",
+      description: "As configurações da tabela foram salvas com sucesso.",
+    })
+  }
+
+  // Reset to first page when records per page changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [recordsPerPage])
 
   const handleMouseDown = (columnKey: string, e: React.MouseEvent) => {
     setIsResizing(true)
@@ -315,20 +362,49 @@ export default function Entradas() {
       {/* Column Control Section */}
       <div className="flex-shrink-0 bg-background">
         <div className="px-6 py-4">
-          <ColumnVisibilityControl
-            columns={columns}
-            onVisibilityChange={(columnKey, visible) => {
-              setColumns(prev => prev.map(col => 
-                col.key === columnKey ? { ...col, visible } : col
-              ))
-            }}
-            onResetDefault={() => {
-              setColumns(prev => prev.map(col => ({
-                ...col,
-                visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
-              })))
-            }}
-          />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <ColumnVisibilityControl
+                columns={columns}
+                onVisibilityChange={(columnKey, visible) => {
+                  setColumns(prev => prev.map(col => 
+                    col.key === columnKey ? { ...col, visible } : col
+                  ))
+                }}
+                onResetDefault={() => {
+                  setColumns(prev => prev.map(col => ({
+                    ...col,
+                    visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
+                  })))
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={saveTableView}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Salvar Visualização
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Registros por página:</span>
+              <Select value={recordsPerPage.toString()} onValueChange={(value) => setRecordsPerPage(Number(value))}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -378,7 +454,7 @@ export default function Entradas() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {entradas.map((entrada) => (
+                    {paginatedEntradas.map((entrada) => (
                       <TableRow key={entrada.id} className="hover:bg-muted/50">
                         {columns.filter(col => col.visible).map((column) => {
                           const content = getCellContent(entrada, column)
@@ -421,6 +497,40 @@ export default function Entradas() {
               </div>
             )}
           </CardContent>
+          
+          {/* Pagination Controls */}
+          {totalRecords > 0 && (
+            <div className="flex items-center justify-between p-6 border-t">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <span className="text-sm">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="gap-1"
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </div>
