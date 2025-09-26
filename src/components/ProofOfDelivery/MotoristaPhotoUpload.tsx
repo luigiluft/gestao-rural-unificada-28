@@ -221,33 +221,35 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         throw new Error('Selecione pelo menos uma foto')
       }
 
-      // Criar ou atualizar comprovante
+      // Criar ou atualizar comprovante via Edge Function
       let comprovanteId = comprovante?.id
 
       if (!comprovanteId) {
-        const { data: novoComprovante, error: comprovanteError } = await supabase
-          .from('comprovantes_entrega')
-          .insert({
-            codigo: `VGM-${viagem.numero}`,
-            cliente_nome: `Viagem ${viagem.numero}`,
-            produto_descricao: 'Carga da viagem',
-            status: 'pendente',
-            tracking_id: viagem.id,
-            observacoes: observacoes,
-            latitude: currentLocation?.lat,
-            longitude: currentLocation?.lng,
-            localizacao: currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : null,
-            user_id: (await supabase.auth.getUser()).data.user?.id
-          })
-          .select()
-          .single()
+        const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
+          body: {
+            action: 'create',
+            data: {
+              codigo: `VGM-${viagem.numero}`,
+              cliente_nome: `Viagem ${viagem.numero}`,
+              produto_descricao: 'Carga da viagem',
+              status: 'pendente',
+              tracking_id: viagem.id,
+              observacoes: observacoes,
+              latitude: currentLocation?.lat,
+              longitude: currentLocation?.lng,
+              localizacao: currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : null
+            }
+          }
+        })
 
-        if (comprovanteError) throw comprovanteError
-        comprovanteId = novoComprovante.id
+        if (comprovanteError || !comprovanteData?.success) {
+          throw new Error(comprovanteData?.error || 'Erro ao criar comprovante')
+        }
+        comprovanteId = comprovanteData.data.id
       }
 
-      // Upload das fotos
-      const uploadPromises = selectedPhotos.map(async (photo, index) => {
+      // Upload das fotos via Edge Function
+      for (const [index, photo] of selectedPhotos.entries()) {
         const fileExt = photo.file.name.split('.').pop()
         const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
         const filePath = `comprovantes/${fileName}`
@@ -263,50 +265,61 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
           .from('comprovantes')
           .getPublicUrl(filePath)
 
-        // Salvar registro da foto com dados EXIF
-        const { error: fotoError } = await supabase
-          .from('comprovante_fotos')
-          .insert({
-            comprovante_id: comprovanteId,
-            url_foto: publicUrl,
-            tipo: 'entrega',
-            descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
-            latitude: photo.exifData?.latitude,
-            longitude: photo.exifData?.longitude,
-            data_foto: photo.exifData?.dateTime?.toISOString()
-          })
+        // Salvar registro da foto via Edge Function
+        const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
+          body: {
+            action: 'uploadPhoto',
+            data: {
+              comprovante_id: comprovanteId,
+              url_foto: publicUrl,
+              tipo: 'entrega',
+              descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
+              latitude: photo.exifData?.latitude,
+              longitude: photo.exifData?.longitude,
+              data_foto: photo.exifData?.dateTime?.toISOString()
+            }
+          }
+        })
 
-        if (fotoError) throw fotoError
+        if (fotoError || !fotoData?.success) {
+          throw new Error(fotoData?.error || 'Erro ao salvar foto')
+        }
+      }
 
-        return publicUrl
+      // Atualizar status do comprovante via Edge Function
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('manage-comprovantes', {
+        body: {
+          action: 'update',
+          data: {
+            id: comprovanteId,
+            status: 'confirmado',
+            data_entrega: new Date().toISOString(),
+            total_fotos: selectedPhotos.length,
+            observacoes: observacoes
+          }
+        }
       })
 
-      await Promise.all(uploadPromises)
+      if (updateError || !updateData?.success) {
+        throw new Error(updateData?.error || 'Erro ao atualizar comprovante')
+      }
 
-      // Atualizar status do comprovante
-      const { error: updateError } = await supabase
-        .from('comprovantes_entrega')
-        .update({
-          status: 'confirmado',
-          data_entrega: new Date().toISOString(),
-          total_fotos: selectedPhotos.length,
-          observacoes: observacoes
-        })
-        .eq('id', comprovanteId)
-
-      if (updateError) throw updateError
-
-      // Marcar viagem como entregue se estiver finalizada
+      // Marcar viagem como entregue se estiver finalizada via Edge Function
       if (viagem.status === 'finalizada') {
-        const { error: viagemError } = await supabase
-          .from('viagens')
-          .update({ 
-            status: 'entregue',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', viagem.id)
+        const { data: viagemData, error: viagemError } = await supabase.functions.invoke('manage-viagens', {
+          body: {
+            action: 'update',
+            data: {
+              id: viagem.id,
+              status: 'entregue',
+              updated_at: new Date().toISOString()
+            }
+          }
+        })
 
-        if (viagemError) throw viagemError
+        if (viagemError || !viagemData?.success) {
+          throw new Error(viagemData?.error || 'Erro ao atualizar viagem')
+        }
       }
 
       return comprovanteId

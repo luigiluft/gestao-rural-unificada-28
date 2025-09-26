@@ -8,22 +8,18 @@ export const useConfirmarViagem = () => {
 
   return useMutation({
     mutationFn: async ({ viagemId }: { viagemId: string }) => {
-      // Update viagem status to 'em_andamento'
-      const { error: viagemError } = await supabase
-        .from("viagens")
-        .update({ 
-          status: "em_andamento"
-        })
-        .eq("id", viagemId)
+      const { data, error } = await supabase.functions.invoke('manage-viagens', {
+        body: {
+          action: 'confirm',
+          data: { viagemId }
+        }
+      })
 
-      if (viagemError) throw viagemError
+      if (error || !data?.success) {
+        throw new Error(data?.error || 'Erro ao confirmar viagem')
+      }
 
-      // Note: agendamentos table was removed from database
-      // The viagem confirmation now only updates the viagem status
-      
-      const agendamentosCriados = 0 // No agendamentos created since table doesn't exist
-
-      return { viagemId, agendamentosCriados }
+      return data.data
     },
     onSuccess: (data) => {
       toast({

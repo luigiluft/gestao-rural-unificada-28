@@ -148,7 +148,6 @@ export const useInventarioItens = (inventarioId?: string, posicaoId?: string) =>
 export const useCriarInventario = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
-  const { user } = useAuth()
 
   return useMutation({
     mutationFn: async (data: {
@@ -156,42 +155,22 @@ export const useCriarInventario = () => {
       observacoes?: string
       posicoes_ids: string[]
     }) => {
-      // Gerar número do inventário
-      const { data: numeroData, error: numeroError } = await supabase
-        .rpc('generate_inventory_number')
+      const { data: result, error } = await supabase.functions.invoke('manage-inventario', {
+        body: {
+          action: 'createInventario',
+          data: {
+            deposito_id: data.deposito_id,
+            observacoes: data.observacoes,
+            posicoes_ids: data.posicoes_ids
+          }
+        }
+      })
 
-      if (numeroError) throw numeroError
+      if (error || !result?.success) {
+        throw new Error(result?.error || 'Erro ao criar inventário')
+      }
 
-      // Criar inventário
-      const { data: inventario, error: inventarioError } = await supabase
-        .from("inventarios")
-        .insert({
-          numero_inventario: numeroData,
-          deposito_id: data.deposito_id,
-          user_id: user?.id,
-          created_by: user?.id,
-          observacoes: data.observacoes,
-          total_posicoes: data.posicoes_ids.length,
-          status: 'iniciado'
-        })
-        .select()
-        .single()
-
-      if (inventarioError) throw inventarioError
-
-      // Adicionar posições ao inventário
-      const posicoes = data.posicoes_ids.map(posicaoId => ({
-        inventario_id: inventario.id,
-        posicao_id: posicaoId
-      }))
-
-      const { error: posicoesError } = await supabase
-        .from("inventario_posicoes")
-        .insert(posicoes)
-
-      if (posicoesError) throw posicoesError
-
-      return inventario
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventarios"] })
@@ -221,22 +200,23 @@ export const useAtualizarInventario = () => {
       observacoes?: string
       posicoes_conferidas?: number
     }) => {
-      const updateData: any = {}
-      
-      if (data.status) updateData.status = data.status
-      if (data.observacoes !== undefined) updateData.observacoes = data.observacoes
-      if (data.posicoes_conferidas !== undefined) updateData.posicoes_conferidas = data.posicoes_conferidas
-      if (data.status === 'concluido') updateData.data_conclusao = new Date().toISOString()
+      const { data: result, error } = await supabase.functions.invoke('manage-inventario', {
+        body: {
+          action: 'updateInventario',
+          data: {
+            id: data.inventarioId,
+            status: data.status,
+            observacoes: data.observacoes,
+            posicoes_conferidas: data.posicoes_conferidas
+          }
+        }
+      })
 
-      const { data: inventario, error } = await supabase
-        .from("inventarios")
-        .update(updateData)
-        .eq("id", data.inventarioId)
-        .select()
-        .single()
+      if (error || !result?.success) {
+        throw new Error(result?.error || 'Erro ao atualizar inventário')
+      }
 
-      if (error) throw error
-      return inventario
+      return result.data
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["inventarios"] })
@@ -259,27 +239,29 @@ export const useAtualizarInventario = () => {
 export const useIniciarPosicao = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
-  const { user } = useAuth()
 
   return useMutation({
     mutationFn: async (data: {
       inventarioId: string
       posicaoId: string
     }) => {
-      const { data: posicao, error } = await supabase
-        .from("inventario_posicoes")
-        .update({
-          status: 'em_andamento',
-          data_inicio: new Date().toISOString(),
-          conferido_por: user?.id
-        })
-        .eq("inventario_id", data.inventarioId)
-        .eq("posicao_id", data.posicaoId)
-        .select()
-        .single()
+      const { data: result, error } = await supabase.functions.invoke('manage-inventario', {
+        body: {
+          action: 'updateInventarioItem',
+          data: {
+            inventario_id: data.inventarioId,
+            posicao_id: data.posicaoId,
+            status: 'em_andamento',
+            data_inicio: new Date().toISOString()
+          }
+        }
+      })
 
-      if (error) throw error
-      return posicao
+      if (error || !result?.success) {
+        throw new Error(result?.error || 'Erro ao iniciar posição')
+      }
+
+      return result.data
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["inventario-posicoes", variables.inventarioId] })
@@ -297,7 +279,6 @@ export const useIniciarPosicao = () => {
 export const useAdicionarItem = () => {
   const queryClient = useQueryClient()
   const { toast } = useToast()
-  const { user } = useAuth()
 
   return useMutation({
     mutationFn: async (data: {
@@ -311,19 +292,21 @@ export const useAdicionarItem = () => {
       valor_unitario?: number
       observacoes?: string
     }) => {
-      const { data: item, error } = await supabase
-        .from("inventario_itens")
-        .insert({
-          ...data,
-          quantidade_sistema: data.quantidade_sistema || 0,
-          scaneado_por: user?.id,
-          data_escaneamento: new Date().toISOString()
-        })
-        .select()
-        .single()
+      const { data: result, error } = await supabase.functions.invoke('manage-inventario', {
+        body: {
+          action: 'createInventarioItem',
+          data: {
+            ...data,
+            quantidade_sistema: data.quantidade_sistema || 0
+          }
+        }
+      })
 
-      if (error) throw error
-      return item
+      if (error || !result?.success) {
+        throw new Error(result?.error || 'Erro ao adicionar item')
+      }
+
+      return result.data
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["inventario-itens", variables.inventario_id] })
@@ -351,38 +334,21 @@ export const useConcluirPosicao = () => {
       inventarioId: string
       posicaoId: string
     }) => {
-      // Marcar posição como concluída
-      const { error: posicaoError } = await supabase
-        .from("inventario_posicoes")
-        .update({
-          status: 'concluida',
-          data_conclusao: new Date().toISOString()
-        })
-        .eq("inventario_id", data.inventarioId)
-        .eq("posicao_id", data.posicaoId)
+      const { data: result, error } = await supabase.functions.invoke('manage-inventario', {
+        body: {
+          action: 'finalizeInventario',
+          data: {
+            inventario_id: data.inventarioId,
+            posicao_id: data.posicaoId
+          }
+        }
+      })
 
-      if (posicaoError) throw posicaoError
+      if (error || !result?.success) {
+        throw new Error(result?.error || 'Erro ao concluir posição')
+      }
 
-      // Contar posições concluídas
-      const { count, error: countError } = await supabase
-        .from("inventario_posicoes")
-        .select("*", { count: 'exact', head: true })
-        .eq("inventario_id", data.inventarioId)
-        .eq("status", "concluida")
-
-      if (countError) throw countError
-
-      // Atualizar contador no inventário
-      const { error: updateError } = await supabase
-        .from("inventarios")
-        .update({
-          posicoes_conferidas: count || 0
-        })
-        .eq("id", data.inventarioId)
-
-      if (updateError) throw updateError
-
-      return count
+      return result.data
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["inventario-posicoes", variables.inventarioId] })
