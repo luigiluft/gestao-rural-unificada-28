@@ -8,7 +8,8 @@ import {
   Package,
   Save,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  GripVertical
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,6 +46,25 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useUserRole } from "@/hooks/useUserRole"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
 import { format } from "date-fns"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const StatusBadge = ({ status }: { status: string }) => {
   const statusConfig = {
@@ -61,6 +81,69 @@ const StatusBadge = ({ status }: { status: string }) => {
     { label: status || 'Desconhecido', variant: 'secondary' as const }
 
   return <Badge variant={config.variant}>{config.label}</Badge>
+}
+
+// Sortable Table Header Component
+function SortableTableHeader({ 
+  column, 
+  width, 
+  isLastColumn, 
+  onMouseDown 
+}: { 
+  column: ColumnConfig; 
+  width: number; 
+  isLastColumn: boolean; 
+  onMouseDown: (columnKey: string, e: React.MouseEvent) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.key })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1000 : 1,
+  }
+
+  return (
+    <TableHead 
+      ref={setNodeRef}
+      style={{
+        ...style,
+        width: `${width}px`, 
+        minWidth: `${width}px`, 
+        maxWidth: `${width}px`
+      }}
+      className={`text-xs lg:text-sm whitespace-nowrap px-2 relative border-r ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 flex-1">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+            title="Arrastar para reordenar coluna"
+          >
+            <GripVertical className="h-3 w-3 text-muted-foreground" />
+          </div>
+          <span className="truncate flex-1">{column.label}</span>
+        </div>
+        {!isLastColumn && (
+          <div
+            className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize bg-border/50 hover:bg-primary/30 active:bg-primary/50 transition-colors z-20"
+            onMouseDown={(e) => onMouseDown(column.key, e)}
+            style={{ userSelect: 'none' }}
+            title="Arraste para redimensionar coluna"
+          />
+        )}
+      </div>
+    </TableHead>
+  )
 }
 
 export default function Entradas() {
@@ -159,13 +242,37 @@ export default function Entradas() {
   const [isResizing, setIsResizing] = useState(false)
   const [resizingColumn, setResizingColumn] = useState<string | null>(null)
 
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   // Load saved table view on component mount
   useEffect(() => {
     const savedView = localStorage.getItem('entradas-table-view')
     if (savedView) {
       try {
-        const { columns: savedColumns, columnWidths: savedWidths, recordsPerPage: savedRecordsPerPage } = JSON.parse(savedView)
-        if (savedColumns) setColumns(savedColumns)
+        const { columns: savedColumns, columnWidths: savedWidths, recordsPerPage: savedRecordsPerPage, columnOrder } = JSON.parse(savedView)
+        if (savedColumns) {
+          // If we have a saved column order, apply it
+          if (columnOrder && Array.isArray(columnOrder)) {
+            const orderedColumns = columnOrder.map((key: string) => 
+              savedColumns.find((col: ColumnConfig) => col.key === key)
+            ).filter(Boolean)
+            
+            // Add any new columns that weren't in the saved order
+            const newColumns = savedColumns.filter((col: ColumnConfig) => 
+              !columnOrder.includes(col.key)
+            )
+            
+            setColumns([...orderedColumns, ...newColumns])
+          } else {
+            setColumns(savedColumns)
+          }
+        }
         if (savedWidths) setColumnWidths(savedWidths)
         if (savedRecordsPerPage) setRecordsPerPage(savedRecordsPerPage)
       } catch (error) {
@@ -179,13 +286,28 @@ export default function Entradas() {
     const viewConfig = {
       columns,
       columnWidths,
-      recordsPerPage
+      recordsPerPage,
+      columnOrder: columns.map(col => col.key)
     }
     localStorage.setItem('entradas-table-view', JSON.stringify(viewConfig))
     toast({
       title: "Visualização salva",
       description: "As configurações da tabela foram salvas com sucesso.",
     })
+  }
+
+  // Handle column reordering
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (active.id !== over?.id) {
+      setColumns((items) => {
+        const oldIndex = items.findIndex((item) => item.key === active.id)
+        const newIndex = items.findIndex((item) => item.key === over!.id)
+
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
   }
 
   // Reset to first page when records per page changes
@@ -422,67 +544,65 @@ export default function Entradas() {
                 ))}
               </div>
             ) : entradas && entradas.length > 0 ? (
-              <div className="w-full max-w-full overflow-x-auto">
-                <Table className="table-fixed w-max min-w-max">
-                  <TableHeader className="sticky top-0 bg-background border-b z-10">
-                    <TableRow>
-                      {columns.filter(col => col.visible).map((column, index) => {
-                        const width = columnWidths[column.key] || 120
-                        const visibleColumns = columns.filter(col => col.visible)
-                        const isLastColumn = index === visibleColumns.length - 1
-                        
-                        return (
-                          <TableHead 
-                            key={column.key} 
-                            className="text-xs lg:text-sm whitespace-nowrap px-2 relative border-r"
-                            style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="truncate">{column.label}</span>
-                              {!isLastColumn && (
-                                <div
-                                  className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize bg-border/50 hover:bg-primary/30 active:bg-primary/50 transition-colors z-20"
-                                  onMouseDown={(e) => handleMouseDown(column.key, e)}
-                                  style={{ userSelect: 'none' }}
-                                  title="Arraste para redimensionar coluna"
-                                />
-                              )}
-                            </div>
-                          </TableHead>
-                        )
-                      })}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedEntradas.map((entrada) => (
-                      <TableRow key={entrada.id} className="hover:bg-muted/50">
-                        {columns.filter(col => col.visible).map((column) => {
-                          const content = getCellContent(entrada, column)
-                          const isAction = column.key === "actions" || column.key === "status_aprovacao"
-                          const width = columnWidths[column.key] || 120
-                          
-                          return (
-                            <TableCell 
-                              key={column.key} 
-                              className="text-xs lg:text-sm whitespace-nowrap px-2"
-                              style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
-                            >
-                              {isAction ? content : (
-                                <span 
-                                  className="truncate block" 
-                                  title={typeof content === 'string' ? content : ''}
-                                >
-                                  {content}
-                                </span>
-                              )}
-                            </TableCell>
-                          )
-                        })}
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <div className="w-full max-w-full overflow-x-auto">
+                  <Table className="table-fixed w-max min-w-max">
+                    <TableHeader className="sticky top-0 bg-background border-b z-10">
+                      <TableRow>
+                        <SortableContext items={columns.filter(col => col.visible).map(col => col.key)} strategy={horizontalListSortingStrategy}>
+                          {columns.filter(col => col.visible).map((column, index) => {
+                            const width = columnWidths[column.key] || 120
+                            const visibleColumns = columns.filter(col => col.visible)
+                            const isLastColumn = index === visibleColumns.length - 1
+                            
+                            return (
+                              <SortableTableHeader
+                                key={column.key}
+                                column={column}
+                                width={width}
+                                isLastColumn={isLastColumn}
+                                onMouseDown={handleMouseDown}
+                              />
+                            )
+                          })}
+                        </SortableContext>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedEntradas.map((entrada) => (
+                        <TableRow key={entrada.id} className="hover:bg-muted/50">
+                          {columns.filter(col => col.visible).map((column) => {
+                            const content = getCellContent(entrada, column)
+                            const isAction = column.key === "actions" || column.key === "status_aprovacao"
+                            const width = columnWidths[column.key] || 120
+                            
+                            return (
+                              <TableCell 
+                                key={column.key} 
+                                className="text-xs lg:text-sm whitespace-nowrap px-2"
+                                style={{ width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` }}
+                              >
+                                {isAction ? content : (
+                                  <span 
+                                    className="truncate block" 
+                                    title={typeof content === 'string' ? content : ''}
+                                  >
+                                    {content}
+                                  </span>
+                                )}
+                              </TableCell>
+                            )
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DndContext>
             ) : (
               <div className="flex items-center justify-center h-full p-6">
                 <EmptyState
