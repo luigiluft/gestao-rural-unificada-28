@@ -747,30 +747,30 @@ export default function Entradas() {
               </div>
             ) : entradas && entradas.length > 0 ? (
               <div className="h-full overflow-hidden">
-                <div className="w-full overflow-auto p-6">
-                  <Table>
+                <div className="w-full overflow-auto p-4">
+                  <Table className="table-fixed">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-24 lg:w-28">NFe</TableHead>
-                        <TableHead className="w-16 lg:w-20">Série</TableHead>
-                        <TableHead className="hidden lg:table-cell w-32">Chave</TableHead>
-                        <TableHead className="w-32 lg:w-40">Emitente</TableHead>
-                        <TableHead className="hidden md:table-cell w-28">CNPJ/CPF</TableHead>
-                        <TableHead className="w-20 lg:w-24">Data</TableHead>
-                        <TableHead className="hidden lg:table-cell w-24">Entrada</TableHead>
-                        <TableHead className="hidden xl:table-cell w-28">Operação</TableHead>
-                        <TableHead className="w-16 lg:w-20">Itens</TableHead>
-                        <TableHead className="hidden lg:table-cell w-24">Depósito</TableHead>
-                        <TableHead className="w-24 lg:w-28">Status</TableHead>
-                        <TableHead className="w-20 lg:w-24">Valor</TableHead>
-                        <TableHead className="w-16 lg:w-20">Ações</TableHead>
+                        <TableHead className="w-20">NFe</TableHead>
+                        <TableHead className="w-14">Série</TableHead>
+                        <TableHead className="hidden 2xl:table-cell w-20">Chave</TableHead>
+                        <TableHead className="w-24">Emitente</TableHead>
+                        <TableHead className="hidden 2xl:table-cell w-16">CNPJ/CPF</TableHead>
+                        <TableHead className="w-24">Data</TableHead>
+                        <TableHead className="hidden 2xl:table-cell w-24">Entrada</TableHead>
+                        <TableHead className="hidden 2xl:table-cell w-20">Operação</TableHead>
+                        <TableHead className="hidden md:table-cell w-16">Itens</TableHead>
+                        <TableHead className="hidden 2xl:table-cell w-24">Depósito</TableHead>
+                        <TableHead className="w-20">Status</TableHead>
+                        <TableHead className="w-20">Valor</TableHead>
+                        <TableHead className="w-16">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {entradas.map((entrada) => (
                         <TableRow key={entrada.id} className="hover:bg-muted/50">
                           <TableCell className="font-medium text-xs lg:text-sm">
-                            <div className="truncate max-w-20 lg:max-w-24" title={entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}>
+                            <div className="truncate" title={entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}>
                               {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
                             </div>
                           </TableCell>
@@ -779,25 +779,25 @@ export default function Entradas() {
                               {entrada.serie || 'N/A'}
                             </span>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            <span className="text-muted-foreground text-xs font-mono truncate max-w-28" title={entrada.chave_nfe}>
+                          <TableCell className="hidden 2xl:table-cell">
+                            <span className="text-muted-foreground text-xs font-mono truncate" title={entrada.chave_nfe}>
                               {entrada.chave_nfe ? entrada.chave_nfe.substring(0, 16) + '...' : 'N/A'}
                             </span>
                           </TableCell>
                           <TableCell>
                             <div>
-                              <div className="text-xs lg:text-sm font-medium truncate max-w-28 lg:max-w-36" title={(entrada as any).emitente_nome || entrada.fornecedores?.nome}>
+                              <div className="text-xs lg:text-sm font-medium truncate" title={(entrada as any).emitente_nome || entrada.fornecedores?.nome}>
                                 {(entrada as any).emitente_nome || entrada.fornecedores?.nome || 'N/A'}
                               </div>
                               {(entrada.fornecedores as any)?.nome_fantasia && (
-                                <div className="text-xs text-muted-foreground truncate max-w-28 lg:max-w-36" title={(entrada.fornecedores as any)?.nome_fantasia}>
+                                <div className="text-xs text-muted-foreground truncate" title={(entrada.fornecedores as any)?.nome_fantasia}>
                                   {(entrada.fornecedores as any).nome_fantasia}
                                 </div>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <span className="text-xs font-mono">
+                          <TableCell className="hidden 2xl:table-cell">
+                            <span className="text-xs font-mono truncate">
                               {(entrada as any).emitente_cnpj || (entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
                             </span>
                           </TableCell>
@@ -812,7 +812,7 @@ export default function Entradas() {
                               }
                             </span>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell">
+                          <TableCell className="hidden 2xl:table-cell">
                             <span className="text-xs lg:text-sm">
                               {new Date(entrada.data_entrada).toLocaleDateString('pt-BR', { 
                                 day: '2-digit', 
@@ -820,14 +820,14 @@ export default function Entradas() {
                               })}
                             </span>
                           </TableCell>
-                          <TableCell className="hidden xl:table-cell">
-                            <div className="max-w-24">
+                          <TableCell className="hidden 2xl:table-cell">
+                            <div>
                               <span className="text-xs text-muted-foreground truncate block" title={entrada.natureza_operacao}>
                                 {entrada.natureza_operacao || 'N/A'}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             <div className="flex items-center gap-1 lg:gap-2">
                               <div className="w-6 h-6 lg:w-8 lg:h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                                 <Package className="w-3 h-3 lg:w-4 lg:h-4 text-primary" />
@@ -837,8 +837,8 @@ export default function Entradas() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            <span className="text-xs lg:text-sm truncate max-w-20" title={(entrada as any).franquias?.nome}>
+                          <TableCell className="hidden 2xl:table-cell">
+                            <span className="text-xs lg:text-sm truncate" title={(entrada as any).franquias?.nome}>
                               {(entrada as any).franquias?.nome || 'N/A'}
                             </span>
                           </TableCell>
