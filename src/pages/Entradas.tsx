@@ -73,8 +73,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import {
   Select,
   SelectContent,
@@ -94,7 +100,9 @@ import { useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
+import { useUserRole } from "@/hooks/useUserRole"
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter"
+import { format } from "date-fns"
 
 export default function Entradas() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
@@ -102,6 +110,8 @@ export default function Entradas() {
   const [activeTab, setActiveTab] = useState("upload")
   const [produtorIdentificado, setProdutorIdentificado] = useState<any>(null)
   const [produtorError, setProdutorError] = useState<string | null>(null)
+  const [selectedEntrada, setSelectedEntrada] = useState<any>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined })
   const { toast } = useToast()
   const navigate = useNavigate()
@@ -109,6 +119,7 @@ export default function Entradas() {
   const { data: entradas, isLoading } = useEntradas(dateRange)
   const { user } = useAuth()
   const { data: currentUserProfile } = useProfile()
+  const { isAdmin, isFranqueado } = useUserRole()
 
   // Column visibility state
   const [columns, setColumns] = useState<ColumnConfig[]>([
@@ -189,32 +200,28 @@ export default function Entradas() {
     // Verificar se a NFe já foi importada (validação mais robusta)
     let entradaExistente = null;
     
-    // Primeira validação: por chave NFe
+    // Buscar por chave da NFe primeiro (mais preciso)
     if (data.chaveNFe) {
-      const { data: entradaPorChave } = await supabase
+      const { data: entradaByChave } = await supabase
         .from('entradas')
-        .select('id, numero_nfe, serie, emitente_nome')
+        .select('*')
         .eq('chave_nfe', data.chaveNFe)
         .maybeSingle();
-
-      if (entradaPorChave) {
-        entradaExistente = entradaPorChave;
-      }
+      
+      if (entradaByChave) entradaExistente = entradaByChave;
     }
     
-    // Segunda validação: por número + série + CNPJ do emitente
-    if (!entradaExistente && data.numeroNF && data.serie && data.emitente.cnpj) {
-      const { data: entradaPorDados } = await supabase
+    // Se não encontrou pela chave, buscar por combinação de campos
+    if (!entradaExistente && data.numeroNF && data.serie && data.emitente?.cnpj) {
+      const { data: entradaByCombo } = await supabase
         .from('entradas')
-        .select('id, numero_nfe, serie, emitente_nome')
+        .select('*')
         .eq('numero_nfe', data.numeroNF)
         .eq('serie', data.serie)
         .eq('emitente_cnpj', data.emitente.cnpj)
         .maybeSingle();
-
-      if (entradaPorDados) {
-        entradaExistente = entradaPorDados;
-      }
+        
+      if (entradaByCombo) entradaExistente = entradaByCombo;
     }
 
     if (entradaExistente) {
@@ -237,85 +244,80 @@ export default function Entradas() {
         return;
       }
 
-      if (currentUserProfile.cpf_cnpj !== data.destinatarioCpfCnpj) {
-        toast({
-          title: "NFe não autorizada",
-          description: "Esta NFe não pertence ao seu CPF/CNPJ cadastrado",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // Tentar identificar o produtor destinatário
-    if (data.destinatario?.cpfCnpj) {
+      // Buscar o produtor pelo CPF/CNPJ do destinatário
       try {
-        const produtorEncontrado = await findProdutorByCpfCnpj(supabase, data.destinatario.cpfCnpj)
-        if (produtorEncontrado) {
-          setProdutorIdentificado(produtorEncontrado)
-          console.log('Produtor identificado:', produtorEncontrado)
-          
-          // Validar se o usuário atual pode importar esta NFe
-          if (currentUserProfile?.role === 'produtor') {
-            // Produtor só pode importar NFe onde ele é o destinatário
-            if (produtorEncontrado.user_id !== user?.id) {
-              setProdutorError('Você só pode importar NFes onde você é o destinatário')
-              toast({
-                title: "NFe não permitida",
-                description: "Você só pode importar NFes onde você é o destinatário.",
-                variant: "destructive",
-              })
-              return
-            }
+        const produtorByCpf = await findProdutorByCpfCnpj(supabase, data.destinatarioCpfCnpj)
+        if (produtorByCpf) {
+          setProdutorIdentificado(produtorByCpf)
+          // Verificar se o produtor identificado é o usuário atual
+          if (produtorByCpf.user_id !== user?.id) {
+            setProdutorError('Você só pode importar NFes onde você é o destinatário')
+            toast({
+              title: "NFe não permitida",
+              description: "Você só pode importar NFes onde você é o destinatário.",
+              variant: "destructive",
+            })
+            return
           }
-          // Admin e franqueado podem importar de qualquer produtor (já encontrado)
         } else {
-          console.log('Nenhum produtor encontrado para CPF/CNPJ:', data.destinatario.cpfCnpj)
           setProdutorError('Nenhum produtor encontrado para o CPF/CNPJ do destinatário')
           toast({
             title: "NFe rejeitada",
             description: "NFe rejeitada: nenhum usuário produtor encontrado para o CPF/CNPJ do destinatário.",
             variant: "destructive",
           })
-          return // Impedir continuação
+          return
         }
       } catch (error) {
-        console.error('Erro ao buscar produtor:', error)
         setProdutorError('Erro ao buscar produtor no sistema')
         toast({
           title: "Erro",
           description: "Erro ao buscar produtor no sistema",
           variant: "destructive",
         })
-        return // Impedir continuação
+        return
       }
     } else {
-      setProdutorError('NFe não contém CPF/CNPJ do destinatário')
-      toast({
-        title: "NFe rejeitada",
-        description: "NFe rejeitada: não contém CPF/CNPJ do destinatário.",
-        variant: "destructive",
-      })
-      return // Impedir continuação
+      // Para admin e franqueado, buscar o produtor se tiver destinatário
+      if (data.destinatario?.cpfCnpj) {
+        try {
+          const produtorByCpf = await findProdutorByCpfCnpj(supabase, data.destinatario.cpfCnpj)
+          if (produtorByCpf) {
+            setProdutorIdentificado(produtorByCpf)
+          } else {
+            setProdutorError('Nenhum produtor encontrado para o CPF/CNPJ do destinatário')
+            toast({
+              title: "NFe rejeitada",
+              description: "NFe rejeitada: nenhum usuário produtor encontrado para o CPF/CNPJ do destinatário.",
+              variant: "destructive",
+            })
+            return
+          }
+        } catch (error) {
+          setProdutorError('Erro ao buscar produtor no sistema')
+          toast({
+            title: "Erro",
+            description: "Erro ao buscar produtor no sistema",
+            variant: "destructive",
+          })
+          return
+        }
+      } else {
+        setProdutorError('NFe não contém CPF/CNPJ do destinatário')
+        toast({
+          title: "NFe rejeitada",
+          description: "NFe rejeitada: não contém CPF/CNPJ do destinatário.",
+          variant: "destructive",
+        })
+        return
+      }
     }
 
     setActiveTab("manual")
-    toast({
-      title: "NFe processada com sucesso",
-      description: `Nota fiscal ${data.numeroNF}/${data.serie} importada com ${data.itens.length} itens.`,
-    })
   }
 
-  const handleUploadError = (message: string) => {
-    toast({
-      title: "Erro no upload",
-      description: message,
-      variant: "destructive",
-    })
-  }
-
-  const handleFormSubmit = async (dados: any) => {
-    if (!user) {
+  const handleEntradaSubmit = async (entradaData: any) => {
+    if (!user?.id) {
       toast({
         title: "Erro",
         description: "Usuário não autenticado.",
@@ -361,15 +363,78 @@ export default function Entradas() {
         }
       }
 
+      // Preparar dados da entrada com informações da NFe se disponível
+      const dadosEntrada = {
+        ...entradaData,
+        user_id: entradaUserId,
+        fornecedor_id: fornecedorId,
+        
+        // Dados da NFe se disponível
+        ...(nfData && {
+          numero_nfe: nfData.numeroNF,
+          serie: nfData.serie,
+          chave_nfe: nfData.chaveNFe,
+          data_emissao: nfData.dataEmissao,
+          dh_emissao: nfData.dhEmissao,
+          dh_saida_entrada: nfData.dhSaidaEntrada,
+          natureza_operacao: nfData.naturezaOperacao,
+          valor_total: nfData.valorTotal,
+          xml_content: nfData.xmlContent,
+          
+          // Emitente
+          emitente_nome: nfData.emitente?.nome,
+          emitente_nome_fantasia: nfData.emitente?.nomeFantasia,
+          emitente_cnpj: nfData.emitente?.cnpj,
+          emitente_ie: nfData.emitente?.ie,
+          emitente_endereco: nfData.emitente?.endereco,
+          emitente_municipio: nfData.emitente?.municipio,
+          emitente_uf: nfData.emitente?.uf,
+          emitente_cep: nfData.emitente?.cep,
+          emitente_telefone: nfData.emitente?.telefone,
+          
+          // Destinatário
+          destinatario_nome: nfData.destinatario?.nome,
+          destinatario_cpf_cnpj: nfData.destinatario?.cpfCnpj,
+          destinatario_ie: nfData.destinatario?.ie,
+          destinatario_endereco: nfData.destinatario?.endereco,
+          destinatario_municipio: nfData.destinatario?.municipio,
+          destinatario_uf: nfData.destinatario?.uf,
+          destinatario_cep: nfData.destinatario?.cep,
+          
+          // Transporte
+          modalidade_frete: nfData.transporte?.modalidadeFrete,
+          transportadora_nome: nfData.transporte?.transportadora?.nome,
+          transportadora_cnpj: nfData.transporte?.transportadora?.cnpj,
+          veiculo_placa: nfData.transporte?.veiculo?.placa,
+          veiculo_uf: nfData.transporte?.veiculo?.uf,
+          
+          // Valores detalhados
+          valor_produtos: nfData.valores?.produtos,
+          valor_frete: nfData.valores?.frete,
+          valor_seguro: nfData.valores?.seguro,
+          valor_desconto: nfData.valores?.desconto,
+          valor_icms: nfData.valores?.icms,
+          valor_ipi: nfData.valores?.ipi,
+          valor_pis: nfData.valores?.pis,
+          valor_cofins: nfData.valores?.cofins,
+          valor_total_tributos: nfData.valores?.totalTributos,
+          
+          // Volumes e pesos
+          quantidade_volumes: nfData.volumes?.quantidade,
+          peso_bruto: nfData.volumes?.pesoBruto,
+          peso_liquido: nfData.volumes?.pesoLiquido,
+        })
+      }
+
       // Verificar duplicatas de NFe (validação mais robusta)
       let entradaExistente = null;
       
       // Primeira validação: por chave NFe
-      if (dados.chaveNFe) {
+      if (dadosEntrada.chave_nfe) {
         const { data: entradaPorChave } = await supabase
           .from('entradas')
           .select('id, numero_nfe, serie, emitente_nome')
-          .eq('chave_nfe', dados.chaveNFe)
+          .eq('chave_nfe', dadosEntrada.chave_nfe)
           .maybeSingle();
 
         if (entradaPorChave) {
@@ -378,13 +443,13 @@ export default function Entradas() {
       }
       
       // Segunda validação: por número + série + CNPJ do emitente
-      if (!entradaExistente && dados.numeroNF && dados.serie && nfData?.emitente?.cnpj) {
+      if (!entradaExistente && dadosEntrada.numero_nfe && dadosEntrada.serie && dadosEntrada.emitente_cnpj) {
         const { data: entradaPorDados } = await supabase
           .from('entradas')
           .select('id, numero_nfe, serie, emitente_nome')
-          .eq('numero_nfe', dados.numeroNF)
-          .eq('serie', dados.serie)
-          .eq('emitente_cnpj', nfData.emitente.cnpj)
+          .eq('numero_nfe', dadosEntrada.numero_nfe)
+          .eq('serie', dadosEntrada.serie)
+          .eq('emitente_cnpj', dadosEntrada.emitente_cnpj)
           .maybeSingle();
 
         if (entradaPorDados) {
@@ -401,93 +466,92 @@ export default function Entradas() {
         return;
       }
 
-      console.log('Dados da entrada a serem salvos:', {
-        user_id: entradaUserId,
-        produtor_identificado: produtorIdentificado?.nome,
-        numeroNF: dados.numeroNF,
-        serie: dados.serie,
-        chaveNFe: dados.chaveNFe,
-        destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj
-      });
+      const { data: entrada, error } = await supabase
+        .from('entradas')
+        .insert(dadosEntrada)
+        .select()
+        .single()
 
-      // Criar a entrada usando edge function
-      const entradaData = {
-        user_id: entradaUserId, // Usar o user_id do produtor identificado
-        numero_nfe: dados.numeroNF || null,
-        serie: dados.serie || null,
-        chave_nfe: dados.chaveNFe || null,
-        natureza_operacao: dados.naturezaOperacao || null,
-        data_entrada: dados.dataEntrada,
-        data_emissao: dados.dataEmissao || dados.dataEntrada,
-        valor_total: dados.valorTotal,
-        deposito_id: dados.depositoId || null,
-        fornecedor_id: fornecedorId,
-        observacoes: dados.observacoes,
-        status_aprovacao: 'aguardando_transporte',
-        xml_content: dados.tipo === 'nfe' ? dados.xmlContent || 'XML importado' : null,
-        emitente_nome: nfData?.emitente?.nome || null,
-        emitente_cnpj: nfData?.emitente?.cnpj || null,
-        emitente_endereco: nfData?.emitente?.endereco || null,
-        destinatario_cpf_cnpj: nfData?.destinatarioCpfCnpj || null,
-        itens: dados.itens && dados.itens.length > 0 ? dados.itens.map((item: any) => ({
-          user_id: entradaUserId, // Usar o mesmo user_id da entrada
-          produto_id: null, // Por enquanto nulo, depois pode implementar busca/criação de produtos
-          quantidade: item.quantidade,
-          valor_unitario: item.valorUnitario,
-          valor_total: item.valorTotal,
+      if (error) throw error
+
+      // Se temos itens da NFe, inserir entrada_itens
+      if (nfData?.itens && entrada.id) {
+        const itensParaInserir = nfData.itens.map((item: any) => ({
+          entrada_id: entrada.id,
+          user_id: entradaUserId,
+          codigo_produto: item.codigo,
+          nome_produto: item.descricao,
+          descricao_produto: item.descricao,
+          quantidade: parseFloat(item.quantidade || '0'),
+          valor_unitario: parseFloat(item.valorUnitario || '0'),
+          valor_total: parseFloat(item.valorTotal || '0'),
+          unidade_comercial: item.unidade,
+          cfop: item.cfop,
+          ncm: item.ncm,
+          cest: item.cest,
+          codigo_ean: item.ean,
           lote: item.lote,
-          nome_produto: item.produto, // Adicionar o nome correto do produto
-          data_validade: item.dataValidade || null, // Adicionar data de validade se disponível
-          quantidade_lote: item.quantidadeLote || null, // Adicionar quantidade do lote
-          data_fabricacao: item.dataFabricacao || null, // Adicionar data de fabricação
-          codigo_produto: item.codigo || null, // Usar código do produto (cProd do XML)
-          codigo_ean: item.codigoEAN || null, // Usar código EAN separadamente (cEAN do XML)
-          unidade_comercial: item.unidade || 'UN', // Adicionar unidade de medida do XML
-          descricao_produto: item.descricao || item.produto // Adicionar descrição do produto
-        })) : []
+          data_validade: item.dataValidade,
+          data_fabricacao: item.dataFabricacao,
+          
+          // Campos tributários
+          quantidade_comercial: parseFloat(item.quantidadeComercial || item.quantidade || '0'),
+          valor_unitario_comercial: parseFloat(item.valorUnitarioComercial || item.valorUnitario || '0'),
+          unidade_tributavel: item.unidadeTributavel || item.unidade,
+          quantidade_tributavel: parseFloat(item.quantidadeTributavel || item.quantidade || '0'),
+          valor_unitario_tributavel: parseFloat(item.valorUnitarioTributavel || item.valorUnitario || '0'),
+          codigo_ean_tributavel: item.eanTributavel || item.ean,
+          indicador_total: item.indicadorTotal,
+          valor_total_tributos_item: parseFloat(item.valorTotalTributosItem || '0'),
+          
+          // Impostos ICMS
+          impostos_icms: item.impostos?.icms ? JSON.stringify(item.impostos.icms) : null,
+          impostos_ipi: item.impostos?.ipi ? JSON.stringify(item.impostos.ipi) : null,
+          impostos_pis: item.impostos?.pis ? JSON.stringify(item.impostos.pis) : null,
+          impostos_cofins: item.impostos?.cofins ? JSON.stringify(item.impostos.cofins) : null,
+          
+          // Dados logísticos (se presentes)
+          volumes: parseFloat(item.volumes || '0'),
+          pallets: parseFloat(item.pallets || '0'),
+          volumes_por_pallet: parseFloat(item.volumesPorPallet || '0'),
+          quantidade_lote: parseFloat(item.quantidadeLote || '0')
+        }))
+
+        const { error: itensError } = await supabase
+          .from('entrada_itens')
+          .insert(itensParaInserir)
+
+        if (itensError) {
+          toast({
+            title: "Aviso",
+            description: "Entrada criada, mas houve erro ao inserir alguns itens: " + itensError.message,
+            variant: "destructive",
+          })
+        }
       }
 
-      const { data: response, error: entradaError } = await supabase.functions.invoke('manage-entradas', {
-        body: { action: 'create', data: entradaData }
-      })
-
-      if (entradaError) throw entradaError
-      if (!response?.success) throw new Error(response?.error || 'Erro ao criar entrada')
-
-      const entrada = response.data
-
-      const successMessage = produtorIdentificado 
-        ? `Entrada registrada para o produtor ${produtorIdentificado.nome}`
-        : "A entrada foi registrada com sucesso no sistema."
-
       toast({
-        title: "Entrada registrada",
-        description: successMessage,
+        title: "Sucesso",
+        description: "Entrada registrada com sucesso!",
       })
-      
+
+      // Limpar estados e fechar diálogos
       setIsNewEntryOpen(false)
       setNfData(null)
       setProdutorIdentificado(null)
       setProdutorError(null)
       setActiveTab("upload")
-      // Invalidate queries to refresh the list efficiently
+      
+      // Invalidar queries para atualizar a lista
       queryClient.invalidateQueries({ queryKey: ["entradas"] })
-    } catch (error) {
-      console.error('Erro ao registrar entrada:', error)
+
+    } catch (error: any) {
       toast({
-        title: "Erro ao registrar entrada",
-        description: "Ocorreu um erro ao salvar a entrada no sistema.",
+        title: "Erro",
+        description: "Erro ao registrar entrada: " + (error.message || "Erro desconhecido"),
         variant: "destructive",
       })
     }
-  }
-
-  const handleFormCancel = () => {
-    setIsNewEntryOpen(false)
-    setNfData(null)
-    setProdutorIdentificado(null)
-    setProdutorError(null)
-    setActiveTab("upload")
   }
 
   const handleNovaEntradaManual = () => {
@@ -499,8 +563,6 @@ export default function Entradas() {
 
   const handleDeleteEntrada = async (entradaId: string, numeroNfe?: string) => {
     try {
-      console.log('=== INICIANDO DELEÇÃO DA ENTRADA ===', entradaId)
-      
       // Verificar se a entrada existe antes de deletar
       const { data: entradaExists, error: checkError } = await supabase
         .from('entradas')
@@ -509,11 +571,8 @@ export default function Entradas() {
         .single()
       
       if (checkError) {
-        console.error('Erro ao verificar entrada:', checkError)
         throw new Error(`Entrada não encontrada: ${checkError.message}`)
       }
-      
-      console.log('Entrada encontrada:', entradaExists)
       
       // Verificar permissões do usuário atual
       const { data: currentUser } = await supabase.auth.getUser()
@@ -522,38 +581,26 @@ export default function Entradas() {
         .select('role')
         .eq('user_id', currentUser.user?.id)
         .single()
-      
-      console.log('Usuário atual:', currentUser.user?.id)
-      console.log('Role do usuário:', userProfile?.role)
-      console.log('Entrada pertence ao usuário:', entradaExists.user_id === currentUser.user?.id)
 
       // 1. Deletar entrada_status_historico primeiro
-      console.log('STEP 1: Deletando entrada_status_historico para:', entradaId)
-      const { data: deletedHistorico, error: historicoDeleteError } = await supabase
+      const { error: historicoDeleteError } = await supabase
         .from('entrada_status_historico')
         .delete()
         .eq('entrada_id', entradaId)
-        .select()
 
-      console.log('Histórico deletado:', deletedHistorico?.length || 0, 'registros')
       if (historicoDeleteError) {
-        console.error('Erro ao deletar histórico:', historicoDeleteError)
         throw new Error(`Erro ao deletar histórico: ${historicoDeleteError.message}`)
       }
 
       // 2. Buscar entrada_itens
-      console.log('STEP 2: Buscando entrada_itens para:', entradaId)
       const { data: entradaItens, error: fetchItensError } = await supabase
         .from('entrada_itens')
         .select('id, produto_id')
         .eq('entrada_id', entradaId)
 
       if (fetchItensError) {
-        console.error('Erro ao buscar itens:', fetchItensError)
         throw new Error(`Erro ao buscar itens: ${fetchItensError.message}`)
       }
-
-      console.log('Entrada itens encontrados:', entradaItens?.length || 0)
 
       // 3. Buscar e remover alocações de pallets se houver
       const { data: entradaPallets } = await supabase
@@ -564,80 +611,42 @@ export default function Entradas() {
       if (entradaPallets && entradaPallets.length > 0) {
         const palletIds = entradaPallets.map(pallet => pallet.id)
         
-        console.log('STEP 3: Removendo alocações de pallets para:', palletIds)
         const { error: palletPositionsError } = await supabase
           .from('pallet_positions')
           .update({ status: 'removido' })
           .in('pallet_id', palletIds)
 
         if (palletPositionsError) {
-          console.error('Erro ao remover alocações de pallets:', palletPositionsError)
           throw new Error(`Erro ao remover alocações: ${palletPositionsError.message}`)
         }
       }
 
       // 4. Deletar movimentacoes relacionadas
-      console.log('STEP 4: Deletando movimentações para:', entradaId)
-      const { data: deletedMovimentacoes, error: movimentacoesError } = await supabase
+      const { error: movimentacoesError } = await supabase
         .from('movimentacoes')
         .delete()
         .eq('referencia_id', entradaId)
         .eq('referencia_tipo', 'entrada')
-        .select()
 
-      console.log('Movimentações deletadas:', deletedMovimentacoes?.length || 0, 'registros')
       if (movimentacoesError) {
-        console.error('Erro ao deletar movimentações:', movimentacoesError)
         throw new Error(`Erro ao deletar movimentações: ${movimentacoesError.message}`)
       }
 
-      // 5. Deletar estoque relacionado
-      if (entradaItens && entradaItens.length > 0) {
-        const produtoIds = entradaItens
-          .map(item => item.produto_id)
-          .filter(Boolean)
-          
-        if (produtoIds.length > 0) {
-          console.log('STEP 5: Deletando estoque para produtos:', produtoIds)
-          // Remove stock movements instead of estoque records (estoque is calculated automatically)
-          const { data: deletedMovs, error: movDeleteError } = await supabase
-            .from('movimentacoes')
-            .delete()
-            .eq('referencia_id', entradaId)
-            .eq('referencia_tipo', 'entrada')
-            .select()
-
-          console.log('Movimentações deletadas:', deletedMovs?.length || 0, 'registros')
-          if (movDeleteError) {
-            console.error('Erro ao deletar movimentações:', movDeleteError)
-            // Não tratar como erro crítico - continuar com a deleção
-          }
-        }
-      }
-
-      // 6. Deletar entrada_itens
-      console.log('STEP 6: Deletando entrada_itens para:', entradaId)
-      const { data: deletedItens, error: itensDeleteError } = await supabase
+      // 5. Deletar entrada_itens
+      const { error: itensDeleteError } = await supabase
         .from('entrada_itens')
         .delete()
         .eq('entrada_id', entradaId)
-        .select()
 
-      console.log('Entrada itens deletados:', deletedItens?.length || 0, 'registros')
       if (itensDeleteError) {
-        console.error('Erro ao deletar itens:', itensDeleteError)
         throw new Error(`Erro ao deletar itens: ${itensDeleteError.message}`)
       }
 
-      // 7. FINALMENTE, deletar a entrada - FORÇAR DELEÇÃO DIRETA
-      console.log('STEP 7: Deletando entrada principal:', entradaId)
-      
+      // 6. FINALMENTE, deletar a entrada - FORÇAR DELEÇÃO DIRETA
       // Verificar se é admin, franqueado ou dono da entrada
       const isOwner = entradaExists.user_id === currentUser.user?.id
       const isAdmin = userProfile?.role === 'admin'
       const isFranqueado = userProfile?.role === 'franqueado'
-      
-      console.log('Permissões - Owner:', isOwner, 'Admin:', isAdmin, 'Franqueado:', isFranqueado)
       
       if (!isOwner && !isAdmin && !isFranqueado) {
         throw new Error('Você não tem permissão para deletar esta entrada')
@@ -647,30 +656,14 @@ export default function Entradas() {
         .from('entradas')
         .delete()
         .eq('id', entradaId)
-        .select()
 
-      console.log('Entrada principal deletada:', deletedEntrada?.length || 0, 'registros')
       if (entradaDeleteError) {
-        console.error('ERRO CRÍTICO ao deletar entrada:', entradaDeleteError)
         throw new Error(`ERRO ao deletar entrada: ${entradaDeleteError.message}`)
       }
 
       if (!deletedEntrada || deletedEntrada.length === 0) {
-        console.error('NENHUMA ENTRADA FOI DELETADA - RLS bloqueou a operação')
-        console.log('Tentando diagnóstico adicional...')
-        
-        // Tentar diagnóstico
-        const { data: debugAuth } = await supabase.auth.getUser()
-        console.log('Debug - User autenticado:', !!debugAuth.user)
-        console.log('Debug - User ID:', debugAuth.user?.id)
-        
         throw new Error('Nenhuma entrada foi deletada. As políticas de segurança impediram a operação.')
       }
-
-      console.log('=== DELEÇÃO CONCLUÍDA COM SUCESSO ===')
-      
-      // Estoque agora é calculado em tempo real - não precisa de refresh manual
-      console.log('STEP 8: Estoque é calculado automaticamente das movimentações')
 
       toast({
         title: "Entrada deletada",
@@ -681,7 +674,6 @@ export default function Entradas() {
       queryClient.invalidateQueries({ queryKey: ["entradas"] })
       queryClient.invalidateQueries({ queryKey: ["estoque"] })
     } catch (error: any) {
-      console.error('=== ERRO NA DELEÇÃO ===', error)
       toast({
         title: "Erro ao deletar entrada",
         description: error.message || "Ocorreu um erro ao deletar a entrada e seus dados relacionados.",
@@ -691,124 +683,94 @@ export default function Entradas() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      {/* Page Header - Fixed */}
-      <div className="flex-shrink-0 p-6 border-b bg-background">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Entradas</h1>
-            <p className="text-muted-foreground">
-              Gerencie e registre as entradas de produtos no estoque
-            </p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <DateRangeFilter
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-            />
-            <ColumnVisibilityControl
-              columns={columns}
-              onVisibilityChange={(columnKey, visible) => {
-                setColumns(prev => prev.map(col => 
-                  col.key === columnKey ? { ...col, visible } : col
-                ))
-              }}
-              onResetDefault={() => {
-                setColumns(prev => prev.map(col => ({
-                  ...col,
-                  visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
-                })))
-              }}
-            />
-            <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="bg-gradient-primary hover:bg-primary/90 w-full sm:w-auto"
-                  data-tutorial="nova-entrada-btn"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Entrada
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-[1400px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Registrar Nova Entrada</DialogTitle>
-                <DialogDescription>
-                  Importe uma NFe ou preencha os dados manualmente
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="upload" className="flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Upload NFe
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" onClick={handleNovaEntradaManual} className="flex items-center gap-2">
-                    <Edit className="w-4 h-4" />
-                    Manual
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="upload" className="mt-6">
-                  <FileUpload 
-                    onNFDataParsed={handleNFDataParsed}
-                    onError={handleUploadError}
-                  />
-                </TabsContent>
-
-                <TabsContent value="manual" className="mt-6">
-                  {/* Status do Produtor Identificado */}
-                  {(produtorIdentificado || produtorError) && (
-                    <div className="mb-6">
-                      {produtorIdentificado && (
-                        <Alert className="border-green-200 bg-green-50">
-                          <User className="w-4 h-4 text-green-600" />
-                          <AlertDescription>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <strong>Produtor identificado:</strong> {produtorIdentificado.nome}
-                                <br />
-                                <span className="text-sm text-muted-foreground">
-                                  CPF/CNPJ: {produtorIdentificado.cpf_cnpj} | Email: {produtorIdentificado.email}
-                                </span>
-                              </div>
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                Auto-identificado
-                              </Badge>
-                            </div>
-                          </AlertDescription>
-                        </Alert>
-                      )}
+    <div className="min-h-screen flex flex-col overflow-hidden">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 border-b bg-background">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Entradas</h1>
+              <p className="text-muted-foreground">
+                Gerencie e registre as entradas de produtos no estoque
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <DateRangeFilter
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+              />
+              <ColumnVisibilityControl
+                columns={columns}
+                onVisibilityChange={(columnKey, visible) => {
+                  setColumns(prev => prev.map(col => 
+                    col.key === columnKey ? { ...col, visible } : col
+                  ))
+                }}
+                onResetDefault={() => {
+                  setColumns(prev => prev.map(col => ({
+                    ...col,
+                    visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
+                  })))
+                }}
+              />
+              <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="gap-2"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nova Entrada
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                  <DialogHeader>
+                    <DialogTitle>Registrar Nova Entrada</DialogTitle>
+                    <DialogDescription>
+                      Importe uma NFe ou preencha os dados manualmente
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="upload">Importar NFe</TabsTrigger>
+                      <TabsTrigger value="manual">Entrada Manual</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="upload" className="space-y-4">
+                      <FileUpload onNFDataParsed={handleNFDataParsed} onError={() => {}} />
                       
                       {produtorError && (
                         <Alert variant="destructive">
-                          <AlertTriangle className="w-4 h-4" />
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>{produtorError}</AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {produtorIdentificado && (
+                        <Alert>
+                          <User className="h-4 w-4" />
                           <AlertDescription>
-                            <strong>Atenção:</strong> {produtorError}
-                            <br />
-                            <span className="text-sm">
-                              Verifique se o produtor está cadastrado no sistema ou preencha manualmente.
-                            </span>
+                            NFe será registrada para: <strong>{produtorIdentificado.nome}</strong>
                           </AlertDescription>
                         </Alert>
                       )}
-                    </div>
-                  )}
-                  
-                  <FormularioEntrada
-                    nfData={nfData}
-                    onSubmit={handleFormSubmit}
-                    onCancel={handleFormCancel}
-                  />
-                </TabsContent>
-              </Tabs>
-            </DialogContent>
-          </Dialog>
+                    </TabsContent>
+                    
+                    <TabsContent value="manual" className="space-y-4">
+                      <FormularioEntrada 
+                        onSubmit={handleEntradaSubmit}
+                        nfData={nfData}
+                        onNovaEntradaManual={handleNovaEntradaManual}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
         </div>
-      </div>
-
       </div>
 
       {/* Entradas Table - Scrollable area */}
@@ -820,9 +782,9 @@ export default function Entradas() {
               {entradas?.length || 0} entradas registradas
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0">
+          <CardContent className="flex-1 overflow-y-auto p-0">
             {isLoading ? (
-              <div className="space-y-4 p-6">
+              <div className="space-y-3 p-6">
                 {[...Array(5)].map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
                 ))}
@@ -840,168 +802,111 @@ export default function Entradas() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {entradas.map((entrada) => (
-                        <TableRow key={entrada.id} className="hover:bg-muted/50">
-                          <TableCell className="font-medium text-xs lg:text-sm">
-                            <div className="truncate" title={entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}>
-                              {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-muted-foreground text-xs lg:text-sm">
-                              {entrada.serie || 'N/A'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="hidden 2xl:table-cell">
-                            <span className="text-muted-foreground text-xs font-mono truncate" title={entrada.chave_nfe}>
-                              {entrada.chave_nfe ? entrada.chave_nfe.substring(0, 16) + '...' : 'N/A'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="text-xs lg:text-sm font-medium truncate" title={(entrada as any).emitente_nome || entrada.fornecedores?.nome}>
-                                {(entrada as any).emitente_nome || entrada.fornecedores?.nome || 'N/A'}
-                              </div>
-                              {(entrada.fornecedores as any)?.nome_fantasia && (
-                                <div className="text-xs text-muted-foreground truncate" title={(entrada.fornecedores as any)?.nome_fantasia}>
-                                  {(entrada.fornecedores as any).nome_fantasia}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden 2xl:table-cell">
-                            <span className="text-xs font-mono truncate">
-                              {(entrada as any).emitente_cnpj || (entrada.fornecedores as any)?.cnpj_cpf || 'N/A'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-xs lg:text-sm">
-                              {entrada.data_emissao 
-                                ? new Date(entrada.data_emissao).toLocaleDateString('pt-BR', { 
-                                    day: '2-digit', 
-                                    month: '2-digit'
-                                  })
-                                : 'N/A'
-                              }
-                            </span>
-                          </TableCell>
-                          <TableCell className="hidden 2xl:table-cell">
-                            <span className="text-xs lg:text-sm">
-                              {new Date(entrada.data_entrada).toLocaleDateString('pt-BR', { 
-                                day: '2-digit', 
-                                month: '2-digit'
-                              })}
-                            </span>
-                          </TableCell>
-                          <TableCell className="hidden 2xl:table-cell">
-                            <div>
-                              <span className="text-xs text-muted-foreground truncate block" title={entrada.natureza_operacao}>
-                                {entrada.natureza_operacao || 'N/A'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <div className="flex items-center gap-1 lg:gap-2">
-                              <div className="w-6 h-6 lg:w-8 lg:h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                                <Package className="w-3 h-3 lg:w-4 lg:h-4 text-primary" />
-                              </div>
-                              <span className="text-xs lg:text-sm">
-                                {entrada.entrada_itens?.length || 0}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden 2xl:table-cell">
-                            <span className="text-xs lg:text-sm truncate" title={(entrada as any).franquias?.nome}>
-                              {(entrada as any).franquias?.nome || 'N/A'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={entrada.status_aprovacao} />
-                          </TableCell>
-                          <TableCell className="font-medium text-xs lg:text-sm">
-                            {entrada.valor_total 
-                              ? `R$ ${entrada.valor_total.toLocaleString('pt-BR', { 
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 0
-                                })}`
-                              : 'N/A'
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Visualizar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar
-                                </DropdownMenuItem>
-                                {entrada.xml_content && (
-                                  <DropdownMenuItem>
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Download XML
-                                  </DropdownMenuItem>
-                                )}
-                                
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem 
-                                      className="text-destructive focus:text-destructive"
-                                      onSelect={(e) => e.preventDefault()}
+                    {entradas.map((entrada) => (
+                      <TableRow key={entrada.id} className="hover:bg-muted/50">
+                        {columns.filter(col => col.visible).map((column) => {
+                          const getCellContent = () => {
+                            switch (column.key) {
+                              case "numero_nfe":
+                                return entrada.numero_nfe || "N/A"
+                              case "serie":
+                                return entrada.serie || "N/A"
+                              case "chave_nfe":
+                                return entrada.chave_nfe ? entrada.chave_nfe.substring(0, 8) + "..." : "N/A"
+                              case "emitente_nome":
+                                return entrada.emitente_nome || entrada.fornecedores?.nome || "N/A"
+                              case "emitente_cnpj":
+                                return entrada.emitente_cnpj || "N/A"
+                              case "data_emissao":
+                                return entrada.data_emissao 
+                                  ? format(new Date(entrada.data_emissao), "dd/MM/yyyy") 
+                                  : entrada.data_entrada 
+                                    ? format(new Date(entrada.data_entrada), "dd/MM/yyyy") 
+                                    : "N/A"
+                              case "data_entrada":
+                                return entrada.data_entrada 
+                                  ? format(new Date(entrada.data_entrada), "dd/MM/yyyy") 
+                                  : "N/A"
+                              case "natureza_operacao":
+                                return entrada.natureza_operacao || "N/A"
+                              case "itens_count":
+                                return entrada.entrada_itens?.length || 0
+                              case "deposito_nome":
+                                return entrada.franquias?.nome || "N/A"
+                              case "status_aprovacao":
+                                return <StatusBadge status={entrada.status_aprovacao || 'aguardando_transporte'} />
+                              case "valor_total":
+                                return entrada.valor_total 
+                                  ? `R$ ${Number(entrada.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                                  : "N/A"
+                              case "actions":
+                                return (
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedEntrada(entrada)
+                                        setIsEditMode(true)
+                                      }}
+                                      className="h-7 w-7 p-0"
                                     >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Deletar
-                                    </DropdownMenuItem>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Tem certeza que deseja deletar a entrada{" "}
-                                        <strong>
-                                          {entrada.numero_nfe || `ENT-${entrada.id.slice(0, 8)}`}
-                                        </strong>?
-                                        <br />
-                                        <br />
-                                        Esta ação é irreversível e irá remover:
-                                        <ul className="list-disc list-inside mt-2 space-y-1">
-                                          <li>A entrada e todos os seus itens</li>
-                                          <li>Movimentações de estoque relacionadas</li>
-                                          <li>Histórico de status</li>
-                                          <li>Dados de alocação em ondas (se houver)</li>
-                                          <li>Registros de estoque criados a partir desta entrada</li>
-                                        </ul>
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        onClick={() => handleDeleteEntrada(
-                                          entrada.id, 
-                                          entrada.numero_nfe || undefined
-                                        )}
-                                      >
-                                        Deletar Entrada
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                                      <Eye className="h-3 w-3" />
+                                    </Button>
+                                    {(isAdmin || isFranqueado) && (
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                            <MoreHorizontal className="h-3 w-3" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem onClick={() => {
+                                            setSelectedEntrada(entrada)
+                                            setIsEditMode(true)
+                                          }}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            Editar
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem onClick={() => {
+                                            if (confirm('Tem certeza que deseja excluir esta entrada?')) {
+                                              handleDeleteEntrada(entrada.id)
+                                            }
+                                          }}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Excluir
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    )}
+                                  </div>
+                                )
+                              default:
+                                return entrada[column.key as keyof typeof entrada] || "N/A"
+                            }
+                          }
+
+                          const content = getCellContent()
+                          const isAction = column.key === "actions" || column.key === "status_aprovacao"
+                          
+                          return (
+                            <TableCell key={column.key} className="text-xs lg:text-sm">
+                              {isAction ? content : (
+                                <span 
+                                  className="truncate block" 
+                                  title={typeof content === 'string' ? content : ''}
+                                >
+                                  {content}
+                                </span>
+                              )}
+                            </TableCell>
+                          )
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full p-6">
                 <EmptyState
