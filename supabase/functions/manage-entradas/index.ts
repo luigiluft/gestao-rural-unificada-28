@@ -64,13 +64,18 @@ serve(async (req) => {
 })
 
 async function createEntrada(supabase: any, userId: string, data: any) {
+  // Normalize input
+  if (!data.data_entrada && data.dataEntrada) {
+    data.data_entrada = data.dataEntrada
+  }
+
   // Validate required fields
   if (!data.data_entrada) {
     throw new Error('Missing required fields')
   }
 
-  // Extract itens from data to save separately
-  const { itens, ...entradaData } = data
+  // Extract itens from data to save separately and remove unsupported fields
+  const { itens, tipo: _ignoredTipo, ...entradaData } = data
 
   // Start transaction
   const { data: entrada, error: entradaError } = await supabase
