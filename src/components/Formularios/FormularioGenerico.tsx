@@ -138,13 +138,34 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
 
     try {
       if (tipo === 'entrada') {
+        const dadosEntrada = dados as DadosEntrada
         const dadosCompletos = {
-          ...dados,
-          itens,
-          valorTotal: calcularValorTotal(),
+          data_entrada: dadosEntrada.dataEntrada,
+          numero_nfe: dadosEntrada.numeroNF,
+          serie: dadosEntrada.serie,
+          chave_nfe: dadosEntrada.chaveNFe,
+          natureza_operacao: dadosEntrada.naturezaOperacao,
+          data_emissao: dadosEntrada.dataEmissao,
+          emitente_nome: dadosEntrada.origem,
+          observacoes: dadosEntrada.observacoes,
+          deposito_id: dadosEntrada.depositoId,
+          valor_total: calcularValorTotal(),
           tipo: nfData ? 'nfe' : 'manual',
-          xmlContent: nfData?.xmlContent
+          xml_content: nfData?.xmlContent,
+          itens: itens.map(item => ({
+            produto_id: item.produto_id,
+            nome_produto: item.produto || item.produtoNome,
+            codigo_produto: item.codigo,
+            codigo_ean: item.codigoEAN,
+            quantidade: item.quantidade,
+            unidade_comercial: item.unidade,
+            valor_unitario: item.valorUnitario,
+            lote: item.lote,
+            data_validade: item.dataValidade,
+            data_fabricacao: item.dataFabricacao
+          }))
         }
+        console.log('Dados formatados para entrada:', dadosCompletos)
         onSubmit(dadosCompletos)
       } else {
         // Lógica específica de saída com reservas
