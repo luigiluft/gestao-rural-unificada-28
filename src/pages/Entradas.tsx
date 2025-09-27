@@ -24,6 +24,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalList
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { exportToCSV } from "@/utils/csvExport";
+import { supabase } from "@/integrations/supabase/client";
 
 const StatusBadge = ({
   status
@@ -580,9 +581,20 @@ export default function Entradas() {
 
   const handleFormSubmit = async (dados: any) => {
     try {
-      // Here you would call your API to save the entrada
       console.log('Dados da entrada:', dados);
       
+      // Call the manage-entradas edge function
+      const { data, error } = await supabase.functions.invoke('manage-entradas', {
+        body: {
+          action: 'create',
+          data: dados
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: "Entrada registrada",
         description: "A entrada foi registrada com sucesso."
@@ -593,6 +605,7 @@ export default function Entradas() {
       setActiveTab("upload");
       refetch(); // Refresh the entries list
     } catch (error) {
+      console.error('Erro ao registrar entrada:', error);
       toast({
         title: "Erro",
         description: "Erro ao registrar entrada.",
