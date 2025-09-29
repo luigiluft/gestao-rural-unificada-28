@@ -18,7 +18,7 @@ export const useDashboardStats = () => {
         .eq("ativo", true)
 
       const valorTotal = Array.isArray(estoqueData) ? estoqueData.reduce((acc, item) => {
-        return acc + (item.valor_total_estoque || 0)
+        return acc + (item.valor_total || 0)
       }, 0) : 0
 
       // Get low stock alerts from new function

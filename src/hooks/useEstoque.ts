@@ -2,24 +2,21 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 
 export interface EstoqueItem {
-  id: string
-  user_id: string
   produto_id: string
   deposito_id: string
+  user_id: string
+  lote: string
   quantidade_atual: number
-  quantidade_disponivel?: number
-  quantidade_reservada?: number
-  valor_total_estoque: number
-  ultima_movimentacao: string
-  lotes: string[]
+  valor_unitario: number
+  valor_total: number
   produtos: {
     nome: string
+    codigo?: string
     unidade_medida: string
   }
-  franquias: {
+  franquias?: {
     nome: string
   } | null
-  franquia_nome: string
 }
 
 export const useEstoque = () => {

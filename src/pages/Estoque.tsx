@@ -189,7 +189,7 @@ export default function Estoque() {
                 {estoque.map(item => {
                 const stockLevel = getStockLevel(item.quantidade_atual);
                 const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
-                return <TableRow key={item.id} className="hover:bg-muted/50">
+                return <TableRow key={`${item.produto_id}-${item.lote || 'no-lote'}`} className="hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -197,11 +197,11 @@ export default function Estoque() {
                           </div>
                           <div>
                             <p className="font-medium">{item.produtos?.nome}</p>
-                            <p className="text-sm text-muted-foreground">ID: {item.id.slice(0, 8)}</p>
+                            <p className="text-sm text-muted-foreground">Código: {item.produtos?.codigo || 'N/A'}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{item.lotes?.[0] || 'N/A'}</TableCell>
+                      <TableCell>{item.lote || 'N/A'}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
@@ -214,11 +214,11 @@ export default function Estoque() {
                           {status}
                         </Badge>
                       </TableCell>
-                       <TableCell className="font-medium">
-                         {item.valor_total_estoque ? `R$ ${item.valor_total_estoque.toLocaleString('pt-BR', {
+                        <TableCell className="font-medium">
+                         {item.valor_total ? `R$ ${item.valor_total.toLocaleString('pt-BR', {
                       minimumFractionDigits: 2
                     })}` : 'N/A'}
-                       </TableCell>
+                        </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Dialog>
@@ -250,7 +250,7 @@ export default function Estoque() {
                                         </div>
                                         <div>
                                           <h4 className="font-medium">Lote</h4>
-                                          <p className="text-muted-foreground">{selectedItem.lotes?.[0] || 'N/A'}</p>
+                                          <p className="text-muted-foreground">{selectedItem.lote || 'N/A'}</p>
                                         </div>
                                       </div>
                                       
@@ -262,28 +262,28 @@ export default function Estoque() {
                                           </p>
                                         </div>
                                         <div>
-                                          <h4 className="font-medium">Disponível</h4>
+                                          <h4 className="font-medium">Valor Unitário</h4>
                                           <p className="text-muted-foreground">
-                                            {selectedItem.quantidade_disponivel || selectedItem.quantidade_atual} {selectedItem.produtos?.unidade_medida}
+                                            R$ {selectedItem.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                           </p>
                                         </div>
                                         <div>
-                                          <h4 className="font-medium">Reservado</h4>
+                                          <h4 className="font-medium">Depósito</h4>
                                           <p className="text-muted-foreground">
-                                            {selectedItem.quantidade_reservada} {selectedItem.produtos?.unidade_medida}
+                                            {selectedItem.franquias?.nome || 'N/A'}
                                           </p>
                                         </div>
                                       </div>
 
                                       <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <h4 className="font-medium">Franquia</h4>
-                                          <p className="text-muted-foreground">{selectedItem.franquias?.nome}</p>
-                                        </div>
+                                         <div>
+                                           <h4 className="font-medium">Código do Produto</h4>
+                                           <p className="text-muted-foreground">{selectedItem.produtos?.codigo || 'N/A'}</p>
+                                         </div>
                                          <div>
                                            <h4 className="font-medium">Valor Total</h4>
                                            <p className="text-muted-foreground">
-                                             {selectedItem.valor_total_estoque ? `R$ ${selectedItem.valor_total_estoque.toLocaleString('pt-BR', {
+                                             {selectedItem.valor_total ? `R$ ${selectedItem.valor_total.toLocaleString('pt-BR', {
                                         minimumFractionDigits: 2
                                       })}` : 'N/A'}
                                            </p>

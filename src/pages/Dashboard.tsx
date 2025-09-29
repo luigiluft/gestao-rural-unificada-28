@@ -199,7 +199,7 @@ export default function Dashboard() {
               ) : stats?.alertasDetalhes && stats.alertasDetalhes.length > 0 ? (
                 <>
                   {stats.alertasDetalhes.slice(0, 3).map((alert) => (
-                    <div key={alert.id} className="space-y-2">
+                    <div key={`${alert.produto_id}-${alert.lote || 'no-lote'}`} className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">
                           {(() => {

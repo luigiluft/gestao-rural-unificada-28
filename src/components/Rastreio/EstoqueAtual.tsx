@@ -6,16 +6,21 @@ import { ptBR } from "date-fns/locale"
 import { isAfter, addDays } from "date-fns"
 
 interface EstoqueItem {
-  id: string
+  produto_id: string
+  deposito_id: string
+  user_id: string
+  lote: string
   quantidade_atual: number
-  valor_medio?: number
-  lote?: string
-  data_validade?: string
-  franquia_nome?: string
-  produtos?: { 
+  valor_unitario: number
+  valor_total: number
+  produtos: { 
     nome: string
+    codigo?: string
     unidade_medida: string
   }
+  franquias?: {
+    nome: string
+  } | null
 }
 
 interface EstoqueAtualProps {
@@ -81,7 +86,7 @@ export const EstoqueAtual = ({ estoque, isLoading }: EstoqueAtualProps) => {
 
   // Group by franquia
   const estoqueByFranquia = estoque.reduce((acc, item) => {
-    const franquia = item.franquia_nome || "Franquia não definida"
+    const franquia = item.franquias?.nome || "Franquia não definida"
     if (!acc[franquia]) acc[franquia] = []
     acc[franquia].push(item)
     return acc
@@ -109,10 +114,10 @@ export const EstoqueAtual = ({ estoque, isLoading }: EstoqueAtualProps) => {
               
               <div className="space-y-3">
                 {items.map((item) => {
-                  const validityStatus = getValidityStatus(item.data_validade)
+                  const validityStatus = getValidityStatus(undefined) // Data de validade não está mais disponível
                   
                   return (
-                    <div key={item.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                    <div key={`${item.produto_id}-${item.lote}`} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h5 className="font-medium">
@@ -139,21 +144,17 @@ export const EstoqueAtual = ({ estoque, isLoading }: EstoqueAtualProps) => {
                             {item.quantidade_atual.toLocaleString("pt-BR")} {item.produtos?.unidade_medida || "UN"}
                           </span>
                         </div>
-                        {item.valor_medio && (
-                          <div>
-                            <span className="text-muted-foreground">Valor médio: </span>
-                            <span className="font-medium">
-                              R$ {item.valor_medio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        )}
+                        <div>
+                          <span className="text-muted-foreground">Valor unitário: </span>
+                          <span className="font-medium">
+                            R$ {item.valor_unitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
                       </div>
 
-                      {item.data_validade && (
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          Validade: {format(new Date(item.data_validade), "dd/MM/yyyy", { locale: ptBR })}
-                        </div>
-                      )}
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Valor total: R$ {item.valor_total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </div>
                     </div>
                   )
                 })}
