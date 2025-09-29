@@ -216,10 +216,9 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
         entrada_id: entrada.id,
         produto_id: produto_id,
         tipo_origem: 'entrada',
-        tipo_divergencia: div.tipo || 'quantidade',
+        tipo_divergencia: mapTipoDivergencia(div.tipo_divergencia || div.tipo),
         quantidade_esperada: parseFloat(div.quantidade_esperada) || 0,
         quantidade_encontrada: parseFloat(div.quantidade_encontrada) || 0,
-        diferenca: (parseFloat(div.quantidade_encontrada) || 0) - (parseFloat(div.quantidade_esperada) || 0),
         lote: div.lote || null,
         observacoes: div.observacoes || null,
         status: 'pendente',
@@ -245,4 +244,28 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
     console.error('Error in createDivergenciasRecords:', error)
     // Não falha a operação principal, apenas loga o erro
   }
+}
+
+// Função para mapear tipos de divergência para valores válidos
+function mapTipoDivergencia(tipo: string): string {
+  const tipoLower = (tipo || '').toLowerCase()
+  
+  if (tipoLower.includes('faltante') || tipoLower.includes('falta')) {
+    return 'produto_faltante'
+  }
+  if (tipoLower.includes('excedente') || tipoLower.includes('sobra')) {
+    return 'produto_excedente'
+  }
+  if (tipoLower.includes('quantidade')) {
+    return 'quantidade_incorreta'
+  }
+  if (tipoLower.includes('lote')) {
+    return 'lote_incorreto'
+  }
+  if (tipoLower.includes('validade')) {
+    return 'validade_incorreta'
+  }
+  
+  // Default para quantidade incorreta
+  return 'quantidade_incorreta'
 }
