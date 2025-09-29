@@ -226,9 +226,31 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       })
     })
     
-    // Add products selected for new pallet
+    // Add products selected for new pallet (only non-avaria)
     selectedProductsForNewPallet.forEach(product => {
-      if (product.productId === itemId) {
+      if (product.productId === itemId && !product.isAvaria) {
+        total += product.quantidade
+      }
+    })
+    
+    return total
+  }
+
+  const getTotalQuantidadeAlocadaAvaria = (itemId: string) => {
+    let total = 0
+    
+    // Count avaria items in existing pallets
+    typedPallets.forEach(pallet => {
+      pallet.entrada_pallet_itens?.forEach(item => {
+        if (item.entrada_item_id === itemId && pallet.descricao?.includes('Avaria')) {
+          total += Number(item.quantidade)
+        }
+      })
+    })
+    
+    // Add avaria products selected for new pallet
+    selectedProductsForNewPallet.forEach(product => {
+      if (product.productId === itemId && product.isAvaria) {
         total += product.quantidade
       }
     })
@@ -251,8 +273,9 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     let disponivel = Number(item.quantidade) - quantityAdjustment - alocada
     
     if (includeAvaria && hasAvaria) {
-      // If including avaria, return only the avaria quantity
-      return Math.max(0, avariaQuantity)
+      // If including avaria, count how much avaria was already allocated
+      const avariaAlocada = getTotalQuantidadeAlocadaAvaria(itemId)
+      return Math.max(0, avariaQuantity - avariaAlocada)
     } else if (!includeAvaria && hasAvaria) {
       // If not including avaria, subtract avaria quantity from available
       disponivel -= avariaQuantity
@@ -302,14 +325,17 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       })
       
       if (hasRealAvaria && avariaQuantity > 0) {
-        products.push({
-          ...item,
-          id: `${item.id}_avaria`, // Use unique ID for damaged version
-          originalId: item.id, // Keep reference to original
-          isAvaria: true,
-          displayName: `${item.nome_produto} (Avaria)`,
-          disponivel: avariaQuantity
-        })
+        const avariaDisponivel = getQuantidadeDisponivel(item.id, true)
+        if (avariaDisponivel > 0) {
+          products.push({
+            ...item,
+            id: `${item.id}_avaria`, // Use unique ID for damaged version
+            originalId: item.id, // Keep reference to original
+            isAvaria: true,
+            displayName: `${item.nome_produto} (Avaria)`,
+            disponivel: avariaDisponivel
+          })
+        }
       }
     })
     
