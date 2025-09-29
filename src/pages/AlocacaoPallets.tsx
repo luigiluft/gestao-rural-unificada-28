@@ -392,9 +392,7 @@ export default function AlocacaoPallets() {
                     <h4 className="font-medium mb-2">
                       Pallet #{currentResult.pallet.numero_pallet} - {isWaveMode === "manual" ? "Confirmação Manual" : "Confirmação com Scanner"}
                     </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Posição: <span className="font-medium">{currentResult.result.posicao_codigo}</span>
-                    </p>
+                    
                     
                     {isWaveMode === "manual" ? <div>
                     <p className="text-sm text-muted-foreground mb-4">
