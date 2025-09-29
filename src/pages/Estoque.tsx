@@ -15,6 +15,7 @@ import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import AvariasTab from "@/components/Estoque/AvariasTab";
 export default function Estoque() {
   const navigate = useNavigate();
   const {
@@ -161,178 +162,216 @@ export default function Estoque() {
         </CardContent>
       </Card>
 
-      {/* Stock Table */}
+      {/* Stock Table with Tabs */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle>Produtos em Estoque</CardTitle>
+          <CardTitle>Controle de Estoque</CardTitle>
           <CardDescription>
-            {estoque?.length || 0} produtos monitorados
+            Gerencie produtos em estoque e produtos avariados
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? <div className="space-y-4">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-            </div> : estoque && estoque.length > 0 ? <div className="overflow-x-auto">
-              <Table className="min-w-[800px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Lote</TableHead>
-                  <TableHead>Quantidade</TableHead>
-                  <TableHead>Depósito</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Valor Total</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {estoque.map(item => {
-                const stockLevel = getStockLevel(item.quantidade_atual);
-                const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
-                return <TableRow key={`${item.produto_id}-${item.lote || 'no-lote'}`} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <Package className="w-4 h-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{item.produtos?.nome}</p>
-                            <p className="text-sm text-muted-foreground">Código: {item.produtos?.codigo || 'N/A'}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.lote || 'N/A'}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
-                          
-                        </div>
-                      </TableCell>
-                      <TableCell>{(item as any).franquias?.nome}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(status) as any}>
-                          {status}
-                        </Badge>
-                      </TableCell>
-                        <TableCell className="font-medium">
-                         {item.valor_total ? `R$ ${item.valor_total.toLocaleString('pt-BR', {
-                      minimumFractionDigits: 2
-                    })}` : 'N/A'}
-                        </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm" onClick={() => setSelectedItem(item)}>
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[600px]">
-                              <DialogHeader>
-                                <DialogTitle>Detalhes do Produto</DialogTitle>
-                                <DialogDescription>
-                                  Informações completas e histórico de movimentações
-                                </DialogDescription>
-                              </DialogHeader>
-                              
-                              {selectedItem && <Tabs defaultValue="details" className="w-full">
-                                  <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="details">Detalhes</TabsTrigger>
-                                    <TabsTrigger value="history">Histórico</TabsTrigger>
-                                  </TabsList>
-                                  
-                                  <TabsContent value="details" className="space-y-4">
-                                    <div className="grid gap-4">
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <h4 className="font-medium">Produto</h4>
-                                          <p className="text-muted-foreground">{selectedItem.produtos?.nome}</p>
-                                        </div>
-                                        <div>
-                                          <h4 className="font-medium">Lote</h4>
-                                          <p className="text-muted-foreground">{selectedItem.lote || 'N/A'}</p>
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="grid grid-cols-3 gap-4">
-                                        <div>
-                                          <h4 className="font-medium">Quantidade Atual</h4>
-                                          <p className="text-muted-foreground">
-                                            {selectedItem.quantidade_atual} {selectedItem.produtos?.unidade_medida}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <h4 className="font-medium">Valor Unitário</h4>
-                                          <p className="text-muted-foreground">
-                                            R$ {selectedItem.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                          </p>
-                                        </div>
-                                        <div>
-                                          <h4 className="font-medium">Depósito</h4>
-                                          <p className="text-muted-foreground">
-                                            {selectedItem.franquias?.nome || 'N/A'}
-                                          </p>
-                                        </div>
-                                      </div>
-
-                                      <div className="grid grid-cols-2 gap-4">
-                                         <div>
-                                           <h4 className="font-medium">Código do Produto</h4>
-                                           <p className="text-muted-foreground">{selectedItem.produtos?.codigo || 'N/A'}</p>
-                                         </div>
-                                         <div>
-                                           <h4 className="font-medium">Valor Total</h4>
-                                           <p className="text-muted-foreground">
-                                             {selectedItem.valor_total ? `R$ ${selectedItem.valor_total.toLocaleString('pt-BR', {
-                                        minimumFractionDigits: 2
-                                      })}` : 'N/A'}
-                                           </p>
-                                         </div>
-                                      </div>
-
-                                      {selectedItem.data_validade && <div>
-                                          <h4 className="font-medium">Validade</h4>
-                                          <p className="text-muted-foreground">
-                                            {new Date(selectedItem.data_validade).toLocaleDateString('pt-BR')}
-                                          </p>
-                                        </div>}
-                                    </div>
-                                  </TabsContent>
-                                  
-                                  <TabsContent value="history" className="space-y-4">
-                                    <div className="space-y-3">
-                                      {movimentacoes && movimentacoes.length > 0 ? movimentacoes.map(mov => <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                                            <div className={`p-2 rounded-full ${mov.tipo_movimentacao === 'entrada' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-                                              <History className="w-4 h-4" />
+          <Tabs defaultValue="estoque" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="estoque">Produtos em Estoque</TabsTrigger>
+              <TabsTrigger value="avarias">Produtos Avariados</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="estoque" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {estoque?.length || 0} produtos monitorados
+                </p>
+              </div>
+              
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : estoque && estoque.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[800px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Lote</TableHead>
+                        <TableHead>Quantidade</TableHead>
+                        <TableHead>Depósito</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                        <TableHead className="w-[100px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {estoque.map(item => {
+                        const stockLevel = getStockLevel(item.quantidade_atual);
+                        const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
+                        return (
+                          <TableRow key={`${item.produto_id}-${item.lote || 'no-lote'}`} className="hover:bg-muted/50">
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                  <Package className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="font-medium">{item.produtos?.nome}</p>
+                                  <p className="text-sm text-muted-foreground">Código: {item.produtos?.codigo || 'N/A'}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{item.lote || 'N/A'}</TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>{(item as any).franquias?.nome}</TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusColor(status) as any}>
+                                {status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {item.valor_total ? `R$ ${item.valor_total.toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2
+                              })}` : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedItem(item)}>
+                                      <Eye className="w-4 h-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="sm:max-w-[600px]">
+                                    <DialogHeader>
+                                      <DialogTitle>Detalhes do Produto</DialogTitle>
+                                      <DialogDescription>
+                                        Informações completas e histórico de movimentações
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    
+                                    {selectedItem && (
+                                      <Tabs defaultValue="details" className="w-full">
+                                        <TabsList className="grid w-full grid-cols-2">
+                                          <TabsTrigger value="details">Detalhes</TabsTrigger>
+                                          <TabsTrigger value="history">Histórico</TabsTrigger>
+                                        </TabsList>
+                                        
+                                        <TabsContent value="details" className="space-y-4">
+                                          <div className="grid gap-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                              <div>
+                                                <h4 className="font-medium">Produto</h4>
+                                                <p className="text-muted-foreground">{selectedItem.produtos?.nome}</p>
+                                              </div>
+                                              <div>
+                                                <h4 className="font-medium">Lote</h4>
+                                                <p className="text-muted-foreground">{selectedItem.lote || 'N/A'}</p>
+                                              </div>
                                             </div>
-                                            <div className="flex-1">
-                                              <p className="font-medium">
-                                                {mov.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'} - {mov.quantidade}
-                                              </p>
-                                              <p className="text-sm text-muted-foreground">{(mov as any).franquias?.nome}</p>
-                                              <p className="text-xs text-muted-foreground">
-                                                {formatDistanceToNow(new Date(mov.data_movimentacao), {
-                                        addSuffix: true,
-                                        locale: ptBR
-                                      })}
-                                              </p>
+                                            
+                                            <div className="grid grid-cols-3 gap-4">
+                                              <div>
+                                                <h4 className="font-medium">Quantidade Atual</h4>
+                                                <p className="text-muted-foreground">
+                                                  {selectedItem.quantidade_atual} {selectedItem.produtos?.unidade_medida}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <h4 className="font-medium">Valor Unitário</h4>
+                                                <p className="text-muted-foreground">
+                                                  R$ {selectedItem.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </p>
+                                              </div>
+                                              <div>
+                                                <h4 className="font-medium">Depósito</h4>
+                                                <p className="text-muted-foreground">
+                                                  {selectedItem.franquias?.nome || 'N/A'}
+                                                </p>
+                                              </div>
                                             </div>
-                                          </div>) : <EmptyState icon={<History className="w-8 h-8 text-muted-foreground" />} title="Nenhuma movimentação" description="Ainda não há movimentações para este produto." />}
-                                    </div>
-                                  </TabsContent>
-                                </Tabs>}
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>;
-              })}
-              </TableBody>
-              </Table>
-            </div> : <EmptyState icon={<Package className="w-8 h-8 text-muted-foreground" />} title="Nenhum produto em estoque" description="Registre entradas de produtos para começar a controlar seu estoque." action={{
-          label: "Registrar Primeira Entrada",
-          onClick: () => navigate('/entradas')
-        }} />}
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                              <div>
+                                                <h4 className="font-medium">Código do Produto</h4>
+                                                <p className="text-muted-foreground">{selectedItem.produtos?.codigo || 'N/A'}</p>
+                                              </div>
+                                              <div>
+                                                <h4 className="font-medium">Valor Total</h4>
+                                                <p className="text-muted-foreground">
+                                                  {selectedItem.valor_total ? `R$ ${selectedItem.valor_total.toLocaleString('pt-BR', {
+                                                    minimumFractionDigits: 2
+                                                  })}` : 'N/A'}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </TabsContent>
+                                        
+                                        <TabsContent value="history" className="space-y-4">
+                                          <div className="space-y-3">
+                                            {movimentacoes && movimentacoes.length > 0 ? (
+                                              movimentacoes.map(mov => (
+                                                <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                                                  <div className={`p-2 rounded-full ${mov.tipo_movimentacao === 'entrada' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                                                    <History className="w-4 h-4" />
+                                                  </div>
+                                                  <div className="flex-1">
+                                                    <p className="font-medium">
+                                                      {mov.tipo_movimentacao === 'entrada' ? 'Entrada' : 'Saída'} - {mov.quantidade}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">{(mov as any).franquias?.nome}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                      {formatDistanceToNow(new Date(mov.data_movimentacao), {
+                                                        addSuffix: true,
+                                                        locale: ptBR
+                                                      })}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              ))
+                                            ) : (
+                                              <EmptyState 
+                                                icon={<History className="w-8 h-8 text-muted-foreground" />} 
+                                                title="Nenhuma movimentação" 
+                                                description="Ainda não há movimentações para este produto." 
+                                              />
+                                            )}
+                                          </div>
+                                        </TabsContent>
+                                      </Tabs>
+                                    )}
+                                  </DialogContent>
+                                </Dialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <EmptyState 
+                  icon={<Package className="w-8 h-8 text-muted-foreground" />} 
+                  title="Nenhum produto em estoque" 
+                  description="Registre entradas de produtos para começar a controlar seu estoque." 
+                  action={{
+                    label: "Registrar Primeira Entrada",
+                    onClick: () => navigate('/entradas')
+                  }} 
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="avarias" className="space-y-4">
+              <AvariasTab />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>;
