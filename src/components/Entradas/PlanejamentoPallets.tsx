@@ -24,6 +24,7 @@ import {
 } from "@/hooks/useEntradaDivergencias"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { usePesoBrutoMaximoPallet } from "@/hooks/useConfiguracoesSistema"
 
 type ExtendedEntradaPallet = EntradaPallet & { 
   entrada_pallet_itens?: EntradaPalletItem[]
@@ -45,6 +46,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const { data: pallets = [], isLoading } = useEntradaPallets(entradaId)
   const { data: divergencias = [], isLoading: isLoadingDivergencias } = useEntradaDivergencias(entradaId)
   const typedPallets = pallets as ExtendedEntradaPallet[]
+  const pesoBrutoMaximo = usePesoBrutoMaximoPallet()
 
   // Fetch product packaging information
   const { data: productPackaging = {} } = useQuery({
@@ -325,6 +327,44 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const validateQuantityIncrement = (itemId: string, quantity: number) => {
     const increment = getPackagingIncrement(itemId)
     return Math.floor(quantity / increment) * increment
+  }
+
+  const calculatePalletGrossWeight = (products: Array<{ productId: string; quantidade: number; isAvaria?: boolean }>) => {
+    // Calculate total net weight and multiply by 1.2 for gross weight
+    const totalNetWeight = products.reduce((total, product) => {
+      const originalId = product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId
+      const item = entradaItens.find(i => i.id === originalId)
+      // Assume 1kg per unit if no weight data available
+      const unitWeight = 1 // This could be enhanced with actual product weight data
+      return total + (product.quantidade * unitWeight)
+    }, 0)
+    
+    return totalNetWeight * 1.2 // Gross weight = net weight * 1.2
+  }
+
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
+    const originalId = productId.includes('_avaria') ? productId.replace('_avaria', '') : productId
+    const increment = getPackagingIncrement(originalId)
+    const validatedQuantity = Math.floor(newQuantity / increment) * increment
+    
+    if (validatedQuantity === 0) return
+
+    // Test the new quantity for weight validation
+    const updatedProducts = selectedProductsForNewPallet.map(p => 
+      p.productId === productId ? { ...p, quantidade: validatedQuantity } : p
+    )
+    
+    const grossWeight = calculatePalletGrossWeight(updatedProducts)
+    if (grossWeight > pesoBrutoMaximo) {
+      toast({
+        title: "Peso bruto excedido",
+        description: `O peso bruto do pallet (${grossWeight.toFixed(1)} kg) excederá o máximo permitido (${pesoBrutoMaximo} kg).`,
+        variant: "destructive"
+      })
+      return
+    }
+
+    setSelectedProductsForNewPallet(updatedProducts)
   }
 
   // Helper functions for divergencias display
@@ -646,36 +686,47 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
               <div>
                 <Label className="text-sm">Produtos Selecionados:</Label>
                 <div className="space-y-2 mt-2">
-                  {selectedProductsForNewPallet.map((product) => (
-                    <div key={product.productId} className="flex items-center gap-2 p-2 bg-muted/30 rounded">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{product.nome}</div>
-                        {product.codigo && (
-                          <div className="text-xs text-muted-foreground">{product.codigo}</div>
-                        )}
-                      </div>
-                      <Input
-                        type="number"
-                        value={product.quantidade}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value) || 0
-                          handleAddProductToNewPallet(product.productId, value, product.isAvaria)
-                        }}
-                        className="w-20 h-8 text-sm"
-                        max={product.maxQuantidade}
-                        min={product.isAvaria ? 1 : getPackagingIncrement(product.productId.replace('_avaria', ''))}
-                        step={product.isAvaria ? 1 : getPackagingIncrement(product.productId.replace('_avaria', ''))}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveProductFromNewPallet(product.productId)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
+                   {selectedProductsForNewPallet.map((product) => (
+                     <div key={product.productId} className="flex items-center gap-2 p-2 bg-muted/30 rounded">
+                       <div className="flex-1 min-w-0">
+                         <div className="flex items-center gap-2">
+                           <div className="text-sm font-medium truncate">{product.nome}</div>
+                           {product.isAvaria && (
+                             <Badge variant="destructive" className="text-xs">Avaria</Badge>
+                           )}
+                         </div>
+                         {product.codigo && (
+                           <div className="text-xs text-muted-foreground">{product.codigo}</div>
+                         )}
+                         <div className="text-xs text-muted-foreground">
+                           Incremento: {getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)} unidades
+                         </div>
+                       </div>
+                       <Input
+                         type="number"
+                         value={product.quantidade}
+                         onChange={(e) => {
+                           const value = parseInt(e.target.value) || 0
+                           const originalId = product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId
+                           const increment = getPackagingIncrement(originalId)
+                           const validatedValue = Math.floor(value / increment) * increment || increment
+                           handleQuantityChange(product.productId, validatedValue)
+                         }}
+                         className="w-20 h-8 text-sm"
+                         max={product.maxQuantidade}
+                         min={getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)}
+                         step={getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)}
+                       />
+                       <Button
+                         variant="ghost"
+                         size="sm"
+                         onClick={() => handleRemoveProductFromNewPallet(product.productId)}
+                         className="h-8 w-8 p-0"
+                       >
+                         <Trash2 className="h-3 w-3" />
+                       </Button>
+                     </div>
+                   ))}
                 </div>
               </div>
             )}
