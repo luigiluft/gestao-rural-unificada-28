@@ -181,5 +181,68 @@ async function updateEntradaStatus(supabase: any, userId: string, data: any) {
     .single()
 
   if (error) throw error
+
+  // Se há divergências, criar registros individuais na tabela divergencias
+  if (divergencias && Array.isArray(divergencias) && divergencias.length > 0) {
+    await createDivergenciasRecords(supabase, entrada, divergencias, userId)
+  }
+
   return entrada
+}
+
+async function createDivergenciasRecords(supabase: any, entrada: any, divergencias: any[], userId: string) {
+  try {
+    const divergenciasRecords = []
+    
+    for (const div of divergencias) {
+      // Encontrar o produto pelo nome do produto na divergência
+      let produto_id = null
+      if (div.produto_nome) {
+        const { data: produto } = await supabase
+          .from('produtos')
+          .select('id')
+          .ilike('nome', div.produto_nome)
+          .limit(1)
+          .single()
+        
+        if (produto) {
+          produto_id = produto.id
+        }
+      }
+
+      const divergenciaRecord = {
+        user_id: entrada.user_id,
+        deposito_id: entrada.deposito_id,
+        entrada_id: entrada.id,
+        produto_id: produto_id,
+        tipo_origem: 'entrada',
+        tipo_divergencia: div.tipo || 'quantidade',
+        quantidade_esperada: parseFloat(div.quantidade_esperada) || 0,
+        quantidade_encontrada: parseFloat(div.quantidade_encontrada) || 0,
+        diferenca: (parseFloat(div.quantidade_encontrada) || 0) - (parseFloat(div.quantidade_esperada) || 0),
+        lote: div.lote || null,
+        observacoes: div.observacoes || null,
+        status: 'pendente',
+        prioridade: div.prioridade || 'media'
+      }
+
+      divergenciasRecords.push(divergenciaRecord)
+    }
+
+    if (divergenciasRecords.length > 0) {
+      const { error: divError } = await supabase
+        .from('divergencias')
+        .insert(divergenciasRecords)
+
+      if (divError) {
+        console.error('Error creating divergencias records:', divError)
+        // Não falha a operação principal, apenas loga o erro
+      } else {
+        console.log(`Created ${divergenciasRecords.length} divergencias records for entrada ${entrada.id}`)
+      }
+    }
+  } catch (error) {
+    console.error('Error in createDivergenciasRecords:', error)
+    // Não falha a operação principal, apenas loga o erro
+  }
 }
