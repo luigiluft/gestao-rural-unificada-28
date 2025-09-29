@@ -1,42 +1,41 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Package, Printer, QrCode } from 'lucide-react'
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Package, Printer, QrCode } from 'lucide-react';
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 interface PalletBarcodeLabelProps {
   pallet: {
-    id: string
-    numero_pallet: number
-    codigo_barras?: string
-    quantidade_atual: number
+    id: string;
+    numero_pallet: number;
+    codigo_barras?: string;
+    quantidade_atual: number;
     entrada_pallet_itens?: Array<{
-      quantidade: number
+      quantidade: number;
       entrada_itens: {
-        nome_produto: string
-        lote?: string
-        data_validade?: string
-      }
-    }>
-  }
+        nome_produto: string;
+        lote?: string;
+        data_validade?: string;
+      };
+    }>;
+  };
   entradaData?: {
-    data_entrada: string
+    data_entrada: string;
     fornecedor?: {
-      nome: string
-    }
-  }
+      nome: string;
+    };
+  };
 }
-
-export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelProps) {
-  const produto = pallet.entrada_pallet_itens?.[0]?.entrada_itens
-  
+export function PalletBarcodeLabel({
+  pallet,
+  entradaData
+}: PalletBarcodeLabelProps) {
+  const produto = pallet.entrada_pallet_itens?.[0]?.entrada_itens;
   const handlePrint = () => {
     // Abrir janela de impressão
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return
-    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
     const labelContent = `
       <!DOCTYPE html>
       <html>
@@ -132,29 +131,30 @@ export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelPr
               ${produto?.data_validade ? `
                 <div class="row">
                   <span class="bold">Validade:</span>
-                  <span>${format(new Date(produto.data_validade), "dd/MM/yy", { locale: ptBR })}</span>
+                  <span>${format(new Date(produto.data_validade), "dd/MM/yy", {
+      locale: ptBR
+    })}</span>
                 </div>
               ` : ''}
               ${entradaData ? `
                 <div class="row">
                   <span class="bold">Data Entrada:</span>
-                  <span>${format(new Date(entradaData.data_entrada), "dd/MM/yy", { locale: ptBR })}</span>
+                  <span>${format(new Date(entradaData.data_entrada), "dd/MM/yy", {
+      locale: ptBR
+    })}</span>
                 </div>
               ` : ''}
             </div>
           </div>
         </body>
       </html>
-    `
-    
-    printWindow.document.write(labelContent)
-    printWindow.document.close()
-    printWindow.focus()
-    printWindow.print()
-  }
-
-  return (
-    <Card className="w-fit">
+    `;
+    printWindow.document.write(labelContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+  return <Card className="w-fit">
       <CardContent className="p-4">
         <div className="space-y-3">
           {/* Header */}
@@ -174,12 +174,12 @@ export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelPr
               <QrCode className="h-4 w-4" />
               <span className="text-xs text-muted-foreground">Código do Pallet</span>
             </div>
-            <div className="font-mono text-lg font-bold bg-muted p-2 rounded border-2 border-dashed mb-2">
-              {pallet.codigo_barras || `PLT${pallet.numero_pallet.toString().padStart(8, '0')}`}
-            </div>
+            
             {/* Código de barras visual */}
             <div className="bg-white p-2 border border-gray-300 rounded">
-              <div className="font-mono text-sm tracking-widest text-center" style={{ fontFamily: '"Libre Barcode 128 Text", monospace' }}>
+              <div className="font-mono text-sm tracking-widest text-center" style={{
+              fontFamily: '"Libre Barcode 128 Text", monospace'
+            }}>
                 {pallet.codigo_barras || `PLT${pallet.numero_pallet.toString().padStart(8, '0')}`}
               </div>
             </div>
@@ -198,41 +198,33 @@ export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelPr
                 <span className="font-medium text-muted-foreground">Quantidade:</span>
                 <p className="font-bold text-primary">{pallet.quantidade_atual} un</p>
               </div>
-              {produto?.lote && (
-                <div>
+              {produto?.lote && <div>
                   <span className="font-medium text-muted-foreground">Lote:</span>
                   <p className="font-mono">{produto.lote}</p>
-                </div>
-              )}
-              {produto?.data_validade && (
-                <div>
+                </div>}
+              {produto?.data_validade && <div>
                   <span className="font-medium text-muted-foreground">Validade:</span>
-                  <p>{format(new Date(produto.data_validade), "dd/MM/yyyy", { locale: ptBR })}</p>
-                </div>
-              )}
-              {entradaData && (
-                <div className="col-span-2">
+                  <p>{format(new Date(produto.data_validade), "dd/MM/yyyy", {
+                  locale: ptBR
+                })}</p>
+                </div>}
+              {entradaData && <div className="col-span-2">
                   <span className="font-medium text-muted-foreground">Data Entrada:</span>
-                  <p>{format(new Date(entradaData.data_entrada), "dd/MM/yyyy", { locale: ptBR })}</p>
-                </div>
-              )}
+                  <p>{format(new Date(entradaData.data_entrada), "dd/MM/yyyy", {
+                  locale: ptBR
+                })}</p>
+                </div>}
             </div>
           </div>
 
           <Separator />
 
           {/* Botão de Impressão */}
-          <Button 
-            onClick={handlePrint}
-            variant="outline" 
-            size="sm" 
-            className="w-full flex items-center gap-2"
-          >
+          <Button onClick={handlePrint} variant="outline" size="sm" className="w-full flex items-center gap-2">
             <Printer className="h-4 w-4" />
             Imprimir Etiqueta
           </Button>
         </div>
       </CardContent>
-    </Card>
-  )
+    </Card>;
 }
