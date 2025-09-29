@@ -3164,6 +3164,10 @@ export type Database = {
         Args: { p_auth_user_id: string; p_cpf: string }
         Returns: boolean
       }
+      migrate_existing_divergencias: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       process_entrada_itens_without_produto: {
         Args: Record<PropertyKey, never>
         Returns: number
