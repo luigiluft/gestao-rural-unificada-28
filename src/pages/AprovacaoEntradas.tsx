@@ -796,20 +796,7 @@ export default function AprovacaoEntradas() {
 
           {selectedEntradaPlanejamento && <div className="space-y-6">
               {/* Informações da entrada */}
-              <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                <div>
-                  <strong>Produtor:</strong> {selectedEntradaPlanejamento.profiles?.nome}
-                </div>
-                <div>
-                  <strong>Fornecedor:</strong> {selectedEntradaPlanejamento.fornecedores?.nome}
-                </div>
-                <div>
-                  <strong>Data:</strong> {format(new Date(selectedEntradaPlanejamento.data_entrada), 'dd/MM/yyyy')}
-                </div>
-                <div>
-                  <strong>Valor Total:</strong> R$ {selectedEntradaPlanejamento.valor_total?.toFixed(2) || '0,00'}
-                </div>
-              </div>
+              
 
               {/* Componente de planejamento */}
               <PlanejamentoPallets entradaId={selectedEntradaPlanejamento.id} entradaItens={selectedEntradaPlanejamento.entrada_itens || []} />
