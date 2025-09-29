@@ -426,17 +426,6 @@ export default function AlocacaoPallets() {
                     </div>
                   </div> : <div className="space-y-3">
                       <div>
-                        <Label htmlFor="wavepalletCode" className="text-sm">Código do Pallet</Label>
-                        <Input id="wavepalletCode" placeholder="Escaneie o código do pallet" value={scannerData.palletCode} onChange={e => setScannerData(prev => ({
-                  ...prev,
-                  palletCode: e.target.value
-                }))} className="text-sm" />
-                      </div>
-                      <div>
-                        
-                        
-                      </div>
-                      <div>
                         <Label htmlFor="waveCustomPosition" className="text-sm">Posição</Label>
                         <div className="flex gap-2">
                           <Input id="waveCustomPosition" value={isEditingPosition ? customPosition : currentResult.result.posicao_codigo} onChange={e => setCustomPosition(e.target.value)} readOnly={!isEditingPosition} className="text-sm" />
@@ -451,6 +440,17 @@ export default function AlocacaoPallets() {
                             {isEditingPosition ? "Cancelar" : "Trocar"}
                           </Button>
                         </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="wavepalletCode" className="text-sm">Código do Pallet</Label>
+                        <Input id="wavepalletCode" placeholder="Escaneie o código do pallet" value={scannerData.palletCode} onChange={e => setScannerData(prev => ({
+                  ...prev,
+                  palletCode: e.target.value
+                }))} className="text-sm" />
+                      </div>
+                      <div>
+                        
+                        
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button size="sm" onClick={confirmWaveStep} disabled={confirmAllocation.isPending || !scannerData.palletCode || !scannerData.positionCode}>
