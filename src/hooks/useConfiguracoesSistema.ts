@@ -104,9 +104,3 @@ export const useJanelaEntregaDias = () => {
   const { valor } = useConfiguracao("janela_entrega_dias")
   return parseInt(valor || "3")
 }
-
-// Hook para obter peso bruto máximo por pallet
-export const usePesoBrutoMaximoPallet = () => {
-  const { valor } = useConfiguracao("peso_bruto_maximo_pallet")
-  return parseInt(valor || "1000")
-}
