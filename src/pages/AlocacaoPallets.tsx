@@ -577,20 +577,6 @@ export default function AlocacaoPallets() {
                   </div>
                 </div> : <div className="space-y-3">
                   <div>
-                    <Label htmlFor="individualPalletCode" className="text-sm">Código do Pallet</Label>
-                    <Input id="individualPalletCode" placeholder="Escaneie o código do pallet" value={scannerData.palletCode} onChange={e => setScannerData(prev => ({
-              ...prev,
-              palletCode: e.target.value
-            }))} className="text-sm" />
-                  </div>
-                  <div>
-                    <Label htmlFor="individualPositionCode" className="text-sm">Código da Posição</Label>
-                    <Input id="individualPositionCode" placeholder="Escaneie o código da posição" value={scannerData.positionCode} onChange={e => setScannerData(prev => ({
-              ...prev,
-              positionCode: e.target.value
-            }))} className="text-sm" />
-                  </div>
-                  <div>
                     <Label htmlFor="individualCustomPosition" className="text-sm">Posição</Label>
                     <div className="flex gap-2">
                       <Input id="individualCustomPosition" value={isEditingPosition ? customPosition : allocationResult.posicao_codigo} onChange={e => setCustomPosition(e.target.value)} readOnly={!isEditingPosition} className="text-sm" />
@@ -605,6 +591,20 @@ export default function AlocacaoPallets() {
                         {isEditingPosition ? "Cancelar" : "Trocar"}
                       </Button>
                     </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="individualPalletCode" className="text-sm">Código do Pallet</Label>
+                    <Input id="individualPalletCode" placeholder="Escaneie o código do pallet" value={scannerData.palletCode} onChange={e => setScannerData(prev => ({
+              ...prev,
+              palletCode: e.target.value
+            }))} className="text-sm" />
+                  </div>
+                  <div>
+                    <Label htmlFor="individualPositionCode" className="text-sm">Código da Posição</Label>
+                    <Input id="individualPositionCode" placeholder="Escaneie o código da posição" value={scannerData.positionCode} onChange={e => setScannerData(prev => ({
+              ...prev,
+              positionCode: e.target.value
+            }))} className="text-sm" />
                   </div>
                   <div className="flex gap-2 pt-2">
                     <Button size="sm" onClick={handleScannerConfirmation} disabled={confirmAllocation.isPending || !scannerData.palletCode || !scannerData.positionCode}>
