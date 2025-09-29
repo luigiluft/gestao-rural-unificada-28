@@ -66,13 +66,20 @@ export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelPr
               padding-bottom: 4px;
               margin-bottom: 4px;
             }
-            .barcode {
+            .pallet-code {
               text-align: center;
               font-size: 20px;
               font-weight: bold;
-              font-family: 'Libre Barcode 128 Text', monospace;
-              letter-spacing: 2px;
-              margin: 8px 0;
+              margin: 8px 0 4px 0;
+            }
+            .barcode {
+              text-align: center;
+              font-family: 'Libre Barcode 128 Text', 'Libre Barcode 128', monospace;
+              font-size: 24px;
+              letter-spacing: 0px;
+              margin: 0 0 8px 0;
+              border: 1px solid #000;
+              padding: 4px;
             }
             .info {
               font-size: 10px;
@@ -90,12 +97,17 @@ export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelPr
               .label { page-break-after: always; }
             }
           </style>
+          <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128+Text&display=swap" rel="stylesheet">
         </head>
         <body>
           <div class="label">
             <div class="header">
               <div class="bold">PALLET ${pallet.numero_pallet}</div>
               <div>AgroHub WMS</div>
+            </div>
+            
+            <div class="pallet-code">
+              ${pallet.codigo_barras || 'PLT' + pallet.numero_pallet.toString().padStart(8, '0')}
             </div>
             
             <div class="barcode">
@@ -160,10 +172,16 @@ export function PalletBarcodeLabel({ pallet, entradaData }: PalletBarcodeLabelPr
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <QrCode className="h-4 w-4" />
-              <span className="text-xs text-muted-foreground">Código de Barras</span>
+              <span className="text-xs text-muted-foreground">Código do Pallet</span>
             </div>
-            <div className="font-mono text-lg font-bold bg-muted p-2 rounded border-2 border-dashed">
+            <div className="font-mono text-lg font-bold bg-muted p-2 rounded border-2 border-dashed mb-2">
               {pallet.codigo_barras || `PLT${pallet.numero_pallet.toString().padStart(8, '0')}`}
+            </div>
+            {/* Código de barras visual */}
+            <div className="bg-white p-2 border border-gray-300 rounded">
+              <div className="font-mono text-sm tracking-widest text-center" style={{ fontFamily: '"Libre Barcode 128 Text", monospace' }}>
+                {pallet.codigo_barras || `PLT${pallet.numero_pallet.toString().padStart(8, '0')}`}
+              </div>
             </div>
           </div>
 
