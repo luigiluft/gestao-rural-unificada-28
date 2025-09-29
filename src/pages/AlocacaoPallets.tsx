@@ -380,7 +380,7 @@ export default function AlocacaoPallets() {
               )}
             </div>
 
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
               <Button
                 size="sm"
                 variant="outline"
