@@ -278,9 +278,9 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     
     entradaItens.forEach(item => {
       const disponivel = getQuantidadeDisponivel(item.id)
-      const disponivelAvaria = getQuantidadeDisponivel(item.id, true)
+      const { hasAvaria, avariaQuantity } = calculateQuantityAdjustment(item.id, item.lote, divergencias)
       
-      // Add normal product if available
+      // Add normal product if available (this includes quantity adjustments but not damage)
       if (disponivel > 0) {
         products.push({
           ...item,
@@ -290,15 +290,23 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
         })
       }
       
-      // Add damaged product separately if available
-      if (disponivelAvaria > 0) {
+      // Add damaged product separately ONLY if there's actual damage (avaria)
+      // Check if it's a real avaria (produto_faltante with AVARIA in observacoes)
+      const hasRealAvaria = divergencias.some(div => {
+        const matchesProduct = !div.produto_id || div.produto_id === item.id
+        const matchesLote = !div.lote || !item.lote || div.lote === item.lote
+        const isAvariaType = div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:')
+        return matchesProduct && matchesLote && isAvariaType
+      })
+      
+      if (hasRealAvaria && avariaQuantity > 0) {
         products.push({
           ...item,
           id: `${item.id}_avaria`, // Use unique ID for damaged version
           originalId: item.id, // Keep reference to original
           isAvaria: true,
           displayName: `${item.nome_produto} (Avaria)`,
-          disponivel: disponivelAvaria
+          disponivel: avariaQuantity
         })
       }
     })
@@ -331,7 +339,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const hasProductAvaria = (itemId: string, lote?: string) => {
     const productDivergencias = getDivergenciasForProduct(itemId, lote)
     return productDivergencias.some(div => 
-      div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria'
+      div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:')
     )
   }
 
@@ -531,22 +539,35 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                           {disponivel}
                         </Button>
                         
-                        {/* Produto avariado (separado) */}
-                        {hasAvaria && disponivelAvaria > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedProductToPallet({ 
-                              productId: item.id, 
-                              palletId: "", 
-                              quantidade: Math.min(disponivelAvaria, 1)
-                            })}
-                            className="font-medium text-orange-600 hover:bg-orange-50"
-                            title="Produto avariado - será alocado em pallet separado"
-                          >
-                            {disponivelAvaria} (Avaria)
-                          </Button>
-                        )}
+                        {/* Produto avariado (separado) - só mostrar se tiver avaria real */}
+                        {(() => {
+                          const hasRealAvaria = divergencias.some(div => {
+                            const matchesProduct = !div.produto_id || div.produto_id === item.id
+                            const matchesLote = !div.lote || !item.lote || div.lote === item.lote
+                            const isAvariaType = div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:')
+                            return matchesProduct && matchesLote && isAvariaType
+                          })
+                          const disponivelAvaria = getQuantidadeDisponivel(item.id, true)
+                          
+                          if (hasRealAvaria && disponivelAvaria > 0) {
+                            return (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedProductToPallet({ 
+                                  productId: item.id, 
+                                  palletId: "", 
+                                  quantidade: Math.min(disponivelAvaria, 1)
+                                })}
+                                className="font-medium text-orange-600 hover:bg-orange-50"
+                                title="Produto avariado - será alocado em pallet separado"
+                              >
+                                {disponivelAvaria} (Avaria)
+                              </Button>
+                            )
+                          }
+                          return null
+                        })()}
                       </div>
                     </TableCell>
                     <TableCell>
