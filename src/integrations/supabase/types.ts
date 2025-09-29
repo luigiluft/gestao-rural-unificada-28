@@ -456,7 +456,6 @@ export type Database = {
           created_at: string
           entrada_item_id: string
           id: string
-          is_avaria: boolean
           pallet_id: string
           quantidade: number
         }
@@ -464,7 +463,6 @@ export type Database = {
           created_at?: string
           entrada_item_id: string
           id?: string
-          is_avaria?: boolean
           pallet_id: string
           quantidade?: number
         }
@@ -472,7 +470,6 @@ export type Database = {
           created_at?: string
           entrada_item_id?: string
           id?: string
-          is_avaria?: boolean
           pallet_id?: string
           quantidade?: number
         }
