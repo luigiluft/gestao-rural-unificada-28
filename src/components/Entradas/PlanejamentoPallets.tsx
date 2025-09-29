@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -47,6 +47,38 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const { data: divergencias = [], isLoading: isLoadingDivergencias } = useEntradaDivergencias(entradaId)
   const typedPallets = pallets as ExtendedEntradaPallet[]
   const pesoBrutoMaximo = usePesoBrutoMaximoPallet()
+
+  // Mapear quais pallets devem receber o tag de Avaria distribuindo a quantidade avariada real
+  const avariaPalletIds = useMemo(() => {
+    // Mapa de quantidade de avaria restante por entrada_item_id
+    const remaining: Record<string, number> = {}
+    entradaItens.forEach((item) => {
+      const { avariaQuantity } = calculateQuantityAdjustment(item.id, item.lote, divergencias)
+      const qty = Number(avariaQuantity || 0)
+      if (qty > 0) remaining[item.id] = qty
+    })
+
+    const result = new Set<string>()
+    // Processar pallets em ordem do numero_pallet para alocar avarias aos primeiros que comportarem
+    const ordered = [...(typedPallets || [])].sort((a, b) => (a.numero_pallet || 0) - (b.numero_pallet || 0))
+
+    ordered.forEach((p) => {
+      let markAvaria = false
+      p.entrada_pallet_itens?.forEach((pi) => {
+        const rem = remaining[pi.entrada_item_id] || 0
+        if (rem > 0) {
+          const take = Math.min(Number(pi.quantidade || 0), rem)
+          if (take > 0) {
+            remaining[pi.entrada_item_id] = rem - take
+            markAvaria = true
+          }
+        }
+      })
+      if (markAvaria) result.add(p.id)
+    })
+
+    return result
+  }, [typedPallets, entradaItens, divergencias])
 
   // Fetch product packaging information
   const { data: productPackaging = {} } = useQuery({
@@ -807,16 +839,9 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         </Badge>
                       )}
                       {(() => {
-                        // Check if this pallet contains avaria products
-                        const hasAvariaProducts = group.template.entrada_pallet_itens?.some(palletItem => {
-                          const entradaItem = entradaItens.find(ei => ei.id === palletItem.entrada_item_id)
-                          if (!entradaItem) return false
-                          
-                          const { hasAvaria } = calculateQuantityAdjustment(palletItem.entrada_item_id, entradaItem.lote, divergencias)
-                          return hasAvaria
-                        })
-                        
-                        return hasAvariaProducts ? (
+                        // Marcar como Avaria somente se ao menos um pallet deste grupo foi alocado com unidades avariadas
+                        const hasAvariaForGroup = group.pallets.some(p => avariaPalletIds.has(p.id))
+                        return hasAvariaForGroup ? (
                           <Badge variant="destructive" className="ml-1">
                             Avaria
                           </Badge>
