@@ -70,15 +70,21 @@ export const calculateQuantityAdjustment = (
     const matchesLote = !div.lote || !lote || div.lote === lote
     
     if (matchesProduct && matchesLote) {
-      if (div.tipo_divergencia === 'quantidade_incorreta') {
-        // For quantity divergences, use diferenca directly (positive or negative)
-        // diferenca = quantidade_recebida - quantidade_esperada
-        // If -20, we received 20 less, so subtract from available
+      // Check if it's avaria by looking at observacoes
+      const isAvaria = div.observacoes?.includes('AVARIA:') || div.tipo_divergencia === 'produto_avariado'
+      
+      if (div.tipo_divergencia === 'quantidade_incorreta' && !isAvaria) {
+        // For quantity divergences, use diferenca (already calculated by DB as quantidade_encontrada - quantidade_esperada)
         quantityAdjustment += Math.abs(div.diferenca || 0)
-      } else if (div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria') {
+      } else if (isAvaria || div.tipo_divergencia === 'produto_faltante') {
         hasAvaria = true
-        // For avaria, quantidade_encontrada is the damaged quantity
-        avariaQuantity += Number(div.quantidade_encontrada || 0)
+        // For avaria, get quantity from observacoes or calculate from difference
+        if (div.observacoes?.includes('AVARIA:')) {
+          const match = div.observacoes.match(/AVARIA:\s*(\d+)/)
+          avariaQuantity += match ? Number(match[1]) : Math.abs(div.diferenca || 0)
+        } else {
+          avariaQuantity += Math.abs(div.diferenca || 0)
+        }
       }
     }
   })

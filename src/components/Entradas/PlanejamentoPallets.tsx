@@ -383,18 +383,34 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                     <TableCell>
                       <div className="space-y-1">
                         {productDivergencias.length > 0 ? (
-                          productDivergencias.map((div, idx) => (
-                            <Badge 
-                              key={idx}
-                              variant={div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria' ? 'destructive' : 'secondary'}
-                              className="text-xs block w-fit"
-                            >
-                              {div.tipo_divergencia === 'quantidade_incorreta' && 
-                                `Qtd: ${div.diferenca > 0 ? '+' : ''}${div.diferenca}`}
-                              {(div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria') && 
-                                `Avaria: ${div.quantidade_encontrada}`}
-                            </Badge>
-                          ))
+                          productDivergencias.map((div, idx) => {
+                            const isAvaria = div.observacoes?.includes('AVARIA:') || div.tipo_divergencia === 'produto_faltante'
+                            
+                            if (isAvaria) {
+                              // Extract avaria quantity from observacoes
+                              const match = div.observacoes?.match(/AVARIA:\s*(\d+)/)
+                              const avariaQty = match ? match[1] : Math.abs(div.diferenca || 0)
+                              return (
+                                <Badge 
+                                  key={idx}
+                                  variant="destructive"
+                                  className="text-xs block w-fit"
+                                >
+                                  Avaria: {avariaQty}
+                                </Badge>
+                              )
+                            } else {
+                              return (
+                                <Badge 
+                                  key={idx}
+                                  variant="secondary"
+                                  className="text-xs block w-fit"
+                                >
+                                  Qtd: {div.diferenca > 0 ? '+' : ''}{ div.diferenca }
+                                </Badge>
+                              )
+                            }
+                          })
                         ) : (
                           <span className="text-xs text-muted-foreground">Nenhuma</span>
                         )}

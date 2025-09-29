@@ -210,19 +210,33 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
         }
       }
 
+      // Map divergencia type (frontend uses 'avaria', backend needs 'produto_faltante')
+      const mappedTipo = div.tipo_divergencia === 'avaria' ? 'produto_faltante' : mapTipoDivergencia(div.tipo_divergencia || div.tipo);
+      
+      // Calculate values based on divergence type
+      let quantidade_esperada = parseFloat(div.quantidade_esperada) || 0;
+      let quantidade_encontrada = parseFloat(div.quantidade_recebida || div.quantidade_encontrada) || 0;
+      
+      // Add marker for avaria in observacoes
+      let observacoes = div.observacoes || null;
+      if (div.tipo_divergencia === 'avaria') {
+        const avariaQty = parseFloat(div.quantidade_avariada) || 0;
+        observacoes = `AVARIA: ${avariaQty} unidades avariadas durante transporte`;
+      }
+
       const divergenciaRecord = {
         user_id: entrada.user_id,
         deposito_id: entrada.deposito_id,
         entrada_id: entrada.id,
         produto_id: produto_id,
         tipo_origem: 'entrada',
-        tipo_divergencia: mapTipoDivergencia(div.tipo_divergencia || div.tipo),
-        quantidade_esperada: parseFloat(div.quantidade_esperada) || 0,
-        quantidade_encontrada: parseFloat(div.quantidade_encontrada) || 0,
+        tipo_divergencia: mappedTipo,
+        quantidade_esperada: quantidade_esperada,
+        quantidade_encontrada: quantidade_encontrada,
         lote: div.lote || null,
-        observacoes: div.observacoes || null,
+        observacoes: observacoes,
         status: 'pendente',
-        prioridade: div.prioridade || 'media'
+        prioridade: div.prioridade || (div.tipo_divergencia === 'avaria' ? 'alta' : 'media')
       }
 
       divergenciasRecords.push(divergenciaRecord)
