@@ -595,16 +595,30 @@ export default function AprovacaoEntradas() {
                             <AlertTriangle className="h-4 w-4 text-destructive" />
                             <strong className="text-destructive">Divergências Registradas</strong>
                           </div>
-                          {entrada.divergencias.map((div: any, index: number) => (
-                            <div key={index} className="p-3 border rounded-lg bg-destructive/5">
-                              <div className="text-sm space-y-1">
-                                <div><strong>Produto:</strong> {div.produto}</div>
-                                <div><strong>Esperado:</strong> {div.quantidade_esperada} | <strong>Recebido:</strong> {div.quantidade_recebida}</div>
-                                <div><strong>Motivo:</strong> {div.motivo}</div>
-                                <div><strong>Ação:</strong> {div.acao_tomada}</div>
+                          {entrada.divergencias.map((div: any, index: number) => {
+                            const diferenca = div.quantidade_recebida - div.quantidade_esperada
+                            const diferencaFormatada = diferenca > 0 ? `+${diferenca}` : `${diferenca}`
+                            
+                            return (
+                              <div key={index} className="p-3 border rounded-lg bg-destructive/5">
+                                <div className="text-sm space-y-1">
+                                  <div><strong>Produto:</strong> {div.produto}</div>
+                                  <div>
+                                    <Badge variant={div.tipo_divergencia === 'avaria' ? 'destructive' : 'outline'} className="mb-1">
+                                      {div.tipo_divergencia === 'avaria' ? 'Avaria' : 'Quantidade'}
+                                    </Badge>
+                                  </div>
+                                  {div.tipo_divergencia === 'quantidade' ? (
+                                    <div><strong>Diferença:</strong> {diferencaFormatada}</div>
+                                  ) : (
+                                    <div><strong>Quantidade Avariada:</strong> {div.quantidade_avariada || 0}</div>
+                                  )}
+                                  <div><strong>Motivo:</strong> {div.motivo}</div>
+                                  <div><strong>Ação:</strong> {div.acao_tomada}</div>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )}
 
