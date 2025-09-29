@@ -659,9 +659,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         if (isSelected) {
                           handleRemoveProductFromNewPallet(produto.id)
                         } else {
-                          const initialQuantity = produto.isAvaria ? 
-                            Math.min(produto.disponivel, 1) : 
-                            Math.min(produto.disponivel, increment)
+                          const initialQuantity = Math.min(produto.disponivel, increment)
                           handleAddProductToNewPallet(produto.id, initialQuantity, produto.isAvaria)
                         }
                       }}
