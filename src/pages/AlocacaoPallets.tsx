@@ -380,23 +380,25 @@ export default function AlocacaoPallets() {
               )}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 size="sm"
                 variant="outline"
                 disabled={selectedPallets.length === 0 || isWaveMode !== null || isProcessing}
                 onClick={handleWaveManualAllocation}
+                className="flex-shrink-0"
               >
                 <Hand className="h-4 w-4 mr-2" />
-                {isProcessing ? "Processando..." : "Alocar Selecionados Manualmente"}
+                {isProcessing ? "Processando..." : "Alocar Manualmente"}
               </Button>
               <Button
                 size="sm"
                 disabled={selectedPallets.length === 0 || isWaveMode !== null || isProcessing}
                 onClick={handleWaveScannerAllocation}
+                className="flex-shrink-0"
               >
                 <Scan className="h-4 w-4 mr-2" />
-                {isProcessing ? "Processando..." : "Alocar Selecionados com Scanner"}
+                {isProcessing ? "Processando..." : "Alocar com Scanner"}
               </Button>
             </div>
           </div>
