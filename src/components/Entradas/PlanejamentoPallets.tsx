@@ -239,13 +239,25 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const getTotalQuantidadeAlocadaAvaria = (itemId: string) => {
     let total = 0
     
-    // Count avaria items in existing pallets
+    // Count avaria items in existing pallets by checking if pallet contains avaria products
     typedPallets.forEach(pallet => {
-      pallet.entrada_pallet_itens?.forEach(item => {
-        if (item.entrada_item_id === itemId && pallet.descricao?.includes('Avaria')) {
-          total += Number(item.quantidade)
-        }
+      // Check if this pallet has avaria products
+      const hasAvariaInPallet = pallet.entrada_pallet_itens?.some(palletItem => {
+        const entradaItem = entradaItens.find(ei => ei.id === palletItem.entrada_item_id)
+        if (!entradaItem) return false
+        
+        const { hasAvaria } = calculateQuantityAdjustment(palletItem.entrada_item_id, entradaItem.lote, divergencias)
+        return hasAvaria
       })
+      
+      // If this pallet has avaria products, count this item's quantity in this pallet as avaria
+      if (hasAvariaInPallet) {
+        pallet.entrada_pallet_itens?.forEach(palletItem => {
+          if (palletItem.entrada_item_id === itemId) {
+            total += Number(palletItem.quantidade)
+          }
+        })
+      }
     })
     
     // Add avaria products selected for new pallet
@@ -794,6 +806,22 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                           {group.count}x
                         </Badge>
                       )}
+                      {(() => {
+                        // Check if this pallet contains avaria products
+                        const hasAvariaProducts = group.template.entrada_pallet_itens?.some(palletItem => {
+                          const entradaItem = entradaItens.find(ei => ei.id === palletItem.entrada_item_id)
+                          if (!entradaItem) return false
+                          
+                          const { hasAvaria } = calculateQuantityAdjustment(palletItem.entrada_item_id, entradaItem.lote, divergencias)
+                          return hasAvaria
+                        })
+                        
+                        return hasAvariaProducts ? (
+                          <Badge variant="destructive" className="ml-1">
+                            Avaria
+                          </Badge>
+                        ) : null
+                      })()}
                     </CardTitle>
                   </div>
                   <div className="flex items-center gap-1">
