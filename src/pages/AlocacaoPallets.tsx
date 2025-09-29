@@ -22,6 +22,7 @@ export default function AlocacaoPallets() {
     palletCode: "",
     positionCode: ""
   });
+  const [customPosition, setCustomPosition] = useState("");
   
   // Estados para seleção múltipla e ondas
   const [selectedPallets, setSelectedPallets] = useState<string[]>([]);
@@ -110,6 +111,7 @@ export default function AlocacaoPallets() {
     setActivePallet(null);
     setAllocationResult(null);
     setScannerData({ palletCode: "", positionCode: "" });
+    setCustomPosition("");
   };
 
   const resetWaveState = () => {
@@ -438,66 +440,86 @@ export default function AlocacaoPallets() {
                     </p>
                     
                     {isWaveMode === "manual" ? (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Coloque fisicamente o pallet na posição indicada e confirme.
-                        </p>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm"
-                            onClick={confirmWaveStep}
-                            disabled={confirmAllocation.isPending}
-                          >
-                            {confirmAllocation.isPending ? "Confirmando..." : "Confirmar Posicionamento"}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={resetWaveState}
-                          >
-                            Cancelar Onda
-                          </Button>
-                        </div>
-                      </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Coloque fisicamente o pallet na posição indicada e confirme.
+                    </p>
+                    <div className="mb-3">
+                      <Label htmlFor="waveCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
+                      <Input
+                        id="waveCustomPosition"
+                        placeholder="Digite uma posição diferente se necessário"
+                        value={customPosition}
+                        onChange={(e) => setCustomPosition(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm"
+                        onClick={confirmWaveStep}
+                        disabled={confirmAllocation.isPending}
+                      >
+                        {confirmAllocation.isPending ? "Confirmando..." : "Confirmar Posicionamento"}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={resetWaveState}
+                      >
+                        Cancelar Onda
+                      </Button>
+                    </div>
+                  </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="wavepalletCode" className="text-sm">Código do Pallet</Label>
-                          <Input
-                            id="wavepalletCode"
-                            placeholder="Escaneie o código do pallet"
-                            value={scannerData.palletCode}
-                            onChange={(e) => setScannerData(prev => ({ ...prev, palletCode: e.target.value }))}
-                            className="text-sm"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="wavepositionCode" className="text-sm">Código da Posição</Label>
-                          <Input
-                            id="wavepositionCode"
-                            placeholder="Escaneie o código da posição"
-                            value={scannerData.positionCode}
-                            onChange={(e) => setScannerData(prev => ({ ...prev, positionCode: e.target.value }))}
-                            className="text-sm"
-                          />
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          <Button 
-                            size="sm"
-                            onClick={confirmWaveStep}
-                            disabled={confirmAllocation.isPending || !scannerData.palletCode || !scannerData.positionCode}
-                          >
-                            {confirmAllocation.isPending ? "Confirmando..." : "Confirmar Escaneamento"}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={resetWaveState}
-                          >
-                            Cancelar Onda
-                          </Button>
-                        </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="wavepalletCode" className="text-sm">Código do Pallet</Label>
+                        <Input
+                          id="wavepalletCode"
+                          placeholder="Escaneie o código do pallet"
+                          value={scannerData.palletCode}
+                          onChange={(e) => setScannerData(prev => ({ ...prev, palletCode: e.target.value }))}
+                          className="text-sm"
+                        />
                       </div>
+                      <div>
+                        <Label htmlFor="wavepositionCode" className="text-sm">Código da Posição</Label>
+                        <Input
+                          id="wavepositionCode"
+                          placeholder="Escaneie o código da posição"
+                          value={scannerData.positionCode}
+                          onChange={(e) => setScannerData(prev => ({ ...prev, positionCode: e.target.value }))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="waveCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
+                        <Input
+                          id="waveCustomPosition"
+                          placeholder="Digite uma posição diferente se necessário"
+                          value={customPosition}
+                          onChange={(e) => setCustomPosition(e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button 
+                          size="sm"
+                          onClick={confirmWaveStep}
+                          disabled={confirmAllocation.isPending || !scannerData.palletCode || !scannerData.positionCode}
+                        >
+                          {confirmAllocation.isPending ? "Confirmando..." : "Confirmar Escaneamento"}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={resetWaveState}
+                        >
+                          Cancelar Onda
+                        </Button>
+                      </div>
+                    </div>
                     )}
                   </div>
                 );
@@ -618,6 +640,16 @@ export default function AlocacaoPallets() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Coloque fisicamente o pallet na posição indicada e confirme abaixo.
                   </p>
+                  <div className="mb-3">
+                    <Label htmlFor="individualCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
+                    <Input
+                      id="individualCustomPosition"
+                      placeholder="Digite uma posição diferente se necessário"
+                      value={customPosition}
+                      onChange={(e) => setCustomPosition(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
                   <div className="flex gap-2">
                     <Button 
                       size="sm"
@@ -654,6 +686,16 @@ export default function AlocacaoPallets() {
                       placeholder="Escaneie o código da posição"
                       value={scannerData.positionCode}
                       onChange={(e) => setScannerData(prev => ({ ...prev, positionCode: e.target.value }))}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="individualCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
+                    <Input
+                      id="individualCustomPosition"
+                      placeholder="Digite uma posição diferente se necessário"
+                      value={customPosition}
+                      onChange={(e) => setCustomPosition(e.target.value)}
                       className="text-sm"
                     />
                   </div>
