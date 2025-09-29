@@ -23,6 +23,7 @@ export default function AlocacaoPallets() {
     positionCode: ""
   });
   const [customPosition, setCustomPosition] = useState("");
+  const [isEditingPosition, setIsEditingPosition] = useState(false);
   
   // Estados para seleção múltipla e ondas
   const [selectedPallets, setSelectedPallets] = useState<string[]>([]);
@@ -112,6 +113,7 @@ export default function AlocacaoPallets() {
     setAllocationResult(null);
     setScannerData({ palletCode: "", positionCode: "" });
     setCustomPosition("");
+    setIsEditingPosition(false);
   };
 
   const resetWaveState = () => {
@@ -445,14 +447,30 @@ export default function AlocacaoPallets() {
                       Coloque fisicamente o pallet na posição indicada e confirme.
                     </p>
                     <div className="mb-3">
-                      <Label htmlFor="waveCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
-                      <Input
-                        id="waveCustomPosition"
-                        placeholder="Digite uma posição diferente se necessário"
-                        value={customPosition}
-                        onChange={(e) => setCustomPosition(e.target.value)}
-                        className="text-sm"
-                      />
+                      <Label htmlFor="wavePositionInput" className="text-sm">Posição</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="wavePositionInput"
+                          value={isEditingPosition ? customPosition : currentResult.result.posicao_codigo}
+                          onChange={(e) => setCustomPosition(e.target.value)}
+                          readOnly={!isEditingPosition}
+                          className="text-sm"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (isEditingPosition) {
+                              setCustomPosition("");
+                            } else {
+                              setCustomPosition(currentResult.result.posicao_codigo);
+                            }
+                            setIsEditingPosition(!isEditingPosition);
+                          }}
+                        >
+                          {isEditingPosition ? "Cancelar" : "Trocar"}
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -494,14 +512,30 @@ export default function AlocacaoPallets() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="waveCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
-                        <Input
-                          id="waveCustomPosition"
-                          placeholder="Digite uma posição diferente se necessário"
-                          value={customPosition}
-                          onChange={(e) => setCustomPosition(e.target.value)}
-                          className="text-sm"
-                        />
+                        <Label htmlFor="waveCustomPosition" className="text-sm">Posição</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="waveCustomPosition"
+                            value={isEditingPosition ? customPosition : currentResult.result.posicao_codigo}
+                            onChange={(e) => setCustomPosition(e.target.value)}
+                            readOnly={!isEditingPosition}
+                            className="text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (isEditingPosition) {
+                                setCustomPosition("");
+                              } else {
+                                setCustomPosition(currentResult.result.posicao_codigo);
+                              }
+                              setIsEditingPosition(!isEditingPosition);
+                            }}
+                          >
+                            {isEditingPosition ? "Cancelar" : "Trocar"}
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button 
@@ -641,14 +675,30 @@ export default function AlocacaoPallets() {
                     Coloque fisicamente o pallet na posição indicada e confirme abaixo.
                   </p>
                   <div className="mb-3">
-                    <Label htmlFor="individualCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
-                    <Input
-                      id="individualCustomPosition"
-                      placeholder="Digite uma posição diferente se necessário"
-                      value={customPosition}
-                      onChange={(e) => setCustomPosition(e.target.value)}
-                      className="text-sm"
-                    />
+                    <Label htmlFor="individualPositionInput" className="text-sm">Posição</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="individualPositionInput"
+                        value={isEditingPosition ? customPosition : allocationResult.posicao_codigo}
+                        onChange={(e) => setCustomPosition(e.target.value)}
+                        readOnly={!isEditingPosition}
+                        className="text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (isEditingPosition) {
+                            setCustomPosition("");
+                          } else {
+                            setCustomPosition(allocationResult.posicao_codigo);
+                          }
+                          setIsEditingPosition(!isEditingPosition);
+                        }}
+                      >
+                        {isEditingPosition ? "Cancelar" : "Trocar"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -690,14 +740,30 @@ export default function AlocacaoPallets() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="individualCustomPosition" className="text-sm">Posição Personalizada (opcional)</Label>
-                    <Input
-                      id="individualCustomPosition"
-                      placeholder="Digite uma posição diferente se necessário"
-                      value={customPosition}
-                      onChange={(e) => setCustomPosition(e.target.value)}
-                      className="text-sm"
-                    />
+                    <Label htmlFor="individualCustomPosition" className="text-sm">Posição</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="individualCustomPosition"
+                        value={isEditingPosition ? customPosition : allocationResult.posicao_codigo}
+                        onChange={(e) => setCustomPosition(e.target.value)}
+                        readOnly={!isEditingPosition}
+                        className="text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          if (isEditingPosition) {
+                            setCustomPosition("");
+                          } else {
+                            setCustomPosition(allocationResult.posicao_codigo);
+                          }
+                          setIsEditingPosition(!isEditingPosition);
+                        }}
+                      >
+                        {isEditingPosition ? "Cancelar" : "Trocar"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex gap-2 pt-2">
                     <Button 
