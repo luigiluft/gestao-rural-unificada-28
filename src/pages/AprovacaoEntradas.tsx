@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import AprovacaoEntradasMobile from "@/components/Mobile/AprovacaoEntradasMobile"
+import { supabase } from "@/integrations/supabase/client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,8 @@ interface Divergencia {
   quantidade_avariada?: number
   motivo: string
   acao_tomada: string
+  produto_id?: string
+  incremento?: number
 }
 
 interface LeituraBarra {
@@ -163,7 +166,14 @@ export default function AprovacaoEntradas() {
     setSelectedEntradaPlanejamento(null)
   }
 
-  const addDivergencia = (item?: any) => {
+  const addDivergencia = async (item?: any) => {
+    let incremento = 1
+    
+    // Calcular incremento se temos produto_id
+    if (item?.produto_id) {
+      incremento = await calcularIncremento(item.produto_id)
+    }
+    
     const novaDivergencia = {
       produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
       lote: item?.lote || `LT${Date.now().toString().slice(-6)}`,
@@ -172,7 +182,9 @@ export default function AprovacaoEntradas() {
       quantidade_recebida: item ? item.quantidade || 0 : 0,
       quantidade_avariada: 0,
       motivo: '',
-      acao_tomada: ''
+      acao_tomada: '',
+      produto_id: item?.produto_id || null,
+      incremento: incremento
     }
     setDivergencias([...divergencias, novaDivergencia])
   }
@@ -181,10 +193,50 @@ export default function AprovacaoEntradas() {
     setDivergencias(divergencias.filter((_, i) => i !== index))
   }
 
-  const updateDivergencia = (index: number, field: keyof Divergencia, value: any) => {
+  const updateDivergencia = async (index: number, field: keyof Divergencia, value: any) => {
     const updated = [...divergencias]
     updated[index] = { ...updated[index], [field]: value }
+    
+    // Se mudou o produto, buscar incremento
+    if (field === 'produto_id' && value) {
+      try {
+        const { data: produto } = await supabase
+          .from('produtos')
+          .select('containers_per_package, package_capacity')
+          .eq('id', value)
+          .single()
+        
+        if (produto) {
+          const incremento = (produto.containers_per_package || 1) * (produto.package_capacity || 1)
+          updated[index].incremento = incremento
+        }
+      } catch (error) {
+        console.error('Erro ao buscar incremento do produto:', error)
+        updated[index].incremento = 1
+      }
+    }
+    
     setDivergencias(updated)
+  }
+
+  const calcularIncremento = async (produtoId: string) => {
+    if (!produtoId) return 1
+    
+    try {
+      const { data: produto } = await supabase
+        .from('produtos')
+        .select('containers_per_package, package_capacity')
+        .eq('id', produtoId)
+        .maybeSingle()
+      
+      if (produto) {
+        return (produto.containers_per_package || 1) * (produto.package_capacity || 1)
+      }
+    } catch (error) {
+      console.error('Erro ao calcular incremento:', error)
+    }
+    
+    return 1
   }
 
   // Funções para conferência por código de barras
@@ -256,13 +308,13 @@ export default function AprovacaoEntradas() {
     ))
   }
 
-  const gerarDivergenciasAutomaticas = () => {
+  const gerarDivergenciasAutomaticas = async () => {
     if (!selectedEntrada || !selectedEntrada.entrada_itens) return
 
     const divergenciasCalculadas: Divergencia[] = []
 
     // Para cada item esperado, verificar se foi lido
-    selectedEntrada.entrada_itens.forEach((itemEsperado: any) => {
+    for (const itemEsperado of selectedEntrada.entrada_itens) {
       const produto_codigo = itemEsperado.produtos?.codigo
       const produto_nome = itemEsperado.produtos?.nome || itemEsperado.nome_produto
       const quantidade_esperada = itemEsperado.quantidade
@@ -275,6 +327,7 @@ export default function AprovacaoEntradas() {
       const quantidade_recebida = leituraCorrespondente?.quantidade || 0
 
       if (quantidade_esperada !== quantidade_recebida) {
+        const incremento = await calcularIncremento(itemEsperado.produto_id)
         divergenciasCalculadas.push({
           produto: produto_nome,
           lote: `LT${Date.now().toString().slice(-6)}`,
@@ -285,10 +338,12 @@ export default function AprovacaoEntradas() {
           motivo: quantidade_recebida < quantidade_esperada 
             ? `Quantidade inferior ao esperado (falta: ${quantidade_esperada - quantidade_recebida})` 
             : `Quantidade superior ao esperado (excesso: ${quantidade_recebida - quantidade_esperada})`,
-          acao_tomada: 'Registrado automaticamente via código de barras'
+          acao_tomada: 'Registrado automaticamente via código de barras',
+          produto_id: itemEsperado.produto_id,
+          incremento
         })
       }
-    })
+    }
 
     // Verificar itens lidos que não estavam na entrada
     leituras.forEach((leitura) => {
@@ -306,7 +361,8 @@ export default function AprovacaoEntradas() {
           quantidade_recebida: leitura.quantidade,
           quantidade_avariada: 0,
           motivo: 'Produto recebido não estava previsto na entrada',
-          acao_tomada: 'Registrado automaticamente via código de barras'
+          acao_tomada: 'Registrado automaticamente via código de barras',
+          incremento: 1
         })
       }
     })
@@ -640,11 +696,11 @@ export default function AprovacaoEntradas() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-base font-semibold">Leituras Realizadas ({leituras.length})</Label>
-                      <Button 
-                        onClick={gerarDivergenciasAutomaticas} 
-                        size="sm" 
-                        variant="outline"
-                      >
+                       <Button 
+                         onClick={async () => await gerarDivergenciasAutomaticas()} 
+                         size="sm" 
+                         variant="outline"
+                       >
                         <Calculator className="h-4 w-4 mr-2" />
                         Gerar Divergências
                       </Button>
@@ -756,12 +812,12 @@ export default function AprovacaoEntradas() {
                                <TableCell>{item.quantidade} {item.produtos?.unidade_medida}</TableCell>
                                 <TableCell>{item.lote || '-'}</TableCell>
                                 <TableCell>
-                                  <Button
-                                    onClick={() => addDivergencia(item)}
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-xs"
-                                  >
+                                   <Button
+                                     onClick={async () => await addDivergencia(item)}
+                                     size="sm"
+                                     variant="outline"
+                                     className="text-xs"
+                                   >
                                     <AlertTriangle className="h-3 w-3 mr-1" />
                                     Registrar Divergência
                                   </Button>
@@ -790,12 +846,12 @@ export default function AprovacaoEntradas() {
 
                 <div className="flex items-center">
                   <Label className="text-base font-semibold">Divergências</Label>
-                  <Button
-                    onClick={() => addDivergencia()}
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto"
-                  >
+                   <Button
+                     onClick={async () => await addDivergencia()}
+                     size="sm"
+                     variant="outline"
+                     className="ml-auto"
+                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar Divergência
                   </Button>
@@ -874,7 +930,7 @@ export default function AprovacaoEntradas() {
                                      const value = parseFloat(e.target.value) || 0
                                      updateDivergencia(index, 'quantidade_recebida', value)
                                    }}
-                                   step="1"
+                                   step={div.incremento || 1}
                                    min="0"
                                  />
                                </div>
@@ -891,7 +947,7 @@ export default function AprovacaoEntradas() {
                                    const value = parseFloat(e.target.value) || 0
                                    updateDivergencia(index, 'quantidade_avariada', value)
                                  }}
-                                 step="1"
+                                 step={div.incremento || 1}
                                  min="0"
                                  max={div.quantidade_esperada}
                                />
