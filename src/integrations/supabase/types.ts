@@ -3107,17 +3107,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           deposito_id: string
-          franquia_nome: string
-          id: string
-          lotes: string[]
+          lote: string
           produto_id: string
           produtos: Json
           quantidade_atual: number
-          quantidade_disponivel: number
-          quantidade_reservada: number
-          ultima_movimentacao: string
           user_id: string
-          valor_total_estoque: number
+          valor_total: number
+          valor_unitario: number
         }[]
       }
       get_invite_email: {
