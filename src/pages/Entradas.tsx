@@ -137,8 +137,10 @@ export default function Entradas() {
   } = useEntradas(dateRange);
   const {
     isAdmin,
-    isFranqueado
+    isFranqueado,
+    isProdutor
   } = useUserRole();
+  const { user } = useAuth();
 
   // Pagination logic
   const totalRecords = entradas?.length || 0;
@@ -678,6 +680,7 @@ export default function Entradas() {
           }} className="h-7 w-7 p-0">
               <Eye className="h-3 w-3" />
             </Button>
+            {/* Ações disponíveis baseadas no papel do usuário */}
             {(isAdmin || isFranqueado) && <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -692,8 +695,9 @@ export default function Entradas() {
                     <Edit className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={async () => {
-                if (confirm('Tem certeza que deseja excluir esta entrada?')) {
+                  {/* Apenas admin pode excluir pela interface administrativa */}
+                  {isAdmin && <DropdownMenuItem onClick={async () => {
+                if (confirm('Tem certeza que deseja excluir esta entrada? (Ação administrativa)')) {
                   try {
                     const { error } = await supabase
                       .from('entradas')
@@ -719,10 +723,46 @@ export default function Entradas() {
                 }
               }}>
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
-                  </DropdownMenuItem>
+                    Excluir (Admin)
+                  </DropdownMenuItem>}
                 </DropdownMenuContent>
               </DropdownMenu>}
+            
+            {/* Botão de excluir para produtores (apenas suas próprias entradas) */}
+            {isProdutor && entrada.user_id === user?.id && <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                onClick={async () => {
+                if (confirm('Tem certeza que deseja excluir esta entrada?')) {
+                  try {
+                    const { error } = await supabase
+                      .from('entradas')
+                      .delete()
+                      .eq('id', entrada.id)
+                      .eq('user_id', user.id); // Extra segurança: só pode excluir próprias entradas
+
+                    if (error) throw error;
+
+                    toast({
+                      title: "Entrada excluída",
+                      description: "A entrada foi excluída com sucesso."
+                    });
+
+                    refetch(); // Refresh the list
+                  } catch (error) {
+                    console.error('Erro ao excluir entrada:', error);
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao excluir entrada.",
+                      variant: "destructive"
+                    });
+                  }
+                }
+              }}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>}
           </div>;
       // Extended fields - simplified to prevent TypeScript errors
       default:
