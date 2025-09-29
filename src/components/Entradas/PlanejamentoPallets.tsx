@@ -389,9 +389,10 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                               variant={div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria' ? 'destructive' : 'secondary'}
                               className="text-xs block w-fit"
                             >
-                              {div.tipo_divergencia === 'quantidade_incorreta' && `Qtd: ${div.diferenca}`}
+                              {div.tipo_divergencia === 'quantidade_incorreta' && 
+                                `Qtd: ${div.diferenca > 0 ? '+' : ''}${div.diferenca}`}
                               {(div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria') && 
-                                `Avaria: ${Math.abs(div.diferenca || div.quantidade_encontrada || 0)}`}
+                                `Avaria: ${div.quantidade_encontrada}`}
                             </Badge>
                           ))
                         ) : (

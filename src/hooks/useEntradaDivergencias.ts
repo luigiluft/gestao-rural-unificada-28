@@ -71,11 +71,14 @@ export const calculateQuantityAdjustment = (
     
     if (matchesProduct && matchesLote) {
       if (div.tipo_divergencia === 'quantidade_incorreta') {
-        // For quantity divergences, subtract the difference (diferenca is negative for less quantity)
+        // For quantity divergences, use diferenca directly (positive or negative)
+        // diferenca = quantidade_recebida - quantidade_esperada
+        // If -20, we received 20 less, so subtract from available
         quantityAdjustment += Math.abs(div.diferenca || 0)
       } else if (div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria') {
         hasAvaria = true
-        avariaQuantity += Math.abs(div.diferenca || div.quantidade_encontrada || 0)
+        // For avaria, quantidade_encontrada is the damaged quantity
+        avariaQuantity += Number(div.quantidade_encontrada || 0)
       }
     }
   })
