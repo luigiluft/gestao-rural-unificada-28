@@ -210,7 +210,6 @@ export default function Estoque() {
                   <TableHead>Produto</TableHead>
                   <TableHead>Lote</TableHead>
                   <TableHead>Quantidade</TableHead>
-                  <TableHead>Nível</TableHead>
                   <TableHead>Depósito</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Valor Total</TableHead>
@@ -242,17 +241,6 @@ export default function Estoque() {
                           <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
                           <p className="text-xs text-muted-foreground">
                             Disponível: {item.quantidade_disponivel || item.quantidade_atual}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Progress 
-                            value={stockLevel} 
-                            className="h-2"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            {Math.round(stockLevel)}%
                           </p>
                         </div>
                       </TableCell>
