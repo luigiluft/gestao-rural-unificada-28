@@ -515,6 +515,8 @@ export const useConfirmPalletAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["estoque"] });
       queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      // Invalidar notificações imediatamente após alocação
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       toast({
         title: "Sucesso",
         description: "Pallet alocado e estoque criado com sucesso!",
