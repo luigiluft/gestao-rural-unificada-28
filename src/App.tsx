@@ -53,6 +53,7 @@ import Instrucoes from "./pages/Instrucoes";
 import InstrucoesAdmin from "./pages/InstrucoesAdmin";
 import InstrucoesFranqueado from "./pages/InstrucoesFranqueado";
 import InstrucoesProdutor from "./pages/InstrucoesProdutor";
+import Divergencias from "./pages/Divergencias";
 import DemoDashboard from "./pages/Demo/DemoDashboard";
 import DemoEntradas from "./pages/Demo/DemoEntradas";
 import DemoEstoque from "./pages/Demo/DemoEstoque";
@@ -147,6 +148,7 @@ const App = () => {
               <Route path="tabela-frete" element={<RequirePageAccess pageKey="tabela-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="tabela-frete/:id" element={<RequirePageAccess pageKey="tabela-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />
+              <Route path="divergencias" element={<RequirePageAccess pageKey="divergencias"><Divergencias /></RequirePageAccess>} />
               
               {/* Rotas de Instruções */}
               <Route path="instrucoes" element={<RequirePageAccess pageKey="instrucoes"><Instrucoes /></RequirePageAccess>} />
