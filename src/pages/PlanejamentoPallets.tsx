@@ -217,7 +217,8 @@ export default function PlanejamentoPalletsPage() {
           nome_produto: item.produtos?.nome || item.nome_produto,
           codigo_produto: item.produtos?.codigo || item.codigo_produto,
           quantidade: item.quantidade,
-          lote: item.lote
+          lote: item.lote,
+          produto_id: item.produto_id
         })) || []}
       />
     </div>

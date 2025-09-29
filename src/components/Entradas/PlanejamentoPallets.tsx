@@ -22,6 +22,8 @@ import {
   calculateQuantityAdjustment,
   type EntradaDivergencia
 } from "@/hooks/useEntradaDivergencias"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 type ExtendedEntradaPallet = EntradaPallet & { 
   entrada_pallet_itens?: EntradaPalletItem[]
@@ -35,6 +37,7 @@ interface PlanejamentoPalletsProps {
     codigo_produto?: string
     quantidade: number
     lote?: string
+    produto_id?: string
   }>
 }
 
@@ -42,6 +45,36 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const { data: pallets = [], isLoading } = useEntradaPallets(entradaId)
   const { data: divergencias = [], isLoading: isLoadingDivergencias } = useEntradaDivergencias(entradaId)
   const typedPallets = pallets as ExtendedEntradaPallet[]
+
+  // Fetch product packaging information
+  const { data: productPackaging = {} } = useQuery({
+    queryKey: ["product-packaging", entradaItens.map(i => i.produto_id).filter(Boolean)],
+    queryFn: async () => {
+      const produtoIds = entradaItens.map(i => i.produto_id).filter(Boolean)
+      if (produtoIds.length === 0) return {}
+      
+      const { data, error } = await supabase
+        .from("produtos")
+        .select("id, containers_per_package, package_capacity")
+        .in("id", produtoIds)
+      
+      if (error) throw error
+      
+      const packagingMap: Record<string, { containers_per_package: number; package_capacity: number; increment: number }> = {}
+      data.forEach(produto => {
+        const containers = produto.containers_per_package || 1
+        const capacity = produto.package_capacity || 1
+        packagingMap[produto.id] = {
+          containers_per_package: containers,
+          package_capacity: capacity,
+          increment: containers * capacity
+        }
+      })
+      
+      return packagingMap
+    },
+    enabled: entradaItens.some(i => i.produto_id)
+  })
   const createPallet = useCreatePallet()
   const deletePallet = useDeletePallet()
   const addItemToPallet = useAddItemToPallet()
@@ -57,6 +90,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     nome: string
     codigo?: string
     maxQuantidade: number
+    isAvaria?: boolean
   }>>([])
   const [showPalletLabels, setShowPalletLabels] = useState<{ [key: string]: boolean }>({})
 
@@ -106,9 +140,13 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
 
     // Adicionar todos os produtos selecionados ao pallet recém-criado
     for (const product of selectedProductsForNewPallet) {
+      const originalId = product.productId.includes('_avaria') ? 
+        product.productId.replace('_avaria', '') : 
+        product.productId
+        
       await addItemToPallet.mutateAsync({
         pallet_id: palletData.id,
-        entrada_item_id: product.productId,
+        entrada_item_id: originalId,
         quantidade: product.quantidade
       })
     }
@@ -126,9 +164,21 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     })
   }
 
-  const handleAddProductToNewPallet = (productId: string, quantidade: number) => {
-    const produto = entradaItens.find(p => p.id === productId)
+  const handleAddProductToNewPallet = (productId: string, quantidade: number, isAvaria = false) => {
+    // Handle damaged products with their special ID format
+    const originalId = productId.includes('_avaria') ? productId.replace('_avaria', '') : productId
+    const produto = entradaItens.find(p => p.id === originalId)
     if (!produto) return
+
+    // Validate quantity increment for normal products
+    let validatedQuantity = quantidade
+    if (!isAvaria) {
+      validatedQuantity = validateQuantityIncrement(originalId, quantidade)
+      if (validatedQuantity === 0) {
+        const increment = getPackagingIncrement(originalId)
+        validatedQuantity = increment
+      }
+    }
 
     const existingIndex = selectedProductsForNewPallet.findIndex(p => p.productId === productId)
     
@@ -137,18 +187,23 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       setSelectedProductsForNewPallet(prev => 
         prev.map((item, index) => 
           index === existingIndex 
-            ? { ...item, quantidade }
+            ? { ...item, quantidade: validatedQuantity }
             : item
         )
       )
     } else {
       // Adicionar novo produto
+      const maxQuantidade = isAvaria ? 
+        getQuantidadeDisponivel(originalId, true) : 
+        getQuantidadeDisponivel(originalId)
+        
       setSelectedProductsForNewPallet(prev => [...prev, {
         productId,
-        quantidade,
-        nome: produto.nome_produto,
+        quantidade: validatedQuantity,
+        nome: isAvaria ? `${produto.nome_produto} (Avaria)` : produto.nome_produto,
         codigo: produto.codigo_produto,
-        maxQuantidade: getQuantidadeDisponivel(productId)
+        maxQuantidade,
+        isAvaria
       }])
     }
   }
@@ -219,9 +274,49 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   }
 
   const getAvailableProductsForNewPallet = () => {
-    return entradaItens.filter(item => 
-      getQuantidadeDisponivel(item.id) > 0 || getQuantidadeDisponivel(item.id, true) > 0
-    )
+    const products = []
+    
+    entradaItens.forEach(item => {
+      const disponivel = getQuantidadeDisponivel(item.id)
+      const disponivelAvaria = getQuantidadeDisponivel(item.id, true)
+      
+      // Add normal product if available
+      if (disponivel > 0) {
+        products.push({
+          ...item,
+          isAvaria: false,
+          displayName: item.nome_produto,
+          disponivel
+        })
+      }
+      
+      // Add damaged product separately if available
+      if (disponivelAvaria > 0) {
+        products.push({
+          ...item,
+          id: `${item.id}_avaria`, // Use unique ID for damaged version
+          originalId: item.id, // Keep reference to original
+          isAvaria: true,
+          displayName: `${item.nome_produto} (Avaria)`,
+          disponivel: disponivelAvaria
+        })
+      }
+    })
+    
+    return products
+  }
+
+  const getPackagingIncrement = (itemId: string) => {
+    const item = entradaItens.find(i => i.id === itemId)
+    if (!item?.produto_id) return 1
+    
+    const packaging = productPackaging[item.produto_id]
+    return packaging?.increment || 1
+  }
+
+  const validateQuantityIncrement = (itemId: string, quantity: number) => {
+    const increment = getPackagingIncrement(itemId)
+    return Math.floor(quantity / increment) * increment
   }
 
   // Helper functions for divergencias display
@@ -490,9 +585,9 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
             <div>
               <Label className="text-sm">Selecionar Produtos:</Label>
               <div className="grid grid-cols-2 gap-2 mt-2 max-h-32 overflow-y-auto">
-                {getAvailableProductsForNewPallet().map((produto) => {
+                {getAvailableProductsForNewPallet().map((produto: any) => {
                   const isSelected = selectedProductsForNewPallet.some(p => p.productId === produto.id)
-                  const disponivel = getQuantidadeDisponivel(produto.id)
+                  const increment = getPackagingIncrement(produto.originalId || produto.id)
                   
                   return (
                     <Button
@@ -503,15 +598,20 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         if (isSelected) {
                           handleRemoveProductFromNewPallet(produto.id)
                         } else {
-                          handleAddProductToNewPallet(produto.id, Math.min(disponivel, 1))
+                          const initialQuantity = produto.isAvaria ? 
+                            Math.min(produto.disponivel, 1) : 
+                            Math.min(produto.disponivel, increment)
+                          handleAddProductToNewPallet(produto.id, initialQuantity, produto.isAvaria)
                         }
                       }}
-                      className="text-left justify-start h-auto py-2"
+                      className={`text-left justify-start h-auto py-2 ${produto.isAvaria ? 'border-orange-200 text-orange-700' : ''}`}
                     >
                       <div className="truncate">
-                        <div className="text-xs font-medium">{produto.nome_produto}</div>
+                        <div className="text-xs font-medium">{produto.displayName}</div>
                         <div className="text-xs text-muted-foreground">
-                          Disponível: {disponivel} {produto.codigo_produto ? `(${produto.codigo_produto})` : ''}
+                          Disponível: {produto.disponivel} 
+                          {produto.codigo_produto ? ` (${produto.codigo_produto})` : ''}
+                          {!produto.isAvaria && increment > 1 ? ` | Incremento: ${increment}` : ''}
                         </div>
                       </div>
                     </Button>
@@ -536,10 +636,14 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                       <Input
                         type="number"
                         value={product.quantidade}
-                        onChange={(e) => handleAddProductToNewPallet(product.productId, parseInt(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 0
+                          handleAddProductToNewPallet(product.productId, value, product.isAvaria)
+                        }}
                         className="w-20 h-8 text-sm"
                         max={product.maxQuantidade}
-                        min={1}
+                        min={product.isAvaria ? 1 : getPackagingIncrement(product.productId.replace('_avaria', ''))}
+                        step={product.isAvaria ? 1 : getPackagingIncrement(product.productId.replace('_avaria', ''))}
                       />
                       <Button
                         variant="ghost"
@@ -766,11 +870,17 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                 <Input
                   type="number"
                   value={selectedProductToPallet.quantidade}
-                  onChange={(e) => setSelectedProductToPallet(prev => 
-                    prev ? { ...prev, quantidade: parseInt(e.target.value) || 0 } : null
-                  )}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0
+                    const increment = getPackagingIncrement(selectedProductToPallet.productId)
+                    const validatedValue = validateQuantityIncrement(selectedProductToPallet.productId, value)
+                    setSelectedProductToPallet(prev => 
+                      prev ? { ...prev, quantidade: validatedValue || increment } : null
+                    )
+                  }}
                   max={getQuantidadeDisponivel(selectedProductToPallet.productId)}
-                  min={1}
+                  min={getPackagingIncrement(selectedProductToPallet.productId)}
+                  step={getPackagingIncrement(selectedProductToPallet.productId)}
                 />
               </div>
             </div>
