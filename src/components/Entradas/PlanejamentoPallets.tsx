@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Trash2, Package, Minus, Printer } from "lucide-react"
+import { Plus, Trash2, Package, Minus, Printer, AlertTriangle } from "lucide-react"
 import { PalletBarcodeLabel } from './PalletBarcodeLabel'
 import { toast } from "@/hooks/use-toast"
 import { 
@@ -17,6 +17,11 @@ import {
   type EntradaPallet,
   type EntradaPalletItem
 } from "@/hooks/useEntradaPallets"
+import { 
+  useEntradaDivergencias, 
+  calculateQuantityAdjustment,
+  type EntradaDivergencia
+} from "@/hooks/useEntradaDivergencias"
 
 type ExtendedEntradaPallet = EntradaPallet & { 
   entrada_pallet_itens?: EntradaPalletItem[]
@@ -29,11 +34,13 @@ interface PlanejamentoPalletsProps {
     nome_produto: string
     codigo_produto?: string
     quantidade: number
+    lote?: string
   }>
 }
 
 export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPalletsProps) => {
   const { data: pallets = [], isLoading } = useEntradaPallets(entradaId)
+  const { data: divergencias = [], isLoading: isLoadingDivergencias } = useEntradaDivergencias(entradaId)
   const typedPallets = pallets as ExtendedEntradaPallet[]
   const createPallet = useCreatePallet()
   const deletePallet = useDeletePallet()
@@ -172,24 +179,65 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     return total
   }
 
-  const getQuantidadeDisponivel = (itemId: string) => {
+  const getQuantidadeDisponivel = (itemId: string, includeAvaria = false) => {
     const item = entradaItens.find(i => i.id === itemId)
     if (!item) return 0
+    
     const alocada = getTotalQuantidadeAlocada(itemId)
-    return Number(item.quantidade) - alocada
+    const { quantityAdjustment, hasAvaria, avariaQuantity } = calculateQuantityAdjustment(
+      itemId, 
+      item.lote, 
+      divergencias
+    )
+    
+    // Calculate available quantity considering divergencias
+    let disponivel = Number(item.quantidade) - quantityAdjustment - alocada
+    
+    if (includeAvaria && hasAvaria) {
+      // If including avaria, return only the avaria quantity
+      return Math.max(0, avariaQuantity)
+    } else if (!includeAvaria && hasAvaria) {
+      // If not including avaria, subtract avaria quantity from available
+      disponivel -= avariaQuantity
+    }
+    
+    return Math.max(0, disponivel)
   }
 
   const getStatusCor = (itemId: string) => {
-    const disponivel = getQuantidadeDisponivel(itemId)
-    const original = entradaItens.find(i => i.id === itemId)?.quantidade || 0
+    const item = entradaItens.find(i => i.id === itemId)
+    if (!item) return "text-gray-600 bg-gray-50"
     
+    const disponivel = getQuantidadeDisponivel(itemId)
+    const { hasAvaria } = calculateQuantityAdjustment(itemId, item.lote, divergencias)
+    const original = item.quantidade || 0
+    
+    if (hasAvaria) return "text-orange-600 bg-orange-50" // Avaria status
     if (disponivel === 0) return "text-red-600 bg-red-50"
     if (disponivel < original) return "text-yellow-600 bg-yellow-50"
     return "text-green-600 bg-green-50"
   }
 
   const getAvailableProductsForNewPallet = () => {
-    return entradaItens.filter(item => getQuantidadeDisponivel(item.id) > 0)
+    return entradaItens.filter(item => 
+      getQuantidadeDisponivel(item.id) > 0 || getQuantidadeDisponivel(item.id, true) > 0
+    )
+  }
+
+  // Helper functions for divergencias display
+  const getDivergenciasForProduct = (itemId: string, lote?: string) => {
+    return divergencias.filter(div => {
+      const matchesProduct = !div.produto_id || div.produto_id === itemId
+      const matchesLote = !div.lote || !lote || div.lote === lote
+      return matchesProduct && matchesLote
+    })
+  }
+
+  const hasProductAvaria = (itemId: string, lote?: string) => {
+    const productDivergencias = getDivergenciasForProduct(itemId, lote)
+    return productDivergencias.some(div => 
+      div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria'
+    )
   }
 
   const handleDuplicatePallet = async (templatePallet: ExtendedEntradaPallet) => {
@@ -270,7 +318,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     })
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingDivergencias) {
     return <div className="text-center p-4">Carregando planejamento de pallets...</div>
   }
 
@@ -286,11 +334,12 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <Table>
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Produto</TableHead>
                 <TableHead>Original</TableHead>
+                <TableHead>Divergências</TableHead>
                 <TableHead>Alocada</TableHead>
                 <TableHead>Disponível</TableHead>
                 <TableHead>Status</TableHead>
@@ -300,17 +349,31 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
               {entradaItens.map((item) => {
                 const alocada = getTotalQuantidadeAlocada(item.id)
                 const disponivel = getQuantidadeDisponivel(item.id)
+                const disponivelAvaria = getQuantidadeDisponivel(item.id, true)
                 const statusCor = getStatusCor(item.id)
+                const productDivergencias = getDivergenciasForProduct(item.id, item.lote)
+                const hasAvaria = hasProductAvaria(item.id, item.lote)
+                const { quantityAdjustment } = calculateQuantityAdjustment(item.id, item.lote, divergencias)
                 
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
-                      <div>
-                        <span className="font-medium">{item.nome_produto}</span>
-                        {item.codigo_produto && (
-                          <div className="text-sm text-muted-foreground">
-                            {item.codigo_produto}
-                          </div>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <span className="font-medium">{item.nome_produto}</span>
+                          {item.codigo_produto && (
+                            <div className="text-sm text-muted-foreground">
+                              {item.codigo_produto}
+                            </div>
+                          )}
+                          {item.lote && (
+                            <div className="text-xs text-muted-foreground">
+                              Lote: {item.lote}
+                            </div>
+                          )}
+                        </div>
+                        {hasAvaria && (
+                          <AlertTriangle className="h-4 w-4 text-orange-500" />
                         )}
                       </div>
                     </TableCell>
@@ -318,27 +381,67 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                       <Badge variant="outline">{item.quantidade}</Badge>
                     </TableCell>
                     <TableCell>
+                      <div className="space-y-1">
+                        {productDivergencias.length > 0 ? (
+                          productDivergencias.map((div, idx) => (
+                            <Badge 
+                              key={idx}
+                              variant={div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria' ? 'destructive' : 'secondary'}
+                              className="text-xs block w-fit"
+                            >
+                              {div.tipo_divergencia === 'quantidade_incorreta' && `Qtd: ${div.diferenca}`}
+                              {(div.tipo_divergencia === 'produto_avariado' || div.tipo_divergencia === 'avaria') && 
+                                `Avaria: ${Math.abs(div.diferenca || div.quantidade_encontrada || 0)}`}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Nenhuma</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Badge variant="secondary">{alocada}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={disponivel === 0}
-                        onClick={() => setSelectedProductToPallet({ 
-                          productId: item.id, 
-                          palletId: "", 
-                          quantidade: disponivel 
-                        })}
-                        className={`font-medium ${disponivel > 0 ? 'hover:bg-primary/10' : ''}`}
-                      >
-                        {disponivel}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {/* Produto normal */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={disponivel === 0}
+                          onClick={() => setSelectedProductToPallet({ 
+                            productId: item.id, 
+                            palletId: "", 
+                            quantidade: Math.min(disponivel, 1)
+                          })}
+                          className={`font-medium ${disponivel > 0 ? 'hover:bg-primary/10' : ''}`}
+                        >
+                          {disponivel}
+                        </Button>
+                        
+                        {/* Produto avariado (separado) */}
+                        {hasAvaria && disponivelAvaria > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedProductToPallet({ 
+                              productId: item.id, 
+                              palletId: "", 
+                              quantidade: Math.min(disponivelAvaria, 1)
+                            })}
+                            className="font-medium text-orange-600 hover:bg-orange-50"
+                            title="Produto avariado - será alocado em pallet separado"
+                          >
+                            {disponivelAvaria} (Avaria)
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className={`px-2 py-1 rounded text-xs font-medium ${statusCor}`}>
-                        {disponivel === 0 ? 'Completo' : 
-                         disponivel < item.quantidade ? 'Parcial' : 'Disponível'}
+                        {hasAvaria ? 'Avaria' :
+                         disponivel === 0 ? 'Completo' : 
+                         disponivel < (item.quantidade - quantityAdjustment) ? 'Parcial' : 'Disponível'}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -383,7 +486,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         if (isSelected) {
                           handleRemoveProductFromNewPallet(produto.id)
                         } else {
-                          handleAddProductToNewPallet(produto.id, disponivel)
+                          handleAddProductToNewPallet(produto.id, Math.min(disponivel, 1))
                         }
                       }}
                       className="text-left justify-start h-auto py-2"
