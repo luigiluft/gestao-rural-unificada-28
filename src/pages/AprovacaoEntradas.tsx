@@ -23,6 +23,8 @@ import { PlanejamentoPallets } from "@/components/Entradas/PlanejamentoPallets"
 
 interface Divergencia {
   produto: string
+  lote: string
+  tipo_divergencia: 'quantidade' | 'avaria'
   quantidade_esperada: number
   quantidade_recebida: number
   motivo: string
@@ -163,6 +165,8 @@ export default function AprovacaoEntradas() {
   const addDivergencia = (item?: any) => {
     const novaDivergencia = {
       produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
+      lote: item?.lote || `LT${Date.now().toString().slice(-6)}`, // Gera lote automaticamente se não existir
+      tipo_divergencia: 'quantidade' as const,
       quantidade_esperada: item ? item.quantidade || 0 : 0,
       quantidade_recebida: item ? item.quantidade || 0 : 0,
       motivo: '',
@@ -271,6 +275,8 @@ export default function AprovacaoEntradas() {
       if (quantidade_esperada !== quantidade_recebida) {
         divergenciasCalculadas.push({
           produto: produto_nome,
+          lote: `LT${Date.now().toString().slice(-6)}`,
+          tipo_divergencia: 'quantidade' as const,
           quantidade_esperada,
           quantidade_recebida,
           motivo: quantidade_recebida < quantidade_esperada 
@@ -291,6 +297,8 @@ export default function AprovacaoEntradas() {
       if (!itemEsperado && !leitura.produto_nome.includes('não encontrado')) {
         divergenciasCalculadas.push({
           produto: leitura.produto_nome,
+          lote: `LT${Date.now().toString().slice(-6)}`,
+          tipo_divergencia: 'quantidade' as const,
           quantidade_esperada: 0,
           quantidade_recebida: leitura.quantidade,
           motivo: 'Produto recebido não estava previsto na entrada',
@@ -804,34 +812,60 @@ export default function AprovacaoEntradas() {
                         </Button>
                       </div>
                       
-                      <div className="grid md:grid-cols-2 gap-3">
-                        <div>
-                          <Label>Produto</Label>
-                          <Input
-                            value={div.produto}
-                            onChange={(e) => updateDivergencia(index, 'produto', e.target.value)}
-                            placeholder="Nome do produto"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label>Qtd. Esperada</Label>
-                            <Input
-                              type="number"
-                              value={div.quantidade_esperada}
-                              onChange={(e) => updateDivergencia(index, 'quantidade_esperada', parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                          <div>
-                            <Label>Qtd. Recebida</Label>
-                            <Input
-                              type="number"
-                              value={div.quantidade_recebida}
-                              onChange={(e) => updateDivergencia(index, 'quantidade_recebida', parseFloat(e.target.value) || 0)}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                       <div className="space-y-3">
+                         <div className="grid md:grid-cols-2 gap-3">
+                           <div>
+                             <Label>Produto</Label>
+                             <Input
+                               value={div.produto}
+                               onChange={(e) => updateDivergencia(index, 'produto', e.target.value)}
+                               placeholder="Nome do produto"
+                             />
+                           </div>
+                           <div>
+                             <Label>Lote</Label>
+                             <Input
+                               value={div.lote}
+                               onChange={(e) => updateDivergencia(index, 'lote', e.target.value)}
+                               placeholder="Número do lote"
+                             />
+                           </div>
+                         </div>
+
+                         <div className="grid md:grid-cols-3 gap-3">
+                           <div>
+                             <Label>Tipo de Divergência</Label>
+                             <Select 
+                               value={div.tipo_divergencia} 
+                               onValueChange={(value) => updateDivergencia(index, 'tipo_divergencia', value)}
+                             >
+                               <SelectTrigger>
+                                 <SelectValue placeholder="Selecione o tipo" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="quantidade">Quantidade</SelectItem>
+                                 <SelectItem value="avaria">Avaria</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+                           <div>
+                             <Label>Qtd. Esperada</Label>
+                             <Input
+                               type="number"
+                               value={div.quantidade_esperada}
+                               onChange={(e) => updateDivergencia(index, 'quantidade_esperada', parseFloat(e.target.value) || 0)}
+                             />
+                           </div>
+                           <div>
+                             <Label>Qtd. Recebida</Label>
+                             <Input
+                               type="number"
+                               value={div.quantidade_recebida}
+                               onChange={(e) => updateDivergencia(index, 'quantidade_recebida', parseFloat(e.target.value) || 0)}
+                             />
+                           </div>
+                         </div>
+                       </div>
                       
                       <div>
                         <Label>Motivo da Divergência</Label>
