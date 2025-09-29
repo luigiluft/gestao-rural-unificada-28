@@ -1,95 +1,72 @@
-import { useState, useEffect } from "react"
-import { 
-  Search, 
-  Filter, 
-  Package, 
-  AlertTriangle, 
-  CheckCircle,
-  Clock,
-  BarChart3,
-  Eye,
-  History
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import { useEstoque, useMovimentacoes } from "@/hooks/useEstoque"
-import { useUpdateNotificationView } from "@/hooks/useNotificationViews"
-import { useNavigate } from "react-router-dom"
-import { formatDistanceToNow } from "date-fns"
-import { ptBR } from "date-fns/locale"
-
-
+import { useState, useEffect } from "react";
+import { Search, Filter, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEstoque, useMovimentacoes } from "@/hooks/useEstoque";
+import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 export default function Estoque() {
-  const navigate = useNavigate()
-  const { data: estoque, isLoading } = useEstoque()
-  const [selectedItem, setSelectedItem] = useState<any>(null)
-  const { data: movimentacoes } = useMovimentacoes(selectedItem?.produto_id)
-  const updateNotificationView = useUpdateNotificationView()
+  const navigate = useNavigate();
+  const {
+    data: estoque,
+    isLoading
+  } = useEstoque();
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const {
+    data: movimentacoes
+  } = useMovimentacoes(selectedItem?.produto_id);
+  const updateNotificationView = useUpdateNotificationView();
 
   // Reset estoque notification when page loads
   useEffect(() => {
-    updateNotificationView.mutate("estoque")
-  }, [])  // Only run once when component mounts
+    updateNotificationView.mutate("estoque");
+  }, []); // Only run once when component mounts
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Crítico":
-        return "destructive"
+        return "destructive";
       case "Baixo":
-        return "secondary"
+        return "secondary";
       case "Normal":
-        return "default"
+        return "default";
       default:
-        return "default"
+        return "default";
     }
-  }
-
+  };
   const getStockLevel = (quantidade: number, maximo: number = 1000) => {
-    return Math.min((quantidade / maximo) * 100, 100)
-  }
-
+    return Math.min(quantidade / maximo * 100, 100);
+  };
   const getStockStats = () => {
-    if (!estoque) return { total: 0, normal: 0, baixo: 0, critico: 0 }
-    
-    const total = estoque.reduce((acc, item) => acc + item.quantidade_atual, 0)
-    const normal = estoque.filter(item => item.quantidade_atual >= 100).length
-    const baixo = estoque.filter(item => item.quantidade_atual < 100 && item.quantidade_atual >= 20).length
-    const critico = estoque.filter(item => item.quantidade_atual < 20).length
-    
-    return { total, normal, baixo, critico }
-  }
-
-  const stats = getStockStats()
-
-  return (
-    <div className="space-y-6">
+    if (!estoque) return {
+      total: 0,
+      normal: 0,
+      baixo: 0,
+      critico: 0
+    };
+    const total = estoque.reduce((acc, item) => acc + item.quantidade_atual, 0);
+    const normal = estoque.filter(item => item.quantidade_atual >= 100).length;
+    const baixo = estoque.filter(item => item.quantidade_atual < 100 && item.quantidade_atual >= 20).length;
+    const critico = estoque.filter(item => item.quantidade_atual < 20).length;
+    return {
+      total,
+      normal,
+      baixo,
+      critico
+    };
+  };
+  const stats = getStockStats();
+  return <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -172,10 +149,7 @@ export default function Estoque() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por produto, lote ou depósito..."
-                className="pl-9"
-              />
+              <Input placeholder="Buscar por produto, lote ou depósito..." className="pl-9" />
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
@@ -196,14 +170,9 @@ export default function Estoque() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : estoque && estoque.length > 0 ? (
-            <div className="overflow-x-auto">
+          {isLoading ? <div className="space-y-4">
+              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+            </div> : estoque && estoque.length > 0 ? <div className="overflow-x-auto">
               <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow>
@@ -217,13 +186,10 @@ export default function Estoque() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {estoque.map((item) => {
-                  const stockLevel = getStockLevel(item.quantidade_atual)
-                  const status = item.quantidade_atual < 20 ? 'Crítico' : 
-                                item.quantidade_atual < 100 ? 'Baixo' : 'Normal'
-                  
-                  return (
-                    <TableRow key={item.id} className="hover:bg-muted/50">
+                {estoque.map(item => {
+                const stockLevel = getStockLevel(item.quantidade_atual);
+                const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
+                return <TableRow key={item.id} className="hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -239,9 +205,7 @@ export default function Estoque() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.quantidade_atual} {item.produtos?.unidade_medida}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Disponível: {item.quantidade_disponivel || item.quantidade_atual}
-                          </p>
+                          
                         </div>
                       </TableCell>
                       <TableCell>{(item as any).franquias?.nome}</TableCell>
@@ -251,20 +215,15 @@ export default function Estoque() {
                         </Badge>
                       </TableCell>
                        <TableCell className="font-medium">
-                         {item.valor_total_estoque
-                           ? `R$ ${item.valor_total_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                           : 'N/A'
-                         }
+                         {item.valor_total_estoque ? `R$ ${item.valor_total_estoque.toLocaleString('pt-BR', {
+                      minimumFractionDigits: 2
+                    })}` : 'N/A'}
                        </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setSelectedItem(item)}
-                              >
+                              <Button variant="ghost" size="sm" onClick={() => setSelectedItem(item)}>
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </DialogTrigger>
@@ -276,8 +235,7 @@ export default function Estoque() {
                                 </DialogDescription>
                               </DialogHeader>
                               
-                              {selectedItem && (
-                                <Tabs defaultValue="details" className="w-full">
+                              {selectedItem && <Tabs defaultValue="details" className="w-full">
                                   <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="details">Detalhes</TabsTrigger>
                                     <TabsTrigger value="history">Histórico</TabsTrigger>
@@ -325,35 +283,26 @@ export default function Estoque() {
                                          <div>
                                            <h4 className="font-medium">Valor Total</h4>
                                            <p className="text-muted-foreground">
-                                             {selectedItem.valor_total_estoque 
-                                               ? `R$ ${selectedItem.valor_total_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                                               : 'N/A'
-                                             }
+                                             {selectedItem.valor_total_estoque ? `R$ ${selectedItem.valor_total_estoque.toLocaleString('pt-BR', {
+                                        minimumFractionDigits: 2
+                                      })}` : 'N/A'}
                                            </p>
                                          </div>
                                       </div>
 
-                                      {selectedItem.data_validade && (
-                                        <div>
+                                      {selectedItem.data_validade && <div>
                                           <h4 className="font-medium">Validade</h4>
                                           <p className="text-muted-foreground">
                                             {new Date(selectedItem.data_validade).toLocaleDateString('pt-BR')}
                                           </p>
-                                        </div>
-                                      )}
+                                        </div>}
                                     </div>
                                   </TabsContent>
                                   
                                   <TabsContent value="history" className="space-y-4">
                                     <div className="space-y-3">
-                                      {movimentacoes && movimentacoes.length > 0 ? (
-                                        movimentacoes.map((mov) => (
-                                          <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                                            <div className={`p-2 rounded-full ${
-                                              mov.tipo_movimentacao === 'entrada' 
-                                                ? 'bg-success/10 text-success' 
-                                                : 'bg-warning/10 text-warning'
-                                            }`}>
+                                      {movimentacoes && movimentacoes.length > 0 ? movimentacoes.map(mov => <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                                            <div className={`p-2 rounded-full ${mov.tipo_movimentacao === 'entrada' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
                                               <History className="w-4 h-4" />
                                             </div>
                                             <div className="flex-1">
@@ -362,48 +311,29 @@ export default function Estoque() {
                                               </p>
                                               <p className="text-sm text-muted-foreground">{(mov as any).franquias?.nome}</p>
                                               <p className="text-xs text-muted-foreground">
-                                                {formatDistanceToNow(new Date(mov.data_movimentacao), { 
-                                                  addSuffix: true, 
-                                                  locale: ptBR 
-                                                })}
+                                                {formatDistanceToNow(new Date(mov.data_movimentacao), {
+                                        addSuffix: true,
+                                        locale: ptBR
+                                      })}
                                               </p>
                                             </div>
-                                          </div>
-                                        ))
-                                      ) : (
-                                        <EmptyState
-                                          icon={<History className="w-8 h-8 text-muted-foreground" />}
-                                          title="Nenhuma movimentação"
-                                          description="Ainda não há movimentações para este produto."
-                                        />
-                                      )}
+                                          </div>) : <EmptyState icon={<History className="w-8 h-8 text-muted-foreground" />} title="Nenhuma movimentação" description="Ainda não há movimentações para este produto." />}
                                     </div>
                                   </TabsContent>
-                                </Tabs>
-                              )}
+                                </Tabs>}
                             </DialogContent>
                           </Dialog>
                         </div>
                       </TableCell>
-                    </TableRow>
-                  )
-                })}
+                    </TableRow>;
+              })}
               </TableBody>
               </Table>
-            </div>
-          ) : (
-            <EmptyState
-              icon={<Package className="w-8 h-8 text-muted-foreground" />}
-              title="Nenhum produto em estoque"
-              description="Registre entradas de produtos para começar a controlar seu estoque."
-              action={{
-                label: "Registrar Primeira Entrada",
-                onClick: () => navigate('/entradas')
-              }}
-            />
-          )}
+            </div> : <EmptyState icon={<Package className="w-8 h-8 text-muted-foreground" />} title="Nenhum produto em estoque" description="Registre entradas de produtos para começar a controlar seu estoque." action={{
+          label: "Registrar Primeira Entrada",
+          onClick: () => navigate('/entradas')
+        }} />}
         </CardContent>
       </Card>
-    </div>
-  )
+    </div>;
 }
