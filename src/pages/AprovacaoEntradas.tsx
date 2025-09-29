@@ -27,6 +27,7 @@ interface Divergencia {
   tipo_divergencia: 'quantidade' | 'avaria'
   quantidade_esperada: number
   quantidade_recebida: number
+  quantidade_avariada?: number
   motivo: string
   acao_tomada: string
 }
@@ -165,10 +166,11 @@ export default function AprovacaoEntradas() {
   const addDivergencia = (item?: any) => {
     const novaDivergencia = {
       produto: item ? (item.produtos?.nome || item.nome_produto || '') : '',
-      lote: item?.lote || `LT${Date.now().toString().slice(-6)}`, // Gera lote automaticamente se não existir
+      lote: item?.lote || `LT${Date.now().toString().slice(-6)}`,
       tipo_divergencia: 'quantidade' as const,
-      quantidade_esperada: item ? item.quantidade || 0 : 0,
+      quantidade_esperada: item ? item.quantidade || 0 : 0, // Quantidade do XML (readonly)
       quantidade_recebida: item ? item.quantidade || 0 : 0,
+      quantidade_avariada: 0,
       motivo: '',
       acao_tomada: ''
     }
@@ -279,6 +281,7 @@ export default function AprovacaoEntradas() {
           tipo_divergencia: 'quantidade' as const,
           quantidade_esperada,
           quantidade_recebida,
+          quantidade_avariada: 0,
           motivo: quantidade_recebida < quantidade_esperada 
             ? `Quantidade inferior ao esperado (falta: ${quantidade_esperada - quantidade_recebida})` 
             : `Quantidade superior ao esperado (excesso: ${quantidade_recebida - quantidade_esperada})`,
@@ -301,6 +304,7 @@ export default function AprovacaoEntradas() {
           tipo_divergencia: 'quantidade' as const,
           quantidade_esperada: 0,
           quantidade_recebida: leitura.quantidade,
+          quantidade_avariada: 0,
           motivo: 'Produto recebido não estava previsto na entrada',
           acao_tomada: 'Registrado automaticamente via código de barras'
         })
@@ -848,22 +852,51 @@ export default function AprovacaoEntradas() {
                                </SelectContent>
                              </Select>
                            </div>
-                           <div>
-                             <Label>Qtd. Esperada</Label>
-                             <Input
-                               type="number"
-                               value={div.quantidade_esperada}
-                               onChange={(e) => updateDivergencia(index, 'quantidade_esperada', parseFloat(e.target.value) || 0)}
-                             />
-                           </div>
-                           <div>
-                             <Label>Qtd. Recebida</Label>
-                             <Input
-                               type="number"
-                               value={div.quantidade_recebida}
-                               onChange={(e) => updateDivergencia(index, 'quantidade_recebida', parseFloat(e.target.value) || 0)}
-                             />
-                           </div>
+                           
+                           {div.tipo_divergencia === 'quantidade' && (
+                             <>
+                               <div>
+                                 <Label>Qtd. Esperada (XML)</Label>
+                                 <Input
+                                   type="number"
+                                   value={div.quantidade_esperada}
+                                   readOnly
+                                   className="bg-muted cursor-not-allowed"
+                                   title="Quantidade do XML - não pode ser alterada"
+                                 />
+                               </div>
+                               <div>
+                                 <Label>Qtd. Recebida</Label>
+                                 <Input
+                                   type="number"
+                                   value={div.quantidade_recebida}
+                                   onChange={(e) => {
+                                     const value = parseFloat(e.target.value) || 0
+                                     updateDivergencia(index, 'quantidade_recebida', value)
+                                   }}
+                                   step="1"
+                                   min="0"
+                                 />
+                               </div>
+                             </>
+                           )}
+                           
+                           {div.tipo_divergencia === 'avaria' && (
+                             <div className="md:col-span-2">
+                               <Label>Qtd. Avariada</Label>
+                               <Input
+                                 type="number"
+                                 value={div.quantidade_avariada || 0}
+                                 onChange={(e) => {
+                                   const value = parseFloat(e.target.value) || 0
+                                   updateDivergencia(index, 'quantidade_avariada', value)
+                                 }}
+                                 step="1"
+                                 min="0"
+                                 max={div.quantidade_esperada}
+                               />
+                             </div>
+                           )}
                          </div>
                        </div>
                       
