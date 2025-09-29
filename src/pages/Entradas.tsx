@@ -692,9 +692,30 @@ export default function Entradas() {
                     <Edit className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
+                  <DropdownMenuItem onClick={async () => {
                 if (confirm('Tem certeza que deseja excluir esta entrada?')) {
-                  console.log('Delete entrada:', entrada.id);
+                  try {
+                    const { error } = await supabase
+                      .from('entradas')
+                      .delete()
+                      .eq('id', entrada.id);
+
+                    if (error) throw error;
+
+                    toast({
+                      title: "Entrada excluída",
+                      description: "A entrada foi excluída com sucesso."
+                    });
+
+                    refetch(); // Refresh the list
+                  } catch (error) {
+                    console.error('Erro ao excluir entrada:', error);
+                    toast({
+                      title: "Erro",
+                      description: "Erro ao excluir entrada.",
+                      variant: "destructive"
+                    });
+                  }
                 }
               }}>
                     <Trash2 className="mr-2 h-4 w-4" />
