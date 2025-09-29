@@ -19,6 +19,7 @@ export interface EntradaPalletItem {
   pallet_id: string
   entrada_item_id: string
   quantidade: number
+  is_avaria?: boolean
   created_at: string
   entrada_itens?: {
     id: string
@@ -138,7 +139,12 @@ export const useAddItemToPallet = () => {
     mutationFn: async (item: Omit<EntradaPalletItem, "id" | "created_at">) => {
       const { data, error } = await supabase
         .from("entrada_pallet_itens")
-        .insert(item)
+        .insert({
+          pallet_id: item.pallet_id,
+          entrada_item_id: item.entrada_item_id,
+          quantidade: item.quantidade,
+          is_avaria: item.is_avaria || false
+        })
         .select()
         .single()
 
