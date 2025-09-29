@@ -554,11 +554,12 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setSelectedProductToPallet({ 
-                                  productId: item.id, 
-                                  palletId: "", 
-                                  quantidade: Math.min(disponivelAvaria, 1)
-                                })}
+                            onClick={() => setSelectedProductToPallet({ 
+                              productId: item.id, 
+                              palletId: "", 
+                              quantidade: Math.min(disponivelAvaria, getPackagingIncrement(item.produto_id)),
+                              isAvaria: true
+                            })}
                                 className="font-medium text-orange-600 hover:bg-orange-50"
                                 title="Produto avariado - será alocado em pallet separado"
                               >

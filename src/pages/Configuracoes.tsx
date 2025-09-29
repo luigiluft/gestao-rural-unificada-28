@@ -19,6 +19,7 @@ export default function Configuracoes() {
   const [horarios, setHorarios] = useState<string[]>([])
   const [diasUteis, setDiasUteis] = useState("")
   const [janelaEntregaDias, setJanelaEntregaDias] = useState("")
+  const [pesoBrutoPallet, setPesoBrutoPallet] = useState("")
 
   React.useEffect(() => {
     if (configuracoes.length > 0) {
@@ -45,6 +46,11 @@ export default function Configuracoes() {
       const janelaEntregaConfig = configuracoes.find(c => c.chave === "janela_entrega_dias")
       if (janelaEntregaConfig) {
         setJanelaEntregaDias(janelaEntregaConfig.valor)
+      }
+      
+      const pesoBrutoConfig = configuracoes.find(c => c.chave === "peso_bruto_maximo_pallet")
+      if (pesoBrutoConfig) {
+        setPesoBrutoPallet(pesoBrutoConfig.valor)
       }
     }
   }, [configuracoes])
@@ -88,6 +94,13 @@ export default function Configuracoes() {
     updateConfiguracao.mutate({
       chave: "janela_entrega_dias",
       valor: janelaEntregaDias
+    })
+  }
+
+  const handleSavePesoBrutoPallet = () => {
+    updateConfiguracao.mutate({
+      chave: "peso_bruto_maximo_pallet",
+      valor: pesoBrutoPallet
     })
   }
 
@@ -303,6 +316,40 @@ export default function Configuracoes() {
                 </div>
                 <Button 
                   onClick={handleSaveJanelaEntrega}
+                  disabled={updateConfiguracao.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configuração de Peso Bruto Máximo por Pallet */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Peso Bruto Máximo por Pallet</CardTitle>
+              <CardDescription>
+                Configure o peso bruto máximo (em Kg) permitido por pallet. O peso bruto é calculado como 1,2x o peso líquido.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end space-x-4">
+                <div className="flex-1">
+                  <Label htmlFor="peso-bruto-pallet">Peso Bruto Máximo (Kg)</Label>
+                  <Input
+                    id="peso-bruto-pallet"
+                    type="number"
+                    min="1"
+                    value={pesoBrutoPallet}
+                    onChange={(e) => setPesoBrutoPallet(e.target.value)}
+                    placeholder="1000"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Peso bruto = peso líquido × 1,2. Este limite será validado ao adicionar produtos aos pallets.
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleSavePesoBrutoPallet}
                   disabled={updateConfiguracao.isPending}
                 >
                   Salvar
