@@ -86,9 +86,27 @@ export const useProdutosAvariados = () => {
         `)
         .eq("is_avaria", true)
 
-      // If not admin, filter by user_id
+      // If not admin, filter by deposito_id based on user role
       if (!isAdmin) {
-        query = query.eq("entrada_pallets.entradas.user_id", user.id)
+        // Check if user is franqueado
+        if (profile?.role === 'franqueado') {
+          // Get franquias where user is master_franqueado_id
+          const { data: franquias } = await supabase
+            .from("franquias")
+            .select("id")
+            .eq("master_franqueado_id", user.id)
+          
+          if (franquias && franquias.length > 0) {
+            const depositoIds = franquias.map(f => f.id)
+            query = query.in("entrada_pallets.entradas.deposito_id", depositoIds)
+          } else {
+            // If no franquias found, return empty result
+            query = query.eq("entrada_pallets.entradas.deposito_id", "00000000-0000-0000-0000-000000000000")
+          }
+        } else {
+          // For produtor role, filter by user_id
+          query = query.eq("entrada_pallets.entradas.user_id", user.id)
+        }
       }
 
       const { data: avariados, error } = await query
