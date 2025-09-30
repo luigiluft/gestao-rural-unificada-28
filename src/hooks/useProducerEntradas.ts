@@ -19,6 +19,9 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
         console.warn("Producer doesn't have CPF/CNPJ registered")
       }
 
+      // Clean CPF/CNPJ for comparison (remove all non-digit characters)
+      const cpfCnpjLimpo = profile?.cpf_cnpj?.replace(/\D/g, '') || ''
+
       let query = supabase
         .from("entradas")
         .select(`
@@ -29,7 +32,6 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
             produtos(nome, unidade_medida)
           )
         `)
-        .or(`user_id.eq.${user.user.id}${profile?.cpf_cnpj ? `,emitente_cnpj.eq.${profile.cpf_cnpj},destinatario_cpf_cnpj.eq.${profile.cpf_cnpj}` : ''}`)
 
       // Apply date filters if provided
       if (dateRange?.from) {
@@ -41,9 +43,25 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
         query = query.lte("created_at", endDate.toISOString())
       }
 
-      const { data: entradas, error } = await query.order("created_at", { ascending: false })
+      const { data: allEntradas, error } = await query.order("created_at", { ascending: false })
 
       if (error) throw error
+
+      // Filter entradas by producer's CPF/CNPJ (comparing cleaned versions)
+      const entradas = (allEntradas || []).filter(entrada => {
+        // Always include entradas created by the user
+        if (entrada.user_id === user.user.id) return true
+        
+        // If no CPF/CNPJ, only show user's own entradas
+        if (!cpfCnpjLimpo) return false
+        
+        // Clean the entrada's CPF/CNPJ fields for comparison
+        const emitenteCnpjLimpo = entrada.emitente_cnpj?.replace(/\D/g, '') || ''
+        const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || ''
+        
+        // Check if producer's CPF/CNPJ matches emitente or destinatario (cleaned comparison)
+        return emitenteCnpjLimpo === cpfCnpjLimpo || destinatarioCpfCnpjLimpo === cpfCnpjLimpo
+      })
 
       // Get franquia names for each entrada
       const entradasWithFranquias = await Promise.all(
