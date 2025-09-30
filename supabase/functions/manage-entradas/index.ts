@@ -253,12 +253,8 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
       } else {
         console.log(`Created ${divergenciasRecords.length} divergencias records for entrada ${entrada.id}`)
         
-        // Para cada divergência de avaria, criar um pallet específico
-        for (const divergencia of divergenciasRecords) {
-          if (divergencia.tipo_divergencia === 'avaria') {
-            await createAvariaPallet(entrada.id, divergencia, supabase);
-          }
-        }
+        // Note: Avaria pallets are now created manually through the frontend
+        // No longer auto-creating avaria pallets to avoid conflicts with manual pallet creation
       }
     }
   } catch (error) {
