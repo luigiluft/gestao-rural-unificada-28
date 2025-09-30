@@ -165,7 +165,27 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
           destinatario_nome: nfData.destinatario?.nome,
           entrega_cnpj: nfData.entrega?.cnpj,
           entrega_nome: nfData.entrega?.nome,
-          xml_content: nfData.xmlContent
+          xml_content: nfData.xmlContent,
+          // Campos adicionais
+          versao_nfe: nfData.versao_nfe,
+          cuf: nfData.cuf,
+          cnf: nfData.cnf,
+          modelo: nfData.modelo,
+          dh_emissao: nfData.dh_emissao,
+          dh_saida_entrada: nfData.dh_saida_entrada,
+          tipo_nf: nfData.tipo_nf,
+          id_dest: nfData.id_dest,
+          cmun_fg: nfData.cmun_fg,
+          tipo_impressao: nfData.tipo_impressao,
+          tipo_emissao: nfData.tipo_emissao,
+          digito_verificador: nfData.digito_verificador,
+          tipo_ambiente: nfData.tipo_ambiente,
+          finalidade_nfe: nfData.finalidade_nfe,
+          ind_final: nfData.ind_final,
+          ind_pres: nfData.ind_pres,
+          ind_intermediador: nfData.ind_intermediador,
+          processo_emissao: nfData.processo_emissao,
+          versao_processo: nfData.versao_processo
         }
       } as DadosEntrada)
 

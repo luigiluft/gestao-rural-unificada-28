@@ -39,6 +39,26 @@ export interface NFData {
   destinatarioCpfCnpj: string;
   itens: NFItem[];
   valorTotal: number;
+  // Campos adicionais da NFe
+  versao_nfe?: string;
+  cuf?: string;
+  cnf?: string;
+  modelo?: string;
+  dh_emissao?: string;
+  dh_saida_entrada?: string;
+  tipo_nf?: string;
+  id_dest?: string;
+  cmun_fg?: string;
+  tipo_impressao?: string;
+  tipo_emissao?: string;
+  digito_verificador?: string;
+  tipo_ambiente?: string;
+  finalidade_nfe?: string;
+  ind_final?: string;
+  ind_pres?: string;
+  ind_intermediador?: string;
+  processo_emissao?: string;
+  versao_processo?: string;
 }
 
 export class NFParser {
@@ -56,6 +76,7 @@ export class NFParser {
       // Extrair chave da NFe
       const infNFe = xmlDoc.querySelector('infNFe');
       const chaveNFe = infNFe?.getAttribute('Id')?.replace('NFe', '') || '';
+      const versao_nfe = infNFe?.getAttribute('versao') || '';
 
       // Extrair dados básicos da NFe
       const ide = xmlDoc.querySelector('ide');
@@ -63,6 +84,26 @@ export class NFParser {
       const serie = ide?.querySelector('serie')?.textContent || '';
       const naturezaOperacao = ide?.querySelector('natOp')?.textContent || '';
       const dataEmissao = ide?.querySelector('dhEmi')?.textContent?.split('T')[0] || '';
+      
+      // Extrair campos adicionais da seção ide
+      const cuf = ide?.querySelector('cUF')?.textContent || '';
+      const cnf = ide?.querySelector('cNF')?.textContent || '';
+      const modelo = ide?.querySelector('mod')?.textContent || '';
+      const dh_emissao = ide?.querySelector('dhEmi')?.textContent || '';
+      const dh_saida_entrada = ide?.querySelector('dhSaiEnt')?.textContent || '';
+      const tipo_nf = ide?.querySelector('tpNF')?.textContent || '';
+      const id_dest = ide?.querySelector('idDest')?.textContent || '';
+      const cmun_fg = ide?.querySelector('cMunFG')?.textContent || '';
+      const tipo_impressao = ide?.querySelector('tpImp')?.textContent || '';
+      const tipo_emissao = ide?.querySelector('tpEmis')?.textContent || '';
+      const digito_verificador = ide?.querySelector('cDV')?.textContent || '';
+      const tipo_ambiente = ide?.querySelector('tpAmb')?.textContent || '';
+      const finalidade_nfe = ide?.querySelector('finNFe')?.textContent || '';
+      const ind_final = ide?.querySelector('indFinal')?.textContent || '';
+      const ind_pres = ide?.querySelector('indPres')?.textContent || '';
+      const ind_intermediador = ide?.querySelector('indIntermed')?.textContent || '';
+      const processo_emissao = ide?.querySelector('procEmi')?.textContent || '';
+      const versao_processo = ide?.querySelector('verProc')?.textContent || '';
 
       // Extrair dados do emitente
       const emit = xmlDoc.querySelector('emit');
@@ -178,7 +219,27 @@ export class NFParser {
         entrega: entregaData,
         destinatarioCpfCnpj,
         itens,
-        valorTotal
+        valorTotal,
+        // Campos adicionais
+        versao_nfe,
+        cuf,
+        cnf,
+        modelo,
+        dh_emissao,
+        dh_saida_entrada,
+        tipo_nf,
+        id_dest,
+        cmun_fg,
+        tipo_impressao,
+        tipo_emissao,
+        digito_verificador,
+        tipo_ambiente,
+        finalidade_nfe,
+        ind_final,
+        ind_pres,
+        ind_intermediador,
+        processo_emissao,
+        versao_processo
       };
     } catch (error) {
       console.error('Erro ao processar XML:', error);
