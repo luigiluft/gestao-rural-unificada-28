@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +67,7 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
     }
 
     try {
+      setIsProcessing(true);
       await confirmAllocation.mutateAsync(confirmData);
       
       // Reset states for next pallet
@@ -81,12 +82,16 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
         onOpenChange(false);
         resetDialog();
       } else {
-        // Move to next pallet
+        // Move to next pallet and start allocation
         setCurrentIndex(prev => prev + 1);
-        setTimeout(() => startAllocation(), 100);
+        // Wait a bit before starting next allocation to ensure state is updated
+        setTimeout(() => {
+          setIsProcessing(false);
+        }, 100);
       }
     } catch (error) {
       console.error("Erro na confirmação:", error);
+      setIsProcessing(false);
     }
   };
 
@@ -106,10 +111,13 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
     onOpenChange(newOpen);
   };
 
-  // Start allocation when dialog opens
-  if (open && method && currentPallet && !allocationResult && !isProcessing) {
-    startAllocation();
-  }
+  // Start allocation when currentIndex changes or dialog opens
+  useEffect(() => {
+    if (open && method && currentPallet && !allocationResult && !isProcessing && !confirmAllocation.isPending) {
+      console.log('Starting allocation for pallet:', currentPallet);
+      startAllocation();
+    }
+  }, [open, method, currentIndex, currentPallet?.id, allocationResult, isProcessing, confirmAllocation.isPending]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
