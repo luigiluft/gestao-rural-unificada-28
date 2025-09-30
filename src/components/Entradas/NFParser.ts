@@ -42,11 +42,33 @@ export interface NFData {
     cpfCnpj: string;
     nome: string;
     endereco: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    municipio?: string;
+    uf?: string;
+    cep?: string;
+    codigo_municipio?: string;
+    codigo_pais?: string;
+    pais?: string;
+    telefone?: string;
+    ind_ie?: string;
+    ie?: string;
+    email?: string;
   };
   entrega?: {
     cnpj: string;
     ie?: string;
     endereco: string;
+    nome?: string;
+    logradouro?: string;
+    numero?: string;
+    bairro?: string;
+    municipio?: string;
+    uf?: string;
+    cep?: string;
+    telefone?: string;
   };
   destinatarioCpfCnpj: string;
   itens: NFItem[];
@@ -141,11 +163,26 @@ export class NFParser {
 
       // Extrair dados do destinatário
       const dest = xmlDoc.querySelector('dest');
+      const enderDest = dest?.querySelector('enderDest');
       const destinatarioCpfCnpj = dest?.querySelector('CNPJ')?.textContent || dest?.querySelector('CPF')?.textContent || '';
       const destinatario = {
         cpfCnpj: destinatarioCpfCnpj,
         nome: dest?.querySelector('xNome')?.textContent || '',
-        endereco: this.formatarEndereco(dest?.querySelector('enderDest'))
+        endereco: this.formatarEndereco(enderDest),
+        logradouro: enderDest?.querySelector('xLgr')?.textContent || undefined,
+        numero: enderDest?.querySelector('nro')?.textContent || undefined,
+        complemento: enderDest?.querySelector('xCpl')?.textContent || undefined,
+        bairro: enderDest?.querySelector('xBairro')?.textContent || undefined,
+        municipio: enderDest?.querySelector('xMun')?.textContent || undefined,
+        uf: enderDest?.querySelector('UF')?.textContent || undefined,
+        cep: enderDest?.querySelector('CEP')?.textContent || undefined,
+        codigo_municipio: enderDest?.querySelector('cMun')?.textContent || undefined,
+        codigo_pais: enderDest?.querySelector('cPais')?.textContent || undefined,
+        pais: enderDest?.querySelector('xPais')?.textContent || undefined,
+        telefone: enderDest?.querySelector('fone')?.textContent || undefined,
+        ind_ie: dest?.querySelector('indIEDest')?.textContent || undefined,
+        ie: dest?.querySelector('IE')?.textContent || undefined,
+        email: dest?.querySelector('email')?.textContent || undefined
       };
 
       // Extrair dados da entrega (local onde será entregue a mercadoria)
@@ -159,7 +196,15 @@ export class NFParser {
           entregaData = {
             cnpj: entregaCnpj,
             ie: entregaIe,
-            endereco: this.formatarEnderecoEntrega(entrega)
+            endereco: this.formatarEnderecoEntrega(entrega),
+            nome: entrega.querySelector('xNome')?.textContent || undefined,
+            logradouro: entrega.querySelector('xLgr')?.textContent || undefined,
+            numero: entrega.querySelector('nro')?.textContent || undefined,
+            bairro: entrega.querySelector('xBairro')?.textContent || undefined,
+            municipio: entrega.querySelector('xMun')?.textContent || undefined,
+            uf: entrega.querySelector('UF')?.textContent || undefined,
+            cep: entrega.querySelector('CEP')?.textContent || undefined,
+            telefone: entrega.querySelector('fone')?.textContent || undefined
           };
         }
       }
