@@ -22,9 +22,21 @@ export default function AlocacaoPallets() {
   } = usePalletsPendentes();
 
   const getSelectedPalletsData = () => {
-    return selectedPallets
+    const data = selectedPallets
       .map(id => palletsPendentes?.find(p => p.id === id))
       .filter(Boolean);
+    
+    console.log('Selected pallets data:', data.length, 'pallets');
+    data.forEach((pallet, idx) => {
+      console.log(`Pallet ${idx + 1}:`, {
+        id: pallet.id,
+        numero: pallet.numero_pallet,
+        items: pallet.entrada_pallet_itens?.length || 0,
+        has_entrada_info: !!pallet.entradas
+      });
+    });
+    
+    return data;
   };
 
   const handleManualAllocation = () => {

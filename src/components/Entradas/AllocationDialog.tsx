@@ -109,7 +109,11 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
 
   // Start allocation when dialog opens or index changes
   useEffect(() => {
-    if (open && method && currentPallet && !allocationResult && !isProcessing) {
+    if (!open || !method || !currentPallet) return;
+    
+    // Only start allocation if we don't have a result yet and not already processing
+    if (!allocationResult && !isProcessing) {
+      console.log('Starting allocation for pallet:', currentPallet?.numero_pallet, 'Items:', currentPallet?.entrada_pallet_itens?.length);
       startAllocation();
     }
   }, [open, currentIndex]);
@@ -150,13 +154,20 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
                 </p>
               </div>
               
+              {/* Debug info */}
+              {!currentPallet.entrada_pallet_itens && (
+                <div className="text-xs text-destructive">
+                  Debug: entrada_pallet_itens não carregado
+                </div>
+              )}
+              
               {/* Produtos no Pallet */}
-              {currentPallet.entrada_pallet_itens && currentPallet.entrada_pallet_itens.length > 0 && (
+              {currentPallet.entrada_pallet_itens && currentPallet.entrada_pallet_itens.length > 0 ? (
                 <div className="space-y-2">
                   <h5 className="text-sm font-medium text-muted-foreground">Produtos neste pallet:</h5>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {currentPallet.entrada_pallet_itens.map((item: any, index: number) => (
-                      <div key={index} className={`flex justify-between items-start text-xs p-2 rounded border ${
+                      <div key={item.id || index} className={`flex justify-between items-start text-xs p-2 rounded border ${
                         item.is_avaria ? 'bg-destructive/10 border-destructive/20' : 'bg-background'
                       }`}>
                         <div className="flex-1 min-w-0">
@@ -216,6 +227,10 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
                       </span>
                     )}
                   </div>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  Nenhum produto encontrado neste pallet
                 </div>
               )}
             </div>
