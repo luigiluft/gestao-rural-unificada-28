@@ -15,6 +15,7 @@ import { FileUpload } from "@/components/Entradas/FileUpload";
 import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada";
 import { useToast } from "@/hooks/use-toast";
 import { useEntradas } from "@/hooks/useEntradas";
+import { useProducerEntradas } from "@/hooks/useProducerEntradas";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
@@ -131,15 +132,20 @@ export default function Entradas() {
     toast
   } = useToast();
   const {
-    data: entradas,
-    isLoading,
-    refetch
-  } = useEntradas(dateRange);
-  const {
     isAdmin,
     isFranqueado,
     isProdutor
   } = useUserRole();
+  
+  // Use different hooks based on user role
+  const adminFranqueadoQuery = useEntradas(dateRange);
+  const produtorQuery = useProducerEntradas();
+  
+  const {
+    data: entradas,
+    isLoading,
+    refetch
+  } = isProdutor ? produtorQuery : adminFranqueadoQuery;
   const { user } = useAuth();
 
   // Pagination logic

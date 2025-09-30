@@ -19,7 +19,7 @@ export const useProducerEntradas = () => {
           )
         `)
         .eq("user_id", user.user.id)
-        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia"])
+        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa", "confirmado", "planejamento"])
         .order("created_at", { ascending: false })
 
       if (error) throw error
