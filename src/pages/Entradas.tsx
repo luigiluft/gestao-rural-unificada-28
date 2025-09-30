@@ -18,6 +18,7 @@ import { useEntradas } from "@/hooks/useEntradas";
 import { useProducerEntradas } from "@/hooks/useProducerEntradas";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useProfile } from "@/hooks/useProfile";
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
 import { format } from "date-fns";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -147,6 +148,19 @@ export default function Entradas() {
     refetch
   } = isProdutor ? produtorQuery : adminFranqueadoQuery;
   const { user } = useAuth();
+  const { data: profile } = useProfile();
+  
+  // Helper function to check if producer can delete entrada
+  const canProducerDeleteEntrada = (entrada: any) => {
+    if (!isProdutor || !profile?.cpf_cnpj) return false;
+    
+    const userCpfCnpjLimpo = profile.cpf_cnpj.replace(/\D/g, '');
+    const emitenteCnpjLimpo = entrada.emitente_cnpj?.replace(/\D/g, '') || '';
+    const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
+    
+    // Producer can delete if their CPF/CNPJ matches emitente or destinatario
+    return emitenteCnpjLimpo === userCpfCnpjLimpo || destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
+  };
 
   // Pagination logic
   const totalRecords = entradas?.length || 0;
@@ -734,8 +748,8 @@ export default function Entradas() {
                 </DropdownMenuContent>
               </DropdownMenu>}
             
-            {/* Botão de excluir para produtores (apenas suas próprias entradas) */}
-            {isProdutor && entrada.user_id === user?.id && <Button
+            {/* Botão de excluir para produtores (quando são destinatários) */}
+            {canProducerDeleteEntrada(entrada) && <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 text-destructive hover:text-destructive"
@@ -745,8 +759,7 @@ export default function Entradas() {
                     const { error } = await supabase
                       .from('entradas')
                       .delete()
-                      .eq('id', entrada.id)
-                      .eq('user_id', user.id); // Extra segurança: só pode excluir próprias entradas
+                      .eq('id', entrada.id);
 
                     if (error) throw error;
 
