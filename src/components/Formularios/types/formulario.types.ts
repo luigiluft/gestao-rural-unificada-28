@@ -53,7 +53,6 @@ export interface DadosEntrada extends DadosGenericosBase {
     destinatario_nome?: string
     entrega_cnpj?: string
     entrega_nome?: string
-    entrega_endereco?: string
     xml_content?: string
   }
 }

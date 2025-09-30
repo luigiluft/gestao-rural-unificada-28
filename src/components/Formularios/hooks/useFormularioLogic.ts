@@ -165,7 +165,6 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
           destinatario_nome: nfData.destinatario?.nome,
           entrega_cnpj: nfData.entrega?.cnpj,
           entrega_nome: nfData.entrega?.nome,
-          entrega_endereco: nfData.entrega?.endereco,
           xml_content: nfData.xmlContent
         }
       } as DadosEntrada)
