@@ -8,6 +8,17 @@ export const useProducerEntradas = () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
 
+      // Get producer's CPF/CNPJ
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("cpf_cnpj")
+        .eq("user_id", user.user.id)
+        .single()
+
+      if (!profile?.cpf_cnpj) {
+        console.warn("Producer doesn't have CPF/CNPJ registered")
+      }
+
       const { data: entradas, error } = await supabase
         .from("entradas")
         .select(`
@@ -18,8 +29,7 @@ export const useProducerEntradas = () => {
             produtos(nome, unidade_medida)
           )
         `)
-        .eq("user_id", user.user.id)
-        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "conferencia_completa", "confirmado", "planejamento"])
+        .or(`user_id.eq.${user.user.id}${profile?.cpf_cnpj ? `,emitente_cnpj.eq.${profile.cpf_cnpj},destinatario_cpf_cnpj.eq.${profile.cpf_cnpj}` : ''}`)
         .order("created_at", { ascending: false })
 
       if (error) throw error
