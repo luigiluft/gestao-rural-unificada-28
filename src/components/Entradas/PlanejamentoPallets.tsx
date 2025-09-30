@@ -48,37 +48,19 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const typedPallets = pallets as ExtendedEntradaPallet[]
   const pesoBrutoMaximo = usePesoBrutoMaximoPallet()
 
-  // Mapear quais pallets devem receber o tag de Avaria distribuindo a quantidade avariada real
+  // Mapear quais pallets devem receber o tag de Avaria baseado nos itens com is_avaria: true
   const avariaPalletIds = useMemo(() => {
-    // Mapa de quantidade de avaria restante por entrada_item_id
-    const remaining: Record<string, number> = {}
-    entradaItens.forEach((item) => {
-      const { avariaQuantity } = calculateQuantityAdjustment(item.id, item.lote, divergencias)
-      const qty = Number(avariaQuantity || 0)
-      if (qty > 0) remaining[item.id] = qty
-    })
-
     const result = new Set<string>()
-    // Processar pallets em ordem do numero_pallet para alocar avarias aos primeiros que comportarem
-    const ordered = [...(typedPallets || [])].sort((a, b) => (a.numero_pallet || 0) - (b.numero_pallet || 0))
-
-    ordered.forEach((p) => {
-      let markAvaria = false
-      p.entrada_pallet_itens?.forEach((pi) => {
-        const rem = remaining[pi.entrada_item_id] || 0
-        if (rem > 0) {
-          const take = Math.min(Number(pi.quantidade || 0), rem)
-          if (take > 0) {
-            remaining[pi.entrada_item_id] = rem - take
-            markAvaria = true
-          }
-        }
-      })
-      if (markAvaria) result.add(p.id)
+    
+    typedPallets.forEach((pallet) => {
+      const hasAvariaItems = pallet.entrada_pallet_itens?.some(item => item.is_avaria === true)
+      if (hasAvariaItems) {
+        result.add(pallet.id)
+      }
     })
 
     return result
-  }, [typedPallets, entradaItens, divergencias])
+  }, [typedPallets])
 
   // Fetch product packaging information
   const { data: productPackaging = {} } = useQuery({
