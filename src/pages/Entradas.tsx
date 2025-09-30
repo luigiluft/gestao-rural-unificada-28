@@ -26,7 +26,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { exportToCSV } from "@/utils/csvExport";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 const StatusBadge = ({
   status
@@ -148,19 +147,6 @@ export default function Entradas() {
     refetch
   } = isProdutor ? produtorQuery : adminFranqueadoQuery;
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  
-  // Debug refresh function
-  const handleDebugRefresh = () => {
-    console.log('🔄 [DEBUG] Clearing React Query cache and refetching...')
-    queryClient.invalidateQueries({ queryKey: ["producer-entradas"] })
-    queryClient.invalidateQueries({ queryKey: ["entradas"] })
-    refetch()
-    toast({
-      title: "Cache limpo",
-      description: "Os dados foram atualizados."
-    })
-  }
 
   // Pagination logic
   const totalRecords = entradas?.length || 0;
@@ -890,11 +876,6 @@ export default function Entradas() {
                 <Download className="h-4 w-4" />
                 Exportar CSV
               </Button>
-              {isProdutor && (
-                <Button variant="outline" size="sm" onClick={handleDebugRefresh} className="gap-2 bg-yellow-500/10 border-yellow-500/50">
-                  🔄 Debug Refresh
-                </Button>
-              )}
             </div>
             
             <div className="flex items-center gap-2">
