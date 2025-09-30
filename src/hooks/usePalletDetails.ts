@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface PalletDetailItem {
   id: string;
   quantidade: number;
+  is_avaria: boolean;
   entrada_itens: {
     nome_produto: string;
     lote?: string;
@@ -26,6 +27,7 @@ export const usePalletDetails = (palletId?: string) => {
         .select(`
           id,
           quantidade,
+          is_avaria,
           entrada_itens (
             nome_produto,
             lote,

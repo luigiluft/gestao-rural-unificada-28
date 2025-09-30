@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Package, MapPin, Calendar, User, Trash2, Eye, ArrowRightLeft, MoreHorizontal } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, MapPin, Calendar, User, Trash2, Eye, ArrowRightLeft, MoreHorizontal, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePalletPositions, useRemovePalletAllocation, useReallocatePallet } from "@/hooks/usePalletPositions";
+import { usePalletPositions, usePalletPositionsAvariados, useRemovePalletAllocation, useReallocatePallet } from "@/hooks/usePalletPositions";
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
 import { usePalletDetails } from "@/hooks/usePalletDetails";
 import { format } from "date-fns";
@@ -30,6 +31,7 @@ export default function GerenciarPosicoes() {
   const [observacoes, setObservacoes] = useState<string>("");
   
   const { data: palletPositions, isLoading } = usePalletPositions(selectedDepositoId);
+  const { data: palletPositionsAvariados, isLoading: isLoadingAvariados } = usePalletPositionsAvariados(selectedDepositoId);
   
   // Extrair depositoId do primeiro pallet para usar no availablePositions
   const depositoId = palletPositions?.[0]?.entrada_pallets?.entradas?.deposito_id;
@@ -67,8 +69,151 @@ export default function GerenciarPosicoes() {
     setNewPositionId("");
     setObservacoes("");
   };
+  
+  // Componente de tabela reutilizável
+  const PalletTable = ({ positions, isAvariados = false }: { positions: any[], isAvariados?: boolean }) => (
+    <div className="border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Pallet</TableHead>
+            <TableHead>Posição</TableHead>
+            <TableHead>Produtos</TableHead>
+            <TableHead>NFe</TableHead>
+            <TableHead>Alocado em</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {positions.map((position) => {
+            // Extrair produtos únicos do pallet baseado na estrutura real dos dados
+            const produtos = position.entrada_pallets?.entrada_pallet_itens?.reduce((acc: string[], item: any) => {
+              // Acessar o nome do produto corretamente baseado na estrutura retornada
+              const nomeProduto = 
+                item.entrada_itens?.produtos?.nome || 
+                item.entrada_itens?.nome_produto;
+              
+              if (nomeProduto && !acc.includes(nomeProduto)) {
+                acc.push(nomeProduto);
+              }
+              return acc;
+            }, []) || [];
 
-  if (isLoading) {
+            return (
+              <TableRow key={position.id} className="hover:bg-muted/50">
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium flex items-center gap-2">
+                        #{position.entrada_pallets?.numero_pallet}
+                        {isAvariados && (
+                          <AlertTriangle className="h-3 w-3 text-destructive" />
+                        )}
+                      </div>
+                      {position.entrada_pallets?.descricao && (
+                        <div className="text-xs text-muted-foreground">
+                          {position.entrada_pallets.descricao}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <Badge variant="secondary">
+                      {position.storage_positions?.codigo}
+                    </Badge>
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="space-y-1">
+                    {produtos.length > 0 ? (
+                      produtos.slice(0, 2).map((produto, index) => (
+                        <div key={index} className={`text-sm ${isAvariados ? 'text-destructive' : ''}`}>
+                          {produto}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">Nenhum produto</div>
+                    )}
+                    {produtos.length > 2 && (
+                      <div className="text-xs text-muted-foreground">
+                        +{produtos.length - 2} mais
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="text-sm">
+                    {position.entrada_pallets?.entradas?.numero_nfe || "N/A"}
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <div className="text-sm">
+                      {format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(position.alocado_em), "HH:mm", { locale: ptBR })}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  <Badge variant={isAvariados ? "destructive" : "secondary"}>
+                    {isAvariados ? "Avariado" : "Alocado"}
+                  </Badge>
+                </TableCell>
+                
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleOpenDetailsDialog(position)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver Detalhes
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem 
+                        onClick={() => handleOpenReallocateDialog(position)}
+                        disabled={reallocatePallet.isPending}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Realocar
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem 
+                        onClick={() => handleRemoveAllocation(position.pallet_id)}
+                        disabled={removeAllocation.isPending}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remover
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  if (isLoading || isLoadingAvariados) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex justify-between items-center">
@@ -94,154 +239,50 @@ export default function GerenciarPosicoes() {
         </div>
       </div>
 
-      {!palletPositions?.length ? (
-        <EmptyState
-          icon={<Package className="h-8 w-8" />}
-          title="Nenhuma posição ocupada"
-          description="Não há pallets alocados no momento."
-        />
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              {palletPositions.length} pallet(s) alocado(s)
+      <Tabs defaultValue="estoque" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="estoque">Pallets em Estoque</TabsTrigger>
+          <TabsTrigger value="avariados">Pallets Avariados</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="estoque" className="space-y-4">
+          {!palletPositions?.length ? (
+            <EmptyState
+              icon={<Package className="h-8 w-8" />}
+              title="Nenhuma posição ocupada"
+              description="Não há pallets em estoque no momento."
+            />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {palletPositions.length} pallet(s) em estoque
+                </div>
+              </div>
+              <PalletTable positions={palletPositions} />
             </div>
-          </div>
-
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pallet</TableHead>
-                  <TableHead>Posição</TableHead>
-                  <TableHead>Produtos</TableHead>
-                  <TableHead>NFe</TableHead>
-                  <TableHead>Alocado em</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {palletPositions.map((position) => {
-                  // Extrair produtos únicos do pallet baseado na estrutura real dos dados
-                  const produtos = position.entrada_pallets?.entrada_pallet_itens?.reduce((acc: string[], item: any) => {
-                    // Acessar o nome do produto corretamente baseado na estrutura retornada
-                    const nomeProduto = 
-                      item.entrada_itens?.produtos?.nome || 
-                      item.entrada_itens?.nome_produto;
-                    
-                    if (nomeProduto && !acc.includes(nomeProduto)) {
-                      acc.push(nomeProduto);
-                    }
-                    return acc;
-                  }, []) || [];
-
-                  return (
-                    <TableRow key={position.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <div className="font-medium">#{position.entrada_pallets?.numero_pallet}</div>
-                            {position.entrada_pallets?.descricao && (
-                              <div className="text-xs text-muted-foreground">
-                                {position.entrada_pallets.descricao}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <Badge variant="secondary">
-                            {position.storage_positions?.codigo}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="space-y-1">
-                          {produtos.length > 0 ? (
-                            produtos.slice(0, 2).map((produto, index) => (
-                              <div key={index} className="text-sm">
-                                {produto}
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-sm text-muted-foreground">Nenhum produto</div>
-                          )}
-                          {produtos.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              +{produtos.length - 2} mais
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="text-sm">
-                          {position.entrada_pallets?.entradas?.numero_nfe || "N/A"}
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <div className="text-sm">
-                            {format(new Date(position.alocado_em), "dd/MM/yyyy", { locale: ptBR })}
-                            <div className="text-xs text-muted-foreground">
-                              {format(new Date(position.alocado_em), "HH:mm", { locale: ptBR })}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Badge variant="secondary">Alocado</Badge>
-                      </TableCell>
-                      
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenDetailsDialog(position)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ver Detalhes
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem 
-                              onClick={() => handleOpenReallocateDialog(position)}
-                              disabled={reallocatePallet.isPending}
-                            >
-                              <ArrowRightLeft className="h-4 w-4 mr-2" />
-                              Realocar
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem 
-                              onClick={() => handleRemoveAllocation(position.pallet_id)}
-                              disabled={removeAllocation.isPending}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Remover
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
+          )}
+        </TabsContent>
+        
+        <TabsContent value="avariados" className="space-y-4">
+          {!palletPositionsAvariados?.length ? (
+            <EmptyState
+              icon={<AlertTriangle className="h-8 w-8 text-destructive" />}
+              title="Nenhum pallet avariado"
+              description="Não há pallets avariados alocados no momento."
+            />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {palletPositionsAvariados.length} pallet(s) avariado(s)
+                </div>
+              </div>
+              <PalletTable positions={palletPositionsAvariados} isAvariados={true} />
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Dialog de Detalhes */}
       <Dialog open={detailsDialog.open} onOpenChange={(open) => setDetailsDialog({ open })}>
@@ -282,10 +323,17 @@ export default function GerenciarPosicoes() {
               {palletDetails && palletDetails.length > 0 ? (
                 <div className="space-y-3">
                   {palletDetails.map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4 space-y-2">
+                    <div key={item.id} className={`border rounded-lg p-4 space-y-2 ${
+                      item.is_avaria ? 'bg-destructive/10 border-destructive/20' : ''
+                    }`}>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <p className="font-medium">{item.entrada_itens.produtos?.nome || item.entrada_itens.nome_produto}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{item.entrada_itens.produtos?.nome || item.entrada_itens.nome_produto}</p>
+                            {item.is_avaria && (
+                              <Badge variant="destructive" className="text-xs">AVARIA</Badge>
+                            )}
+                          </div>
                           {item.entrada_itens.produtos?.codigo && (
                             <p className="text-xs text-muted-foreground">Código: {item.entrada_itens.produtos.codigo}</p>
                           )}
