@@ -99,7 +99,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const [newPallet, setNewPallet] = useState({
     descricao: "",
   })
-  const [selectedProductToPallet, setSelectedProductToPallet] = useState<{ productId: string; palletId: string; quantidade: number } | null>(null)
+  const [selectedProductToPallet, setSelectedProductToPallet] = useState<{ productId: string; palletId: string; quantidade: number; isAvaria?: boolean } | null>(null)
   const [selectedProductsForNewPallet, setSelectedProductsForNewPallet] = useState<Array<{
     productId: string
     quantidade: number
@@ -282,25 +282,13 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const getTotalQuantidadeAlocadaAvaria = (itemId: string) => {
     let total = 0
     
-    // Count avaria items in existing pallets by checking if pallet contains avaria products
+    // Count only items in existing pallets that are explicitly marked as avaria (is_avaria = true)
     typedPallets.forEach(pallet => {
-      // Check if this pallet has avaria products
-      const hasAvariaInPallet = pallet.entrada_pallet_itens?.some(palletItem => {
-        const entradaItem = entradaItens.find(ei => ei.id === palletItem.entrada_item_id)
-        if (!entradaItem) return false
-        
-        const { hasAvaria } = calculateQuantityAdjustment(palletItem.entrada_item_id, entradaItem.lote, divergencias)
-        return hasAvaria
+      pallet.entrada_pallet_itens?.forEach(item => {
+        if (item.entrada_item_id === itemId && item.is_avaria === true) {
+          total += Number(item.quantidade)
+        }
       })
-      
-      // If this pallet has avaria products, count this item's quantity in this pallet as avaria
-      if (hasAvariaInPallet) {
-        pallet.entrada_pallet_itens?.forEach(palletItem => {
-          if (palletItem.entrada_item_id === itemId) {
-            total += Number(palletItem.quantidade)
-          }
-        })
-      }
     })
     
     // Add avaria products selected for new pallet
@@ -424,11 +412,20 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   }
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
-    const originalId = productId.includes('_avaria') ? productId.replace('_avaria', '') : productId
-    const increment = getPackagingIncrement(originalId)
-    const validatedQuantity = Math.floor(newQuantity / increment) * increment
-    
-    if (validatedQuantity === 0) return
+    const isAvaria = productId.includes('_avaria')
+    let validatedQuantity = newQuantity
+
+    if (!isAvaria) {
+      // For normal products, apply packaging constraints
+      const originalId = productId.includes('_avaria') ? productId.replace('_avaria', '') : productId
+      const increment = getPackagingIncrement(originalId)
+      validatedQuantity = Math.floor(newQuantity / increment) * increment
+      
+      if (validatedQuantity === 0) return
+    } else {
+      // For avaria products, just ensure minimum of 1
+      validatedQuantity = Math.max(1, newQuantity)
+    }
 
     // Test the new quantity for weight validation
     const updatedProducts = selectedProductsForNewPallet.map(p => 
@@ -782,21 +779,28 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                            Incremento: {getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)} unidades
                          </div>
                        </div>
-                       <Input
-                         type="number"
-                         value={product.quantidade}
-                         onChange={(e) => {
-                           const value = parseInt(e.target.value) || 0
-                           const originalId = product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId
-                           const increment = getPackagingIncrement(originalId)
-                           const validatedValue = Math.floor(value / increment) * increment || increment
-                           handleQuantityChange(product.productId, validatedValue)
-                         }}
-                         className="w-20 h-8 text-sm"
-                         max={product.maxQuantidade}
-                         min={getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)}
-                         step={getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)}
-                       />
+                        <Input
+                          type="number"
+                          value={product.quantidade}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0
+                            if (product.isAvaria) {
+                              // For avaria products, no packaging constraints
+                              const validatedValue = Math.max(1, value)
+                              handleQuantityChange(product.productId, validatedValue)
+                            } else {
+                              // For normal products, apply packaging constraints
+                              const originalId = product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId
+                              const increment = getPackagingIncrement(originalId)
+                              const validatedValue = Math.floor(value / increment) * increment || increment
+                              handleQuantityChange(product.productId, validatedValue)
+                            }
+                          }}
+                          className="w-20 h-8 text-sm"
+                          max={product.maxQuantidade}
+                          min={product.isAvaria ? 1 : getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)}
+                          step={product.isAvaria ? 1 : getPackagingIncrement(product.productId.includes('_avaria') ? product.productId.replace('_avaria', '') : product.productId)}
+                        />
                        <Button
                          variant="ghost"
                          size="sm"
@@ -1018,7 +1022,8 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         await handleAddItemToPallet(
                           selectedProductToPallet.productId,
                           pallet.id,
-                          selectedProductToPallet.quantidade
+                          selectedProductToPallet.quantidade,
+                          selectedProductToPallet.isAvaria || false
                         )
                         setSelectedProductToPallet(null)
                       }}
@@ -1039,15 +1044,26 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                   value={selectedProductToPallet.quantidade}
                   onChange={(e) => {
                     const value = parseInt(e.target.value) || 0
-                    const increment = getPackagingIncrement(selectedProductToPallet.productId)
-                    const validatedValue = validateQuantityIncrement(selectedProductToPallet.productId, value)
-                    setSelectedProductToPallet(prev => 
-                      prev ? { ...prev, quantidade: validatedValue || increment } : null
-                    )
+                    if (selectedProductToPallet.isAvaria) {
+                      // For avaria products, no packaging constraints
+                      setSelectedProductToPallet(prev => 
+                        prev ? { ...prev, quantidade: Math.max(1, value) } : null
+                      )
+                    } else {
+                      // For normal products, apply packaging constraints
+                      const increment = getPackagingIncrement(selectedProductToPallet.productId)
+                      const validatedValue = validateQuantityIncrement(selectedProductToPallet.productId, value)
+                      setSelectedProductToPallet(prev => 
+                        prev ? { ...prev, quantidade: validatedValue || increment } : null
+                      )
+                    }
                   }}
-                  max={getQuantidadeDisponivel(selectedProductToPallet.productId)}
-                  min={getPackagingIncrement(selectedProductToPallet.productId)}
-                  step={getPackagingIncrement(selectedProductToPallet.productId)}
+                  max={selectedProductToPallet.isAvaria ? 
+                    getQuantidadeDisponivel(selectedProductToPallet.productId, true) : 
+                    getQuantidadeDisponivel(selectedProductToPallet.productId)
+                  }
+                  min={selectedProductToPallet.isAvaria ? 1 : getPackagingIncrement(selectedProductToPallet.productId)}
+                  step={selectedProductToPallet.isAvaria ? 1 : getPackagingIncrement(selectedProductToPallet.productId)}
                 />
               </div>
             </div>
