@@ -164,10 +164,29 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const handleCreatePallet = async () => {
     if (selectedProductsForNewPallet.length === 0) return
 
+    // Verificar se há produtos de avaria e produtos normais misturados
+    const hasAvaria = selectedProductsForNewPallet.some(p => p.isAvaria)
+    const hasNormal = selectedProductsForNewPallet.some(p => !p.isAvaria)
+    
+    if (hasAvaria && hasNormal) {
+      toast({
+        title: "Erro de planejamento",
+        description: "Produtos avariados não podem ser misturados com produtos normais no mesmo pallet.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Determinar descrição automática baseada no conteúdo
+    let autoDescricao = newPallet.descricao || null
+    if (hasAvaria) {
+      autoDescricao = `Pallet ${getNextPalletNumber()} - Avaria`
+    }
+
     const palletData = await createPallet.mutateAsync({
       entrada_id: entradaId,
       numero_pallet: getNextPalletNumber(),
-      descricao: newPallet.descricao || null,
+      descricao: autoDescricao,
       peso_total: null,
       quantidade_atual: selectedProductsForNewPallet.reduce((acc, product) => acc + product.quantidade, 0),
     })
@@ -181,20 +200,30 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       await addItemToPallet.mutateAsync({
         pallet_id: palletData.id,
         entrada_item_id: originalId,
-        quantidade: product.quantidade
+        quantidade: product.quantidade,
+        is_avaria: product.isAvaria || false
       })
     }
 
     // Reset
     setNewPallet({ descricao: "" })
     setSelectedProductsForNewPallet([])
+    
+    if (hasAvaria) {
+      toast({
+        title: "Pallet de avaria criado",
+        description: "Pallet específico para produtos avariados foi criado com sucesso.",
+        variant: "default"
+      })
+    }
   }
 
-  const handleAddItemToPallet = async (productId: string, palletId: string, quantidade: number) => {
+  const handleAddItemToPallet = async (productId: string, palletId: string, quantidade: number, isAvaria = false) => {
     await addItemToPallet.mutateAsync({
       pallet_id: palletId,
       entrada_item_id: productId,
-      quantidade
+      quantidade,
+      is_avaria: isAvaria
     })
   }
 
@@ -491,7 +520,8 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
           await addItemToPallet.mutateAsync({
             pallet_id: newPalletData.id,
             entrada_item_id: item.entrada_item_id,
-            quantidade: Number(item.quantidade)
+            quantidade: Number(item.quantidade),
+            is_avaria: item.is_avaria || false
           })
         }
       }
@@ -918,6 +948,12 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                           <Badge variant="outline">
                             {item.quantidade} × {group.count} = {Number(item.quantidade) * group.count} unidades
                           </Badge>
+                          {item.is_avaria && (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Avaria
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     ))}

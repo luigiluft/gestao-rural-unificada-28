@@ -252,11 +252,81 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
         // Não falha a operação principal, apenas loga o erro
       } else {
         console.log(`Created ${divergenciasRecords.length} divergencias records for entrada ${entrada.id}`)
+        
+        // Para cada divergência de avaria, criar um pallet específico
+        for (const divergencia of divergenciasRecords) {
+          if (divergencia.tipo_divergencia === 'avaria') {
+            await createAvariaPallet(entrada.id, divergencia, supabase);
+          }
+        }
       }
     }
   } catch (error) {
     console.error('Error in createDivergenciasRecords:', error)
     // Não falha a operação principal, apenas loga o erro
+  }
+}
+
+// Helper function to create a separate pallet for avaria items
+async function createAvariaPallet(entradaId: string, divergencia: any, supabase: any) {
+  try {
+    // Get next pallet number
+    const { data: existingPallets } = await supabase
+      .from('entrada_pallets')
+      .select('numero_pallet')
+      .eq('entrada_id', entradaId)
+      .order('numero_pallet', { ascending: false })
+      .limit(1)
+
+    const nextPalletNumber = existingPallets && existingPallets.length > 0 
+      ? (existingPallets[0].numero_pallet || 0) + 1 
+      : 1
+
+    // Create pallet for avaria
+    const { data: avariaPallet, error: palletError } = await supabase
+      .from('entrada_pallets')
+      .insert({
+        entrada_id: entradaId,
+        numero_pallet: nextPalletNumber,
+        descricao: `Pallet ${nextPalletNumber} - Avaria`,
+        quantidade_atual: Math.abs(divergencia.diferenca || 0)
+      })
+      .select()
+      .single()
+
+    if (palletError) {
+      console.error('Error creating avaria pallet:', palletError)
+      return
+    }
+
+    // Find the entrada_item_id for this product/lote
+    const { data: entradaItens } = await supabase
+      .from('entrada_itens')
+      .select('id')
+      .eq('entrada_id', entradaId)
+      .eq('produto_id', divergencia.produto_id)
+      .eq('lote', divergencia.lote)
+      .limit(1)
+
+    if (entradaItens && entradaItens.length > 0) {
+      // Add damaged items to the avaria pallet
+      const { error: itemError } = await supabase
+        .from('entrada_pallet_itens')
+        .insert({
+          pallet_id: avariaPallet.id,
+          entrada_item_id: entradaItens[0].id,
+          quantidade: Math.abs(divergencia.diferenca || 0),
+          is_avaria: true
+        })
+
+      if (itemError) {
+        console.error('Error creating avaria pallet item:', itemError)
+      } else {
+        console.log('Avaria pallet created successfully:', avariaPallet.id)
+      }
+    }
+  } catch (error) {
+    console.error('Error creating avaria pallet:', error)
   }
 }
 

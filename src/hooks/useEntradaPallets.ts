@@ -19,6 +19,7 @@ export interface EntradaPalletItem {
   pallet_id: string
   entrada_item_id: string
   quantidade: number
+  is_avaria: boolean
   created_at: string
   entrada_itens?: {
     id: string
