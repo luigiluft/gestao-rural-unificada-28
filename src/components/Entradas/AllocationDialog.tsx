@@ -127,10 +127,10 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
             <p className="text-sm text-muted-foreground">
               Pallet {currentIndex + 1} de {selectedPallets.length}
             </p>
-            <div className="w-full bg-muted rounded-full h-2 mt-2">
+            <div className="w-full bg-muted rounded-full h-2 mt-2 overflow-hidden">
               <div 
                 className="bg-primary h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${((currentIndex + (allocationResult ? 1 : 0)) / selectedPallets.length) * 100}%` }}
+                style={{ width: `${Math.min(((currentIndex + 1) / selectedPallets.length) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -311,14 +311,16 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-2">
                 <Button 
                   onClick={confirmCurrentAllocation}
                   disabled={
                     confirmAllocation.isPending ||
+                    isProcessing ||
                     (method === "scanner" && (!scannerData.palletCode || !scannerData.positionCode))
                   }
                   className="flex-1"
+                  type="button"
                 >
                   {confirmAllocation.isPending ? "Confirmando..." : "Confirmar Posicionamento"}
                 </Button>
@@ -326,6 +328,7 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
                   variant="outline" 
                   onClick={() => handleOpenChange(false)}
                   disabled={confirmAllocation.isPending}
+                  type="button"
                 >
                   Cancelar
                 </Button>
