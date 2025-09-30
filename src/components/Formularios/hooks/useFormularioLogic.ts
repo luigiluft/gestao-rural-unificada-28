@@ -150,7 +150,24 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         dataEmissao: nfData.dataEmissao,
         origem: nfData.emitente.nome,
         observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
-        depositoId: franquiaData?.id || ''
+        depositoId: franquiaData?.id || '',
+        // Mapear todos os dados da NFe para submissão backend
+        nfeData: {
+          numero_nfe: nfData.numeroNF,
+          serie: nfData.serie,
+          chave_nfe: nfData.chaveNFe,
+          data_emissao: nfData.dataEmissao,
+          valor_total: nfData.valorTotal,
+          emitente_cnpj: nfData.emitente?.cnpj,
+          emitente_nome: nfData.emitente?.nome,
+          emitente_endereco: nfData.emitente?.endereco,
+          destinatario_cpf_cnpj: nfData.destinatario?.cnpj,
+          destinatario_nome: nfData.destinatario?.nome,
+          entrega_cnpj: nfData.entrega?.cnpj,
+          entrega_nome: nfData.entrega?.nome,
+          entrega_endereco: nfData.entrega?.endereco,
+          xml_content: nfData.xmlContent
+        }
       } as DadosEntrada)
 
       const itensConvertidos: ItemGenerico[] = nfData.itens.map((item: any) => ({

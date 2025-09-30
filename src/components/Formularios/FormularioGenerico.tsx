@@ -152,6 +152,16 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           valor_total: calcularValorTotal(),
           tipo: nfData ? 'nfe' : 'manual',
           xml_content: nfData?.xmlContent,
+          // Incluir todos os campos da NFe se disponíveis
+          ...(dadosEntrada.nfeData && {
+            emitente_cnpj: dadosEntrada.nfeData.emitente_cnpj,
+            emitente_endereco: dadosEntrada.nfeData.emitente_endereco,
+            destinatario_cpf_cnpj: dadosEntrada.nfeData.destinatario_cpf_cnpj,
+            destinatario_nome: dadosEntrada.nfeData.destinatario_nome,
+            entrega_cnpj: dadosEntrada.nfeData.entrega_cnpj,
+            entrega_nome: dadosEntrada.nfeData.entrega_nome,
+            entrega_endereco: dadosEntrada.nfeData.entrega_endereco
+          }),
           itens: itens.map(item => ({
             produto_id: item.produto_id,
             nome_produto: item.produto || item.produtoNome,

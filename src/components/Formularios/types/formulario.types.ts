@@ -39,6 +39,23 @@ export interface DadosEntrada extends DadosGenericosBase {
   dataEntrada: string
   dataEmissao: string
   origem: string
+  // Dados completos da NFe para submissão backend
+  nfeData?: {
+    numero_nfe?: string
+    serie?: string
+    chave_nfe?: string
+    data_emissao?: string
+    valor_total?: number
+    emitente_cnpj?: string
+    emitente_nome?: string
+    emitente_endereco?: string
+    destinatario_cpf_cnpj?: string
+    destinatario_nome?: string
+    entrega_cnpj?: string
+    entrega_nome?: string
+    entrega_endereco?: string
+    xml_content?: string
+  }
 }
 
 export interface DadosSaida extends DadosGenericosBase {
