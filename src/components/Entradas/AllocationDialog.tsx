@@ -136,14 +136,85 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
           </div>
 
           {currentPallet && (
-            <div className="bg-muted/50 p-3 rounded-lg">
-              <h4 className="font-medium">Pallet #{currentPallet.numero_pallet}</h4>
-              <p className="text-sm text-muted-foreground">
-                NFe: {currentPallet.entradas?.numero_nfe || 'S/N'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Entrada ID: {currentPallet.entradas?.id || 'N/A'}
-              </p>
+            <div className="bg-muted/50 p-3 rounded-lg space-y-3">
+              <div>
+                <h4 className="font-medium">Pallet #{currentPallet.numero_pallet}</h4>
+                <p className="text-sm text-muted-foreground">
+                  NFe: {currentPallet.entradas?.numero_nfe || 'S/N'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Entrada ID: {currentPallet.entradas?.id || 'N/A'}
+                </p>
+              </div>
+              
+              {/* Produtos no Pallet */}
+              {currentPallet.entrada_pallet_itens && currentPallet.entrada_pallet_itens.length > 0 && (
+                <div className="space-y-2">
+                  <h5 className="text-sm font-medium text-muted-foreground">Produtos neste pallet:</h5>
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {currentPallet.entrada_pallet_itens.map((item: any, index: number) => (
+                      <div key={index} className={`flex justify-between items-start text-xs p-2 rounded border ${
+                        item.is_avaria ? 'bg-destructive/10 border-destructive/20' : 'bg-background'
+                      }`}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <p className="font-medium truncate">
+                              {item.entrada_itens?.produtos?.nome || item.entrada_itens?.nome_produto || 'Produto sem nome'}
+                            </p>
+                            {item.is_avaria && (
+                              <span className="text-destructive text-xs px-1 py-0.5 bg-destructive/20 rounded">
+                                AVARIA
+                              </span>
+                            )}
+                          </div>
+                          {item.entrada_itens?.produtos?.codigo && (
+                            <p className="text-muted-foreground">
+                              Cód: {item.entrada_itens.produtos.codigo}
+                            </p>
+                          )}
+                          {item.entrada_itens?.lote && (
+                            <p className="text-muted-foreground">
+                              Lote: {item.entrada_itens.lote}
+                            </p>
+                          )}
+                          {item.entrada_itens?.data_validade && (
+                            <p className="text-muted-foreground">
+                              Válido até: {new Date(item.entrada_itens.data_validade).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right ml-2 flex-shrink-0">
+                          <p className="font-medium">
+                            {item.quantidade} {item.entrada_itens?.produtos?.unidade_medida || item.entrada_itens?.unidade_comercial || 'UN'}
+                          </p>
+                          {item.entrada_itens?.valor_unitario && (
+                            <p className="text-muted-foreground">
+                              R$ {item.entrada_itens.valor_unitario.toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2
+                              })}
+                            </p>
+                          )}
+                          {item.entrada_itens?.valor_unitario && (
+                            <p className="text-muted-foreground font-medium">
+                              Total: R$ {(item.quantidade * item.entrada_itens.valor_unitario).toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-xs text-muted-foreground flex justify-between">
+                    <span>Total: {currentPallet.entrada_pallet_itens.length} item(ns)</span>
+                    {currentPallet.entrada_pallet_itens.some((item: any) => item.is_avaria) && (
+                      <span className="text-destructive">
+                        {currentPallet.entrada_pallet_itens.filter((item: any) => item.is_avaria).length} avariado(s)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

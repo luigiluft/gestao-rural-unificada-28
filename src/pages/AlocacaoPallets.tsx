@@ -178,9 +178,25 @@ export default function AlocacaoPallets() {
                     {pallet.peso_total ? `${pallet.peso_total} kg` : '-'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">
-                      {pallet.entrada_pallet_itens?.length || 0} item(ns)
-                    </Badge>
+                    <div className="space-y-1">
+                      <Badge variant="secondary">
+                        {pallet.entrada_pallet_itens?.length || 0} item(ns)
+                      </Badge>
+                      {pallet.entrada_pallet_itens && pallet.entrada_pallet_itens.length > 0 && (
+                        <div className="text-xs text-muted-foreground max-w-48">
+                          {pallet.entrada_pallet_itens.slice(0, 2).map((item: any, index: number) => (
+                            <div key={index} className="truncate">
+                              • {item.entrada_itens?.nome_produto || 'Produto'} ({item.quantidade} {item.entrada_itens?.unidade_comercial || 'UN'})
+                            </div>
+                          ))}
+                          {pallet.entrada_pallet_itens.length > 2 && (
+                            <div className="text-muted-foreground/70">
+                              +{pallet.entrada_pallet_itens.length - 2} mais...
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell colSpan={2} className="text-center text-sm text-muted-foreground">
                     Selecione pallets e use os botões de alocação acima

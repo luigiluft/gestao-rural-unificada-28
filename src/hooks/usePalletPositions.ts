@@ -111,12 +111,22 @@ export const usePalletsPendentes = (depositoId?: string) => {
           entrada_pallet_itens (
             id,
             quantidade,
+            is_avaria,
             entrada_itens (
+              id,
               nome_produto,
               quantidade,
               lote,
               valor_unitario,
-              data_validade
+              data_validade,
+              unidade_comercial,
+              produto_id,
+              produtos (
+                id,
+                nome,
+                codigo,
+                unidade_medida
+              )
             )
           )
         `)
