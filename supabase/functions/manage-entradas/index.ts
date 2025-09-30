@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.4?target=deno&no-dts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -210,8 +210,8 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
         }
       }
 
-      // Map divergencia type (frontend uses 'avaria', backend needs 'produto_faltante')
-      const mappedTipo = div.tipo_divergencia === 'avaria' ? 'produto_faltante' : mapTipoDivergencia(div.tipo_divergencia || div.tipo);
+      // Mapear tipo de divergência corretamente (suporta 'avaria')
+      const mappedTipo = mapTipoDivergencia(div.tipo_divergencia || div.tipo);
       
       // Calculate values based on divergence type
       let quantidade_esperada = parseFloat(div.quantidade_esperada) || 0;
@@ -219,8 +219,8 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
       
       // Add marker for avaria in observacoes
       let observacoes = div.observacoes || null;
-      if (div.tipo_divergencia === 'avaria') {
-        const avariaQty = parseFloat(div.quantidade_avariada) || 0;
+      if ((div.tipo_divergencia || '').toLowerCase() === 'avaria') {
+        const avariaQty = parseFloat(div.quantidade_avariada) || Math.max(0, quantidade_esperada - quantidade_encontrada) || 0;
         observacoes = `AVARIA: ${avariaQty} unidades avariadas durante transporte`;
       }
 
@@ -236,7 +236,7 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
         lote: div.lote || null,
         observacoes: observacoes,
         status: 'pendente',
-        prioridade: div.prioridade || (div.tipo_divergencia === 'avaria' ? 'alta' : 'media')
+        prioridade: div.prioridade || ((div.tipo_divergencia || '').toLowerCase() === 'avaria' ? 'alta' : 'media')
       }
 
       divergenciasRecords.push(divergenciaRecord)
@@ -262,8 +262,11 @@ async function createDivergenciasRecords(supabase: any, entrada: any, divergenci
 
 // Função para mapear tipos de divergência para valores válidos
 function mapTipoDivergencia(tipo: string): string {
-  const tipoLower = (tipo || '').toLowerCase()
+  const tipoLower = (tipo || '').toLowerCase().trim()
   
+  if (tipoLower === 'avaria' || tipoLower.includes('avaria') || tipoLower.includes('avariado')) {
+    return 'avaria'
+  }
   if (tipoLower.includes('faltante') || tipoLower.includes('falta')) {
     return 'produto_faltante'
   }

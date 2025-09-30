@@ -70,8 +70,8 @@ export const calculateQuantityAdjustment = (
     const matchesLote = !div.lote || !lote || div.lote === lote
     
     if (matchesProduct && matchesLote) {
-      // Check if it's avaria by looking at observacoes
-      const isAvaria = div.observacoes?.includes('AVARIA:') || div.tipo_divergencia === 'produto_avariado'
+      // Check if it's avaria (support new 'avaria' type and legacy marker in observacoes)
+      const isAvaria = div.tipo_divergencia === 'avaria' || div.observacoes?.includes('AVARIA:') || div.tipo_divergencia === 'produto_avariado'
       
       if (div.tipo_divergencia === 'quantidade_incorreta' && !isAvaria) {
         // For quantity divergences, use diferenca (already calculated by DB as quantidade_encontrada - quantidade_esperada)

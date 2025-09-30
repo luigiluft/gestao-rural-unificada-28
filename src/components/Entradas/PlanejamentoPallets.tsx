@@ -364,7 +364,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
       const hasRealAvaria = divergencias.some(div => {
         const matchesProduct = !div.produto_id || div.produto_id === item.id
         const matchesLote = !div.lote || !item.lote || div.lote === item.lote
-        const isAvariaType = div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:')
+        const isAvariaType = div.tipo_divergencia === 'avaria' || (div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:'))
         return matchesProduct && matchesLote && isAvariaType
       })
       
@@ -449,7 +449,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const hasProductAvaria = (itemId: string, lote?: string) => {
     const productDivergencias = getDivergenciasForProduct(itemId, lote)
     return productDivergencias.some(div => 
-      div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:')
+      div.tipo_divergencia === 'avaria' || (div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:'))
     )
   }
 
@@ -597,7 +597,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                       <div className="space-y-1">
                         {productDivergencias.length > 0 ? (
                           productDivergencias.map((div, idx) => {
-                            const isAvaria = div.observacoes?.includes('AVARIA:') || div.tipo_divergencia === 'produto_faltante'
+                            const isAvaria = div.tipo_divergencia === 'avaria' || (div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:'))
                             
                             if (isAvaria) {
                               // Extract avaria quantity from observacoes
@@ -654,7 +654,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                           const hasRealAvaria = divergencias.some(div => {
                             const matchesProduct = !div.produto_id || div.produto_id === item.id
                             const matchesLote = !div.lote || !item.lote || div.lote === item.lote
-                            const isAvariaType = div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:')
+                            const isAvariaType = div.tipo_divergencia === 'avaria' || (div.tipo_divergencia === 'produto_faltante' && div.observacoes?.includes('AVARIA:'))
                             return matchesProduct && matchesLote && isAvariaType
                           })
                           const disponivelAvaria = getQuantidadeDisponivel(item.id, true)
