@@ -85,64 +85,6 @@ export default function Estoque() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="shadow-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Produtos</p>
-                <p className="text-2xl font-bold">{stats.total.toLocaleString('pt-BR')}</p>
-              </div>
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Package className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Estoque Normal</p>
-                <p className="text-2xl font-bold text-success">{stats.normal}</p>
-              </div>
-              <div className="p-2 bg-success/10 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-success" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Estoque Baixo</p>
-                <p className="text-2xl font-bold text-warning">{stats.baixo}</p>
-              </div>
-              <div className="p-2 bg-warning/10 rounded-lg">
-                <Clock className="w-5 h-5 text-warning" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Estoque Crítico</p>
-                <p className="text-2xl font-bold text-destructive">{stats.critico}</p>
-              </div>
-              <div className="p-2 bg-destructive/10 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Filters */}
       <Card className="shadow-card">
@@ -178,6 +120,65 @@ export default function Estoque() {
             </TabsList>
             
             <TabsContent value="estoque" className="space-y-4">
+              {/* Summary Cards inside Stock Tab */}
+              <div className="grid gap-4 md:grid-cols-4 mb-6">
+                <Card className="shadow-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total de Produtos</p>
+                        <p className="text-2xl font-bold">{stats.total.toLocaleString('pt-BR')}</p>
+                      </div>
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="w-5 h-5 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="shadow-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Estoque Normal</p>
+                        <p className="text-2xl font-bold text-success">{stats.normal}</p>
+                      </div>
+                      <div className="p-2 bg-success/10 rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-success" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Estoque Baixo</p>
+                        <p className="text-2xl font-bold text-warning">{stats.baixo}</p>
+                      </div>
+                      <div className="p-2 bg-warning/10 rounded-lg">
+                        <Clock className="w-5 h-5 text-warning" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Estoque Crítico</p>
+                        <p className="text-2xl font-bold text-destructive">{stats.critico}</p>
+                      </div>
+                      <div className="p-2 bg-destructive/10 rounded-lg">
+                        <AlertTriangle className="w-5 h-5 text-destructive" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
                   {estoque?.length || 0} produtos monitorados
