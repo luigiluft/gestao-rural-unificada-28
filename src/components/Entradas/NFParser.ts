@@ -25,6 +25,18 @@ export interface NFData {
     nome: string;
     nomeFantasia?: string;
     endereco: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    municipio?: string;
+    uf?: string;
+    cep?: string;
+    codigo_municipio?: string;
+    codigo_pais?: string;
+    telefone?: string;
+    ie?: string;
+    crt?: string;
   };
   destinatario: {
     cpfCnpj: string;
@@ -107,11 +119,24 @@ export class NFParser {
 
       // Extrair dados do emitente
       const emit = xmlDoc.querySelector('emit');
+      const enderEmit = emit?.querySelector('enderEmit');
       const emitente = {
         cnpj: emit?.querySelector('CNPJ')?.textContent || '',
         nome: emit?.querySelector('xNome')?.textContent || '',
         nomeFantasia: emit?.querySelector('xFant')?.textContent || undefined,
-        endereco: this.formatarEndereco(emit?.querySelector('enderEmit'))
+        endereco: this.formatarEndereco(enderEmit),
+        logradouro: enderEmit?.querySelector('xLgr')?.textContent || undefined,
+        numero: enderEmit?.querySelector('nro')?.textContent || undefined,
+        complemento: enderEmit?.querySelector('xCpl')?.textContent || undefined,
+        bairro: enderEmit?.querySelector('xBairro')?.textContent || undefined,
+        municipio: enderEmit?.querySelector('xMun')?.textContent || undefined,
+        uf: enderEmit?.querySelector('UF')?.textContent || undefined,
+        cep: enderEmit?.querySelector('CEP')?.textContent || undefined,
+        codigo_municipio: enderEmit?.querySelector('cMun')?.textContent || undefined,
+        codigo_pais: enderEmit?.querySelector('cPais')?.textContent || undefined,
+        telefone: enderEmit?.querySelector('fone')?.textContent || undefined,
+        ie: emit?.querySelector('IE')?.textContent || undefined,
+        crt: emit?.querySelector('CRT')?.textContent || undefined
       };
 
       // Extrair dados do destinatário
