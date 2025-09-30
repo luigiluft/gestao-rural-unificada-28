@@ -139,7 +139,7 @@ export default function Entradas() {
   
   // Use different hooks based on user role
   const adminFranqueadoQuery = useEntradas(dateRange);
-  const produtorQuery = useProducerEntradas();
+  const produtorQuery = useProducerEntradas(dateRange);
   
   const {
     data: entradas,

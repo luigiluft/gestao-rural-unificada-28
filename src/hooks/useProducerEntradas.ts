@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 
-export const useProducerEntradas = () => {
+export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
   return useQuery({
-    queryKey: ["producer-entradas"],
+    queryKey: ["producer-entradas", dateRange],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
@@ -19,7 +19,7 @@ export const useProducerEntradas = () => {
         console.warn("Producer doesn't have CPF/CNPJ registered")
       }
 
-      const { data: entradas, error } = await supabase
+      let query = supabase
         .from("entradas")
         .select(`
           *,
@@ -30,7 +30,18 @@ export const useProducerEntradas = () => {
           )
         `)
         .or(`user_id.eq.${user.user.id}${profile?.cpf_cnpj ? `,emitente_cnpj.eq.${profile.cpf_cnpj},destinatario_cpf_cnpj.eq.${profile.cpf_cnpj}` : ''}`)
-        .order("created_at", { ascending: false })
+
+      // Apply date filters if provided
+      if (dateRange?.from) {
+        query = query.gte("created_at", dateRange.from.toISOString())
+      }
+      if (dateRange?.to) {
+        const endDate = new Date(dateRange.to)
+        endDate.setHours(23, 59, 59, 999)
+        query = query.lte("created_at", endDate.toISOString())
+      }
+
+      const { data: entradas, error } = await query.order("created_at", { ascending: false })
 
       if (error) throw error
 
