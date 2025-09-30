@@ -3163,6 +3163,10 @@ export type Database = {
         Args: { p_auth_user_id: string; p_cpf: string }
         Returns: boolean
       }
+      matches_auth_user_cpf_cnpj: {
+        Args: { _destinatario: string; _emitente: string }
+        Returns: boolean
+      }
       migrate_existing_divergencias: {
         Args: Record<PropertyKey, never>
         Returns: number
