@@ -25,15 +25,17 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
   const [customPosition, setCustomPosition] = useState("");
   const [isEditingPosition, setIsEditingPosition] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // Snapshot da seleção para manter consistência durante o processo
+  const [palletSequence, setPalletSequence] = useState<any[]>([]);
 
   const autoAllocatePallet = useAutoAllocatePallet();
-  const confirmAllocation = useConfirmPalletAllocation();
+  const confirmAllocation = useConfirmPalletAllocation({ invalidateOnSuccess: false });
 
-  const currentPallet = selectedPallets[currentIndex];
-  const isLastPallet = currentIndex === selectedPallets.length - 1;
+  const currentPallet = palletSequence[currentIndex];
+  const isLastPallet = currentIndex === palletSequence.length - 1;
 
   const startAllocation = () => {
-    if (!currentPallet || !method) return;
+    if (!currentPallet || !method || palletSequence.length === 0) return;
     
     setIsProcessing(true);
     autoAllocatePallet.mutate({
@@ -77,8 +79,12 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
       setIsProcessing(false);
 
       if (isLastPallet) {
-        // Finished all pallets - invalidate and close
+        // Finished all pallets - invalidate everything and close
+        await queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
         await queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+        await queryClient.invalidateQueries({ queryKey: ["estoque"] });
+        await queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+        await queryClient.invalidateQueries({ queryKey: ["notifications"] });
         onOpenChange(false);
         resetDialog();
       } else {
@@ -98,6 +104,7 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
     setCustomPosition("");
     setIsEditingPosition(false);
     setIsProcessing(false);
+    setPalletSequence([]);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -107,16 +114,24 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
     onOpenChange(newOpen);
   };
 
+  // Create snapshot of selected pallets when dialog opens
+  useEffect(() => {
+    if (open && selectedPallets.length > 0 && palletSequence.length === 0) {
+      console.log('Creating snapshot of selected pallets:', selectedPallets.length);
+      setPalletSequence([...selectedPallets]);
+    }
+  }, [open, selectedPallets]);
+
   // Start allocation when dialog opens or index changes
   useEffect(() => {
-    if (!open || !method || !currentPallet) return;
+    if (!open || !method || !currentPallet || palletSequence.length === 0) return;
     
     // Only start allocation if we don't have a result yet and not already processing
     if (!allocationResult && !isProcessing) {
       console.log('Starting allocation for pallet:', currentPallet?.numero_pallet, 'Items:', currentPallet?.entrada_pallet_itens?.length);
       startAllocation();
     }
-  }, [open, currentIndex]);
+  }, [open, currentIndex, palletSequence]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -132,12 +147,12 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
           {/* Progress */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              Pallet {currentIndex + 1} de {selectedPallets.length}
+              Pallet {currentIndex + 1} de {palletSequence.length}
             </p>
             <div className="w-full bg-muted rounded-full h-2 mt-2 overflow-hidden">
               <div 
                 className="bg-primary h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${Math.min(((currentIndex + 1) / selectedPallets.length) * 100, 100)}%` }}
+                style={{ width: `${palletSequence.length > 0 ? Math.min(((currentIndex + 1) / palletSequence.length) * 100, 100) : 0}%` }}
               />
             </div>
           </div>

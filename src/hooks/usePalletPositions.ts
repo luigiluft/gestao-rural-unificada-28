@@ -535,9 +535,10 @@ export const useReallocatePallet = () => {
 };
 
 // Hook para confirmar alocação de pallet
-export const useConfirmPalletAllocation = () => {
+export const useConfirmPalletAllocation = (options?: { invalidateOnSuccess?: boolean }) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const shouldInvalidate = options?.invalidateOnSuccess ?? true;
 
   return useMutation({
     mutationFn: async ({ 
@@ -596,12 +597,14 @@ export const useConfirmPalletAllocation = () => {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-      queryClient.invalidateQueries({ queryKey: ["estoque"] });
-      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
-      // Invalidar notificações imediatamente após alocação
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      if (shouldInvalidate) {
+        queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
+        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+        queryClient.invalidateQueries({ queryKey: ["estoque"] });
+        queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+        // Invalidar notificações imediatamente após alocação
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      }
       toast({
         title: "Sucesso",
         description: "Pallet alocado e estoque criado com sucesso!",
