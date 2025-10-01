@@ -10,7 +10,25 @@ export interface NFItem {
   dataValidade?: string;
   quantidadeLote?: number;
   dataFabricacao?: string;
-  codigoEAN?: string; // Código de barras EAN
+  codigoEAN?: string;
+  // Campos comerciais e tributáveis
+  descricao_produto?: string;
+  ncm?: string;
+  cest?: string;
+  cfop?: string;
+  quantidade_comercial?: number;
+  valor_unitario_comercial?: number;
+  codigo_ean_tributavel?: string;
+  unidade_tributavel?: string;
+  quantidade_tributavel?: number;
+  valor_unitario_tributavel?: number;
+  indicador_total?: string;
+  // Impostos
+  impostos_icms?: any;
+  impostos_ipi?: any;
+  impostos_pis?: any;
+  impostos_cofins?: any;
+  valor_total_tributos_item?: number;
 }
 
 export interface NFData {
@@ -313,6 +331,79 @@ export class NFParser {
             }
           }
           
+          // Extrair informações tributárias do item
+          const imposto = det.querySelector('imposto');
+          
+          // ICMS
+          const icms = imposto?.querySelector('ICMS');
+          let impostos_icms = null;
+          if (icms) {
+            // Pode ser ICMS00, ICMS10, ICMS20, etc.
+            const icmsTag = icms.children[0];
+            if (icmsTag) {
+              impostos_icms = {
+                tipo: icmsTag.tagName,
+                origem: icmsTag.querySelector('orig')?.textContent,
+                cst: icmsTag.querySelector('CST')?.textContent,
+                modBC: icmsTag.querySelector('modBC')?.textContent,
+                vBC: icmsTag.querySelector('vBC')?.textContent,
+                pICMS: icmsTag.querySelector('pICMS')?.textContent,
+                vICMS: icmsTag.querySelector('vICMS')?.textContent,
+                pRedBC: icmsTag.querySelector('pRedBC')?.textContent,
+                vBCST: icmsTag.querySelector('vBCST')?.textContent,
+                pICMSST: icmsTag.querySelector('pICMSST')?.textContent,
+                vICMSST: icmsTag.querySelector('vICMSST')?.textContent
+              };
+            }
+          }
+          
+          // IPI
+          const ipi = imposto?.querySelector('IPI');
+          let impostos_ipi = null;
+          if (ipi) {
+            const ipiTrib = ipi.querySelector('IPITrib');
+            if (ipiTrib) {
+              impostos_ipi = {
+                cst: ipiTrib.querySelector('CST')?.textContent,
+                vBC: ipiTrib.querySelector('vBC')?.textContent,
+                pIPI: ipiTrib.querySelector('pIPI')?.textContent,
+                vIPI: ipiTrib.querySelector('vIPI')?.textContent
+              };
+            }
+          }
+          
+          // PIS
+          const pis = imposto?.querySelector('PIS');
+          let impostos_pis = null;
+          if (pis) {
+            const pisTag = pis.children[0];
+            if (pisTag) {
+              impostos_pis = {
+                tipo: pisTag.tagName,
+                cst: pisTag.querySelector('CST')?.textContent,
+                vBC: pisTag.querySelector('vBC')?.textContent,
+                pPIS: pisTag.querySelector('pPIS')?.textContent,
+                vPIS: pisTag.querySelector('vPIS')?.textContent
+              };
+            }
+          }
+          
+          // COFINS
+          const cofins = imposto?.querySelector('COFINS');
+          let impostos_cofins = null;
+          if (cofins) {
+            const cofinsTag = cofins.children[0];
+            if (cofinsTag) {
+              impostos_cofins = {
+                tipo: cofinsTag.tagName,
+                cst: cofinsTag.querySelector('CST')?.textContent,
+                vBC: cofinsTag.querySelector('vBC')?.textContent,
+                pCOFINS: cofinsTag.querySelector('pCOFINS')?.textContent,
+                vCOFINS: cofinsTag.querySelector('vCOFINS')?.textContent
+              };
+            }
+          }
+          
           const item: NFItem = {
             codigo: prod.querySelector('cProd')?.textContent || '',
             descricao: descricao || 'Produto sem descrição',
@@ -324,7 +415,27 @@ export class NFParser {
             dataValidade,
             quantidadeLote,
             dataFabricacao,
-            codigoEAN: prod.querySelector('cEAN')?.textContent || '' // Capturar código EAN
+            codigoEAN: prod.querySelector('cEAN')?.textContent || '',
+            // Campos comerciais e tributáveis
+            descricao_produto: prod.querySelector('xProd')?.textContent || undefined,
+            ncm: prod.querySelector('NCM')?.textContent || undefined,
+            cest: prod.querySelector('CEST')?.textContent || undefined,
+            cfop: det.querySelector('CFOP')?.textContent || undefined,
+            quantidade_comercial: parseFloat(prod.querySelector('qCom')?.textContent || '0'),
+            valor_unitario_comercial: parseFloat(prod.querySelector('vUnCom')?.textContent || '0'),
+            codigo_ean_tributavel: prod.querySelector('cEANTrib')?.textContent || undefined,
+            unidade_tributavel: prod.querySelector('uTrib')?.textContent || undefined,
+            quantidade_tributavel: parseFloat(prod.querySelector('qTrib')?.textContent || '0'),
+            valor_unitario_tributavel: parseFloat(prod.querySelector('vUnTrib')?.textContent || '0'),
+            indicador_total: prod.querySelector('indTot')?.textContent || undefined,
+            // Impostos
+            impostos_icms,
+            impostos_ipi,
+            impostos_pis,
+            impostos_cofins,
+            valor_total_tributos_item: imposto?.querySelector('vTotTrib')?.textContent 
+              ? parseFloat(imposto.querySelector('vTotTrib')!.textContent!) 
+              : undefined
           };
           itens.push(item);
         }
