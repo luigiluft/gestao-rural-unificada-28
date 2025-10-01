@@ -140,6 +140,9 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
       if (tipo === 'entrada') {
         const dadosEntrada = dados as DadosEntrada
         const dadosCompletos = {
+          // Incluir TODOS os campos da NFe primeiro se disponíveis
+          ...(dadosEntrada.nfeData || {}),
+          // Sobrescrever com campos específicos do formulário
           data_entrada: dadosEntrada.dataEntrada,
           numero_nfe: dadosEntrada.numeroNF,
           serie: dadosEntrada.serie,
@@ -152,15 +155,6 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           valor_total: calcularValorTotal(),
           tipo: nfData ? 'nfe' : 'manual',
           xml_content: nfData?.xmlContent,
-          // Incluir todos os campos da NFe se disponíveis
-          ...(dadosEntrada.nfeData && {
-            emitente_cnpj: dadosEntrada.nfeData.emitente_cnpj,
-            emitente_endereco: dadosEntrada.nfeData.emitente_endereco,
-            destinatario_cpf_cnpj: dadosEntrada.nfeData.destinatario_cpf_cnpj,
-            destinatario_nome: dadosEntrada.nfeData.destinatario_nome,
-            entrega_cnpj: dadosEntrada.nfeData.entrega_cnpj,
-            entrega_nome: dadosEntrada.nfeData.entrega_nome
-          }),
           itens: itens.map(item => ({
             produto_id: item.produto_id,
             nome_produto: item.produto || item.produtoNome,
@@ -174,7 +168,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             data_fabricacao: item.dataFabricacao
           }))
         }
-        console.log('Dados formatados para entrada:', dadosCompletos)
+        console.log('📤 Dados completos sendo enviados para edge function:', dadosCompletos)
         onSubmit(dadosCompletos)
       } else {
         // Lógica específica de saída com reservas
