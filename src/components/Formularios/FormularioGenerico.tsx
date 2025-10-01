@@ -163,9 +163,27 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             quantidade: item.quantidade,
             unidade_comercial: item.unidade,
             valor_unitario: item.valorUnitario,
+            valor_total: item.valorTotal,
             lote: item.lote,
             data_validade: item.dataValidade,
-            data_fabricacao: item.dataFabricacao
+            data_fabricacao: item.dataFabricacao,
+            // Campos comerciais/tributáveis
+            descricao_produto: item.descricao_produto || (item.produto || item.produtoNome),
+            ncm: item.ncm,
+            cest: item.cest,
+            cfop: item.cfop,
+            quantidade_comercial: item.quantidade_comercial,
+            valor_unitario_comercial: item.valor_unitario_comercial,
+            codigo_ean_tributavel: item.codigo_ean_tributavel,
+            unidade_tributavel: item.unidade_tributavel,
+            quantidade_tributavel: item.quantidade_tributavel,
+            valor_unitario_tributavel: item.valor_unitario_tributavel,
+            indicador_total: item.indicador_total,
+            impostos_icms: item.impostos_icms,
+            impostos_ipi: item.impostos_ipi,
+            impostos_pis: item.impostos_pis,
+            impostos_cofins: item.impostos_cofins,
+            valor_total_tributos_item: item.valor_total_tributos_item
           }))
         }
         console.log('📤 Dados completos sendo enviados para edge function:', dadosCompletos)
