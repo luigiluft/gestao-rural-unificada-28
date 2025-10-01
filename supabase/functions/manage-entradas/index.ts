@@ -47,6 +47,12 @@ serve(async (req) => {
       case 'update_status':
         result = await updateEntradaStatus(supabaseClient, user.id, data)
         break
+      case 'get_franquia_coords':
+        result = await getFranquiaCoords(supabaseClient, data.user_id)
+        break
+      case 'get_fazenda_coords':
+        result = await getFazendaCoords(supabaseClient, data.fazenda_id)
+        break
       default:
         throw new Error('Invalid action')
     }
@@ -142,14 +148,62 @@ async function updateEntrada(supabase: any, userId: string, data: any) {
 }
 
 async function deleteEntrada(supabase: any, userId: string, entradaId: string) {
-  const { error } = await supabase
+  console.log('🗑️ Edge Function DELETE - Iniciando:', { userId, entradaId });
+  
+  // First, verify the entrada exists and get its details
+  const { data: entrada, error: fetchError } = await supabase
+    .from('entradas')
+    .select('id, numero_nfe, user_id, emitente_cnpj, destinatario_cpf_cnpj')
+    .eq('id', entradaId)
+    .single();
+
+  if (fetchError) {
+    console.error('🗑️ Edge Function DELETE - Erro ao buscar entrada:', fetchError);
+    throw fetchError;
+  }
+
+  if (!entrada) {
+    console.error('🗑️ Edge Function DELETE - Entrada não encontrada:', entradaId);
+    throw new Error('Entrada não encontrada');
+  }
+
+  console.log('🗑️ Edge Function DELETE - Entrada encontrada:', entrada);
+
+  // Perform the delete with explicit ID filter only
+  // RLS policies will handle authorization
+  const { data: deletedData, error } = await supabase
     .from('entradas')
     .delete()
     .eq('id', entradaId)
-    .eq('user_id', userId)
+    .select();
 
-  if (error) throw error
-  return { id: entradaId }
+  console.log('🗑️ Edge Function DELETE - Resultado:', { 
+    deletedCount: deletedData?.length || 0, 
+    deletedIds: deletedData?.map((e: any) => e.id) || [],
+    error 
+  });
+
+  if (error) {
+    console.error('🗑️ Edge Function DELETE - Erro ao deletar:', error);
+    throw error;
+  }
+
+  // Safety check: ensure only one record was deleted
+  if (deletedData && deletedData.length > 1) {
+    console.error('🗑️ Edge Function DELETE - ERRO CRÍTICO: Múltiplas entradas deletadas!', {
+      count: deletedData.length,
+      ids: deletedData.map((e: any) => e.id)
+    });
+    throw new Error(`ERRO CRÍTICO: ${deletedData.length} entradas foram deletadas ao invés de 1`);
+  }
+
+  if (!deletedData || deletedData.length === 0) {
+    console.error('🗑️ Edge Function DELETE - Nenhuma entrada foi deletada');
+    throw new Error('Entrada não pôde ser deletada - verifique as permissões');
+  }
+
+  console.log('🗑️ Edge Function DELETE - Sucesso:', deletedData[0]);
+  return { id: entradaId, deleted: deletedData[0] };
 }
 
 async function updateEntradaStatus(supabase: any, userId: string, data: any) {
@@ -351,4 +405,39 @@ function mapTipoDivergencia(tipo: string): string {
   
   // Default para quantidade incorreta
   return 'quantidade_incorreta'
+}
+
+async function getFranquiaCoords(supabase: any, userId: string) {
+  console.log('🗺️ Getting franquia coords for user:', userId);
+  
+  const { data: franquia, error } = await supabase
+    .from('franquias')
+    .select('id, nome, latitude, longitude')
+    .eq('master_franqueado_id', userId)
+    .eq('ativo', true)
+    .single();
+
+  if (error) {
+    console.error('Error getting franquia coords:', error);
+    throw error;
+  }
+
+  return franquia;
+}
+
+async function getFazendaCoords(supabase: any, fazendaId: string) {
+  console.log('🗺️ Getting fazenda coords for:', fazendaId);
+  
+  const { data: fazenda, error } = await supabase
+    .from('fazendas')
+    .select('id, nome, latitude, longitude')
+    .eq('id', fazendaId)
+    .single();
+
+  if (error) {
+    console.error('Error getting fazenda coords:', error);
+    throw error;
+  }
+
+  return fazenda;
 }

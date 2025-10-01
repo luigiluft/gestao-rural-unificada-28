@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -132,6 +133,7 @@ export default function Entradas() {
   const {
     toast
   } = useToast();
+  const queryClient = useQueryClient();
   const {
     isAdmin,
     isFranqueado,
@@ -717,26 +719,35 @@ export default function Entradas() {
                   </DropdownMenuItem>
                   {/* Apenas admin pode excluir pela interface administrativa */}
                   {isAdmin && <DropdownMenuItem onClick={async () => {
-                if (confirm('Tem certeza que deseja excluir esta entrada? (Ação administrativa)')) {
+                const entradaId = entrada.id;
+                const entradaNumero = entrada.numero_nfe;
+                
+                if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}? (Ação administrativa)`)) {
                   try {
-                    const { error } = await supabase
-                      .from('entradas')
-                      .delete()
-                      .eq('id', entrada.id);
+                    const { data, error } = await supabase.functions.invoke('manage-entradas', {
+                      body: {
+                        action: 'delete',
+                        data: { id: entradaId }
+                      }
+                    });
 
                     if (error) throw error;
+                    
+                    if (!data?.success) {
+                      throw new Error(data?.error || 'Erro ao excluir entrada');
+                    }
 
                     toast({
                       title: "Entrada excluída",
-                      description: "A entrada foi excluída com sucesso."
+                      description: `A entrada NFe ${entradaNumero} foi excluída com sucesso (Admin).`
                     });
 
-                    refetch(); // Refresh the list
+                    queryClient.invalidateQueries({ queryKey: ["entradas"] });
                   } catch (error) {
                     console.error('Erro ao excluir entrada:', error);
                     toast({
-                      title: "Erro",
-                      description: "Erro ao excluir entrada.",
+                      title: "Erro ao excluir",
+                      description: error instanceof Error ? error.message : "Erro ao excluir entrada.",
                       variant: "destructive"
                     });
                   }
@@ -754,26 +765,35 @@ export default function Entradas() {
                 size="sm"
                 className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                 onClick={async () => {
-                if (confirm('Tem certeza que deseja excluir esta entrada?')) {
+                const entradaId = entrada.id;
+                const entradaNumero = entrada.numero_nfe;
+                
+                if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}?`)) {
                   try {
-                    const { error } = await supabase
-                      .from('entradas')
-                      .delete()
-                      .eq('id', entrada.id);
+                    const { data, error } = await supabase.functions.invoke('manage-entradas', {
+                      body: {
+                        action: 'delete',
+                        data: { id: entradaId }
+                      }
+                    });
 
                     if (error) throw error;
+                    
+                    if (!data?.success) {
+                      throw new Error(data?.error || 'Erro ao excluir entrada');
+                    }
 
                     toast({
                       title: "Entrada excluída",
-                      description: "A entrada foi excluída com sucesso."
+                      description: `A entrada NFe ${entradaNumero} foi excluída com sucesso.`
                     });
 
-                    refetch(); // Refresh the list
+                    queryClient.invalidateQueries({ queryKey: ["entradas"] });
                   } catch (error) {
                     console.error('Erro ao excluir entrada:', error);
                     toast({
-                      title: "Erro",
-                      description: "Erro ao excluir entrada.",
+                      title: "Erro ao excluir",
+                      description: error instanceof Error ? error.message : "Erro ao excluir entrada.",
                       variant: "destructive"
                     });
                   }
