@@ -77,12 +77,12 @@ export function AllocationDialog({ open, onOpenChange, selectedPallets, method }
       setIsProcessing(false);
 
       if (isLastPallet) {
-        // Finished all pallets
-        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
+        // Finished all pallets - invalidate and close
+        await queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
         onOpenChange(false);
         resetDialog();
       } else {
-        // Move to next pallet
+        // Move to next pallet without invalidating yet
         setCurrentIndex(prev => prev + 1);
       }
     } catch (error) {

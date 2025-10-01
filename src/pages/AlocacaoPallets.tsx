@@ -222,7 +222,13 @@ export default function AlocacaoPallets() {
 
       <AllocationDialog
         open={allocationDialogOpen}
-        onOpenChange={setAllocationDialogOpen}
+        onOpenChange={(open) => {
+          setAllocationDialogOpen(open);
+          if (!open) {
+            // Clear selection when dialog closes
+            setSelectedPallets([]);
+          }
+        }}
         selectedPallets={getSelectedPalletsData()}
         method={allocationMethod}
       />
