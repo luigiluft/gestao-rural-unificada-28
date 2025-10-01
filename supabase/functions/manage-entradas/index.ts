@@ -103,6 +103,16 @@ async function createEntrada(supabase: any, userId: string, data: any) {
       const itemsWithEntradaId = itens.map((item: any) => {
         console.log('📦 Item antes de salvar:', item);
         
+        // Garantir preservação de zeros e normalização de tipos
+        const valorTotalTributosItem =
+          typeof item?.valor_total_tributos_item === 'number'
+            ? item.valor_total_tributos_item
+            : (item?.valor_total_tributos_item != null
+                ? parseFloat(item.valor_total_tributos_item)
+                : 0);
+
+        const impostosIpi = item?.impostos_ipi ?? null;
+        
         return {
           entrada_id: entrada.id,
           user_id: userId,
@@ -131,10 +141,10 @@ async function createEntrada(supabase: any, userId: string, data: any) {
           valor_unitario_tributavel: item.valor_unitario_tributavel,
           indicador_total: item.indicador_total,
           impostos_icms: item.impostos_icms,
-          impostos_ipi: item.impostos_ipi,
+          impostos_ipi: impostosIpi,
           impostos_pis: item.impostos_pis,
           impostos_cofins: item.impostos_cofins,
-          valor_total_tributos_item: item.valor_total_tributos_item
+          valor_total_tributos_item: valorTotalTributosItem ?? 0,
         };
       })
       
