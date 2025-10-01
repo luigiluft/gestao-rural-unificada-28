@@ -219,7 +219,31 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
           ind_pres: nfData.ind_pres,
           ind_intermediador: nfData.ind_intermediador,
           processo_emissao: nfData.processo_emissao,
-          versao_processo: nfData.versao_processo
+          versao_processo: nfData.versao_processo,
+          // Dados de transporte
+          modalidade_frete: nfData.modalidade_frete,
+          transportadora_cnpj: nfData.transportadora_cnpj,
+          transportadora_nome: nfData.transportadora_nome,
+          transportadora_endereco: nfData.transportadora_endereco,
+          transportadora_municipio: nfData.transportadora_municipio,
+          transportadora_uf: nfData.transportadora_uf,
+          veiculo_placa: nfData.veiculo_placa,
+          veiculo_uf: nfData.veiculo_uf,
+          quantidade_volumes: nfData.quantidade_volumes,
+          peso_liquido: nfData.peso_liquido,
+          peso_bruto: nfData.peso_bruto,
+          // Dados de pagamento
+          numero_fatura: nfData.numero_fatura,
+          valor_original_fatura: nfData.valor_original_fatura,
+          valor_desconto_fatura: nfData.valor_desconto_fatura,
+          valor_liquido_fatura: nfData.valor_liquido_fatura,
+          numero_duplicata: nfData.numero_duplicata,
+          data_vencimento_duplicata: nfData.data_vencimento_duplicata,
+          valor_duplicata: nfData.valor_duplicata,
+          indicador_pagamento: nfData.indicador_pagamento,
+          tipo_pagamento: nfData.tipo_pagamento,
+          descricao_pagamento: nfData.descricao_pagamento,
+          valor_pagamento: nfData.valor_pagamento
         }
       } as DadosEntrada)
 

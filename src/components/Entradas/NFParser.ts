@@ -93,6 +93,30 @@ export interface NFData {
   ind_intermediador?: string;
   processo_emissao?: string;
   versao_processo?: string;
+  // Dados de transporte
+  modalidade_frete?: string;
+  transportadora_cnpj?: string;
+  transportadora_nome?: string;
+  transportadora_endereco?: string;
+  transportadora_municipio?: string;
+  transportadora_uf?: string;
+  veiculo_placa?: string;
+  veiculo_uf?: string;
+  quantidade_volumes?: number;
+  peso_liquido?: number;
+  peso_bruto?: number;
+  // Dados de pagamento
+  numero_fatura?: string;
+  valor_original_fatura?: number;
+  valor_desconto_fatura?: number;
+  valor_liquido_fatura?: number;
+  numero_duplicata?: string;
+  data_vencimento_duplicata?: string;
+  valor_duplicata?: number;
+  indicador_pagamento?: string;
+  tipo_pagamento?: string;
+  descricao_pagamento?: string;
+  valor_pagamento?: number;
 }
 
 export class NFParser {
@@ -277,6 +301,52 @@ export class NFParser {
       const total = xmlDoc.querySelector('ICMSTot');
       const valorTotal = parseFloat(total?.querySelector('vNF')?.textContent || '0');
 
+      // Extrair dados de transporte
+      const transp = xmlDoc.querySelector('transp');
+      const modalidade_frete = transp?.querySelector('modFrete')?.textContent || undefined;
+      
+      const transporta = transp?.querySelector('transporta');
+      const transportadora_cnpj = transporta?.querySelector('CNPJ')?.textContent || transporta?.querySelector('CPF')?.textContent || undefined;
+      const transportadora_nome = transporta?.querySelector('xNome')?.textContent || undefined;
+      const transportadora_municipio = transporta?.querySelector('xMun')?.textContent || undefined;
+      const transportadora_uf = transporta?.querySelector('UF')?.textContent || undefined;
+      
+      // Montar endereço da transportadora
+      const transportadora_endereco = [
+        transporta?.querySelector('xEnder')?.textContent,
+        transportadora_municipio,
+        transportadora_uf
+      ].filter(Boolean).join(', ') || undefined;
+      
+      const veicTransp = transp?.querySelector('veicTransp');
+      const veiculo_placa = veicTransp?.querySelector('placa')?.textContent || undefined;
+      const veiculo_uf = veicTransp?.querySelector('UF')?.textContent || undefined;
+      
+      const vol = transp?.querySelector('vol');
+      const quantidade_volumes = vol?.querySelector('qVol')?.textContent ? parseFloat(vol.querySelector('qVol')!.textContent!) : undefined;
+      const peso_liquido = vol?.querySelector('pesoL')?.textContent ? parseFloat(vol.querySelector('pesoL')!.textContent!) : undefined;
+      const peso_bruto = vol?.querySelector('pesoB')?.textContent ? parseFloat(vol.querySelector('pesoB')!.textContent!) : undefined;
+
+      // Extrair dados de cobrança/pagamento
+      const cobr = xmlDoc.querySelector('cobr');
+      const fat = cobr?.querySelector('fat');
+      const numero_fatura = fat?.querySelector('nFat')?.textContent || undefined;
+      const valor_original_fatura = fat?.querySelector('vOrig')?.textContent ? parseFloat(fat.querySelector('vOrig')!.textContent!) : undefined;
+      const valor_desconto_fatura = fat?.querySelector('vDesc')?.textContent ? parseFloat(fat.querySelector('vDesc')!.textContent!) : undefined;
+      const valor_liquido_fatura = fat?.querySelector('vLiq')?.textContent ? parseFloat(fat.querySelector('vLiq')!.textContent!) : undefined;
+      
+      const dup = cobr?.querySelector('dup');
+      const numero_duplicata = dup?.querySelector('nDup')?.textContent || undefined;
+      const data_vencimento_duplicata = dup?.querySelector('dVenc')?.textContent || undefined;
+      const valor_duplicata = dup?.querySelector('vDup')?.textContent ? parseFloat(dup.querySelector('vDup')!.textContent!) : undefined;
+      
+      const pag = xmlDoc.querySelector('pag');
+      const detPag = pag?.querySelector('detPag');
+      const indicador_pagamento = pag?.querySelector('indPag')?.textContent || undefined;
+      const tipo_pagamento = detPag?.querySelector('tPag')?.textContent || undefined;
+      const descricao_pagamento = detPag?.querySelector('xPag')?.textContent || undefined;
+      const valor_pagamento = detPag?.querySelector('vPag')?.textContent ? parseFloat(detPag.querySelector('vPag')!.textContent!) : undefined;
+
       return {
         numeroNF,
         serie,
@@ -309,7 +379,31 @@ export class NFParser {
         ind_pres,
         ind_intermediador,
         processo_emissao,
-        versao_processo
+        versao_processo,
+        // Dados de transporte
+        modalidade_frete,
+        transportadora_cnpj,
+        transportadora_nome,
+        transportadora_endereco,
+        transportadora_municipio,
+        transportadora_uf,
+        veiculo_placa,
+        veiculo_uf,
+        quantidade_volumes,
+        peso_liquido,
+        peso_bruto,
+        // Dados de pagamento
+        numero_fatura,
+        valor_original_fatura,
+        valor_desconto_fatura,
+        valor_liquido_fatura,
+        numero_duplicata,
+        data_vencimento_duplicata,
+        valor_duplicata,
+        indicador_pagamento,
+        tipo_pagamento,
+        descricao_pagamento,
+        valor_pagamento
       };
     } catch (error) {
       console.error('Erro ao processar XML:', error);
