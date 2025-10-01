@@ -320,7 +320,15 @@ export type Database = {
           user_id?: string
           valor_impacto?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "divergencias_entrada_id_fkey"
+            columns: ["entrada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entrada_itens: {
         Row: {
@@ -347,7 +355,6 @@ export type Database = {
           produto_id: string | null
           quantidade: number
           quantidade_comercial: number | null
-          quantidade_lote: number | null
           quantidade_tributavel: number | null
           unidade_comercial: string | null
           unidade_tributavel: string | null
@@ -384,7 +391,6 @@ export type Database = {
           produto_id?: string | null
           quantidade: number
           quantidade_comercial?: number | null
-          quantidade_lote?: number | null
           quantidade_tributavel?: number | null
           unidade_comercial?: string | null
           unidade_tributavel?: string | null
@@ -421,7 +427,6 @@ export type Database = {
           produto_id?: string | null
           quantidade?: number
           quantidade_comercial?: number | null
-          quantidade_lote?: number | null
           quantidade_tributavel?: number | null
           unidade_comercial?: string | null
           unidade_tributavel?: string | null
@@ -638,7 +643,6 @@ export type Database = {
           entrega_telefone: string | null
           entrega_uf: string | null
           finalidade_nfe: string | null
-          fornecedor_id: string | null
           id: string
           id_dest: string | null
           ind_final: string | null
@@ -770,7 +774,6 @@ export type Database = {
           entrega_telefone?: string | null
           entrega_uf?: string | null
           finalidade_nfe?: string | null
-          fornecedor_id?: string | null
           id?: string
           id_dest?: string | null
           ind_final?: string | null
@@ -904,7 +907,6 @@ export type Database = {
           entrega_telefone?: string | null
           entrega_uf?: string | null
           finalidade_nfe?: string | null
-          fornecedor_id?: string | null
           id?: string
           id_dest?: string | null
           ind_final?: string | null
@@ -976,15 +978,7 @@ export type Database = {
           versao_processo?: string | null
           xml_content?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "entradas_fornecedor_id_fkey"
-            columns: ["fornecedor_id"]
-            isOneToOne: false
-            referencedRelation: "fornecedores"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       estoque_reservas: {
         Row: {
@@ -3017,6 +3011,10 @@ export type Database = {
         Returns: number
       }
       clean_orphaned_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      clean_orphaned_divergencias: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
