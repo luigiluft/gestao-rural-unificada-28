@@ -361,13 +361,22 @@ export class NFParser {
           const ipi = imposto?.querySelector('IPI');
           let impostos_ipi = null;
           if (ipi) {
+            // Pode ser IPITrib (tributado) ou IPINT (não tributado)
             const ipiTrib = ipi.querySelector('IPITrib');
+            const ipiNT = ipi.querySelector('IPINT');
+            
             if (ipiTrib) {
               impostos_ipi = {
+                tipo: 'IPITrib',
                 cst: ipiTrib.querySelector('CST')?.textContent,
                 vBC: ipiTrib.querySelector('vBC')?.textContent,
                 pIPI: ipiTrib.querySelector('pIPI')?.textContent,
                 vIPI: ipiTrib.querySelector('vIPI')?.textContent
+              };
+            } else if (ipiNT) {
+              impostos_ipi = {
+                tipo: 'IPINT',
+                cst: ipiNT.querySelector('CST')?.textContent
               };
             }
           }
@@ -435,7 +444,7 @@ export class NFParser {
             impostos_cofins,
             valor_total_tributos_item: imposto?.querySelector('vTotTrib')?.textContent 
               ? parseFloat(imposto.querySelector('vTotTrib')!.textContent!) 
-              : undefined
+              : 0
           };
           itens.push(item);
         }
