@@ -21,6 +21,24 @@ export interface ItemGenerico {
   quantidadeLote?: number
   dataFabricacao?: string
   
+  // Campos tributários (entrada)
+  descricao_produto?: string
+  ncm?: string
+  cest?: string
+  cfop?: string
+  quantidade_comercial?: number
+  valor_unitario_comercial?: number
+  codigo_ean_tributavel?: string
+  unidade_tributavel?: string
+  quantidade_tributavel?: number
+  valor_unitario_tributavel?: number
+  indicador_total?: string
+  impostos_icms?: any
+  impostos_ipi?: any
+  impostos_pis?: any
+  impostos_cofins?: any
+  valor_total_tributos_item?: number
+  
   // Campos específicos de saída
   valor_unitario?: number
   valor_total?: number

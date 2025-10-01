@@ -298,8 +298,27 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         valorTotal: item.valorTotal,
         dataValidade: item.dataValidade,
         quantidadeLote: item.quantidadeLote,
-        dataFabricacao: item.dataFabricacao
+        dataFabricacao: item.dataFabricacao,
+        // Campos tributários
+        descricao_produto: item.descricao_produto,
+        ncm: item.ncm,
+        cest: item.cest,
+        cfop: item.cfop,
+        quantidade_comercial: item.quantidade_comercial,
+        valor_unitario_comercial: item.valor_unitario_comercial,
+        codigo_ean_tributavel: item.codigo_ean_tributavel,
+        unidade_tributavel: item.unidade_tributavel,
+        quantidade_tributavel: item.quantidade_tributavel,
+        valor_unitario_tributavel: item.valor_unitario_tributavel,
+        indicador_total: item.indicador_total,
+        impostos_icms: item.impostos_icms,
+        impostos_ipi: item.impostos_ipi,
+        impostos_pis: item.impostos_pis,
+        impostos_cofins: item.impostos_cofins,
+        valor_total_tributos_item: item.valor_total_tributos_item
       }))
+      
+      console.log('📦 Itens convertidos com campos tributários:', itensConvertidos)
 
       setItens(itensConvertidos)
 

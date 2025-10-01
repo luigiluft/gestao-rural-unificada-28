@@ -100,12 +100,45 @@ async function createEntrada(supabase: any, userId: string, data: any) {
   try {
     // Insert items if provided
     if (itens && itens.length > 0) {
-      const itemsWithEntradaId = itens.map((item: any) => ({
-        ...item,
-        entrada_id: entrada.id,
-        user_id: userId,
-        created_at: new Date().toISOString()
-      }))
+      const itemsWithEntradaId = itens.map((item: any) => {
+        console.log('📦 Item antes de salvar:', item);
+        
+        return {
+          entrada_id: entrada.id,
+          user_id: userId,
+          created_at: new Date().toISOString(),
+          // Campos básicos
+          nome_produto: item.produto || item.nome_produto,
+          codigo_produto: item.codigo || item.codigo_produto,
+          codigo_ean: item.codigoEAN || item.codigo_ean,
+          quantidade: item.quantidade,
+          unidade_comercial: item.unidade || item.unidade_comercial,
+          valor_unitario: item.valorUnitario || item.valor_unitario,
+          valor_total: item.valorTotal || item.valor_total,
+          lote: item.lote,
+          data_validade: item.dataValidade || item.data_validade,
+          data_fabricacao: item.dataFabricacao || item.data_fabricacao,
+          // Campos tributários
+          descricao_produto: item.descricao_produto || item.produto,
+          ncm: item.ncm,
+          cest: item.cest,
+          cfop: item.cfop,
+          quantidade_comercial: item.quantidade_comercial,
+          valor_unitario_comercial: item.valor_unitario_comercial,
+          codigo_ean_tributavel: item.codigo_ean_tributavel,
+          unidade_tributavel: item.unidade_tributavel,
+          quantidade_tributavel: item.quantidade_tributavel,
+          valor_unitario_tributavel: item.valor_unitario_tributavel,
+          indicador_total: item.indicador_total,
+          impostos_icms: item.impostos_icms,
+          impostos_ipi: item.impostos_ipi,
+          impostos_pis: item.impostos_pis,
+          impostos_cofins: item.impostos_cofins,
+          valor_total_tributos_item: item.valor_total_tributos_item
+        };
+      })
+      
+      console.log('💾 Itens com tributação preparados para salvar:', itemsWithEntradaId);
 
       const { data: itemsData, error: itemsError } = await supabase
         .from('entrada_itens')
@@ -113,10 +146,13 @@ async function createEntrada(supabase: any, userId: string, data: any) {
         .select()
 
       if (itemsError) {
+        console.error('❌ Erro ao salvar itens:', itemsError);
         // Rollback entrada
         await supabase.from('entradas').delete().eq('id', entrada.id)
         throw itemsError
       }
+      
+      console.log('✅ Itens salvos com sucesso:', itemsData);
 
       return { ...entrada, itens: itemsData }
     }
