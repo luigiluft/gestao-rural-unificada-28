@@ -126,7 +126,7 @@ export default function Estoque() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total de Produtos</p>
+                        <p className="text-sm font-medium text-muted-foreground">Estoque Total</p>
                         <p className="text-2xl font-bold">{stats.total.toLocaleString('pt-BR')}</p>
                       </div>
                       <div className="p-2 bg-primary/10 rounded-lg">

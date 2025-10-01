@@ -27,7 +27,6 @@ export const useRastreamentoEntradas = () => {
         .from("entradas")
         .select(`
           *,
-          fornecedores(nome),
           entrada_itens(
             *,
             produtos(nome, unidade_medida)

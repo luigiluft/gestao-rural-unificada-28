@@ -50,7 +50,6 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
 
         // Fetch related data separately
         const userIds = [...new Set(entradas.map(e => e.user_id).filter(Boolean))]
-        const fornecedorIds = [...new Set(entradas.map(e => e.fornecedor_id).filter(Boolean))]
         const depositoIds = [...new Set(entradas.map(e => e.deposito_id).filter(Boolean))]
         
         // Batch fetch profiles
@@ -62,17 +61,6 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
             .in("user_id", userIds)
           
           profiles?.forEach(p => profilesMap.set(p.user_id, p))
-        }
-        
-        // Batch fetch fornecedores  
-        let fornecedoresMap = new Map()
-        if (fornecedorIds.length > 0) {
-          const { data: fornecedores } = await supabase
-            .from("fornecedores")
-            .select("id, nome")
-            .in("id", fornecedorIds)
-          
-          fornecedores?.forEach(f => fornecedoresMap.set(f.id, f))
         }
         
         // Batch fetch franquias
@@ -90,7 +78,6 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
         const enrichedEntradas = entradas.map(entrada => ({
           ...entrada,
           profiles: entrada.user_id ? profilesMap.get(entrada.user_id) : null,
-          fornecedores: entrada.fornecedor_id ? fornecedoresMap.get(entrada.fornecedor_id) : null,
           franquias: entrada.deposito_id ? franquiasMap.get(entrada.deposito_id) : null
         }))
 
