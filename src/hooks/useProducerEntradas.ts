@@ -22,11 +22,12 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
       // Clean CPF/CNPJ for comparison (remove all non-digit characters)
       const cpfCnpjLimpo = profile?.cpf_cnpj?.replace(/\D/g, '') || ''
 
+      console.log('🔍 [useProducerEntradas] CPF/CNPJ do produtor:', cpfCnpjLimpo)
+
       let query = supabase
         .from("entradas")
         .select(`
           *,
-          fornecedores(nome),
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
@@ -45,10 +46,23 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
 
       const { data: allEntradas, error } = await query.order("created_at", { ascending: false })
 
-      if (error) throw error
+      console.log('📦 [useProducerEntradas] Query result:', {
+        count: allEntradas?.length || 0,
+        error: error?.message,
+        firstEntry: allEntradas?.[0]
+      })
+
+      if (error) {
+        console.error('❌ [useProducerEntradas] Query error:', error)
+        throw error
+      }
 
       // Filter entradas by producer's CPF/CNPJ - RLS handles this now, so we just return all
       const entradas = allEntradas || []
+
+      if (!cpfCnpjLimpo) {
+        console.warn('⚠️ [useProducerEntradas] Produtor sem CPF/CNPJ cadastrado. Não é possível filtrar entradas.')
+      }
 
       // Get franquia names for each entrada
       const entradasWithFranquias = await Promise.all(
@@ -68,6 +82,12 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
           return entrada
         })
       )
+
+      console.log('✅ [useProducerEntradas] Final result:', {
+        totalEntradas: entradasWithFranquias?.length || 0,
+        depositoIds: [...new Set(entradasWithFranquias?.map(e => e.deposito_id))],
+        franquiasEncontradas: entradasWithFranquias?.filter(e => 'franquia_nome' in e && e.franquia_nome).length
+      })
 
       return entradasWithFranquias || []
     },
