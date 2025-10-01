@@ -53,17 +53,20 @@ export default function Estoque() {
       total: 0,
       normal: 0,
       baixo: 0,
-      critico: 0
+      critico: 0,
+      valorTotal: 0
     };
     const total = estoque.reduce((acc, item) => acc + item.quantidade_atual, 0);
     const normal = estoque.filter(item => item.quantidade_atual >= 100).length;
     const baixo = estoque.filter(item => item.quantidade_atual < 100 && item.quantidade_atual >= 20).length;
     const critico = estoque.filter(item => item.quantidade_atual < 20).length;
+    const valorTotal = estoque.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     return {
       total,
       normal,
       baixo,
-      critico
+      critico,
+      valorTotal
     };
   };
   const stats = getStockStats();
@@ -121,7 +124,7 @@ export default function Estoque() {
             
             <TabsContent value="estoque" className="space-y-4">
               {/* Summary Cards inside Stock Tab */}
-              <div className="grid gap-4 md:grid-cols-4 mb-6">
+              <div className="grid gap-4 md:grid-cols-3 mb-6">
                 <Card className="shadow-card">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
@@ -150,9 +153,21 @@ export default function Estoque() {
                   </CardContent>
                 </Card>
 
-                
-
-                
+                <Card className="shadow-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Valor Total</p>
+                        <p className="text-2xl font-bold">
+                          R$ {stats.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="w-5 h-5 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
               
               <div className="flex items-center justify-between">
