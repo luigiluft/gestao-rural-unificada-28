@@ -22,7 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isCheckingProfile = false;
+    
     const checkProfile = async (u: User) => {
+      if (isCheckingProfile) return;
+      isCheckingProfile = true;
+      
       try {
         console.log('🔍 Checking profile for user:', u.id, u.email);
         
@@ -35,11 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
         if (error) {
           console.error('❌ Error fetching profile:', error);
+          isCheckingProfile = false;
           return;
         }
 
         if (!profile) {
           console.log('⏳ Profile not found, waiting for trigger to create...');
+          isCheckingProfile = false;
           // Profile should be created by trigger, wait a bit and try again
           setTimeout(() => checkProfile(u), 1000);
           return;
@@ -56,25 +63,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setTimeout(() => {
             window.location.href = '/completar-cadastro';
           }, 100);
+          isCheckingProfile = false;
           return;
         }
 
         // Sistema agora é 100% automático - invite processing acontece no backend via trigger
         console.log('✅ Profile check completed successfully');
+        isCheckingProfile = false;
         
       } catch (e) {
         console.error('❌ Profile check failed:', e);
+        isCheckingProfile = false;
       }
     };
+
+    let initialSessionHandled = false;
 
     // Listen first to avoid missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       console.log('🔄 Auth state change:', event, newSession?.user?.email);
+      
+      // Ignore INITIAL_SESSION if we already handled it
+      if (event === 'INITIAL_SESSION' && initialSessionHandled) {
+        return;
+      }
+      
+      if (event === 'INITIAL_SESSION') {
+        initialSessionHandled = true;
+      }
+      
       setSession(newSession);
       setUser(newSession?.user ?? null);
-      if (newSession?.user) {
+      
+      if (newSession?.user && event !== 'INITIAL_SESSION') {
         setTimeout(() => checkProfile(newSession.user as User), 0);
       }
+      
       if (loading) setLoading(false);
     });
 
@@ -84,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
+        initialSessionHandled = true;
         setTimeout(() => checkProfile(data.session!.user as User), 0);
       }
       setLoading(false);
