@@ -117,6 +117,28 @@ export interface NFData {
   tipo_pagamento?: string;
   descricao_pagamento?: string;
   valor_pagamento?: number;
+  // Valores totais
+  valor_produtos?: number;
+  valor_frete?: number;
+  valor_seguro?: number;
+  valor_desconto?: number;
+  valor_ii?: number;
+  valor_ipi?: number;
+  valor_ipi_devolvido?: number;
+  valor_pis?: number;
+  valor_cofins?: number;
+  valor_outros?: number;
+  valor_total_tributos?: number;
+  // Dados de protocolo
+  tipo_ambiente_protocolo?: string;
+  versao_aplicativo?: string;
+  data_recebimento?: string;
+  numero_protocolo?: string;
+  digest_value?: string;
+  codigo_status?: string;
+  motivo_status?: string;
+  // Pedido de compra
+  numero_pedido_compra?: string;
 }
 
 export class NFParser {
@@ -162,6 +184,7 @@ export class NFParser {
       const ind_intermediador = ide?.querySelector('indIntermed')?.textContent || '';
       const processo_emissao = ide?.querySelector('procEmi')?.textContent || '';
       const versao_processo = ide?.querySelector('verProc')?.textContent || '';
+      const numero_pedido_compra = ide?.querySelector('xPed')?.textContent || '';
 
       // Extrair dados do emitente
       const emit = xmlDoc.querySelector('emit');
@@ -297,9 +320,20 @@ export class NFParser {
         }
       });
 
-      // Extrair valor total
+      // Extrair valor total e valores detalhados
       const total = xmlDoc.querySelector('ICMSTot');
       const valorTotal = parseFloat(total?.querySelector('vNF')?.textContent || '0');
+      const valor_produtos = total?.querySelector('vProd')?.textContent ? parseFloat(total.querySelector('vProd')!.textContent!) : undefined;
+      const valor_frete = total?.querySelector('vFrete')?.textContent ? parseFloat(total.querySelector('vFrete')!.textContent!) : undefined;
+      const valor_seguro = total?.querySelector('vSeg')?.textContent ? parseFloat(total.querySelector('vSeg')!.textContent!) : undefined;
+      const valor_desconto = total?.querySelector('vDesc')?.textContent ? parseFloat(total.querySelector('vDesc')!.textContent!) : undefined;
+      const valor_ii = total?.querySelector('vII')?.textContent ? parseFloat(total.querySelector('vII')!.textContent!) : undefined;
+      const valor_ipi = total?.querySelector('vIPI')?.textContent ? parseFloat(total.querySelector('vIPI')!.textContent!) : undefined;
+      const valor_ipi_devolvido = total?.querySelector('vIPIDevol')?.textContent ? parseFloat(total.querySelector('vIPIDevol')!.textContent!) : undefined;
+      const valor_pis = total?.querySelector('vPIS')?.textContent ? parseFloat(total.querySelector('vPIS')!.textContent!) : undefined;
+      const valor_cofins = total?.querySelector('vCOFINS')?.textContent ? parseFloat(total.querySelector('vCOFINS')!.textContent!) : undefined;
+      const valor_outros = total?.querySelector('vOutro')?.textContent ? parseFloat(total.querySelector('vOutro')!.textContent!) : undefined;
+      const valor_total_tributos = total?.querySelector('vTotTrib')?.textContent ? parseFloat(total.querySelector('vTotTrib')!.textContent!) : undefined;
 
       // Extrair dados de transporte
       const transp = xmlDoc.querySelector('transp');
@@ -346,6 +380,17 @@ export class NFParser {
       const tipo_pagamento = detPag?.querySelector('tPag')?.textContent || undefined;
       const descricao_pagamento = detPag?.querySelector('xPag')?.textContent || undefined;
       const valor_pagamento = detPag?.querySelector('vPag')?.textContent ? parseFloat(detPag.querySelector('vPag')!.textContent!) : undefined;
+
+      // Extrair dados do protocolo de autorização
+      const protNFe = xmlDoc.querySelector('protNFe');
+      const infProt = protNFe?.querySelector('infProt');
+      const tipo_ambiente_protocolo = infProt?.querySelector('tpAmb')?.textContent || undefined;
+      const versao_aplicativo = infProt?.querySelector('verAplic')?.textContent || undefined;
+      const data_recebimento = infProt?.querySelector('dhRecbto')?.textContent || undefined;
+      const numero_protocolo = infProt?.querySelector('nProt')?.textContent || undefined;
+      const digest_value = infProt?.querySelector('digVal')?.textContent || undefined;
+      const codigo_status = infProt?.querySelector('cStat')?.textContent || undefined;
+      const motivo_status = infProt?.querySelector('xMotivo')?.textContent || undefined;
 
       return {
         numeroNF,
@@ -403,7 +448,29 @@ export class NFParser {
         indicador_pagamento,
         tipo_pagamento,
         descricao_pagamento,
-        valor_pagamento
+        valor_pagamento,
+        // Valores totais
+        valor_produtos,
+        valor_frete,
+        valor_seguro,
+        valor_desconto,
+        valor_ii,
+        valor_ipi,
+        valor_ipi_devolvido,
+        valor_pis,
+        valor_cofins,
+        valor_outros,
+        valor_total_tributos,
+        // Dados de protocolo
+        tipo_ambiente_protocolo,
+        versao_aplicativo,
+        data_recebimento,
+        numero_protocolo,
+        digest_value,
+        codigo_status,
+        motivo_status,
+        // Pedido de compra
+        numero_pedido_compra
       };
     } catch (error) {
       console.error('Erro ao processar XML:', error);

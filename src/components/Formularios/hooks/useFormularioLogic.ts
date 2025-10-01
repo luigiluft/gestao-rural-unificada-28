@@ -243,7 +243,29 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
           indicador_pagamento: nfData.indicador_pagamento,
           tipo_pagamento: nfData.tipo_pagamento,
           descricao_pagamento: nfData.descricao_pagamento,
-          valor_pagamento: nfData.valor_pagamento
+          valor_pagamento: nfData.valor_pagamento,
+          // Valores totais
+          valor_produtos: nfData.valor_produtos,
+          valor_frete: nfData.valor_frete,
+          valor_seguro: nfData.valor_seguro,
+          valor_desconto: nfData.valor_desconto,
+          valor_ii: nfData.valor_ii,
+          valor_ipi: nfData.valor_ipi,
+          valor_ipi_devolvido: nfData.valor_ipi_devolvido,
+          valor_pis: nfData.valor_pis,
+          valor_cofins: nfData.valor_cofins,
+          valor_outros: nfData.valor_outros,
+          valor_total_tributos: nfData.valor_total_tributos,
+          // Dados de protocolo
+          tipo_ambiente_protocolo: nfData.tipo_ambiente_protocolo,
+          versao_aplicativo: nfData.versao_aplicativo,
+          data_recebimento: nfData.data_recebimento,
+          numero_protocolo: nfData.numero_protocolo,
+          digest_value: nfData.digest_value,
+          codigo_status: nfData.codigo_status,
+          motivo_status: nfData.motivo_status,
+          // Pedido de compra
+          numero_pedido_compra: nfData.numero_pedido_compra
         }
       } as DadosEntrada)
 
