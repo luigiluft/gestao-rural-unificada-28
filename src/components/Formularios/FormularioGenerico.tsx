@@ -180,10 +180,10 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             valor_unitario_tributavel: item.valor_unitario_tributavel,
             indicador_total: item.indicador_total,
             impostos_icms: item.impostos_icms,
-            impostos_ipi: item.impostos_ipi,
+            impostos_ipi: item.impostos_ipi ?? null,
             impostos_pis: item.impostos_pis,
             impostos_cofins: item.impostos_cofins,
-            valor_total_tributos_item: item.valor_total_tributos_item
+            valor_total_tributos_item: item.valor_total_tributos_item ?? 0
           }))
         }
         console.log('📤 Dados completos sendo enviados para edge function:', dadosCompletos)
