@@ -894,16 +894,6 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                     </CardTitle>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDuplicatePallet(group.template)}
-                      disabled={!canAddMorePallets(group.template)}
-                      className="h-7 w-7 p-0"
-                      title="Adicionar mais um pallet igual"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
                     {group.count > 1 && (
                       <Button
                         variant="ghost"
@@ -915,6 +905,16 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         <Minus className="h-3 w-3" />
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDuplicatePallet(group.template)}
+                      disabled={!canAddMorePallets(group.template)}
+                      className="h-7 w-7 p-0"
+                      title="Adicionar mais um pallet igual"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
