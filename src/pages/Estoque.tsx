@@ -150,33 +150,9 @@ export default function Estoque() {
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-card">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Estoque Baixo</p>
-                        <p className="text-2xl font-bold text-warning">{stats.baixo}</p>
-                      </div>
-                      <div className="p-2 bg-warning/10 rounded-lg">
-                        <Clock className="w-5 h-5 text-warning" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                
 
-                <Card className="shadow-card">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Estoque Crítico</p>
-                        <p className="text-2xl font-bold text-destructive">{stats.critico}</p>
-                      </div>
-                      <div className="p-2 bg-destructive/10 rounded-lg">
-                        <AlertTriangle className="w-5 h-5 text-destructive" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                
               </div>
               
               <div className="flex items-center justify-between">
@@ -185,14 +161,9 @@ export default function Estoque() {
                 </p>
               </div>
               
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
-              ) : estoque && estoque.length > 0 ? (
-                <div className="overflow-x-auto">
+              {isLoading ? <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+                </div> : estoque && estoque.length > 0 ? <div className="overflow-x-auto">
                   <Table className="min-w-[800px]">
                     <TableHeader>
                       <TableRow>
@@ -207,10 +178,9 @@ export default function Estoque() {
                     </TableHeader>
                     <TableBody>
                       {estoque.map(item => {
-                        const stockLevel = getStockLevel(item.quantidade_atual);
-                        const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
-                        return (
-                          <TableRow key={`${item.produto_id}-${item.lote || 'no-lote'}`} className="hover:bg-muted/50">
+                    const stockLevel = getStockLevel(item.quantidade_atual);
+                    const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
+                    return <TableRow key={`${item.produto_id}-${item.lote || 'no-lote'}`} className="hover:bg-muted/50">
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -236,8 +206,8 @@ export default function Estoque() {
                             </TableCell>
                             <TableCell className="font-medium">
                               {item.valor_total ? `R$ ${item.valor_total.toLocaleString('pt-BR', {
-                                minimumFractionDigits: 2
-                              })}` : 'N/A'}
+                          minimumFractionDigits: 2
+                        })}` : 'N/A'}
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
@@ -255,8 +225,7 @@ export default function Estoque() {
                                       </DialogDescription>
                                     </DialogHeader>
                                     
-                                    {selectedItem && (
-                                      <Tabs defaultValue="details" className="w-full">
+                                    {selectedItem && <Tabs defaultValue="details" className="w-full">
                                         <TabsList className="grid w-full grid-cols-2">
                                           <TabsTrigger value="details">Detalhes</TabsTrigger>
                                           <TabsTrigger value="history">Histórico</TabsTrigger>
@@ -285,7 +254,9 @@ export default function Estoque() {
                                               <div>
                                                 <h4 className="font-medium">Valor Unitário</h4>
                                                 <p className="text-muted-foreground">
-                                                  R$ {selectedItem.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                  R$ {selectedItem.valor_unitario?.toLocaleString('pt-BR', {
+                                            minimumFractionDigits: 2
+                                          })}
                                                 </p>
                                               </div>
                                               <div>
@@ -305,8 +276,8 @@ export default function Estoque() {
                                                 <h4 className="font-medium">Valor Total</h4>
                                                 <p className="text-muted-foreground">
                                                   {selectedItem.valor_total ? `R$ ${selectedItem.valor_total.toLocaleString('pt-BR', {
-                                                    minimumFractionDigits: 2
-                                                  })}` : 'N/A'}
+                                            minimumFractionDigits: 2
+                                          })}` : 'N/A'}
                                                 </p>
                                               </div>
                                             </div>
@@ -315,9 +286,7 @@ export default function Estoque() {
                                         
                                         <TabsContent value="history" className="space-y-4">
                                           <div className="space-y-3">
-                                            {movimentacoes && movimentacoes.length > 0 ? (
-                                              movimentacoes.map(mov => (
-                                                <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                                            {movimentacoes && movimentacoes.length > 0 ? movimentacoes.map(mov => <div key={mov.id} className="flex items-center gap-3 p-3 rounded-lg border">
                                                   <div className={`p-2 rounded-full ${mov.tipo_movimentacao === 'entrada' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
                                                     <History className="w-4 h-4" />
                                                   </div>
@@ -328,45 +297,27 @@ export default function Estoque() {
                                                     <p className="text-sm text-muted-foreground">{(mov as any).franquias?.nome}</p>
                                                     <p className="text-xs text-muted-foreground">
                                                       {formatDistanceToNow(new Date(mov.data_movimentacao), {
-                                                        addSuffix: true,
-                                                        locale: ptBR
-                                                      })}
+                                            addSuffix: true,
+                                            locale: ptBR
+                                          })}
                                                     </p>
                                                   </div>
-                                                </div>
-                                              ))
-                                            ) : (
-                                              <EmptyState 
-                                                icon={<History className="w-8 h-8 text-muted-foreground" />} 
-                                                title="Nenhuma movimentação" 
-                                                description="Ainda não há movimentações para este produto." 
-                                              />
-                                            )}
+                                                </div>) : <EmptyState icon={<History className="w-8 h-8 text-muted-foreground" />} title="Nenhuma movimentação" description="Ainda não há movimentações para este produto." />}
                                           </div>
                                         </TabsContent>
-                                      </Tabs>
-                                    )}
+                                      </Tabs>}
                                   </DialogContent>
                                 </Dialog>
                               </div>
                             </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                          </TableRow>;
+                  })}
                     </TableBody>
                   </Table>
-                </div>
-              ) : (
-                <EmptyState 
-                  icon={<Package className="w-8 h-8 text-muted-foreground" />} 
-                  title="Nenhum produto em estoque" 
-                  description="Registre entradas de produtos para começar a controlar seu estoque." 
-                  action={{
-                    label: "Registrar Primeira Entrada",
-                    onClick: () => navigate('/entradas')
-                  }} 
-                />
-              )}
+                </div> : <EmptyState icon={<Package className="w-8 h-8 text-muted-foreground" />} title="Nenhum produto em estoque" description="Registre entradas de produtos para começar a controlar seu estoque." action={{
+              label: "Registrar Primeira Entrada",
+              onClick: () => navigate('/entradas')
+            }} />}
             </TabsContent>
 
             <TabsContent value="avarias" className="space-y-4">
