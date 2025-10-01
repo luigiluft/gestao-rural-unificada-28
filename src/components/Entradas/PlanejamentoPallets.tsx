@@ -411,6 +411,31 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     return totalNetWeight * 1.2 // Gross weight = net weight * 1.2
   }
 
+  const calculateMaxQuantityForPallet = (productId: string, availableQuantity: number, isAvaria: boolean) => {
+    // Para produtos avariados, retornar a quantidade disponível sem restrições
+    if (isAvaria) {
+      return availableQuantity
+    }
+
+    // Calcular peso atual do pallet
+    const currentWeight = calculatePalletGrossWeight(selectedProductsForNewPallet)
+    const remainingWeight = pesoBrutoMaximo - currentWeight
+    
+    // Assumir 1kg por unidade (pode ser melhorado com dados reais de peso)
+    const unitWeight = 1
+    const maxByWeight = Math.floor(remainingWeight / unitWeight)
+    
+    // Obter incremento de embalagem
+    const originalId = productId.includes('_avaria') ? productId.replace('_avaria', '') : productId
+    const increment = getPackagingIncrement(originalId)
+    
+    // Aplicar incremento de embalagem ao máximo por peso
+    const maxByWeightWithIncrement = Math.floor(maxByWeight / increment) * increment
+    
+    // Retornar o menor entre: disponível e máximo por peso, mas pelo menos 1 incremento
+    return Math.max(increment, Math.min(availableQuantity, maxByWeightWithIncrement))
+  }
+
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     const isAvaria = productId.includes('_avaria')
     let validatedQuantity = newQuantity
@@ -738,7 +763,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                         if (isSelected) {
                           handleRemoveProductFromNewPallet(produto.id)
                         } else {
-                          const initialQuantity = Math.min(produto.disponivel, increment)
+                          const initialQuantity = calculateMaxQuantityForPallet(produto.id, produto.disponivel, produto.isAvaria)
                           handleAddProductToNewPallet(produto.id, initialQuantity, produto.isAvaria)
                         }
                       }}
