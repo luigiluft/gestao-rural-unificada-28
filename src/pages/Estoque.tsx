@@ -140,7 +140,7 @@ export default function Estoque() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Estoque Normal</p>
+                        <p className="text-sm font-medium text-muted-foreground">Total de Pallets</p>
                         <p className="text-2xl font-bold text-success">{stats.normal}</p>
                       </div>
                       <div className="p-2 bg-success/10 rounded-lg">
