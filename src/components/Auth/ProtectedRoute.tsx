@@ -1,5 +1,5 @@
-import { ReactNode, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { ReactNode, useEffect, useRef } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthVerification } from "@/hooks/useAuthVerification";
 
 interface ProtectedRouteProps {
@@ -21,6 +21,7 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const hasRedirectedRef = useRef(false);
   
   const { isLoading, hasAccess, shouldRedirect, redirectPath } = useAuthVerification({
     requireAuth,
@@ -29,14 +30,30 @@ export function ProtectedRoute({
   });
 
   useEffect(() => {
-    if (shouldRedirect) {
+    if (shouldRedirect && !hasRedirectedRef.current) {
       const targetPath = fallbackPath !== "/" ? fallbackPath : redirectPath;
+      
+      // Debug log
+      console.log('🛡️ ProtectedRoute redirect:', { 
+        pageKey, 
+        from: location.pathname, 
+        to: targetPath,
+        hasAccess 
+      });
+      
+      // Prevenir redirecionamento para a mesma rota
+      if (targetPath === location.pathname) {
+        console.warn('⚠️ ProtectedRoute: Prevented redirect to same path:', targetPath);
+        return;
+      }
+      
+      hasRedirectedRef.current = true;
       navigate(targetPath, { 
         replace: true, 
         state: { from: location.pathname } 
       });
     }
-  }, [shouldRedirect, redirectPath, fallbackPath, navigate, location.pathname]);
+  }, [shouldRedirect, redirectPath, fallbackPath, navigate, location.pathname, pageKey, hasAccess]);
 
   if (isLoading) {
     return (
@@ -52,7 +69,7 @@ export function ProtectedRoute({
         <div className="text-center">
           <h2 className="text-lg font-semibold mb-2">Acesso Negado</h2>
           <p className="text-muted-foreground mb-4">Você não tem permissão para acessar esta página.</p>
-          <a href="/" className="text-primary hover:underline">Voltar ao início</a>
+          <Link to="/" className="text-primary hover:underline">Voltar ao início</Link>
         </div>
       </div>
     );
