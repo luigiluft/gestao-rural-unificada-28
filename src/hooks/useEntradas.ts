@@ -5,6 +5,12 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
   return useQuery({
     queryKey: ["entradas", dateRange],
     queryFn: async () => {
+      console.log('[useEntradas] Starting query with dateRange:', dateRange);
+      
+      // Check auth status
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('[useEntradas] Current user:', user?.id);
+      
       let query = supabase
         .from("entradas")
         .select(`
@@ -28,7 +34,16 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
 
       const { data: entradas, error } = await query.order("created_at", { ascending: false })
 
-      if (error) throw error
+      console.log('[useEntradas] Query result:', { 
+        entriesCount: entradas?.length || 0, 
+        error: error?.message,
+        firstEntry: entradas?.[0]
+      });
+
+      if (error) {
+        console.error('[useEntradas] Query error:', error);
+        throw error;
+      }
 
       // Optimize: Get unique deposito_ids and batch fetch franquias
       const depositoIds = [...new Set(entradas?.map(e => e.deposito_id).filter(Boolean))]
@@ -48,6 +63,12 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
         ...entrada,
         franquias: entrada.deposito_id ? franquiasMap.get(entrada.deposito_id) : null
       }))
+
+      console.log('[useEntradas] Final result:', {
+        totalEntries: entradasWithFranquias?.length || 0,
+        depositoIds: [...new Set(entradasWithFranquias?.map(e => e.deposito_id))],
+        franquiasFound: franquiasMap.size
+      });
 
       return entradasWithFranquias || []
     },
