@@ -15,7 +15,6 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
         .from("entradas")
         .select(`
           *,
-          fornecedores(nome),
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
