@@ -69,11 +69,26 @@ export const useAuthVerification = ({
     }
   }, [allowedRoles, user, session, authLoading]);
 
-  const isLoading = authLoading || roleLoading || (pageKey ? pageLoading : false);
+  // Considerar também se user/session estão prontos
+  const isLoading = authLoading || !user || !session || roleLoading || (pageKey ? pageLoading : false);
 
   // Determinar acesso e redirecionamento
   let hasAccess = true;
   let redirectPath = "/";
+
+  // Debug log
+  console.log('🔍 AuthVerification:', { 
+    pageKey, 
+    authLoading, 
+    hasUser: !!user,
+    hasSession: !!session,
+    roleLoading, 
+    pageLoading, 
+    hasRoleAccess, 
+    canAccessPage, 
+    redirectPath,
+    isLoading
+  });
 
   if (requireAuth && !session) {
     hasAccess = false;

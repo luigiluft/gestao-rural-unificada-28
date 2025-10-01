@@ -9,10 +9,13 @@ import { useSimplifiedPermissions } from './useSimplifiedPermissions'
 const PRIORITY_ROUTES = [
   { path: '/dashboard', permission: 'dashboard.view' },
   { path: '/entradas', permission: 'entradas.view' },
+  { path: '/recebimento', permission: 'recebimento.view' },
   { path: '/estoque', permission: 'estoque.view' },
   { path: '/saidas', permission: 'saidas.view' },
+  { path: '/expedicao', permission: 'expedicao.view' },
   { path: '/proof-of-delivery', permission: 'proof-of-delivery.view' },
   { path: '/rastreio', permission: 'rastreio.view' },
+  { path: '/catalogo', permission: 'catalogo.view' },
 ]
 
 export const useLoginRedirect = () => {
@@ -68,13 +71,21 @@ export const useLoginRedirect = () => {
 
     // Fallback baseado no role se não encontrou rota nas permissões
     if (!firstAccessibleRoute) {
-      const roleRedirects: Record<string, string> = {
-        'admin': '/dashboard',
-        'franqueado': '/dashboard',
-        'produtor': '/dashboard',
-        'motorista': '/proof-of-delivery'
+      // Tentar rota padrão do role, mas só se a permissão existir
+      const roleDefaults: Record<string, { path: string; permission: string }> = {
+        'admin': { path: '/dashboard', permission: 'dashboard.view' },
+        'franqueado': { path: '/dashboard', permission: 'dashboard.view' },
+        'produtor': { path: '/dashboard', permission: 'dashboard.view' },
+        'motorista': { path: '/proof-of-delivery', permission: 'proof-of-delivery.view' }
       }
-      firstAccessibleRoute = roleRedirects[profile.role as string] || '/dashboard'
+      
+      const roleDefault = roleDefaults[profile.role as string]
+      if (roleDefault && permissions.includes(roleDefault.permission as any)) {
+        firstAccessibleRoute = roleDefault.path
+      } else {
+        // Se nem o padrão do role tem permissão, usar a primeira rota acessível de PRIORITY_ROUTES
+        firstAccessibleRoute = PRIORITY_ROUTES[0].path // fallback final para /dashboard
+      }
     }
 
     // Debug log

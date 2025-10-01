@@ -14,7 +14,10 @@ export const useSimplifiedPermissions = (): UserPermissions => {
   const { user } = useAuth()
   const { data: profile } = useProfile()
 
-  const { data, isLoading } = useQuery({
+  // Flag para indicar se os dados básicos estão prontos
+  const ready = !!user?.id && !!profile?.role
+
+  const { data, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ["simplified-permissions", user?.id],
     queryFn: async (): Promise<{ permissions: PermissionCode[]; isSubaccount: boolean }> => {
       if (!user?.id || !profile?.role) {
@@ -97,7 +100,7 @@ export const useSimplifiedPermissions = (): UserPermissions => {
   return {
     permissions: data?.permissions || [],
     isSubaccount: data?.isSubaccount || false,
-    isLoading
+    isLoading: !ready || queryLoading || isFetching
   }
 }
 
