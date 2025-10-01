@@ -717,18 +717,32 @@ export default function Entradas() {
                   </DropdownMenuItem>
                   {/* Apenas admin pode excluir pela interface administrativa */}
                   {isAdmin && <DropdownMenuItem onClick={async () => {
-                if (confirm('Tem certeza que deseja excluir esta entrada? (Ação administrativa)')) {
+                const entradaId = entrada.id;
+                const entradaNumero = entrada.numero_nfe;
+                console.log('🗑️ ADMIN DELETE - Iniciando exclusão:', { entradaId, entradaNumero, userId: user?.id });
+                
+                if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}? (Ação administrativa)`)) {
                   try {
-                    const { error } = await supabase
-                      .from('entradas')
-                      .delete()
-                      .eq('id', entrada.id);
+                    console.log('🗑️ ADMIN DELETE - Chamando edge function para entrada:', entradaId);
+                    
+                    const { data, error } = await supabase.functions.invoke('manage-entradas', {
+                      body: {
+                        action: 'delete',
+                        data: { id: entradaId }
+                      }
+                    });
+
+                    console.log('🗑️ ADMIN DELETE - Resposta da edge function:', { data, error });
 
                     if (error) throw error;
+                    
+                    if (!data?.success) {
+                      throw new Error(data?.error || 'Erro ao excluir entrada');
+                    }
 
                     toast({
                       title: "Entrada excluída",
-                      description: "A entrada foi excluída com sucesso."
+                      description: `A entrada NFe ${entradaNumero} foi excluída com sucesso (Admin).`
                     });
 
                     refetch(); // Refresh the list
@@ -754,18 +768,39 @@ export default function Entradas() {
                 size="sm"
                 className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                 onClick={async () => {
-                if (confirm('Tem certeza que deseja excluir esta entrada?')) {
+                const entradaId = entrada.id;
+                const entradaNumero = entrada.numero_nfe;
+                console.log('🗑️ PRODUTOR DELETE - Iniciando exclusão:', { 
+                  entradaId, 
+                  entradaNumero, 
+                  userId: user?.id,
+                  producerCpfCnpj: profile?.cpf_cnpj,
+                  entradaEmitente: entrada.emitente_cnpj,
+                  entradaDestinatario: entrada.destinatario_cpf_cnpj
+                });
+                
+                if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}?`)) {
                   try {
-                    const { error } = await supabase
-                      .from('entradas')
-                      .delete()
-                      .eq('id', entrada.id);
+                    console.log('🗑️ PRODUTOR DELETE - Chamando edge function para entrada:', entradaId);
+                    
+                    const { data, error } = await supabase.functions.invoke('manage-entradas', {
+                      body: {
+                        action: 'delete',
+                        data: { id: entradaId }
+                      }
+                    });
+
+                    console.log('🗑️ PRODUTOR DELETE - Resposta da edge function:', { data, error });
 
                     if (error) throw error;
+                    
+                    if (!data?.success) {
+                      throw new Error(data?.error || 'Erro ao excluir entrada');
+                    }
 
                     toast({
                       title: "Entrada excluída",
-                      description: "A entrada foi excluída com sucesso."
+                      description: `A entrada NFe ${entradaNumero} foi excluída com sucesso.`
                     });
 
                     refetch(); // Refresh the list
