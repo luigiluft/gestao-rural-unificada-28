@@ -6,16 +6,24 @@ import { LoadingState } from '@/components/ui/loading-state'
 const Index = () => {
   const { user, loading } = useAuth()
   
+  console.log('📍 INDEX (/): Rendering', { 
+    user: user?.email, 
+    loading,
+    timestamp: new Date().toISOString()
+  })
+  
   // Use o hook de redirecionamento automático
   useLoginRedirect()
 
   // Mostrar loading enquanto verifica autenticação
   if (loading) {
+    console.log('📍 INDEX (/): Showing auth loading state')
     return <LoadingState variant="spinner" text="Verificando autenticação..." fullHeight />
   }
 
   // Se não está logado, mostrar página inicial
   if (!user) {
+    console.log('📍 INDEX (/): User not logged in, showing login prompt')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -35,6 +43,7 @@ const Index = () => {
   }
 
   // Se está logado, o redirecionamento acontecerá via useLoginRedirect
+  console.log('📍 INDEX (/): User logged in, waiting for redirect')
   return <LoadingState variant="spinner" text="Redirecionando..." fullHeight />
 };
 

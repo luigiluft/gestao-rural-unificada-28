@@ -25,6 +25,12 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: recentMovements, isLoading: movementsLoading } = useRecentMovements()
 
+  console.log('📍 DASHBOARD: Rendering', { 
+    statsLoading, 
+    movementsLoading,
+    timestamp: new Date().toISOString()
+  })
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
