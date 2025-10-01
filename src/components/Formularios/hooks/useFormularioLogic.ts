@@ -235,7 +235,16 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         tipo_pagamento: nfData.tipo_pagamento,
         descricao_pagamento: nfData.descricao_pagamento,
         valor_pagamento: nfData.valor_pagamento,
-        // Valores totais
+        // Valores totais (inclui ICMS - usar 0 quando não houver valores)
+        valor_bc_icms: nfData.valor_bc_icms ?? 0,
+        valor_icms: nfData.valor_icms ?? 0,
+        valor_icms_desonerado: nfData.valor_icms_desonerado ?? 0,
+        valor_fcp: nfData.valor_fcp ?? 0,
+        valor_bc_st: nfData.valor_bc_st ?? 0,
+        valor_st: nfData.valor_st ?? 0,
+        valor_fcp_st: nfData.valor_fcp_st ?? 0,
+        valor_fcp_st_ret: nfData.valor_fcp_st_ret ?? 0,
+        // Demais totais
         valor_produtos: nfData.valor_produtos,
         valor_frete: nfData.valor_frete,
         valor_seguro: nfData.valor_seguro,
@@ -256,7 +265,9 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         codigo_status: nfData.codigo_status,
         motivo_status: nfData.motivo_status,
         // Pedido de compra
-        numero_pedido_compra: nfData.numero_pedido_compra
+        numero_pedido_compra: nfData.numero_pedido_compra,
+        // Informações complementares
+        informacoes_complementares: nfData.informacoes_complementares
       };
       
       console.log('💾 nfeData preparado para salvar:', nfeDataToSave);
