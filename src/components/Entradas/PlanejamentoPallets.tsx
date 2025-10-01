@@ -421,9 +421,12 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     const currentWeight = calculatePalletGrossWeight(selectedProductsForNewPallet)
     const remainingWeight = pesoBrutoMaximo - currentWeight
     
+    // Converter peso bruto restante para peso líquido (peso bruto ÷ 1.2)
+    const remainingNetWeight = remainingWeight / 1.2
+    
     // Assumir 1kg por unidade (pode ser melhorado com dados reais de peso)
     const unitWeight = 1
-    const maxByWeight = Math.floor(remainingWeight / unitWeight)
+    const maxByWeight = Math.floor(remainingNetWeight / unitWeight)
     
     // Obter incremento de embalagem
     const originalId = productId.includes('_avaria') ? productId.replace('_avaria', '') : productId
