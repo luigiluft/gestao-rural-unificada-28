@@ -322,6 +322,8 @@ export class NFParser {
 
       // Extrair valor total e valores detalhados
       const total = xmlDoc.querySelector('ICMSTot');
+      console.log('🔍 Seção ICMSTot encontrada:', total ? 'SIM' : 'NÃO');
+      
       const valorTotal = parseFloat(total?.querySelector('vNF')?.textContent || '0');
       const valor_produtos = total?.querySelector('vProd')?.textContent ? parseFloat(total.querySelector('vProd')!.textContent!) : undefined;
       const valor_frete = total?.querySelector('vFrete')?.textContent ? parseFloat(total.querySelector('vFrete')!.textContent!) : undefined;
@@ -334,12 +336,30 @@ export class NFParser {
       const valor_cofins = total?.querySelector('vCOFINS')?.textContent ? parseFloat(total.querySelector('vCOFINS')!.textContent!) : undefined;
       const valor_outros = total?.querySelector('vOutro')?.textContent ? parseFloat(total.querySelector('vOutro')!.textContent!) : undefined;
       const valor_total_tributos = total?.querySelector('vTotTrib')?.textContent ? parseFloat(total.querySelector('vTotTrib')!.textContent!) : undefined;
+      
+      console.log('💰 Valores Totais extraídos:', {
+        valor_produtos,
+        valor_frete,
+        valor_seguro,
+        valor_desconto,
+        valor_ii,
+        valor_ipi,
+        valor_ipi_devolvido,
+        valor_pis,
+        valor_cofins,
+        valor_outros,
+        valor_total_tributos
+      });
 
       // Extrair dados de transporte
       const transp = xmlDoc.querySelector('transp');
+      console.log('🚚 Seção transp encontrada:', transp ? 'SIM' : 'NÃO');
+      
       const modalidade_frete = transp?.querySelector('modFrete')?.textContent || undefined;
       
       const transporta = transp?.querySelector('transporta');
+      console.log('🚛 Seção transporta encontrada:', transporta ? 'SIM' : 'NÃO');
+      
       const transportadora_cnpj = transporta?.querySelector('CNPJ')?.textContent || transporta?.querySelector('CPF')?.textContent || undefined;
       const transportadora_nome = transporta?.querySelector('xNome')?.textContent || undefined;
       const transportadora_municipio = transporta?.querySelector('xMun')?.textContent || undefined;
@@ -353,37 +373,83 @@ export class NFParser {
       ].filter(Boolean).join(', ') || undefined;
       
       const veicTransp = transp?.querySelector('veicTransp');
+      console.log('🚗 Seção veicTransp encontrada:', veicTransp ? 'SIM' : 'NÃO');
+      
       const veiculo_placa = veicTransp?.querySelector('placa')?.textContent || undefined;
       const veiculo_uf = veicTransp?.querySelector('UF')?.textContent || undefined;
       
       const vol = transp?.querySelector('vol');
+      console.log('📦 Seção vol encontrada:', vol ? 'SIM' : 'NÃO');
+      
       const quantidade_volumes = vol?.querySelector('qVol')?.textContent ? parseFloat(vol.querySelector('qVol')!.textContent!) : undefined;
       const peso_liquido = vol?.querySelector('pesoL')?.textContent ? parseFloat(vol.querySelector('pesoL')!.textContent!) : undefined;
       const peso_bruto = vol?.querySelector('pesoB')?.textContent ? parseFloat(vol.querySelector('pesoB')!.textContent!) : undefined;
+      
+      console.log('🚚 Dados de Transporte extraídos:', {
+        modalidade_frete,
+        transportadora_cnpj,
+        transportadora_nome,
+        transportadora_endereco,
+        transportadora_municipio,
+        transportadora_uf,
+        veiculo_placa,
+        veiculo_uf,
+        quantidade_volumes,
+        peso_liquido,
+        peso_bruto
+      });
 
       // Extrair dados de cobrança/pagamento
       const cobr = xmlDoc.querySelector('cobr');
+      console.log('💳 Seção cobr encontrada:', cobr ? 'SIM' : 'NÃO');
+      
       const fat = cobr?.querySelector('fat');
+      console.log('🧾 Seção fat encontrada:', fat ? 'SIM' : 'NÃO');
+      
       const numero_fatura = fat?.querySelector('nFat')?.textContent || undefined;
       const valor_original_fatura = fat?.querySelector('vOrig')?.textContent ? parseFloat(fat.querySelector('vOrig')!.textContent!) : undefined;
       const valor_desconto_fatura = fat?.querySelector('vDesc')?.textContent ? parseFloat(fat.querySelector('vDesc')!.textContent!) : undefined;
       const valor_liquido_fatura = fat?.querySelector('vLiq')?.textContent ? parseFloat(fat.querySelector('vLiq')!.textContent!) : undefined;
       
       const dup = cobr?.querySelector('dup');
+      console.log('📄 Seção dup encontrada:', dup ? 'SIM' : 'NÃO');
+      
       const numero_duplicata = dup?.querySelector('nDup')?.textContent || undefined;
       const data_vencimento_duplicata = dup?.querySelector('dVenc')?.textContent || undefined;
       const valor_duplicata = dup?.querySelector('vDup')?.textContent ? parseFloat(dup.querySelector('vDup')!.textContent!) : undefined;
       
       const pag = xmlDoc.querySelector('pag');
+      console.log('💰 Seção pag encontrada:', pag ? 'SIM' : 'NÃO');
+      
       const detPag = pag?.querySelector('detPag');
+      console.log('💵 Seção detPag encontrada:', detPag ? 'SIM' : 'NÃO');
+      
       const indicador_pagamento = pag?.querySelector('indPag')?.textContent || undefined;
       const tipo_pagamento = detPag?.querySelector('tPag')?.textContent || undefined;
       const descricao_pagamento = detPag?.querySelector('xPag')?.textContent || undefined;
       const valor_pagamento = detPag?.querySelector('vPag')?.textContent ? parseFloat(detPag.querySelector('vPag')!.textContent!) : undefined;
+      
+      console.log('💳 Dados de Pagamento extraídos:', {
+        numero_fatura,
+        valor_original_fatura,
+        valor_desconto_fatura,
+        valor_liquido_fatura,
+        numero_duplicata,
+        data_vencimento_duplicata,
+        valor_duplicata,
+        indicador_pagamento,
+        tipo_pagamento,
+        descricao_pagamento,
+        valor_pagamento
+      });
 
       // Extrair dados do protocolo de autorização
       const protNFe = xmlDoc.querySelector('protNFe');
+      console.log('🔐 Seção protNFe encontrada:', protNFe ? 'SIM' : 'NÃO');
+      
       const infProt = protNFe?.querySelector('infProt');
+      console.log('ℹ️ Seção infProt encontrada:', infProt ? 'SIM' : 'NÃO');
+      
       const tipo_ambiente_protocolo = infProt?.querySelector('tpAmb')?.textContent || undefined;
       const versao_aplicativo = infProt?.querySelector('verAplic')?.textContent || undefined;
       const data_recebimento = infProt?.querySelector('dhRecbto')?.textContent || undefined;
@@ -391,6 +457,26 @@ export class NFParser {
       const digest_value = infProt?.querySelector('digVal')?.textContent || undefined;
       const codigo_status = infProt?.querySelector('cStat')?.textContent || undefined;
       const motivo_status = infProt?.querySelector('xMotivo')?.textContent || undefined;
+      
+      console.log('🔐 Dados de Protocolo extraídos:', {
+        tipo_ambiente_protocolo,
+        versao_aplicativo,
+        data_recebimento,
+        numero_protocolo,
+        digest_value,
+        codigo_status,
+        motivo_status
+      });
+      
+      console.log('📋 Pedido de Compra:', { numero_pedido_compra });
+      
+      console.log('✅ Parsing XML completo - todos os campos novos:', {
+        valores_totais: { valor_produtos, valor_frete, valor_seguro, valor_desconto, valor_ii, valor_ipi, valor_ipi_devolvido, valor_pis, valor_cofins, valor_outros, valor_total_tributos },
+        transporte: { modalidade_frete, transportadora_cnpj, transportadora_nome, veiculo_placa, veiculo_uf, quantidade_volumes, peso_liquido, peso_bruto },
+        pagamento: { numero_fatura, valor_original_fatura, numero_duplicata, data_vencimento_duplicata, valor_duplicata, indicador_pagamento, tipo_pagamento, valor_pagamento },
+        protocolo: { tipo_ambiente_protocolo, versao_aplicativo, data_recebimento, numero_protocolo, digest_value, codigo_status, motivo_status },
+        pedido: { numero_pedido_compra }
+      });
 
       return {
         numeroNF,
