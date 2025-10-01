@@ -47,8 +47,21 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
 
       if (error) throw error
 
-      // Filter entradas by producer's CPF/CNPJ - RLS handles this now, so we just return all
-      const entradas = allEntradas || []
+      // Filter entradas by producer's CPF/CNPJ (comparing cleaned versions)
+      const entradas = (allEntradas || []).filter(entrada => {
+        // Always include entradas created by the user
+        if (entrada.user_id === user.user.id) return true
+        
+        // If no CPF/CNPJ, only show user's own entradas
+        if (!cpfCnpjLimpo) return false
+        
+        // Clean the entrada's CPF/CNPJ fields for comparison
+        const emitenteCnpjLimpo = entrada.emitente_cnpj?.replace(/\D/g, '') || ''
+        const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || ''
+        
+        // Check if producer's CPF/CNPJ matches emitente or destinatario (cleaned comparison)
+        return emitenteCnpjLimpo === cpfCnpjLimpo || destinatarioCpfCnpjLimpo === cpfCnpjLimpo
+      })
 
       // Get franquia names for each entrada
       const entradasWithFranquias = await Promise.all(
