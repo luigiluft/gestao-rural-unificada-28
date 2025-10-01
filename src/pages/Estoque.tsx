@@ -127,13 +127,13 @@ export default function Estoque() {
               <div className="grid gap-4 md:grid-cols-3 mb-6">
                 <Card className="shadow-card">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="w-5 h-5 text-primary" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Estoque Total</p>
                         <p className="text-2xl font-bold">{stats.total.toLocaleString('pt-BR')}</p>
-                      </div>
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Package className="w-5 h-5 text-primary" />
                       </div>
                     </div>
                   </CardContent>
@@ -141,13 +141,13 @@ export default function Estoque() {
                 
                 <Card className="shadow-card">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-success/10 rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-success" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Total de Pallets</p>
                         <p className="text-2xl font-bold text-success">{stats.normal}</p>
-                      </div>
-                      <div className="p-2 bg-success/10 rounded-lg">
-                        <CheckCircle className="w-5 h-5 text-success" />
                       </div>
                     </div>
                   </CardContent>
@@ -155,15 +155,15 @@ export default function Estoque() {
 
                 <Card className="shadow-card">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="w-5 h-5 text-primary" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Valor Total</p>
                         <p className="text-2xl font-bold">
                           R$ {stats.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
-                      </div>
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Package className="w-5 h-5 text-primary" />
                       </div>
                     </div>
                   </CardContent>
