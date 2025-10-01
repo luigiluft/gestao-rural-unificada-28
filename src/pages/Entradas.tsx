@@ -770,6 +770,12 @@ export default function Entradas() {
                 
                 if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}?`)) {
                   try {
+                    // Atualização otimista: remove imediatamente do cache
+                    queryClient.setQueryData(["entradas", dateRange], (old: any) => {
+                      if (!old) return old;
+                      return old.filter((e: any) => e.id !== entradaId);
+                    });
+
                     const { data, error } = await supabase.functions.invoke('manage-entradas', {
                       body: {
                         action: 'delete',
@@ -788,9 +794,15 @@ export default function Entradas() {
                       description: `A entrada NFe ${entradaNumero} foi excluída com sucesso.`
                     });
 
-                    queryClient.invalidateQueries({ queryKey: ["entradas"] });
+                    // Invalida todas as queries relacionadas
+                    await Promise.all([
+                      queryClient.invalidateQueries({ queryKey: ["entradas"] }),
+                      queryClient.invalidateQueries({ queryKey: ["producer-entradas"] })
+                    ]);
                   } catch (error) {
                     console.error('Erro ao excluir entrada:', error);
+                    // Em caso de erro, reverte a atualização otimista
+                    await queryClient.invalidateQueries({ queryKey: ["entradas"] });
                     toast({
                       title: "Erro ao excluir",
                       description: error instanceof Error ? error.message : "Erro ao excluir entrada.",
