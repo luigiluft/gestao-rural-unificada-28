@@ -118,6 +118,14 @@ export interface NFData {
   descricao_pagamento?: string;
   valor_pagamento?: number;
   // Valores totais
+  valor_bc_icms?: number;
+  valor_icms?: number;
+  valor_icms_desonerado?: number;
+  valor_fcp?: number;
+  valor_bc_st?: number;
+  valor_st?: number;
+  valor_fcp_st?: number;
+  valor_fcp_st_ret?: number;
   valor_produtos?: number;
   valor_frete?: number;
   valor_seguro?: number;
@@ -139,6 +147,8 @@ export interface NFData {
   motivo_status?: string;
   // Pedido de compra
   numero_pedido_compra?: string;
+  // Informações complementares
+  informacoes_complementares?: string;
 }
 
 export class NFParser {
@@ -325,6 +335,17 @@ export class NFParser {
       console.log('🔍 Seção ICMSTot encontrada:', total ? 'SIM' : 'NÃO');
       
       const valorTotal = parseFloat(total?.querySelector('vNF')?.textContent || '0');
+      
+      // Campos de ICMS - usar 0 ao invés de undefined para valores zerados
+      const valor_bc_icms = parseFloat(total?.querySelector('vBC')?.textContent || '0');
+      const valor_icms = parseFloat(total?.querySelector('vICMS')?.textContent || '0');
+      const valor_icms_desonerado = parseFloat(total?.querySelector('vICMSDeson')?.textContent || '0');
+      const valor_fcp = parseFloat(total?.querySelector('vFCP')?.textContent || '0');
+      const valor_bc_st = parseFloat(total?.querySelector('vBCST')?.textContent || '0');
+      const valor_st = parseFloat(total?.querySelector('vST')?.textContent || '0');
+      const valor_fcp_st = parseFloat(total?.querySelector('vFCPST')?.textContent || '0');
+      const valor_fcp_st_ret = parseFloat(total?.querySelector('vFCPSTRet')?.textContent || '0');
+      
       const valor_produtos = total?.querySelector('vProd')?.textContent ? parseFloat(total.querySelector('vProd')!.textContent!) : undefined;
       const valor_frete = total?.querySelector('vFrete')?.textContent ? parseFloat(total.querySelector('vFrete')!.textContent!) : undefined;
       const valor_seguro = total?.querySelector('vSeg')?.textContent ? parseFloat(total.querySelector('vSeg')!.textContent!) : undefined;
@@ -338,6 +359,14 @@ export class NFParser {
       const valor_total_tributos = total?.querySelector('vTotTrib')?.textContent ? parseFloat(total.querySelector('vTotTrib')!.textContent!) : undefined;
       
       console.log('💰 Valores Totais extraídos:', {
+        valor_bc_icms,
+        valor_icms,
+        valor_icms_desonerado,
+        valor_fcp,
+        valor_bc_st,
+        valor_st,
+        valor_fcp_st,
+        valor_fcp_st_ret,
         valor_produtos,
         valor_frete,
         valor_seguro,
@@ -470,12 +499,22 @@ export class NFParser {
       
       console.log('📋 Pedido de Compra:', { numero_pedido_compra });
       
+      // Extrair informações complementares
+      const nfe = xmlDoc.querySelector('NFe');
+      const infNFeData = nfe?.querySelector('infNFe');
+      const infAdic = infNFeData?.querySelector('infAdic');
+      console.log('📝 Seção infAdic encontrada:', infAdic ? 'SIM' : 'NÃO');
+      
+      const informacoes_complementares = infAdic?.querySelector('infCpl')?.textContent || undefined;
+      console.log('📝 Informações Complementares extraídas:', informacoes_complementares ? informacoes_complementares.substring(0, 100) + '...' : 'Não encontrado');
+      
       console.log('✅ Parsing XML completo - todos os campos novos:', {
-        valores_totais: { valor_produtos, valor_frete, valor_seguro, valor_desconto, valor_ii, valor_ipi, valor_ipi_devolvido, valor_pis, valor_cofins, valor_outros, valor_total_tributos },
+        valores_totais: { valor_bc_icms, valor_icms, valor_icms_desonerado, valor_fcp, valor_bc_st, valor_st, valor_fcp_st, valor_fcp_st_ret, valor_produtos, valor_frete, valor_seguro, valor_desconto, valor_ii, valor_ipi, valor_ipi_devolvido, valor_pis, valor_cofins, valor_outros, valor_total_tributos },
         transporte: { modalidade_frete, transportadora_cnpj, transportadora_nome, veiculo_placa, veiculo_uf, quantidade_volumes, peso_liquido, peso_bruto },
         pagamento: { numero_fatura, valor_original_fatura, numero_duplicata, data_vencimento_duplicata, valor_duplicata, indicador_pagamento, tipo_pagamento, valor_pagamento },
         protocolo: { tipo_ambiente_protocolo, versao_aplicativo, data_recebimento, numero_protocolo, digest_value, codigo_status, motivo_status },
-        pedido: { numero_pedido_compra }
+        pedido: { numero_pedido_compra },
+        informacoes: { informacoes_complementares }
       });
 
       return {
@@ -536,6 +575,14 @@ export class NFParser {
         descricao_pagamento,
         valor_pagamento,
         // Valores totais
+        valor_bc_icms,
+        valor_icms,
+        valor_icms_desonerado,
+        valor_fcp,
+        valor_bc_st,
+        valor_st,
+        valor_fcp_st,
+        valor_fcp_st_ret,
         valor_produtos,
         valor_frete,
         valor_seguro,
@@ -556,7 +603,9 @@ export class NFParser {
         codigo_status,
         motivo_status,
         // Pedido de compra
-        numero_pedido_compra
+        numero_pedido_compra,
+        // Informações complementares
+        informacoes_complementares
       };
     } catch (error) {
       console.error('Erro ao processar XML:', error);
