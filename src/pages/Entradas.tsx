@@ -721,12 +721,9 @@ export default function Entradas() {
                   {isAdmin && <DropdownMenuItem onClick={async () => {
                 const entradaId = entrada.id;
                 const entradaNumero = entrada.numero_nfe;
-                console.log('🗑️ ADMIN DELETE - Iniciando exclusão:', { entradaId, entradaNumero, userId: user?.id });
                 
                 if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}? (Ação administrativa)`)) {
                   try {
-                    console.log('🗑️ ADMIN DELETE - Chamando edge function para entrada:', entradaId);
-                    
                     const { data, error } = await supabase.functions.invoke('manage-entradas', {
                       body: {
                         action: 'delete',
@@ -734,44 +731,20 @@ export default function Entradas() {
                       }
                     });
 
-                    console.log('🗑️ ADMIN DELETE - Resposta da edge function:', { data, error });
-
                     if (error) throw error;
                     
                     if (!data?.success) {
                       throw new Error(data?.error || 'Erro ao excluir entrada');
                     }
 
-                    // Verify deletion by checking if record still exists
-                    console.log('🗑️ ADMIN DELETE - Verificando se entrada foi realmente deletada...');
-                    const { data: verificacao, error: verifyError } = await supabase
-                      .from('entradas')
-                      .select('id')
-                      .eq('id', entradaId)
-                      .maybeSingle();
-
-                    if (verifyError) {
-                      console.error('🗑️ ADMIN DELETE - Erro ao verificar deleção:', verifyError);
-                    }
-
-                    if (verificacao) {
-                      console.error('🗑️ ADMIN DELETE - ERRO: Entrada ainda existe no banco!', verificacao);
-                      throw new Error('A entrada não foi deletada do banco de dados. Verifique as permissões RLS.');
-                    }
-
-                    console.log('🗑️ ADMIN DELETE - Confirmado: entrada deletada com sucesso');
-
                     toast({
                       title: "Entrada excluída",
                       description: `A entrada NFe ${entradaNumero} foi excluída com sucesso (Admin).`
                     });
 
-                    // Invalidate all relevant caches
                     queryClient.invalidateQueries({ queryKey: ["entradas"] });
-                    queryClient.invalidateQueries({ queryKey: ["producer-entradas"] });
-                    queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] });
                   } catch (error) {
-                    console.error('❌ ADMIN DELETE - Erro ao excluir entrada:', error);
+                    console.error('Erro ao excluir entrada:', error);
                     toast({
                       title: "Erro ao excluir",
                       description: error instanceof Error ? error.message : "Erro ao excluir entrada.",
@@ -794,19 +767,9 @@ export default function Entradas() {
                 onClick={async () => {
                 const entradaId = entrada.id;
                 const entradaNumero = entrada.numero_nfe;
-                console.log('🗑️ PRODUTOR DELETE - Iniciando exclusão:', { 
-                  entradaId, 
-                  entradaNumero, 
-                  userId: user?.id,
-                  producerCpfCnpj: profile?.cpf_cnpj,
-                  entradaEmitente: entrada.emitente_cnpj,
-                  entradaDestinatario: entrada.destinatario_cpf_cnpj
-                });
                 
                 if (confirm(`Tem certeza que deseja excluir a entrada NFe ${entradaNumero}?`)) {
                   try {
-                    console.log('🗑️ PRODUTOR DELETE - Chamando edge function para entrada:', entradaId);
-                    
                     const { data, error } = await supabase.functions.invoke('manage-entradas', {
                       body: {
                         action: 'delete',
@@ -814,44 +777,20 @@ export default function Entradas() {
                       }
                     });
 
-                    console.log('🗑️ PRODUTOR DELETE - Resposta da edge function:', { data, error });
-
                     if (error) throw error;
                     
                     if (!data?.success) {
                       throw new Error(data?.error || 'Erro ao excluir entrada');
                     }
 
-                    // Verify deletion by checking if record still exists
-                    console.log('🗑️ PRODUTOR DELETE - Verificando se entrada foi realmente deletada...');
-                    const { data: verificacao, error: verifyError } = await supabase
-                      .from('entradas')
-                      .select('id')
-                      .eq('id', entradaId)
-                      .maybeSingle();
-
-                    if (verifyError) {
-                      console.error('🗑️ PRODUTOR DELETE - Erro ao verificar deleção:', verifyError);
-                    }
-
-                    if (verificacao) {
-                      console.error('🗑️ PRODUTOR DELETE - ERRO: Entrada ainda existe no banco!', verificacao);
-                      throw new Error('A entrada não foi deletada do banco de dados. Verifique as permissões RLS.');
-                    }
-
-                    console.log('🗑️ PRODUTOR DELETE - Confirmado: entrada deletada com sucesso');
-
                     toast({
                       title: "Entrada excluída",
                       description: `A entrada NFe ${entradaNumero} foi excluída com sucesso.`
                     });
 
-                    // Invalidate all relevant caches
                     queryClient.invalidateQueries({ queryKey: ["entradas"] });
-                    queryClient.invalidateQueries({ queryKey: ["producer-entradas"] });
-                    queryClient.invalidateQueries({ queryKey: ["entradas-pendentes"] });
                   } catch (error) {
-                    console.error('❌ PRODUTOR DELETE - Erro ao excluir entrada:', error);
+                    console.error('Erro ao excluir entrada:', error);
                     toast({
                       title: "Erro ao excluir",
                       description: error instanceof Error ? error.message : "Erro ao excluir entrada.",
