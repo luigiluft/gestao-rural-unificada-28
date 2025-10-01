@@ -869,7 +869,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
 
         {/* Lista de Pallets Agrupados */}
         <div className="space-y-3">
-          {getGroupedPallets().map((group, groupIndex) => (
+          {getGroupedPallets().reverse().map((group, groupIndex) => (
             <Card key={groupIndex}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
