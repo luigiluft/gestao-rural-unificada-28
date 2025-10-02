@@ -3164,6 +3164,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           deposito_id: string
+          franquia_nome: string
           lote: string
           produto_id: string
           produtos: Json
