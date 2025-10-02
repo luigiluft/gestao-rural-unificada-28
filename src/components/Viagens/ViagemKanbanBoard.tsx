@@ -77,6 +77,9 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({
   onClick,
   dateIndex
 }) => {
+  // Desabilitar drag se a viagem está em andamento
+  const isDragDisabled = viagem.status === 'em_andamento';
+  
   const {
     attributes,
     listeners,
@@ -89,7 +92,8 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({
     data: {
       viagem,
       dateIndex
-    }
+    },
+    disabled: isDragDisabled
   });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -98,8 +102,8 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({
     zIndex: isDragging ? 1000 : 'auto'
   };
   const statusConfig = statusBadges[viagem.status as keyof typeof statusBadges] || statusBadges.planejada;
-  return <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <Card className={`mb-2 hover:shadow-md transition-shadow ${isDragging ? 'shadow-lg' : ''}`} onClick={onClick}>
+  return <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={isDragDisabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}>
+      <Card className={`mb-2 hover:shadow-md transition-shadow ${isDragging ? 'shadow-lg' : ''} ${isDragDisabled ? 'opacity-90' : ''}`} onClick={onClick}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -170,14 +174,22 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     }, (_, i) => addDays(startDate, i));
   }, [viewType]);
 
-  // Organizar viagens por previsao_inicio
+  // Organizar viagens por data de início real ou previsão
   const viagensByDate = useMemo(() => {
     const result: {
       [key: string]: Viagem[];
     } = {};
     dates.forEach(date => {
       const dateKey = format(date, 'yyyy-MM-dd');
-      result[dateKey] = filteredViagens.filter(viagem => viagem.previsao_inicio && isSameDay(parse(viagem.previsao_inicio, 'yyyy-MM-dd', new Date()), date));
+      result[dateKey] = filteredViagens.filter(viagem => {
+        // Se a viagem já foi iniciada, usar data_inicio
+        if (viagem.data_inicio) {
+          const dataInicio = new Date(viagem.data_inicio);
+          return isSameDay(dataInicio, date);
+        }
+        // Caso contrário, usar previsao_inicio
+        return viagem.previsao_inicio && isSameDay(parse(viagem.previsao_inicio, 'yyyy-MM-dd', new Date()), date);
+      });
     });
     return result;
   }, [dates, filteredViagens]);
