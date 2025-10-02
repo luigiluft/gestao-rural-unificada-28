@@ -406,7 +406,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
           <div className="flex" style={{ height: `${chartHeight}px`, minHeight: `${chartHeight}px` }}>
             {/* Área de seleção das remessas */}
             {onToggleSelection && (
-              <div className="w-32 flex flex-col" style={{ paddingTop: '20px' }}>
+              <div className="w-32 flex flex-col">
                 <div className="flex flex-col flex-1">
                   {ganttData.map((item) => (
                     <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px`, minHeight: `${BAR_HEIGHT}px` }}>
@@ -430,10 +430,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 barCategoryGap={0}
                 barGap={0}
                 margin={{
-                  top: 20,
+                  top: 0,
                   right: 30,
                   left: 20,
-                  bottom: 5
+                  bottom: 0
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
