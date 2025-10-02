@@ -7,6 +7,7 @@ import { DadosSaidaSection } from "./sections/DadosSaida"
 import { ItensComunsSection } from "./sections/ItensComuns"
 import { SimuladorFrete } from "./sections/SimuladorFrete"
 import { AgendamentoSection } from "./sections/AgendamentoSection"
+import { DetalhesEntregaSection } from "./sections/DetalhesEntrega"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { useCriarReserva } from "@/hooks/useReservasHorario"
@@ -324,6 +325,14 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         isTutorialActive={isTutorialActive}
         depositoId={dados.depositoId}
       />
+
+      {/* Seção de Detalhes de Entrega - apenas para saídas */}
+      {tipo === 'saida' && (
+        <DetalhesEntregaSection
+          dados={dadosSaida}
+          onDadosChange={setDados}
+        />
+      )}
 
       {/* Simulador de Frete - apenas para saídas de entrega na fazenda */}
       {tipo === 'saida' && dadosSaida.tipo_saida === 'entrega_fazenda' && dadosSaida.fazenda_id && calcularPesoTotal() > 0 && (

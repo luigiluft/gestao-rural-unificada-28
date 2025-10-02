@@ -173,20 +173,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-          <div className="space-y-2">
-            <Label htmlFor="tipo_saida">Tipo de Saída *</Label>
-            <Select value={dados.tipo_saida} onValueChange={(value) => handleChange('tipo_saida', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="retirada_deposito">Retirada no Depósito</SelectItem>
-                <SelectItem value="entrega_fazenda">Entrega na Fazenda</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div className="space-y-2">
             <Label htmlFor="deposito_id">Depósito *</Label>
@@ -216,33 +203,6 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
                   {produtoresComEstoque?.map((produtor) => (
                     <SelectItem key={produtor.user_id} value={produtor.user_id}>
                       {produtor.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Mostrar seleção de fazenda quando há produtor selecionado */}
-          {(dados.tipo_saida === 'entrega_fazenda' && (isProdutor || dados.produtor_destinatario)) && (
-            <div className="space-y-2">
-              <Label htmlFor="fazenda_id">Fazenda de Destino</Label>
-              <Select value={dados.fazenda_id} onValueChange={(value) => handleChange('fazenda_id', value)}>
-                <SelectTrigger>
-                  <SelectValue 
-                    placeholder={
-                      loadingFazendas 
-                        ? "Carregando fazendas..." 
-                        : fazendas.length === 0 && targetProdutorId
-                          ? "Nenhuma fazenda cadastrada"
-                          : "Selecione a fazenda"
-                    } 
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {fazendas?.map((fazenda) => (
-                    <SelectItem key={fazenda.id} value={fazenda.id}>
-                      {fazenda.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
