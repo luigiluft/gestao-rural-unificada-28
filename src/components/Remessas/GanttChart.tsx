@@ -399,29 +399,30 @@ const GanttChart: React.FC<GanttChartProps> = ({
           </div>
         </CardHeader>
       <CardContent>
-        <div className="flex" style={{ height: `${chartHeight}px` }}>
-          {/* Área de seleção das remessas */}
-          {onToggleSelection && (
-            <div className="w-32 flex flex-col">
-              <div className="text-sm font-medium text-muted-foreground mb-2 px-2">
-                Remessas
+        <div className="w-full max-h-[600px] overflow-y-auto overflow-x-hidden">
+          <div className="flex" style={{ height: `${chartHeight}px` }}>
+            {/* Área de seleção das remessas */}
+            {onToggleSelection && (
+              <div className="w-32 flex flex-col">
+                <div className="text-sm font-medium text-muted-foreground mb-2 px-2">
+                  Remessas
+                </div>
+                <div className="flex flex-col justify-center flex-1">
+                  {ganttData.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
+                      <Checkbox 
+                        checked={item.isSelected} 
+                        onCheckedChange={() => onToggleSelection(item.id)} 
+                      />
+                      <span className="text-xs">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-col justify-center flex-1">
-                {ganttData.map((item, index) => (
-                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
-                    <Checkbox 
-                      checked={item.isSelected} 
-                      onCheckedChange={() => onToggleSelection(item.id)} 
-                    />
-                    <span className="text-xs">{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Área do gráfico */}
-          <div className="flex-1">
+            )}
+            
+            {/* Área do gráfico */}
+            <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ganttData} layout="vertical" margin={{
               top: 20,
@@ -479,6 +480,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
         </div>
         
         {/* Legenda */}
