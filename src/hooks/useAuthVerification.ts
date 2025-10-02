@@ -69,8 +69,19 @@ export const useAuthVerification = ({
     }
   }, [allowedRoles, user, session, authLoading]);
 
-  // Considerar também se user/session estão prontos
-  const isLoading = authLoading || !user || !session || roleLoading || (pageKey ? pageLoading : false);
+  // Early return: Se requireAuth e não tem sessão após auth carregar, redirecionar imediatamente
+  if (requireAuth && !authLoading && !session) {
+    return {
+      isLoading: false,
+      hasAccess: false,
+      shouldRedirect: true,
+      redirectPath: "/auth"
+    };
+  }
+
+  // Só verificar permissões de página se tiver sessão
+  const effectivePageLoading = session ? pageLoading : false;
+  const isLoading = authLoading || roleLoading || (pageKey ? effectivePageLoading : false);
 
   // Determinar acesso e redirecionamento
   let hasAccess = true;
@@ -90,10 +101,7 @@ export const useAuthVerification = ({
     isLoading
   });
 
-  if (requireAuth && !session) {
-    hasAccess = false;
-    redirectPath = "/auth";
-  } else if (allowedRoles && !hasRoleAccess) {
+  if (allowedRoles && !hasRoleAccess) {
     hasAccess = false;
     redirectPath = "/";
   } else if (pageKey && !canAccessPage) {
