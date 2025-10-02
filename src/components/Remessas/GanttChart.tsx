@@ -439,70 +439,67 @@ const GanttChart: React.FC<GanttChartProps> = ({
           </div>
         </CardHeader>
       <CardContent>
-        <div className="w-full max-h-[600px] overflow-y-auto overflow-x-auto" ref={chartContainerRef}>
-          <div className="flex" style={{ 
-            height: `${chartHeight}px`,
-            width: `${calculateChartWidth()}px`
-          }}>
-            {/* Área de seleção das remessas */}
-            {onToggleSelection && (
-              <div className="w-32 flex flex-col">
-                <div className="text-sm font-medium text-muted-foreground mb-2 px-2">
-                  Remessas
-                </div>
-                <div className="flex flex-col justify-center flex-1">
-                  {ganttData.map((item, index) => (
-                    <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
-                      <Checkbox 
-                        checked={item.isSelected} 
-                        onCheckedChange={() => onToggleSelection(item.id)} 
-                      />
-                      <span className="text-xs">{item.name}</span>
-                    </div>
-                  ))}
-                </div>
+        <div className="flex w-full max-h-[600px]">
+          {/* Coluna fixa de remessas */}
+          {onToggleSelection && (
+            <div className="w-32 flex-shrink-0 border-r border-border overflow-y-auto">
+              <div className="text-sm font-medium text-muted-foreground mb-2 px-2 py-1 bg-background sticky top-0 z-10">
+                Remessas
               </div>
-            )}
-            
-            {/* Área do gráfico */}
-            <div className="flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ganttData} layout="vertical" margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 5
-            }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  type="number" 
-                  orientation="top" 
-                  domain={getFullXAxisDomain()} 
-                  tickFormatter={formatXAxisTick}
-                  tickCount={timeUnit === 'dias' ? 30 : timeUnit === 'semanas' ? 20 : 12}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis type="category" dataKey="name" hide />
-                <Tooltip content={<CustomTooltip />} />
-                
-                {/* Linha indicando hoje */}
-                {todayPosition !== null && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
-                value: "Hoje",
-                position: "top",
-                fill: "hsl(var(--destructive))"
-              }} />}
-                
-                {/* Barra invisível para posicionar o início */}
-                <Bar dataKey="start" stackId="gantt" fill="transparent" />
-                
-                {/* Barra colorida para a duração */}
-                <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
-                  {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+              <div className="flex flex-col">
+                {ganttData.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
+                    <Checkbox 
+                      checked={item.isSelected} 
+                      onCheckedChange={() => onToggleSelection(item.id)} 
+                    />
+                    <span className="text-xs">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Container com scroll horizontal - só o gráfico */}
+          <div className="flex-1 overflow-x-auto overflow-y-auto" ref={chartContainerRef}>
+            <div style={{ height: `${chartHeight}px`, width: `${calculateChartWidth()}px` }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ganttData} layout="vertical" margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5
+                }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    type="number" 
+                    orientation="top" 
+                    domain={getFullXAxisDomain()} 
+                    tickFormatter={formatXAxisTick}
+                    tickCount={timeUnit === 'dias' ? 30 : timeUnit === 'semanas' ? 20 : 12}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis type="category" dataKey="name" hide />
+                  <Tooltip content={<CustomTooltip />} />
+                  
+                  {/* Linha indicando hoje */}
+                  {todayPosition !== null && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
+                    value: "Hoje",
+                    position: "top",
+                    fill: "hsl(var(--destructive))"
+                  }} />}
+                  
+                  {/* Barra invisível para posicionar o início */}
+                  <Bar dataKey="start" stackId="gantt" fill="transparent" />
+                  
+                  {/* Barra colorida para a duração */}
+                  <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
+                    {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
         </div>
         
         {/* Legenda */}
