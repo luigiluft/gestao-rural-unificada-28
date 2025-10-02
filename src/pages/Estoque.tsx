@@ -105,8 +105,6 @@ export default function Estoque() {
         </div>
       </div>
 
-
-
       {/* Stock Table with Tabs */}
       <Card className="shadow-card">
         <CardHeader>
