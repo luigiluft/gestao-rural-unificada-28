@@ -170,6 +170,15 @@ export default function Estoque() {
                 </Card>
               </div>
               
+              {/* Search bar */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar por produto, lote, código ou depósito..." 
+                  className="pl-9" 
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
                   {estoque?.length || 0} produtos monitorados
