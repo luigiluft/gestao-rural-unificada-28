@@ -209,18 +209,6 @@ export function ItensComunsSection({
     }
   }
 
-  const handleQuantidadeChange = (valor: string) => {
-    const quantidade = parseFloat(valor) || 0
-    const step = calcularStep()
-    
-    // Arredondar para o múltiplo mais próximo do step
-    const quantidadeArredondada = Math.round(quantidade / step) * step
-    
-    console.log('Quantidade digitada:', quantidade, 'Step:', step, 'Arredondada:', quantidadeArredondada)
-    
-    onNovoItemChange('quantidade', quantidadeArredondada)
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -297,8 +285,7 @@ export function ItensComunsSection({
                   step={calcularStep()}
                   min="0"
                   value={novoItem.quantidade || ''}
-                  onChange={(e) => handleQuantidadeChange(e.target.value)}
-                  onBlur={(e) => handleQuantidadeChange(e.target.value)}
+                  onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
                   className="w-full"
                 />
               </div>
