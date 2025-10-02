@@ -2959,6 +2959,7 @@ export type Database = {
           numero: string
           observacoes: string | null
           peso_total: number | null
+          previsao_inicio: string | null
           remessas_entregues: number
           status: string
           total_remessas: number
@@ -2982,6 +2983,7 @@ export type Database = {
           numero: string
           observacoes?: string | null
           peso_total?: number | null
+          previsao_inicio?: string | null
           remessas_entregues?: number
           status?: string
           total_remessas?: number
@@ -3005,6 +3007,7 @@ export type Database = {
           numero?: string
           observacoes?: string | null
           peso_total?: number | null
+          previsao_inicio?: string | null
           remessas_entregues?: number
           status?: string
           total_remessas?: number

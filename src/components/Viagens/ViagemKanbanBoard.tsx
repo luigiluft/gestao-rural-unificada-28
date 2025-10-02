@@ -32,8 +32,9 @@ import { ptBR } from 'date-fns/locale'
 interface Viagem {
   id: string
   numero: string
-  data_inicio: string
-  data_fim: string
+  previsao_inicio: string  // Onde o card aparece no Kanban
+  data_inicio?: string      // Quando motorista iniciou (opcional)
+  data_fim?: string         // Quando foi concluído (opcional)
   status: string
   observacoes?: string
   progresso?: number
@@ -127,12 +128,18 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({ viagem, onClick
           <div className="space-y-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>Início: {viagem.data_inicio ? format(parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR }) : 'Não definido'}</span>
+              <span>📅 Previsão: {format(parse(viagem.previsao_inicio, 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR })}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Truck className="h-3 w-3" />
-              <span>Entrega: {viagem.data_fim ? format(parse(viagem.data_fim.slice(0,10), 'yyyy-MM-dd', new Date()), 'dd/MM', { locale: ptBR }) : 'Não definido'}</span>
-            </div>
+            {viagem.data_inicio && (
+              <div className="flex items-center gap-1 text-green-600">
+                <span>✅ Iniciado: {format(new Date(viagem.data_inicio), 'dd/MM HH:mm', { locale: ptBR })}</span>
+              </div>
+            )}
+            {viagem.data_fim && (
+              <div className="flex items-center gap-1 text-blue-600">
+                <span>🏁 Fim: {format(new Date(viagem.data_fim), 'dd/MM HH:mm', { locale: ptBR })}</span>
+              </div>
+            )}
           </div>
           
           {viagem.observacoes && (
@@ -182,14 +189,14 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     return Array.from({ length: daysToShow }, (_, i) => addDays(startDate, i))
   }, [centerDate, viewType])
 
-  // Organizar viagens por data de início
+  // Organizar viagens por previsao_inicio
   const viagensByDate = useMemo(() => {
     const result: { [key: string]: Viagem[] } = {}
     
     dates.forEach(date => {
       const dateKey = format(date, 'yyyy-MM-dd')
       result[dateKey] = filteredViagens.filter(viagem => 
-        viagem.data_inicio && isSameDay(parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()), date)
+        viagem.previsao_inicio && isSameDay(parse(viagem.previsao_inicio, 'yyyy-MM-dd', new Date()), date)
       )
     })
     
@@ -266,18 +273,18 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
       indexChange: `${currentDateIndex} → ${newDateIndex}`
     })
 
-    // Atualizar apenas a data de início - data de fim fica em branco até o comprovante
-    const novaDataInicio = format(newDate, 'yyyy-MM-dd')
+    // Atualizar apenas a previsão de início - data_inicio e data_fim são gerenciadas pelo motorista
+    const novaPrevisaoInicio = format(newDate, 'yyyy-MM-dd')
 
-    console.log('🔄 Updating viagem:', {
+    console.log('🔄 Updating viagem previsao_inicio:', {
       viagemId: viagem.id,
-      oldStart: viagem.data_inicio,
-      newStart: novaDataInicio
+      oldPrevisao: viagem.previsao_inicio,
+      newPrevisao: novaPrevisaoInicio
     })
 
     updateViagemData.mutate({
       viagemId: viagem.id,
-      data_inicio: novaDataInicio
+      previsao_inicio: novaPrevisaoInicio
     })
   }
 

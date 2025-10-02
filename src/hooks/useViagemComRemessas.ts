@@ -4,8 +4,7 @@ import { useToast } from "@/hooks/use-toast"
 
 interface ViagemData {
   numero: string;
-  data_inicio: string;
-  data_fim?: string;
+  previsao_inicio: string;
   observacoes?: string;
   motorista_id?: string;
 }
@@ -68,8 +67,9 @@ export const useViagemComRemessas = () => {
 
       const viagemDataComplete = {
         numero: viagemData.numero,
-        data_inicio: viagemData.data_inicio,
-        data_fim: viagemData.data_fim || null,
+        previsao_inicio: viagemData.previsao_inicio,
+        data_inicio: null, // Será preenchido pelo motorista
+        data_fim: null, // Será extraído da foto do comprovante
         observacoes: viagemData.observacoes || null,
         motorista_id: viagemData.motorista_id || null,
         status: 'planejada',

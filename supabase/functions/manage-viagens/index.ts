@@ -46,6 +46,9 @@ serve(async (req) => {
       case 'update_data':
         result = await updateViagemData(supabaseClient, user.id, data)
         break
+      case 'iniciar_viagem':
+        result = await iniciarViagem(supabaseClient, user.id, data.id)
+        break
       case 'confirm':
         result = await confirmViagem(supabaseClient, user.id, data.id)
         break
@@ -195,15 +198,32 @@ async function updateViagem(supabase: any, userId: string, data: any) {
 }
 
 async function updateViagemData(supabase: any, userId: string, data: any) {
-  const { viagemId, data_inicio, data_fim } = data
+  const { viagemId, previsao_inicio, data_inicio, data_fim } = data
   
   const updateData: any = {}
+  if (previsao_inicio) updateData.previsao_inicio = previsao_inicio
   if (data_inicio) updateData.data_inicio = data_inicio
   if (data_fim) updateData.data_fim = data_fim
 
   const { data: viagem, error } = await supabase
     .from('viagens')
     .update(updateData)
+    .eq('id', viagemId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return viagem
+}
+
+async function iniciarViagem(supabase: any, userId: string, viagemId: string) {
+  const { data: viagem, error } = await supabase
+    .from('viagens')
+    .update({
+      data_inicio: new Date().toISOString(),
+      status: 'em_andamento',
+      updated_at: new Date().toISOString()
+    })
     .eq('id', viagemId)
     .select()
     .single()

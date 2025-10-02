@@ -16,8 +16,7 @@ import { useViagens } from '@/hooks/useViagens';
 import { useEffect } from 'react';
 const viagemSchema = z.object({
   numero: z.string().min(1, 'Número da viagem é obrigatório'),
-  data_inicio: z.string().min(1, 'Data de início é obrigatória'),
-  data_fim: z.string().optional(),
+  previsao_inicio: z.string().min(1, 'Previsão de início é obrigatória'),
   observacoes: z.string().optional(),
   motorista_id: z.string().min(1, 'Motorista é obrigatório')
 });
@@ -46,8 +45,7 @@ export const NovaViagemComRemessasDialog = ({
     resolver: zodResolver(viagemSchema),
     defaultValues: {
       numero: '',
-      data_inicio: '',
-      data_fim: '',
+      previsao_inicio: '',
       observacoes: '',
       motorista_id: undefined
     }
@@ -74,8 +72,7 @@ export const NovaViagemComRemessasDialog = ({
     createViagemComRemessas.mutate({
       viagemData: {
         numero: data.numero,
-        data_inicio: data.data_inicio,
-        data_fim: data.data_fim,
+        previsao_inicio: data.previsao_inicio,
         observacoes: data.observacoes,
         motorista_id: data.motorista_id
       },
@@ -99,27 +96,15 @@ export const NovaViagemComRemessasDialog = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="data_inicio" render={({
+            <FormField control={form.control} name="previsao_inicio" render={({
               field
             }) => <FormItem>
-                    <FormLabel>Data de Início</FormLabel>
+                    <FormLabel>Previsão de Início *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>} />
-              
-              <FormField control={form.control} name="data_fim" render={({
-              field
-            }) => <FormItem>
-                    <FormLabel>Data de Fim (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>} />
-            </div>
             
             <FormField control={form.control} name="motorista_id" render={({
             field

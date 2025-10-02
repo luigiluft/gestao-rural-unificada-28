@@ -169,6 +169,9 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({ deliveryId, onPhotoUpl
 
       const metadatas = await Promise.all(photoPromises);
 
+      // Get the timestamp from the photo (or use current time)
+      const photoTimestamp = metadatas[0]?.timestamp || new Date();
+
       // Update delivery record
       const { error: updateError } = await supabase
         .from('comprovantes_entrega')
@@ -177,7 +180,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({ deliveryId, onPhotoUpl
           recebido_por: recebidoPor,
           documento_recebedor: documentoRecebedor || null,
           observacoes: observacoes || null,
-          data_entrega: new Date().toISOString(),
+          data_entrega: photoTimestamp.toISOString(),
           total_fotos: selectedFiles.length,
           latitude: metadatas[0]?.latitude || location?.lat,
           longitude: metadatas[0]?.longitude || location?.lng

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast"
 
 interface UpdateViagemDataParams {
   viagemId: string
+  previsao_inicio?: string
   data_inicio?: string
   data_fim?: string
 }
@@ -13,8 +14,9 @@ export const useUpdateViagemData = () => {
   const { toast } = useToast()
 
   return useMutation({
-    mutationFn: async ({ viagemId, data_inicio, data_fim }: UpdateViagemDataParams) => {
+    mutationFn: async ({ viagemId, previsao_inicio, data_inicio, data_fim }: UpdateViagemDataParams) => {
       const updateData: any = {}
+      if (previsao_inicio) updateData.previsao_inicio = previsao_inicio
       if (data_inicio) updateData.data_inicio = data_inicio
       if (data_fim) updateData.data_fim = data_fim
 
@@ -25,7 +27,7 @@ export const useUpdateViagemData = () => {
 
       if (error) throw error
 
-      return { viagemId, data_inicio, data_fim }
+      return { viagemId, previsao_inicio, data_inicio, data_fim }
     },
     onSuccess: () => {
       toast({
