@@ -15,6 +15,7 @@ import { useState, useEffect } from "react"
 import type { Coordinates } from "@/services/routingService"
 import { useFazendas } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
+import { parseLocalDate, calculateDeliveryWindowEnd } from "@/lib/delivery-window"
 
 export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: FormularioGenericoProps) {
   const { user } = useAuth()
@@ -218,6 +219,11 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           throw new Error(`${itensInvalidos.length} itens têm dados inválidos (produto ou quantidade)`)
         }
 
+        // Calcular janela de entrega
+        const dataInicioJanela = dadosSaida.data_saida ? parseLocalDate(dadosSaida.data_saida) : null
+        const janelaEntregaDias = dadosSaida.janela_entrega_dias || 3 // Default 3 dias
+        const dataFimJanela = dataInicioJanela ? calculateDeliveryWindowEnd(dataInicioJanela, janelaEntregaDias) : null
+
         const saidaData = {
           user_id: user?.id,
           data_saida: dadosSaida.data_saida,
@@ -236,6 +242,10 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario,
           valor_frete_calculado: dadosSaida.valor_frete_calculado || null,
           reserva_id: reservaId,
+          // Campos de janela de entrega
+          data_inicio_janela: dataInicioJanela ? dataInicioJanela.toISOString().split('T')[0] : null,
+          data_fim_janela: dataFimJanela ? dataFimJanela.toISOString().split('T')[0] : null,
+          janela_entrega_dias: janelaEntregaDias,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
