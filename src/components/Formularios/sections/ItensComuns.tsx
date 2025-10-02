@@ -81,14 +81,17 @@ export function ItensComunsSection({
         const agrupados = estoque.reduce((acc, item) => {
           const produtoId = item.produto_id
           const produtoNome = item.produtos?.nome || `Produto ${item.id}`
+          const fallbackProduto = Array.isArray(produtosFallback)
+            ? produtosFallback.find((p: any) => p.id === produtoId)
+            : undefined
           
           if (!acc[produtoId]) {
             acc[produtoId] = {
               id: produtoId,
               nome: produtoNome,
-              unidade_medida: item.produtos?.unidade_medida || '',
-              package_capacity: item.produtos?.package_capacity || 1,
-              containers_per_package: item.produtos?.containers_per_package || 1,
+              unidade_medida: item.produtos?.unidade_medida || fallbackProduto?.unidade_medida || '',
+              package_capacity: (item.produtos?.package_capacity ?? fallbackProduto?.package_capacity ?? 1),
+              containers_per_package: (item.produtos?.containers_per_package ?? fallbackProduto?.containers_per_package ?? 1),
               quantidade_total: 0,
               itens: []
             }
@@ -148,6 +151,35 @@ export function ItensComunsSection({
                 '(capacity:', packageCapacity, '* containers:', containersPerPackage, ')')
     
     return step
+  }
+
+  // Garante que a quantidade respeite o incremento do produto (package_capacity * containers_per_package)
+  const handleQuantidadeChange = (value: string) => {
+    const step = calcularStep()
+    let val = parseFloat(value)
+    if (isNaN(val) || val <= 0) {
+      onNovoItemChange('quantidade', 0)
+      return
+    }
+
+    // Arredonda para o múltiplo mais próximo do step
+    if (step && step > 0) {
+      val = Math.round(val / step) * step
+    }
+
+    // Opcional: limitar à disponibilidade no estoque para saída
+    if (tipo === 'saida' && novoItem.produto_id) {
+      const produto = produtosDisponiveis.find((p: any) => p.id === novoItem.produto_id)
+      if (produto?.quantidade_total != null) {
+        val = Math.min(val, produto.quantidade_total)
+      }
+      // Evitar valores menores que o step quando houver step
+      if (step > 0 && val > 0 && val < step) {
+        val = step
+      }
+    }
+
+    onNovoItemChange('quantidade', val)
   }
 
   const handleProdutoChange = (valor: string) => {
@@ -283,9 +315,10 @@ export function ItensComunsSection({
                   type="number"
                   placeholder="0"
                   step={calcularStep()}
-                  min="0"
+                  min={tipo === 'saida' ? calcularStep() : 0}
                   value={novoItem.quantidade || ''}
-                  onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleQuantidadeChange(e.target.value)}
+                  onBlur={(e) => handleQuantidadeChange(e.target.value)}
                   className="w-full"
                 />
               </div>
