@@ -170,6 +170,19 @@ const GanttChart: React.FC<GanttChartProps> = ({
   // Calcular altura dinâmica do gráfico baseado no número de remessas
   const chartHeight = Math.max(MIN_CHART_HEIGHT, ganttData.length * BAR_HEIGHT);
 
+  // Calcular o range completo do eixo X para garantir que todas as barras sejam visíveis
+  const getFullXAxisDomain = (): [number, number] => {
+    if (ganttData.length === 0) return [0, 1];
+    
+    const starts = ganttData.map(d => d.start);
+    const ends = ganttData.map(d => d.start + d.duration);
+    
+    const minStart = Math.min(...starts);
+    const maxEnd = Math.max(...ends);
+    
+    return [Math.max(0, minStart), maxEnd + 2]; // +2 para dar um espaço no final
+  };
+
   // Calcular posição da linha "hoje"
   const getTodayPosition = (): number | null => {
     if (!ganttData.length) return null;
@@ -432,31 +445,36 @@ const GanttChart: React.FC<GanttChartProps> = ({
             }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" orientation="top" domain={(() => {
-                if (!startDate || !endDate) {
-                  return [0, (dataMax: number) => Math.max(dataMax + 2, 1)];
-                }
-                const baseDate = getBaseDate();
-                let domainStart: number;
-                let domainEnd: number;
-                if (timeUnit === 'semanas') {
-                  const filterStartWeek = startOfWeek(startDate, {
-                    locale: ptBR
-                  });
-                  const filterEndWeek = startOfWeek(endDate, {
-                    locale: ptBR
-                  });
-                  domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
-                  domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
-                } else if (timeUnit === 'meses') {
-                  const filterStartMonth = startOfMonth(startDate);
-                  const filterEndMonth = startOfMonth(endDate);
-                  domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
-                  domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
+                if (startDate && endDate) {
+                  // Se há filtro de data, usar o range filtrado
+                  const baseDate = getBaseDate();
+                  let domainStart: number;
+                  let domainEnd: number;
+                  
+                  if (timeUnit === 'semanas') {
+                    const filterStartWeek = startOfWeek(startDate, {
+                      locale: ptBR
+                    });
+                    const filterEndWeek = startOfWeek(endDate, {
+                      locale: ptBR
+                    });
+                    domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
+                    domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
+                  } else if (timeUnit === 'meses') {
+                    const filterStartMonth = startOfMonth(startDate);
+                    const filterEndMonth = startOfMonth(endDate);
+                    domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
+                    domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
+                  } else {
+                    domainStart = differenceInDays(startOfDay(startDate), baseDate);
+                    domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
+                  }
+                  
+                  return [domainStart, domainEnd];
                 } else {
-                  domainStart = differenceInDays(startOfDay(startDate), baseDate);
-                  domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
+                  // Sem filtro de data, garantir que todas as barras sejam visíveis
+                  return getFullXAxisDomain();
                 }
-                return [domainStart, domainEnd];
               })()} tickFormatter={formatXAxisTick} tick={{
                 fontSize: 12
               }} />
