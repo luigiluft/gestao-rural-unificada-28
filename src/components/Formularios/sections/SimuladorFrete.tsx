@@ -2,8 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useSimuladorFrete } from "@/hooks/useSimuladorFrete"
-import { useProfile } from "@/hooks/useProfile"
+import { useProfile, useFazendas } from "@/hooks/useProfile"
+import { useAuth } from "@/contexts/AuthContext"
 import { Loader2, Calculator, MapPin } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -16,6 +18,9 @@ interface SimuladorFreteProps {
   fazendaCoords?: Coordinates
   franquiaNome?: string
   fazendaNome?: string
+  fazendaId?: string
+  onFazendaChange?: (fazendaId: string) => void
+  produtorDestinatarioId?: string
 }
 
 export function SimuladorFrete({ 
@@ -24,9 +29,19 @@ export function SimuladorFrete({
   franquiaCoords, 
   fazendaCoords,
   franquiaNome,
-  fazendaNome 
+  fazendaNome,
+  fazendaId,
+  onFazendaChange,
+  produtorDestinatarioId
 }: SimuladorFreteProps) {
+  const { user } = useAuth()
   const { data: profile } = useProfile()
+  
+  // Buscar fazendas do produtor
+  const isProdutor = profile?.role === 'produtor'
+  const targetProdutorId = isProdutor ? user?.id : produtorDestinatarioId
+  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetProdutorId)
+
   const { 
     simulacao, 
     setSimulacao, 
@@ -112,6 +127,31 @@ export function SimuladorFrete({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Campo de Fazenda de Destino */}
+        <div className="space-y-2">
+          <Label htmlFor="fazenda_id">Fazenda de Destino *</Label>
+          <Select value={fazendaId} onValueChange={onFazendaChange}>
+            <SelectTrigger>
+              <SelectValue 
+                placeholder={
+                  loadingFazendas 
+                    ? "Carregando fazendas..." 
+                    : fazendas.length === 0 && targetProdutorId
+                      ? "Nenhuma fazenda cadastrada"
+                      : "Selecione a fazenda"
+                } 
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {fazendas?.map((fazenda) => (
+                <SelectItem key={fazenda.id} value={fazenda.id}>
+                  {fazenda.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="distancia">Distância (km)</Label>

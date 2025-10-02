@@ -335,13 +335,16 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
       )}
 
       {/* Simulador de Frete - apenas para saídas de entrega na fazenda */}
-      {tipo === 'saida' && dadosSaida.tipo_saida === 'entrega_fazenda' && dadosSaida.fazenda_id && calcularPesoTotal() > 0 && (
+      {tipo === 'saida' && dadosSaida.tipo_saida === 'entrega_fazenda' && calcularPesoTotal() > 0 && (
         <SimuladorFrete 
           pesoTotal={calcularPesoTotal()}
           franquiaCoords={franquiaCoords || undefined}
           fazendaCoords={fazendaCoords || undefined}
           franquiaNome={franquiaNome}
           fazendaNome={fazendas.find(f => f.id === dadosSaida.fazenda_id)?.nome}
+          fazendaId={dadosSaida.fazenda_id}
+          onFazendaChange={(fazendaId) => setDados({ ...dadosSaida, fazenda_id: fazendaId })}
+          produtorDestinatarioId={dadosSaida.produtor_destinatario}
           onFreteCalculado={handleFreteCalculado}
         />
       )}
