@@ -157,7 +157,7 @@ async function createSaida(supabase: any, userId: string, data: any) {
       // Buscar os lotes das referências criadas pela alocação FEFO
       const { data: referencias, error: referenciasError } = await supabase
         .from('saida_item_referencias')
-        .select('lote, quantidade_alocada')
+        .select('lote, quantidade')
         .eq('saida_item_id', saidaItem.id)
         .order('created_at', { ascending: true })
       
@@ -176,7 +176,7 @@ async function createSaida(supabase: any, userId: string, data: any) {
           // Alocação de múltiplos lotes
           loteToUpdate = 'MULTI'
           console.log(`Multiple batch allocation (${referencias.length} batches) - updating saida_item ${saidaItem.id} with lote: MULTI`)
-          console.log('Allocated batches:', referencias.map(r => `${r.lote} (${r.quantidade_alocada})`).join(', '))
+          console.log('Allocated batches:', referencias.map(r => `${r.lote} (${r.quantidade})`).join(', '))
         }
         
         const { error: updateError } = await supabase
