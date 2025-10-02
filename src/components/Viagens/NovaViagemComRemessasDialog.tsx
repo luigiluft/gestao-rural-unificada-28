@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Package, Truck, DollarSign, User } from 'lucide-react';
 import { useViagemComRemessas } from '@/hooks/useViagemComRemessas';
 import { useMotoristas } from '@/hooks/useMotoristas';
+import { useViagens } from '@/hooks/useViagens';
+import { useEffect } from 'react';
 const viagemSchema = z.object({
   numero: z.string().min(1, 'Número da viagem é obrigatório'),
   data_inicio: z.string().min(1, 'Data de início é obrigatória'),
@@ -38,9 +40,8 @@ export const NovaViagemComRemessasDialog = ({
   onSuccess
 }: NovaViagemComRemessasDialogProps) => {
   const createViagemComRemessas = useViagemComRemessas();
-  const {
-    data: motoristas = []
-  } = useMotoristas();
+  const { data: motoristas = [] } = useMotoristas();
+  const { data: viagens = [] } = useViagens();
   const form = useForm<ViagemFormData>({
     resolver: zodResolver(viagemSchema),
     defaultValues: {
@@ -51,6 +52,23 @@ export const NovaViagemComRemessasDialog = ({
       motorista_id: undefined
     }
   });
+
+  // Gera número da viagem automaticamente
+  useEffect(() => {
+    if (open) {
+      const ultimoNumero = viagens.reduce((max, viagem) => {
+        const match = viagem.numero?.match(/V(\d+)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 0);
+      
+      const proximoNumero = `V${String(ultimoNumero + 1).padStart(3, '0')}`;
+      form.setValue('numero', proximoNumero);
+    }
+  }, [open, viagens, form]);
   const valorTotal = remessasSelecionadas.reduce((acc, remessa) => acc + (remessa.valor_total || 0), 0);
   const onSubmit = (data: ViagemFormData) => {
     createViagemComRemessas.mutate({
@@ -81,16 +99,6 @@ export const NovaViagemComRemessasDialog = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="numero" render={({
-            field
-          }) => <FormItem>
-                  <FormLabel>Número da Viagem</FormLabel>
-                  <FormControl>
-                    <Input placeholder="V001" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>} />
-            
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="data_inicio" render={({
               field
