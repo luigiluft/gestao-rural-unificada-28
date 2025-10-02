@@ -185,11 +185,8 @@ const GanttChart: React.FC<GanttChartProps> = ({
   };
   const todayPosition = getTodayPosition();
 
-  // Função para obter cor baseada no status e seleção
+  // Função para obter cor baseada no status
   const getBarColor = (status: string, isSelected: boolean) => {
-    if (isSelected) {
-      return 'hsl(var(--accent))';
-    }
     switch (status) {
       case 'expedido':
         return 'hsl(var(--primary))';
