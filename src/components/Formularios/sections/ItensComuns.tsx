@@ -87,6 +87,8 @@ export function ItensComunsSection({
               id: produtoId,
               nome: produtoNome,
               unidade_medida: item.produtos?.unidade_medida || '',
+              package_capacity: item.produtos?.package_capacity || 1,
+              containers_per_package: item.produtos?.containers_per_package || 1,
               quantidade_total: 0,
               itens: []
             }
@@ -120,7 +122,9 @@ export function ItensComunsSection({
       return produtosFallback.map(produto => ({
         id: produto.id,
         nome: produto.nome,
-        unidade_medida: produto.unidade_medida || 'UN'
+        unidade_medida: produto.unidade_medida || 'UN',
+        package_capacity: produto.package_capacity || 1,
+        containers_per_package: produto.containers_per_package || 1
       }))
     } else {
       // Para entrada, usar produtos fallback ou permitir entrada manual
@@ -128,6 +132,23 @@ export function ItensComunsSection({
       return produtosFallback
     }
   })()
+
+  // Calcular o step (incremento) baseado no produto selecionado
+  const calcularStep = () => {
+    if (!novoItem.produto_id) return 0.01
+    
+    const produto = produtosDisponiveis.find(p => p.id === novoItem.produto_id)
+    if (!produto) return 0.01
+    
+    const packageCapacity = produto.package_capacity || 1
+    const containersPerPackage = produto.containers_per_package || 1
+    const step = packageCapacity * containersPerPackage
+    
+    console.log('Step calculado:', step, 'para produto:', produto.nome, 
+                '(capacity:', packageCapacity, '* containers:', containersPerPackage, ')')
+    
+    return step
+  }
 
   const handleProdutoChange = (valor: string) => {
     console.log('=== INÍCIO handleProdutoChange ===')
@@ -261,7 +282,7 @@ export function ItensComunsSection({
                 <Input
                   type="number"
                   placeholder="0"
-                  step="0.01"
+                  step={calcularStep()}
                   min="0"
                   value={novoItem.quantidade || ''}
                   onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
