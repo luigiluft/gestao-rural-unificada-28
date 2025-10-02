@@ -72,6 +72,8 @@ serve(async (req) => {
 })
 
 async function createSaida(supabase: any, userId: string, data: any) {
+  console.log('📦 Creating saida with data:', JSON.stringify(data, null, 2))
+  
   if (!data.data_saida || !data.itens || data.itens.length === 0) {
     throw new Error('Missing required fields')
   }
@@ -80,6 +82,13 @@ async function createSaida(supabase: any, userId: string, data: any) {
   if (!data.deposito_id) {
     throw new Error('deposito_id é obrigatório para rastreabilidade FEFO')
   }
+
+  // Log delivery window fields specifically
+  console.log('🗓️ Delivery window fields:', {
+    data_inicio_janela: data.data_inicio_janela,
+    data_fim_janela: data.data_fim_janela,
+    janela_entrega_dias: data.janela_entrega_dias
+  })
 
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)

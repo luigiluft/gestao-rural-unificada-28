@@ -59,7 +59,7 @@ export function useSaidaSubmission() {
       const dataInicioJanela = parseLocalDate(dados.dataSaida);
       const dataFimJanela = calculateDeliveryWindowEnd(dataInicioJanela, janelaEntregaDias);
 
-      // 3. Preparar dados para a edge function
+      // 3. Preparar dados para a edge function - CONVERTENDO TODOS OS CAMPOS PARA SNAKE_CASE
       const saidaData = {
         user_id: user!.id,
         deposito_id: dados.deposito.id,
@@ -69,6 +69,7 @@ export function useSaidaSubmission() {
         criado_por_franqueado: true,
         status_aprovacao_produtor: dados.produtorDestinatario ? "pendente" : "nao_aplicavel",
         produtor_destinatario_id: dados.produtorDestinatario?.user_id || null,
+        // CRITICAL: Incluir campos de janela de entrega
         data_inicio_janela: dataInicioJanela.toISOString().split('T')[0],
         data_fim_janela: dataFimJanela.toISOString().split('T')[0],
         janela_entrega_dias: janelaEntregaDias,

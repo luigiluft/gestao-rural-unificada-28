@@ -224,39 +224,6 @@ export default function Remessas() {
         </Card>
       </div>
 
-      {/* Remessas sem janela de entrega */}
-      {remessas.filter(r => !r.data_inicio_janela || !r.data_fim_janela).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Configurar Janelas de Entrega
-            </CardTitle>
-            <CardDescription>
-              As seguintes remessas precisam ter suas janelas de entrega configuradas para aparecer no cronograma
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {remessas
-                .filter(r => !r.data_inicio_janela || !r.data_fim_janela)
-                .map(remessa => (
-                  <div key={remessa.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary">#{remessa.id.slice(0, 8)}</Badge>
-                      <div className="text-sm text-muted-foreground">
-                        Criada em {new Date(remessa.created_at).toLocaleDateString('pt-BR')}
-                      </div>
-                    </div>
-                    <ConfigurarJanelaEntrega remessaId={remessa.id} />
-                  </div>
-                ))
-              }
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Gantt Chart */}
       <GanttChart 
         remessas={filteredRemessas} 
