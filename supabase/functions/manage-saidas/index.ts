@@ -76,6 +76,11 @@ async function createSaida(supabase: any, userId: string, data: any) {
     throw new Error('Missing required fields')
   }
 
+  // Validate deposito_id for FEFO traceability
+  if (!data.deposito_id) {
+    throw new Error('deposito_id é obrigatório para rastreabilidade FEFO')
+  }
+
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
 
@@ -113,28 +118,47 @@ async function createSaida(supabase: any, userId: string, data: any) {
       }
     }
 
-    // Insert items
-    const itemsWithSaidaId = data.itens.map((item: any) => ({
-      ...item,
-      saida_id: saida.id,
-      user_id: userId,
-      created_at: new Date().toISOString()
-    }))
+    // Insert items with FEFO allocation
+    const itensInseridos = []
+    
+    for (const item of data.itens) {
+      // Insert saida_item
+      const { data: saidaItem, error: itemError } = await supabase
+        .from('saida_itens')
+        .insert({
+          ...item,
+          saida_id: saida.id,
+          user_id: userId,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
 
-    const { data: itensInseridos, error: itemsError } = await supabase
-      .from('saida_itens')
-      .insert(itemsWithSaidaId)
-      .select()
+      if (itemError) {
+        throw new Error(`Erro ao criar item: ${itemError.message}`)
+      }
 
-    if (itemsError) {
-      // Rollback saida
-      await supabase.from('saidas').delete().eq('id', saida.id)
-      throw itemsError
+      // Allocate stock using FEFO
+      const { data: alocacaoResult, error: alocacaoError } = await supabase
+        .rpc('validar_e_alocar_estoque_fefo', {
+          p_produto_id: item.produto_id,
+          p_deposito_id: data.deposito_id,
+          p_quantidade_necessaria: item.quantidade,
+          p_saida_item_id: saidaItem.id
+        })
+
+      if (alocacaoError) {
+        throw new Error(`Erro ao alocar estoque FEFO: ${alocacaoError.message}`)
+      }
+
+      console.log(`FEFO allocation for product ${item.produto_id}:`, alocacaoResult)
+      itensInseridos.push(saidaItem)
     }
 
     return { ...saida, itens: itensInseridos }
   } catch (error) {
     // If any error occurs after saida creation, clean up
+    console.error('Error creating saida, rolling back:', error)
     await supabase.from('saidas').delete().eq('id', saida.id)
     throw error
   }
