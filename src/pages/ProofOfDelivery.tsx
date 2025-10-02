@@ -72,7 +72,7 @@ const ProofOfDelivery = () => {
   }
 
   const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'em_andamento')
-  const viagensEntregues = viagens.filter(v => v.status === 'entregue' || v.status === 'confirmada')
+  const viagensEntregues = viagens.filter(v => v.status === 'entregue')
 
   // Debug logging
   console.log('🚛 Total viagens:', viagens.length)

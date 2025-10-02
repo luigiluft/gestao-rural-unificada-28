@@ -49,7 +49,6 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
       case 'planejada': return 'secondary'
       case 'em_andamento': return 'default'
       case 'entregue': return 'outline'
-      case 'confirmada': return 'outline' // Sinônimo de entregue
       default: return 'secondary'
     }
   }
@@ -59,7 +58,6 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
       case 'planejada': return Clock
       case 'em_andamento': return Truck
       case 'entregue': return Package
-      case 'confirmada': return Package // Sinônimo de entregue
       default: return Clock
     }
   }
@@ -69,7 +67,6 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
       case 'planejada': return 'Planejada'
       case 'em_andamento': return 'Em Andamento'
       case 'entregue': return 'Entregue'
-      case 'confirmada': return 'Entregue' // Sinônimo de entregue
       default: return status
     }
   }

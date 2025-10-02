@@ -45,7 +45,7 @@ const Tracking = () => {
   };
 
   const calcularTempoRestante = (viagem: any) => {
-    if (viagem.status === 'entregue' || viagem.status === 'confirmada') return 'Entregue';
+    if (viagem.status === 'entregue') return 'Entregue';
     return 'Calculando...';
   };
 
