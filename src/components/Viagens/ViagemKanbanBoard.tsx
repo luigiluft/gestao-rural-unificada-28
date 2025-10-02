@@ -266,28 +266,18 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
       indexChange: `${currentDateIndex} → ${newDateIndex}`
     })
 
-    // Calcular duração original da viagem
-    const dataInicioOriginal = viagem.data_inicio ? parse(viagem.data_inicio.slice(0,10), 'yyyy-MM-dd', new Date()) : new Date()
-    const dataFimOriginal = viagem.data_fim ? parse(viagem.data_fim.slice(0,10), 'yyyy-MM-dd', new Date()) : new Date()
-    const duracaoOriginal = differenceInCalendarDays(dataFimOriginal, dataInicioOriginal)
-
-    // A nova data será a data de início, e calculamos a nova data de fim
+    // Atualizar apenas a data de início - data de fim fica em branco até o comprovante
     const novaDataInicio = format(newDate, 'yyyy-MM-dd')
-    const novaDataFim = format(addDays(newDate, duracaoOriginal), 'yyyy-MM-dd')
 
     console.log('🔄 Updating viagem:', {
       viagemId: viagem.id,
       oldStart: viagem.data_inicio,
-      oldEnd: viagem.data_fim,
-      newStart: novaDataInicio,
-      newEnd: novaDataFim,
-      duration: duracaoOriginal + ' days'
+      newStart: novaDataInicio
     })
 
     updateViagemData.mutate({
       viagemId: viagem.id,
-      data_inicio: novaDataInicio,
-      data_fim: novaDataFim
+      data_inicio: novaDataInicio
     })
   }
 
