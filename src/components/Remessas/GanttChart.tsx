@@ -33,6 +33,11 @@ interface GanttDataPoint {
 }
 type TimeUnit = 'dias' | 'semanas' | 'meses';
 type SortOrder = 'asc' | 'desc';
+
+// Constantes para controle de altura das barras
+const BAR_HEIGHT = 60; // Altura fixa de cada barra em pixels
+const MIN_CHART_HEIGHT = 300; // Altura mínima do gráfico
+
 const GanttChart: React.FC<GanttChartProps> = ({
   remessas,
   selectedRemessas = [],
@@ -161,6 +166,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
       return b.start - a.start;
     }
   });
+
+  // Calcular altura dinâmica do gráfico baseado no número de remessas
+  const chartHeight = Math.max(MIN_CHART_HEIGHT, ganttData.length * BAR_HEIGHT);
 
   // Calcular posição da linha "hoje"
   const getTodayPosition = (): number | null => {
@@ -391,7 +399,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
           </div>
         </CardHeader>
       <CardContent>
-        <div className="h-96 flex">
+        <div className="flex" style={{ height: `${chartHeight}px` }}>
           {/* Área de seleção das remessas */}
           {onToggleSelection && (
             <div className="w-32 flex flex-col">
@@ -400,7 +408,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               </div>
               <div className="flex flex-col justify-center flex-1">
                 {ganttData.map((item, index) => (
-                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${100 / ganttData.length}%` }}>
+                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
                     <Checkbox 
                       checked={item.isSelected} 
                       onCheckedChange={() => onToggleSelection(item.id)} 
