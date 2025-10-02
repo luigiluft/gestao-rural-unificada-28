@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
-import { format, parseISO, differenceInDays, startOfDay, endOfDay, startOfWeek, startOfMonth, getISOWeek, isWithinInterval } from 'date-fns';
+import { format, parseISO, differenceInDays, startOfDay, endOfDay, startOfWeek, startOfMonth, getISOWeek, isWithinInterval, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -157,19 +157,37 @@ const GanttChart: React.FC<GanttChartProps> = ({
   // Calcular altura dinâmica do gráfico baseado no número de remessas
   const chartHeight = Math.max(MIN_CHART_HEIGHT, ganttData.length * BAR_HEIGHT);
 
-  // Calcular o range completo do eixo X com margem temporal para scroll
+  // Calcular o range completo do eixo X baseado em calendário fixo (6 meses antes, 12 meses depois de hoje)
   const getFullXAxisDomain = (): [number, number] => {
-    if (ganttData.length === 0) return [0, 1];
-    
-    const starts = ganttData.map(d => d.start);
-    const ends = ganttData.map(d => d.start + d.duration);
-    
-    const minStart = Math.min(...starts);
-    const maxEnd = Math.max(...ends);
-    
-    // Adicionar margem de 30 unidades (dias/semanas/meses) antes e depois
-    const margin = 30;
-    return [Math.max(0, minStart - margin), maxEnd + margin];
+    try {
+      const today = new Date();
+      const baseDate = getBaseDate();
+      
+      // Definir range: 6 meses antes de hoje e 12 meses depois
+      const startRange = addMonths(today, -6);
+      const endRange = addMonths(today, 12);
+      
+      if (timeUnit === 'semanas') {
+        const startWeek = startOfWeek(startRange, { locale: ptBR });
+        const endWeek = startOfWeek(endRange, { locale: ptBR });
+        const minPos = Math.floor(differenceInDays(startWeek, baseDate) / 7);
+        const maxPos = Math.floor(differenceInDays(endWeek, baseDate) / 7);
+        return [minPos, maxPos];
+      } else if (timeUnit === 'meses') {
+        const startMonth = startOfMonth(startRange);
+        const endMonth = startOfMonth(endRange);
+        const minPos = (startMonth.getFullYear() - baseDate.getFullYear()) * 12 + (startMonth.getMonth() - baseDate.getMonth());
+        const maxPos = (endMonth.getFullYear() - baseDate.getFullYear()) * 12 + (endMonth.getMonth() - baseDate.getMonth());
+        return [minPos, maxPos];
+      } else {
+        // dias
+        const minPos = differenceInDays(startOfDay(startRange), baseDate);
+        const maxPos = differenceInDays(startOfDay(endRange), baseDate);
+        return [minPos, maxPos];
+      }
+    } catch {
+      return [0, 365]; // Fallback: 1 ano
+    }
   };
 
   // Calcular posição da linha "hoje"
@@ -197,21 +215,26 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
   // Auto-scroll para centralizar em "hoje" ao montar o componente
   const scrollToToday = () => {
-    if (chartContainerRef.current && ganttData.length > 0) {
-      const todayPos = getTodayPosition();
-      if (todayPos !== null && todayPos >= 0) {
-        const container = chartContainerRef.current;
-        const domain = getFullXAxisDomain();
-        const domainRange = domain[1] - domain[0];
-        
-        // Calcular a posição em pixels baseado na proporção
-        const scrollWidth = container.scrollWidth;
-        const containerWidth = container.clientWidth;
-        const scrollPosition = ((todayPos - domain[0]) / domainRange) * scrollWidth - (containerWidth / 2);
-        
-        container.scrollLeft = Math.max(0, scrollPosition);
+    setTimeout(() => {
+      if (chartContainerRef.current && ganttData.length > 0) {
+        const todayPos = getTodayPosition();
+        if (todayPos !== null) {
+          const container = chartContainerRef.current;
+          const domain = getFullXAxisDomain();
+          const domainRange = domain[1] - domain[0];
+          
+          // Calcular a posição em pixels baseado na proporção
+          const scrollWidth = container.scrollWidth;
+          const containerWidth = container.clientWidth;
+          
+          // Normalizar todayPos em relação ao domain
+          const normalizedPos = (todayPos - domain[0]) / domainRange;
+          const scrollPosition = (normalizedPos * scrollWidth) - (containerWidth / 2);
+          
+          container.scrollLeft = Math.max(0, scrollPosition);
+        }
       }
-    }
+    }, 100);
   };
 
   // Executar auto-scroll quando os dados mudarem ou a unidade de tempo mudar
@@ -438,7 +461,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 <Tooltip content={<CustomTooltip />} />
                 
                 {/* Linha indicando hoje */}
-                {todayPosition !== null && todayPosition >= 0 && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
+                {todayPosition !== null && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
                 value: "Hoje",
                 position: "top",
                 fill: "hsl(var(--destructive))"
