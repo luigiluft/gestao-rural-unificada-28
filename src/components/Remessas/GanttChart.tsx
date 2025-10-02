@@ -9,7 +9,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, X, ArrowUpDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 interface RemessaData {
   id: string;
@@ -36,10 +35,8 @@ type TimeUnit = 'dias' | 'semanas' | 'meses';
 type SortOrder = 'asc' | 'desc';
 
 // Constantes para controle de altura das barras
-const BAR_HEIGHT = 50; // Altura fixa de cada barra em pixels
-const BAR_SIZE = 35; // Tamanho da barra no recharts
+const BAR_HEIGHT = 60; // Altura fixa de cada barra em pixels
 const MIN_CHART_HEIGHT = 300; // Altura mínima do gráfico
-const MAX_SCROLL_HEIGHT = 600; // Altura máxima antes de ativar scroll
 
 const GanttChart: React.FC<GanttChartProps> = ({
   remessas,
@@ -402,40 +399,36 @@ const GanttChart: React.FC<GanttChartProps> = ({
           </div>
         </CardHeader>
       <CardContent>
-        <ScrollArea className="w-full" style={{ maxHeight: `${MAX_SCROLL_HEIGHT}px` }}>
-          <div className="flex" style={{ height: `${chartHeight}px`, minHeight: `${chartHeight}px` }}>
-            {/* Área de seleção das remessas */}
-            {onToggleSelection && (
-              <div className="w-32 flex flex-col">
-                <div className="flex flex-col flex-1">
-                  {ganttData.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px`, minHeight: `${BAR_HEIGHT}px` }}>
-                      <Checkbox 
-                        checked={item.isSelected} 
-                        onCheckedChange={() => onToggleSelection(item.id)} 
-                      />
-                      <span className="text-xs truncate">{item.name}</span>
-                    </div>
-                  ))}
-                </div>
+        <div className="flex" style={{ height: `${chartHeight}px` }}>
+          {/* Área de seleção das remessas */}
+          {onToggleSelection && (
+            <div className="w-32 flex flex-col">
+              <div className="text-sm font-medium text-muted-foreground mb-2 px-2">
+                Remessas
               </div>
-            )}
-            
-            {/* Área do gráfico */}
-            <div className="flex-1" style={{ minHeight: `${chartHeight}px` }}>
-              <ResponsiveContainer width="100%" height={chartHeight}>
-              <BarChart 
-                data={ganttData} 
-                layout="vertical" 
-                barCategoryGap={0}
-                barGap={0}
-                margin={{
-                  top: 0,
-                  right: 30,
-                  left: 20,
-                  bottom: 0
-                }}
-              >
+              <div className="flex flex-col justify-center flex-1">
+                {ganttData.map((item, index) => (
+                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
+                    <Checkbox 
+                      checked={item.isSelected} 
+                      onCheckedChange={() => onToggleSelection(item.id)} 
+                    />
+                    <span className="text-xs">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Área do gráfico */}
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ganttData} layout="vertical" margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 5
+            }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" orientation="top" domain={(() => {
                 if (!startDate || !endDate) {
@@ -477,17 +470,16 @@ const GanttChart: React.FC<GanttChartProps> = ({
               }} />}
                 
                 {/* Barra invisível para posicionar o início */}
-                <Bar dataKey="start" stackId="gantt" fill="transparent" barSize={BAR_SIZE} />
+                <Bar dataKey="start" stackId="gantt" fill="transparent" />
                 
                 {/* Barra colorida para a duração */}
-                <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]} barSize={BAR_SIZE}>
+                <Bar dataKey="duration" stackId="gantt" radius={[2, 2, 2, 2]}>
                   {ganttData.map((entry, index) => <Cell key={`cell-${index}`} fill={getBarColor(entry.status, entry.isSelected)} stroke={entry.isSelected ? "hsl(var(--accent-foreground))" : "transparent"} strokeWidth={entry.isSelected ? 2 : 0} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-        </ScrollArea>
         
         {/* Legenda */}
         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
