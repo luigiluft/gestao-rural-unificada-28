@@ -107,6 +107,7 @@ export const useAtualizarStatusSaida = () => {
       queryClient.invalidateQueries({ queryKey: ["saidas-pendentes"] })
       queryClient.invalidateQueries({ queryKey: ["saidas"] })
       queryClient.invalidateQueries({ queryKey: ["saida-stats"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
     onError: (error) => {
       console.error("Erro ao atualizar status da saída:", error)

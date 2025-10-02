@@ -256,6 +256,7 @@ export function useSeparacaoItens() {
       toast.success('Separação finalizada com sucesso!')
       queryClient.invalidateQueries({ queryKey: ['saidas-pendentes'] })
       queryClient.invalidateQueries({ queryKey: ['saidas'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
     onError: (error: any) => {
       console.error('Erro ao finalizar separação:', error)
