@@ -23,13 +23,13 @@ export const useViagensNotifications = () => {
 
       // Count trips that need attention from the driver:
       // - planejada/pendente (ready to start)
-      // - em_andamento (in progress, needs completion)
       // - finalizada (ready for proof of delivery)
+      // Note: em_andamento removed - once started, no notification needed
       const { data, error } = await supabase
         .from("viagens")
         .select("id, status")
         .eq("motorista_id", motorista.id)
-        .in("status", ["planejada", "pendente", "em_andamento", "finalizada"])
+        .in("status", ["planejada", "pendente", "finalizada"])
 
       if (error) {
         console.error('Error fetching viagens notifications:', error)

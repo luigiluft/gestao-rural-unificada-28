@@ -109,6 +109,40 @@ export const useViagemComRemessas = () => {
       }
       
       console.log('✅ useViagemComRemessas: Viagem created and remessas allocated successfully:', newViagem)
+      
+      // Send notification to motorista if assigned
+      if (newViagem.motorista_id) {
+        try {
+          const { data: motorista } = await supabase
+            .from('motoristas')
+            .select('auth_user_id, nome')
+            .eq('id', newViagem.motorista_id)
+            .maybeSingle();
+
+          if (motorista?.auth_user_id) {
+            await supabase.functions.invoke('manage-notifications', {
+              body: {
+                action: 'sendMotoristaNotification',
+                data: {
+                  motorista_user_id: motorista.auth_user_id,
+                  title: 'Nova Viagem Atribuída',
+                  message: `Viagem ${newViagem.numero} foi criada com ${remessasIds.length} remessa(s)`,
+                  data: {
+                    viagem_id: newViagem.id,
+                    numero_viagem: newViagem.numero,
+                    total_remessas: remessasIds.length
+                  }
+                }
+              }
+            });
+            console.log('✅ Notification sent to motorista:', motorista.nome);
+          }
+        } catch (notificationError) {
+          console.error('⚠️ Error sending notification:', notificationError);
+          // Don't fail the whole operation if notification fails
+        }
+      }
+      
       return newViagem;
     },
     onSuccess: () => {
@@ -120,6 +154,8 @@ export const useViagemComRemessas = () => {
       queryClient.invalidateQueries({ queryKey: ["viagens-com-remessas"] })
       queryClient.invalidateQueries({ queryKey: ["remessas"] })
       queryClient.invalidateQueries({ queryKey: ["total-remessas-alocadas"] })
+      queryClient.invalidateQueries({ queryKey: ["viagens-notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["motorista-notifications"] })
     },
     onError: (error) => {
       console.error("Erro ao criar viagem com remessas:", error)

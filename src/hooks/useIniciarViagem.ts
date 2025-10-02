@@ -31,6 +31,8 @@ export const useIniciarViagem = () => {
       })
       queryClient.invalidateQueries({ queryKey: ["viagens"] })
       queryClient.invalidateQueries({ queryKey: ["motorista-viagens"] })
+      queryClient.invalidateQueries({ queryKey: ["viagens-notifications"] })
+      queryClient.invalidateQueries({ queryKey: ["motorista-notifications"] })
     },
     onError: (error) => {
       console.error("Erro ao iniciar viagem:", error)
