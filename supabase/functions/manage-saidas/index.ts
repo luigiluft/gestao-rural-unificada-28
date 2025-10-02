@@ -139,6 +139,7 @@ async function createSaida(supabase: any, userId: string, data: any) {
       }
 
       // Allocate stock using FEFO
+      console.log(`Calling FEFO allocation for product ${item.produto_id}, quantity: ${item.quantidade}`)
       const { data: alocacaoResult, error: alocacaoError } = await supabase
         .rpc('validar_e_alocar_estoque_fefo', {
           p_produto_id: item.produto_id,
@@ -151,26 +152,46 @@ async function createSaida(supabase: any, userId: string, data: any) {
         throw new Error(`Erro ao alocar estoque FEFO: ${alocacaoError.message}`)
       }
 
-      console.log(`FEFO allocation for product ${item.produto_id}:`, alocacaoResult)
+      console.log(`FEFO allocation result for product ${item.produto_id}:`, alocacaoResult)
       
-      // Buscar o lote das reservas criadas pela alocação FEFO
-      const { data: reservas, error: reservasError } = await supabase
-        .from('estoque_reservas')
-        .select('lote')
-        .eq('saida_id', saida.id)
-        .eq('produto_id', item.produto_id)
+      // Buscar os lotes das referências criadas pela alocação FEFO
+      const { data: referencias, error: referenciasError } = await supabase
+        .from('saida_item_referencias')
+        .select('lote, quantidade_alocada')
+        .eq('saida_item_id', saidaItem.id)
         .order('created_at', { ascending: true })
-        .limit(1)
       
-      // Atualizar o saida_item com o lote da primeira reserva
-      if (reservas && reservas.length > 0 && reservas[0].lote) {
-        await supabase
+      if (referenciasError) {
+        console.error('Error fetching saida_item_referencias:', referenciasError)
+      }
+      
+      // Atualizar o saida_item com o lote apropriado
+      let loteToUpdate = null
+      if (referencias && referencias.length > 0) {
+        if (referencias.length === 1) {
+          // Alocação de um único lote
+          loteToUpdate = referencias[0].lote
+          console.log(`Single batch allocation - updating saida_item ${saidaItem.id} with lote: ${loteToUpdate}`)
+        } else {
+          // Alocação de múltiplos lotes
+          loteToUpdate = 'MULTI'
+          console.log(`Multiple batch allocation (${referencias.length} batches) - updating saida_item ${saidaItem.id} with lote: MULTI`)
+          console.log('Allocated batches:', referencias.map(r => `${r.lote} (${r.quantidade_alocada})`).join(', '))
+        }
+        
+        const { error: updateError } = await supabase
           .from('saida_itens')
-          .update({ lote: reservas[0].lote })
+          .update({ lote: loteToUpdate })
           .eq('id', saidaItem.id)
         
-        saidaItem.lote = reservas[0].lote
-        console.log(`Updated saida_item ${saidaItem.id} with lote: ${reservas[0].lote}`)
+        if (updateError) {
+          console.error('Error updating saida_item lote:', updateError)
+        } else {
+          saidaItem.lote = loteToUpdate
+          console.log(`Successfully updated saida_item ${saidaItem.id} with lote: ${loteToUpdate}`)
+        }
+      } else {
+        console.warn(`No allocation references found for saida_item ${saidaItem.id}`)
       }
       
       itensInseridos.push(saidaItem)
