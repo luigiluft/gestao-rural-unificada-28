@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -160,7 +160,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
   const [viewType, setViewType] = useState<ViewType>('daily')
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [centerDate, setCenterDate] = useState(new Date())
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   
   const updateViagemData = useUpdateViagemData()
 
@@ -181,13 +181,15 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     })
   }, [viagens, searchTerm, statusFilter])
 
-  // Gerar datas para timeline
+  // Gerar datas para timeline - período expandido para scroll contínuo
   const dates = useMemo(() => {
-    const daysToShow = viewType === 'daily' ? 14 : viewType === 'weekly' ? 28 : 60
-    const startDate = subDays(centerDate, Math.floor(daysToShow / 2))
+    const today = new Date()
+    const daysToShow = viewType === 'daily' ? 90 : viewType === 'weekly' ? 180 : 365
+    const daysBefore = Math.floor(daysToShow / 2)
+    const startDate = subDays(today, daysBefore)
     
     return Array.from({ length: daysToShow }, (_, i) => addDays(startDate, i))
-  }, [centerDate, viewType])
+  }, [viewType])
 
   // Organizar viagens por previsao_inicio
   const viagensByDate = useMemo(() => {
@@ -288,17 +290,47 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     })
   }
 
-  const resetView = () => {
-    setCenterDate(new Date())
-  }
+  // Auto-scroll para "Hoje" ao carregar ou mudar tipo de visualização
+  useEffect(() => {
+    const scrollToToday = () => {
+      if (!scrollContainerRef.current) return
+      
+      const today = new Date()
+      const todayIndex = dates.findIndex(date => isSameDay(date, today))
+      
+      if (todayIndex !== -1) {
+        const columnWidth = 192 // 48 * 4 (w-48)
+        const containerWidth = scrollContainerRef.current.offsetWidth
+        const scrollPosition = (todayIndex * columnWidth) - (containerWidth / 2) + (columnWidth / 2)
+        
+        scrollContainerRef.current.scrollTo({
+          left: Math.max(0, scrollPosition),
+          behavior: 'smooth'
+        })
+      }
+    }
+    
+    // Delay para garantir que o DOM está renderizado
+    const timer = setTimeout(scrollToToday, 100)
+    return () => clearTimeout(timer)
+  }, [dates, viewType])
 
-  const navigateTimeline = (direction: 'prev' | 'next') => {
-    const daysToMove = viewType === 'daily' ? 7 : viewType === 'weekly' ? 14 : 30
-    setCenterDate(prev => 
-      direction === 'next' 
-        ? addDays(prev, daysToMove)
-        : subDays(prev, daysToMove)
-    )
+  const scrollToToday = () => {
+    if (!scrollContainerRef.current) return
+    
+    const today = new Date()
+    const todayIndex = dates.findIndex(date => isSameDay(date, today))
+    
+    if (todayIndex !== -1) {
+      const columnWidth = 192
+      const containerWidth = scrollContainerRef.current.offsetWidth
+      const scrollPosition = (todayIndex * columnWidth) - (containerWidth / 2) + (columnWidth / 2)
+      
+      scrollContainerRef.current.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: 'smooth'
+      })
+    }
   }
 
   return (
@@ -338,14 +370,9 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
             </SelectContent>
           </Select>
           
-          <Button variant="outline" size="sm" onClick={() => navigateTimeline('prev')}>
-            ←
-          </Button>
-          <Button variant="outline" size="sm" onClick={resetView}>
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigateTimeline('next')}>
-            →
+          <Button variant="outline" size="sm" onClick={scrollToToday}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Voltar para Hoje
           </Button>
         </div>
       </div>
@@ -353,7 +380,10 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
       {/* Timeline Kanban Container Responsivo */}
       <div className="w-full max-w-full overflow-hidden">
         <div className="border rounded-lg bg-background">
-          <div className="overflow-x-auto overflow-y-hidden h-[600px] scrollbar-thin scrollbar-thumb-border scrollbar-track-background">
+          <div 
+            ref={scrollContainerRef}
+            className="overflow-x-auto overflow-y-hidden h-[600px] scrollbar-thin scrollbar-thumb-border scrollbar-track-background"
+          >
             <div style={{ width: `${dates.length * 192}px` }}>
               {/* Header com datas */}
               <div className="flex border-b bg-muted/50" style={{ width: `${dates.length * 192}px` }}>
