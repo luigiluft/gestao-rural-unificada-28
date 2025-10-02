@@ -213,6 +213,26 @@ const GanttChart: React.FC<GanttChartProps> = ({
   };
   const todayPosition = getTodayPosition();
 
+  // Calcular largura dinâmica do gráfico baseado no timeUnit e no domínio
+  const calculateChartWidth = (): number => {
+    const domain = getFullXAxisDomain();
+    const domainRange = domain[1] - domain[0];
+    
+    switch (timeUnit) {
+      case 'dias':
+        // 45 pixels por dia para boa legibilidade
+        return domainRange * 45;
+      case 'semanas':
+        // 70 pixels por semana
+        return domainRange * 70;
+      case 'meses':
+        // 180 pixels por mês
+        return domainRange * 180;
+      default:
+        return 2000;
+    }
+  };
+
   // Auto-scroll para centralizar em "hoje" ao montar o componente
   const scrollToToday = () => {
     setTimeout(() => {
@@ -422,7 +442,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
         <div className="w-full max-h-[600px] overflow-y-auto overflow-x-auto" ref={chartContainerRef}>
           <div className="flex" style={{ 
             height: `${chartHeight}px`,
-            minWidth: '2000px'
+            width: `${calculateChartWidth()}px`
           }}>
             {/* Área de seleção das remessas */}
             {onToggleSelection && (
@@ -454,9 +474,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
               bottom: 5
             }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" orientation="top" domain={getFullXAxisDomain()} tickFormatter={formatXAxisTick} tick={{
-                fontSize: 12
-              }} />
+                <XAxis 
+                  type="number" 
+                  orientation="top" 
+                  domain={getFullXAxisDomain()} 
+                  tickFormatter={formatXAxisTick}
+                  tickCount={timeUnit === 'dias' ? 30 : timeUnit === 'semanas' ? 20 : 12}
+                  tick={{ fontSize: 12 }}
+                />
                 <YAxis type="category" dataKey="name" hide />
                 <Tooltip content={<CustomTooltip />} />
                 
