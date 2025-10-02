@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History } from "lucide-react";
+import { Search, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,7 @@ export default function Estoque() {
     isLoading
   } = useEstoque();
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const {
     data: movimentacoes
   } = useMovimentacoes(selectedItem?.produto_id);
@@ -32,6 +33,22 @@ export default function Estoque() {
   useEffect(() => {
     updateNotificationView.mutate("estoque");
   }, []); // Only run once when component mounts
+
+  // Filter estoque based on search term
+  const filteredEstoque = estoque?.filter(item => {
+    const produto = item.produtos?.nome || ""
+    const lote = item.lote || ""
+    const codigo = item.produtos?.codigo || ""
+    const deposito = (item as any).franquias?.nome || ""
+    
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      produto.toLowerCase().includes(searchLower) ||
+      lote.toLowerCase().includes(searchLower) ||
+      codigo.toLowerCase().includes(searchLower) ||
+      deposito.toLowerCase().includes(searchLower)
+    )
+  }) || []
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,18 +66,18 @@ export default function Estoque() {
     return Math.min(quantidade / maximo * 100, 100);
   };
   const getStockStats = () => {
-    if (!estoque) return {
+    if (!filteredEstoque) return {
       total: 0,
       normal: 0,
       baixo: 0,
       critico: 0,
       valorTotal: 0
     };
-    const total = estoque.reduce((acc, item) => acc + item.quantidade_atual, 0);
-    const normal = estoque.filter(item => item.quantidade_atual >= 100).length;
-    const baixo = estoque.filter(item => item.quantidade_atual < 100 && item.quantidade_atual >= 20).length;
-    const critico = estoque.filter(item => item.quantidade_atual < 20).length;
-    const valorTotal = estoque.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    const total = filteredEstoque.reduce((acc, item) => acc + item.quantidade_atual, 0);
+    const normal = filteredEstoque.filter(item => item.quantidade_atual >= 100).length;
+    const baixo = filteredEstoque.filter(item => item.quantidade_atual < 100 && item.quantidade_atual >= 20).length;
+    const critico = filteredEstoque.filter(item => item.quantidade_atual < 20).length;
+    const valorTotal = filteredEstoque.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     return {
       total,
       normal,
@@ -89,23 +106,6 @@ export default function Estoque() {
       </div>
 
 
-      {/* Filters */}
-      <Card className="shadow-card">
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por produto, lote ou depósito..." className="pl-9" />
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtros
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Stock Table with Tabs */}
       <Card className="shadow-card">
@@ -171,23 +171,21 @@ export default function Estoque() {
               </div>
               
               {/* Search bar */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar por produto, lote, código ou depósito..." 
-                  className="pl-9" 
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {estoque?.length || 0} produtos monitorados
-                </p>
+              <div className="flex gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar por produto, lote, código ou depósito..." 
+                    className="pl-9" 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
               
               {isLoading ? <div className="space-y-4">
                   {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-                </div> : estoque && estoque.length > 0 ? <div className="overflow-x-auto">
+                </div> : filteredEstoque && filteredEstoque.length > 0 ? <div className="overflow-x-auto">
                   <Table className="min-w-[800px]">
                     <TableHeader>
                       <TableRow>
@@ -201,7 +199,7 @@ export default function Estoque() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {estoque.map(item => {
+                      {filteredEstoque.map(item => {
                     const stockLevel = getStockLevel(item.quantidade_atual);
                     const status = item.quantidade_atual < 20 ? 'Crítico' : item.quantidade_atual < 100 ? 'Baixo' : 'Normal';
                     return <TableRow key={`${item.produto_id}-${item.lote || 'no-lote'}`} className="hover:bg-muted/50">
@@ -338,10 +336,15 @@ export default function Estoque() {
                   })}
                     </TableBody>
                   </Table>
-                </div> : <EmptyState icon={<Package className="w-8 h-8 text-muted-foreground" />} title="Nenhum produto em estoque" description="Registre entradas de produtos para começar a controlar seu estoque." action={{
-              label: "Registrar Primeira Entrada",
-              onClick: () => navigate('/entradas')
-            }} />}
+                </div> : <EmptyState 
+                  icon={<Package className="w-8 h-8 text-muted-foreground" />} 
+                  title="Nenhum produto em estoque" 
+                  description={searchTerm ? "Nenhum produto encontrado com os critérios de busca." : "Registre entradas de produtos para começar a controlar seu estoque."} 
+                  action={!searchTerm ? {
+                    label: "Registrar Primeira Entrada",
+                    onClick: () => navigate('/entradas')
+                  } : undefined}
+                />}
             </TabsContent>
 
             <TabsContent value="avarias" className="space-y-4">
