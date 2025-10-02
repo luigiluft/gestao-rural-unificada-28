@@ -261,6 +261,8 @@ export function ItensComunsSection({
                 <Input
                   type="number"
                   placeholder="0"
+                  step="0.01"
+                  min="0"
                   value={novoItem.quantidade || ''}
                   onChange={(e) => onNovoItemChange('quantidade', parseFloat(e.target.value) || 0)}
                   className="w-full"
