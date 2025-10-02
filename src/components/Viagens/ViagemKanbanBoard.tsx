@@ -154,9 +154,14 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     coordinateGetter: sortableKeyboardCoordinates
   }));
 
-  // Filtrar viagens
+  // Filtrar viagens - excluir entregues/concluídas do kanban
   const filteredViagens = useMemo(() => {
     return viagens.filter(viagem => {
+      // Excluir viagens entregues/concluídas
+      if (viagem.status === 'entregue' || viagem.status === 'concluida') {
+        return false;
+      }
+      
       const matchesSearch = viagem.numero?.toLowerCase().includes(searchTerm.toLowerCase()) || viagem.observacoes?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || viagem.status === statusFilter;
       return matchesSearch && matchesStatus;
