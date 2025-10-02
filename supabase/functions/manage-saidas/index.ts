@@ -152,6 +152,27 @@ async function createSaida(supabase: any, userId: string, data: any) {
       }
 
       console.log(`FEFO allocation for product ${item.produto_id}:`, alocacaoResult)
+      
+      // Buscar o lote das reservas criadas pela alocação FEFO
+      const { data: reservas, error: reservasError } = await supabase
+        .from('estoque_reservas')
+        .select('lote')
+        .eq('saida_id', saida.id)
+        .eq('produto_id', item.produto_id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+      
+      // Atualizar o saida_item com o lote da primeira reserva
+      if (reservas && reservas.length > 0 && reservas[0].lote) {
+        await supabase
+          .from('saida_itens')
+          .update({ lote: reservas[0].lote })
+          .eq('id', saidaItem.id)
+        
+        saidaItem.lote = reservas[0].lote
+        console.log(`Updated saida_item ${saidaItem.id} with lote: ${reservas[0].lote}`)
+      }
+      
       itensInseridos.push(saidaItem)
     }
 
