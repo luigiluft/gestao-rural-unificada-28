@@ -137,12 +137,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setSession(null);
       
-      // Clear localStorage/sessionStorage
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Sign out from Supabase
+      // Sign out from Supabase (this will clear auth tokens properly)
       await supabase.auth.signOut();
+      
+      // Clear only app-specific data, NOT Supabase auth tokens
+      // Supabase handles its own token cleanup in signOut()
+      const keysToRemove = Object.keys(localStorage).filter(key => 
+        !key.startsWith('sb-') // Keep Supabase keys
+      );
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Clear sessionStorage app-specific data
+      const sessionKeysToRemove = Object.keys(sessionStorage).filter(key => 
+        !key.startsWith('sb-')
+      );
+      sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
       
       // Redirect to auth page
       redirect("/auth");
