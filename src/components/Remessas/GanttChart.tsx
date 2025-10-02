@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import { format, parseISO, differenceInDays, startOfDay, endOfDay, startOfWeek, startOfMonth, getISOWeek, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,28 +44,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
   onToggleSelection
 }) => {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  // Função para obter a data base para todos os cálculos
+  // Função para obter a data base para todos os cálculos (sempre usa a data mínima)
   const getBaseDate = (): Date => {
-    // Se há filtro de data, usar a data de início do filtro como base
-    if (startDate) {
-      if (timeUnit === 'semanas') {
-        return startOfWeek(startDate, {
-          locale: ptBR
-        });
-      } else if (timeUnit === 'meses') {
-        return startOfMonth(startDate);
-      } else {
-        return startOfDay(startDate);
-      }
-    }
-
-    // Senão, usar a data mínima dos dados
     const remessasValidas = remessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
     if (!remessasValidas.length) return new Date();
+    
     const allDates = remessasValidas.flatMap(r => {
       try {
         const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
@@ -75,12 +61,13 @@ const GanttChart: React.FC<GanttChartProps> = ({
         return [];
       }
     }).filter(date => !isNaN(date.getTime()));
+    
     if (!allDates.length) return new Date();
+    
     const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+    
     if (timeUnit === 'semanas') {
-      return startOfWeek(minDate, {
-        locale: ptBR
-      });
+      return startOfWeek(minDate, { locale: ptBR });
     } else if (timeUnit === 'meses') {
       return startOfMonth(minDate);
     } else {
@@ -170,7 +157,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
   // Calcular altura dinâmica do gráfico baseado no número de remessas
   const chartHeight = Math.max(MIN_CHART_HEIGHT, ganttData.length * BAR_HEIGHT);
 
-  // Calcular o range completo do eixo X para garantir que todas as barras sejam visíveis
+  // Calcular o range completo do eixo X com margem temporal para scroll
   const getFullXAxisDomain = (): [number, number] => {
     if (ganttData.length === 0) return [0, 1];
     
@@ -180,7 +167,9 @@ const GanttChart: React.FC<GanttChartProps> = ({
     const minStart = Math.min(...starts);
     const maxEnd = Math.max(...ends);
     
-    return [Math.max(0, minStart), maxEnd + 2]; // +2 para dar um espaço no final
+    // Adicionar margem de 30 unidades (dias/semanas/meses) antes e depois
+    const margin = 30;
+    return [Math.max(0, minStart - margin), maxEnd + margin];
   };
 
   // Calcular posição da linha "hoje"
@@ -205,6 +194,30 @@ const GanttChart: React.FC<GanttChartProps> = ({
     }
   };
   const todayPosition = getTodayPosition();
+
+  // Auto-scroll para centralizar em "hoje" ao montar o componente
+  const scrollToToday = () => {
+    if (chartContainerRef.current && ganttData.length > 0) {
+      const todayPos = getTodayPosition();
+      if (todayPos !== null && todayPos >= 0) {
+        const container = chartContainerRef.current;
+        const domain = getFullXAxisDomain();
+        const domainRange = domain[1] - domain[0];
+        
+        // Calcular a posição em pixels baseado na proporção
+        const scrollWidth = container.scrollWidth;
+        const containerWidth = container.clientWidth;
+        const scrollPosition = ((todayPos - domain[0]) / domainRange) * scrollWidth - (containerWidth / 2);
+        
+        container.scrollLeft = Math.max(0, scrollPosition);
+      }
+    }
+  };
+
+  // Executar auto-scroll quando os dados mudarem ou a unidade de tempo mudar
+  useEffect(() => {
+    scrollToToday();
+  }, [ganttData.length, timeUnit]);
 
   // Função para obter cor baseada no status
   const getBarColor = (status: string, isSelected: boolean) => {
@@ -352,6 +365,15 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={scrollToToday}
+                  className="flex items-center gap-2"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  Voltar para Hoje
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                   className="flex items-center gap-2"
                 >
@@ -371,49 +393,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
               </div>
             </div>
             
-            {/* Filtros de Data */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Período:</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-40 justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "dd/MM/yyyy") : "Data início"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="pointer-events-auto" />
-                  </PopoverContent>
-                </Popover>
-                
-                <span className="text-muted-foreground">até</span>
-                
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-40 justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "dd/MM/yyyy") : "Data fim"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus className="pointer-events-auto" />
-                  </PopoverContent>
-                </Popover>
-                
-                {(startDate || endDate) && <Button variant="ghost" size="sm" onClick={() => {
-              setStartDate(undefined);
-              setEndDate(undefined);
-            }}>
-                    <X className="h-4 w-4" />
-                  </Button>}
-              </div>
-            </div>
           </div>
         </CardHeader>
       <CardContent>
-        <div className="w-full max-h-[600px] overflow-y-auto overflow-x-hidden">
-          <div className="flex" style={{ height: `${chartHeight}px` }}>
+        <div className="w-full max-h-[600px] overflow-y-auto overflow-x-auto" ref={chartContainerRef}>
+          <div className="flex" style={{ 
+            height: `${chartHeight}px`,
+            minWidth: '2000px'
+          }}>
             {/* Área de seleção das remessas */}
             {onToggleSelection && (
               <div className="w-32 flex flex-col">
@@ -444,38 +431,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
               bottom: 5
             }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" orientation="top" domain={(() => {
-                if (startDate && endDate) {
-                  // Se há filtro de data, usar o range filtrado
-                  const baseDate = getBaseDate();
-                  let domainStart: number;
-                  let domainEnd: number;
-                  
-                  if (timeUnit === 'semanas') {
-                    const filterStartWeek = startOfWeek(startDate, {
-                      locale: ptBR
-                    });
-                    const filterEndWeek = startOfWeek(endDate, {
-                      locale: ptBR
-                    });
-                    domainStart = Math.floor(differenceInDays(filterStartWeek, baseDate) / 7);
-                    domainEnd = Math.floor(differenceInDays(filterEndWeek, baseDate) / 7) + 1;
-                  } else if (timeUnit === 'meses') {
-                    const filterStartMonth = startOfMonth(startDate);
-                    const filterEndMonth = startOfMonth(endDate);
-                    domainStart = (filterStartMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterStartMonth.getMonth() - baseDate.getMonth());
-                    domainEnd = (filterEndMonth.getFullYear() - baseDate.getFullYear()) * 12 + (filterEndMonth.getMonth() - baseDate.getMonth()) + 1;
-                  } else {
-                    domainStart = differenceInDays(startOfDay(startDate), baseDate);
-                    domainEnd = differenceInDays(endOfDay(endDate), baseDate) + 1;
-                  }
-                  
-                  return [domainStart, domainEnd];
-                } else {
-                  // Sem filtro de data, garantir que todas as barras sejam visíveis
-                  return getFullXAxisDomain();
-                }
-              })()} tickFormatter={formatXAxisTick} tick={{
+                <XAxis type="number" orientation="top" domain={getFullXAxisDomain()} tickFormatter={formatXAxisTick} tick={{
                 fontSize: 12
               }} />
                 <YAxis type="category" dataKey="name" hide />
