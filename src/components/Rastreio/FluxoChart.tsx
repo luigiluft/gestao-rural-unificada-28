@@ -66,18 +66,19 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="w-full" style={{ height: Math.max(400, data.length * 40) }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 80,
-              }}
-              barCategoryGap="15%"
-            >
+        <div className="w-full h-[500px] overflow-y-auto overflow-x-hidden">
+          <div style={{ height: Math.max(400, data.length * 50 + 150), minHeight: 400 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 80,
+                }}
+                barSize={35}
+              >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="produto" 
@@ -130,6 +131,7 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
               />
             </BarChart>
           </ResponsiveContainer>
+          </div>
         </div>
       </CardContent>
     </Card>
