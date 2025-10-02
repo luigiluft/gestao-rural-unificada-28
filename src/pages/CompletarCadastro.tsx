@@ -2,6 +2,18 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Helper para redirecionar de forma compatível com Lovable
+const redirect = (path: string) => {
+  const isLovable = window.location.hostname.endsWith('lovableproject.com') || 
+                    window.location.search.includes('__lovable_token');
+  
+  if (isLovable) {
+    window.location.hash = path.startsWith('/') ? `#${path}` : `#/${path}`;
+  } else {
+    window.location.href = path;
+  }
+};
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +76,7 @@ export default function CompletarCadastro() {
       
       // Recarregar a página para atualizar as permissões
       setTimeout(() => {
-        window.location.href = "/";
+        redirect("/");
       }, 1000);
 
     } catch (error) {

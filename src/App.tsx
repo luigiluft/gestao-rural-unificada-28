@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Index from "./pages/Index";
@@ -90,10 +90,15 @@ const App = () => {
     initializePWAElements();
   }, []);
 
+  // Detectar se está rodando no Lovable
+  const isLovable = window.location.hostname.endsWith('lovableproject.com') || 
+                    window.location.search.includes('__lovable_token');
+  const Router = isLovable ? HashRouter : BrowserRouter;
+
   return (
     <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <BrowserRouter>
+      <Router>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -167,7 +172,7 @@ const App = () => {
             </Route>
           </Routes>
         </TooltipProvider>
-      </BrowserRouter>
+      </Router>
     </AuthProvider>
   </QueryClientProvider>
   );

@@ -2,6 +2,18 @@ import { createContext, useContext, useEffect, useMemo, useState, ReactNode } fr
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+// Helper para redirecionar de forma compatível com Lovable
+const redirect = (path: string) => {
+  const isLovable = window.location.hostname.endsWith('lovableproject.com') || 
+                    window.location.search.includes('__lovable_token');
+  
+  if (isLovable) {
+    window.location.hash = path.startsWith('/') ? `#${path}` : `#/${path}`;
+  } else {
+    window.location.href = path;
+  }
+};
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
@@ -61,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (needsCompletion && window.location.pathname !== '/completar-cadastro') {
           console.log('🔄 Redirecting to complete registration');
           setTimeout(() => {
-            window.location.href = '/completar-cadastro';
+            redirect('/completar-cadastro');
           }, 100);
           isCheckingProfile = false;
           return;
@@ -133,13 +145,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       
       // Redirect to auth page
-      window.location.href = "/auth";
+      redirect("/auth");
     } catch (error) {
       console.error('Erro no logout:', error);
       // Even if signOut fails, clear local state and redirect
       setUser(null);
       setSession(null);
-      window.location.href = "/auth";
+      redirect("/auth");
     }
   };
 
