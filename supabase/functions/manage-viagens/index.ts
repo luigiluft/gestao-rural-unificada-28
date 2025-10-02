@@ -236,7 +236,7 @@ async function confirmViagem(supabase: any, userId: string, viagemId: string) {
   const { data: viagem, error } = await supabase
     .from('viagens')
     .update({
-      status: 'confirmada',
+      status: 'entregue',
       data_confirmacao: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })

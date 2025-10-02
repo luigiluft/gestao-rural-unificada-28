@@ -157,7 +157,7 @@ export const useFinalizarViagem = () => {
       const { error } = await supabase
         .from("viagens")
         .update({
-          status: "finalizada",
+          status: "entregue",
           data_fim: new Date().toISOString(),
           hodometro_fim: hodometroFim,
           combustivel_fim: combustivelFim,

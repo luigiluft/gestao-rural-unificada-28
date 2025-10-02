@@ -25,7 +25,8 @@ const Viagens = () => {
   const statusBadges = {
     planejada: { label: 'Planejada', variant: 'secondary' as const },
     em_andamento: { label: 'Em Andamento', variant: 'default' as const },
-    concluida: { label: 'Concluída', variant: 'outline' as const },
+    entregue: { label: 'Entregue', variant: 'outline' as const },
+    confirmada: { label: 'Entregue', variant: 'outline' as const },
     cancelada: { label: 'Cancelada', variant: 'destructive' as const }
   };
 
@@ -37,7 +38,10 @@ const Viagens = () => {
   });
 
   const calcularProgresso = (viagem: any) => {
-    return viagem.progresso || 0;
+    if (viagem.status === 'entregue' || viagem.status === 'confirmada') return 100;
+    if (viagem.status === 'em_andamento') return 50;
+    if (viagem.status === 'planejada') return 10;
+    return 0;
   };
 
   const handleViagemClick = (viagem: any) => {
@@ -78,7 +82,7 @@ const Viagens = () => {
             <SelectItem value="all">Todos os Status</SelectItem>
             <SelectItem value="planejada">Planejada</SelectItem>
             <SelectItem value="em_andamento">Em Andamento</SelectItem>
-            <SelectItem value="concluida">Concluída</SelectItem>
+            <SelectItem value="entregue">Entregue</SelectItem>
             <SelectItem value="cancelada">Cancelada</SelectItem>
           </SelectContent>
         </Select>
@@ -108,11 +112,11 @@ const Viagens = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
+            <CardTitle className="text-sm font-medium">Entregues</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{viagens.filter(v => v.status === 'concluida').length}</div>
+            <div className="text-2xl font-bold">{viagens.filter(v => v.status === 'entregue' || v.status === 'confirmada').length}</div>
             <p className="text-xs text-muted-foreground">Este mês</p>
           </CardContent>
         </Card>

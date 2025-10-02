@@ -71,15 +71,14 @@ const ProofOfDelivery = () => {
     )
   }
 
-  const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'pendente' || v.status === 'em_andamento')
-  const viagensFinalizadas = viagens.filter(v => v.status === 'finalizada')
-  const viagensEntregues = viagens.filter(v => v.status === 'entregue')
+  const viagensPendentes = viagens.filter(v => v.status === 'planejada' || v.status === 'em_andamento')
+  const viagensEntregues = viagens.filter(v => v.status === 'entregue' || v.status === 'confirmada')
 
   // Debug logging
   console.log('🚛 Total viagens:', viagens.length)
   console.log('🚛 Viagens por status:', viagens.map(v => ({ id: v.id, status: v.status, numero: v.numero })))
   console.log('🚛 Viagens pendentes:', viagensPendentes.length)
-  console.log('🚛 Viagens finalizadas:', viagensFinalizadas.length)
+  console.log('🚛 Viagens entregues:', viagensEntregues.length)
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,26 +138,6 @@ const ProofOfDelivery = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {viagensPendentes.map((viagem) => (
-                    <ViagemCard
-                      key={viagem.id}
-                      viagem={viagem}
-                      onVerFotos={(id) => setShowPhotoUpload(id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Seção 'Em Andamento' removida conforme solicitação */}
-            {/* Viagens Finalizadas */}
-            {viagensFinalizadas.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-purple-600" />
-                  <h2 className="text-xl font-semibold">Aguardando Comprovante ({viagensFinalizadas.length})</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {viagensFinalizadas.map((viagem) => (
                     <ViagemCard
                       key={viagem.id}
                       viagem={viagem}

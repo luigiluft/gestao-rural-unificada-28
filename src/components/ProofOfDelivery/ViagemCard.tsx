@@ -47,10 +47,9 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'planejada': return 'secondary'
-      case 'pendente': return 'secondary'
       case 'em_andamento': return 'default'
-      case 'finalizada': return 'outline'
       case 'entregue': return 'outline'
+      case 'confirmada': return 'outline' // Sinônimo de entregue
       default: return 'secondary'
     }
   }
@@ -58,21 +57,19 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'planejada': return Clock
-      case 'pendente': return Clock
       case 'em_andamento': return Truck
-      case 'finalizada': return CheckSquare
       case 'entregue': return Package
+      case 'confirmada': return Package // Sinônimo de entregue
       default: return Clock
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'planejada': return 'Aguardando Início'
-      case 'pendente': return 'Aguardando Início'
+      case 'planejada': return 'Planejada'
       case 'em_andamento': return 'Em Andamento'
-      case 'finalizada': return 'Finalizada'
       case 'entregue': return 'Entregue'
+      case 'confirmada': return 'Entregue' // Sinônimo de entregue
       default: return status
     }
   }
@@ -102,9 +99,9 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
   }
 
   const StatusIcon = getStatusIcon(viagem.status)
-  const canStart = viagem.status === 'planejada' || viagem.status === 'pendente'
+  const canStart = viagem.status === 'planejada'
   const canFinalize = viagem.status === 'em_andamento'
-  const canViewPhotos = viagem.status === 'em_andamento' || viagem.status === 'finalizada'
+  const canViewPhotos = viagem.status === 'em_andamento'
 
   return (
     <Card className="hover:shadow-md transition-shadow">
