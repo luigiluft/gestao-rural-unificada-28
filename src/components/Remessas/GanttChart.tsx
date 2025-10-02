@@ -396,35 +396,33 @@ const GanttChart: React.FC<GanttChartProps> = ({
   return <Card>
         <CardHeader>
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Cronograma de Entregas</CardTitle>
-                <CardDescription>
-                  Visualização das janelas de entrega das remessas expedidas
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={scrollToToday} className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4" />
-                  Voltar para Hoje
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="flex items-center gap-2">
-                  <ArrowUpDown className="h-4 w-4" />
-                  {sortOrder === 'asc' ? 'Mais próximas primeiro' : 'Mais distantes primeiro'}
-                </Button>
-                <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Unidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dias">Dias</SelectItem>
-                    <SelectItem value="semanas">Semanas</SelectItem>
-                    <SelectItem value="meses">Meses</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <CardTitle>Cronograma de Entregas</CardTitle>
+              <CardDescription>
+                Visualização das janelas de entrega das remessas expedidas
+              </CardDescription>
             </div>
             
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={scrollToToday} className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Voltar para Hoje
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                {sortOrder === 'asc' ? 'Mais próximas primeiro' : 'Mais distantes primeiro'}
+              </Button>
+              <Select value={timeUnit} onValueChange={(value: TimeUnit) => setTimeUnit(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dias">Dias</SelectItem>
+                  <SelectItem value="semanas">Semanas</SelectItem>
+                  <SelectItem value="meses">Meses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
       <CardContent>
