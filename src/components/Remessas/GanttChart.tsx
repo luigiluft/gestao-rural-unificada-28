@@ -427,12 +427,18 @@ const GanttChart: React.FC<GanttChartProps> = ({
             {/* Área do gráfico */}
             <div className="flex-1" style={{ minHeight: `${chartHeight}px` }}>
               <ResponsiveContainer width="100%" height={chartHeight}>
-              <BarChart data={ganttData} layout="vertical" margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 5
-            }}>
+              <BarChart 
+                data={ganttData} 
+                layout="vertical" 
+                barCategoryGap={0}
+                barGap={0}
+                margin={{
+                  top: 20,
+                  right: 30,
+                  left: 20,
+                  bottom: 5
+                }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis type="number" orientation="top" domain={(() => {
                 if (!startDate || !endDate) {
