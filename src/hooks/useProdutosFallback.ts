@@ -7,7 +7,7 @@ export const useProdutosFallback = () => {
     queryFn: async () => {
       const { data: produtos, error } = await supabase
         .from("produtos")
-        .select("id, nome, unidade_medida")
+        .select("id, nome, unidade_medida, package_capacity, containers_per_package")
         .eq("ativo", true)
         .order("nome")
 
