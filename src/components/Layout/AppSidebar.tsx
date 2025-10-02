@@ -167,7 +167,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="w-56 lg:w-64" collapsible="none">
+    <Sidebar className="w-56 lg:w-64" collapsible="offcanvas">
       <SidebarContent className="bg-gradient-card">
         {/* Logo/Brand */}
         <div className="p-4 border-b border-border">
