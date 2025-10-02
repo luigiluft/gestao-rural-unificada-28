@@ -2118,6 +2118,65 @@ export type Database = {
           },
         ]
       }
+      saida_item_referencias: {
+        Row: {
+          created_at: string
+          data_validade: string | null
+          entrada_item_id: string
+          id: string
+          lote: string | null
+          quantidade: number
+          saida_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_validade?: string | null
+          entrada_item_id: string
+          id?: string
+          lote?: string | null
+          quantidade: number
+          saida_item_id: string
+        }
+        Update: {
+          created_at?: string
+          data_validade?: string | null
+          entrada_item_id?: string
+          id?: string
+          lote?: string | null
+          quantidade?: number
+          saida_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_entrada_item"
+            columns: ["entrada_item_id"]
+            isOneToOne: false
+            referencedRelation: "entrada_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_saida_item"
+            columns: ["saida_item_id"]
+            isOneToOne: false
+            referencedRelation: "saida_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saida_item_referencias_entrada_item_id_fkey"
+            columns: ["entrada_item_id"]
+            isOneToOne: false
+            referencedRelation: "entrada_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saida_item_referencias_saida_item_id_fkey"
+            columns: ["saida_item_id"]
+            isOneToOne: false
+            referencedRelation: "saida_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saida_itens: {
         Row: {
           created_at: string
@@ -3196,6 +3255,15 @@ export type Database = {
       reset_wave_positions: {
         Args: { p_wave_id: string }
         Returns: boolean
+      }
+      validar_e_alocar_estoque_fefo: {
+        Args: {
+          p_deposito_id: string
+          p_produto_id: string
+          p_quantidade_necessaria: number
+          p_saida_item_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
