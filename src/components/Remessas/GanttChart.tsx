@@ -51,7 +51,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
   const getBaseDate = (): Date => {
     const remessasValidas = remessas.filter(r => r.data_inicio_janela && r.data_fim_janela);
     if (!remessasValidas.length) return new Date();
-    
     const allDates = remessasValidas.flatMap(r => {
       try {
         const startDate = new Date(r.data_inicio_janela + 'T00:00:00');
@@ -61,13 +60,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
         return [];
       }
     }).filter(date => !isNaN(date.getTime()));
-    
     if (!allDates.length) return new Date();
-    
     const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-    
     if (timeUnit === 'semanas') {
-      return startOfWeek(minDate, { locale: ptBR });
+      return startOfWeek(minDate, {
+        locale: ptBR
+      });
     } else if (timeUnit === 'meses') {
       return startOfMonth(minDate);
     } else {
@@ -144,7 +142,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
       }
     });
   };
-  
+
   // Aplicar ordenação aos dados do gráfico
   const ganttData = prepareGanttData().sort((a, b) => {
     if (sortOrder === 'asc') {
@@ -162,14 +160,17 @@ const GanttChart: React.FC<GanttChartProps> = ({
     try {
       const today = new Date();
       const baseDate = getBaseDate();
-      
+
       // Definir range: 6 meses antes de hoje e 12 meses depois
       const startRange = addMonths(today, -6);
       const endRange = addMonths(today, 12);
-      
       if (timeUnit === 'semanas') {
-        const startWeek = startOfWeek(startRange, { locale: ptBR });
-        const endWeek = startOfWeek(endRange, { locale: ptBR });
+        const startWeek = startOfWeek(startRange, {
+          locale: ptBR
+        });
+        const endWeek = startOfWeek(endRange, {
+          locale: ptBR
+        });
         const minPos = Math.floor(differenceInDays(startWeek, baseDate) / 7);
         const maxPos = Math.floor(differenceInDays(endWeek, baseDate) / 7);
         return [minPos, maxPos];
@@ -217,7 +218,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
   const calculateChartWidth = (): number => {
     const domain = getFullXAxisDomain();
     const domainRange = domain[1] - domain[0];
-    
     switch (timeUnit) {
       case 'dias':
         // 45 pixels por dia para boa legibilidade
@@ -242,15 +242,14 @@ const GanttChart: React.FC<GanttChartProps> = ({
           const container = chartContainerRef.current;
           const domain = getFullXAxisDomain();
           const domainRange = domain[1] - domain[0];
-          
+
           // Calcular a posição em pixels baseado na proporção
           const scrollWidth = container.scrollWidth;
           const containerWidth = container.clientWidth;
-          
+
           // Normalizar todayPos em relação ao domain
           const normalizedPos = (todayPos - domain[0]) / domainRange;
-          const scrollPosition = (normalizedPos * scrollWidth) - (containerWidth / 2);
-          
+          const scrollPosition = normalizedPos * scrollWidth - containerWidth / 2;
           container.scrollLeft = Math.max(0, scrollPosition);
         }
       }
@@ -405,21 +404,11 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={scrollToToday}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={scrollToToday} className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
                   Voltar para Hoje
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" size="sm" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="flex items-center gap-2">
                   <ArrowUpDown className="h-4 w-4" />
                   {sortOrder === 'asc' ? 'Mais próximas primeiro' : 'Mais distantes primeiro'}
                 </Button>
@@ -441,53 +430,46 @@ const GanttChart: React.FC<GanttChartProps> = ({
       <CardContent>
         <div className="flex w-full max-h-[600px]">
           {/* Coluna fixa de remessas */}
-          {onToggleSelection && (
-            <div className="w-32 flex-shrink-0 border-r border-border overflow-y-auto">
+          {onToggleSelection && <div className="w-32 flex-shrink-0 border-r border-border overflow-y-auto">
               <div className="text-sm font-medium text-muted-foreground mb-2 px-2 py-1 bg-background sticky top-0 z-10">
                 Remessas
               </div>
               <div className="flex flex-col">
-                {ganttData.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 px-2" style={{ height: `${BAR_HEIGHT}px` }}>
-                    <Checkbox 
-                      checked={item.isSelected} 
-                      onCheckedChange={() => onToggleSelection(item.id)} 
-                    />
+                {ganttData.map(item => <div key={item.id} className="flex items-center gap-2 px-2" style={{
+              height: `${BAR_HEIGHT}px`
+            }}>
+                    <Checkbox checked={item.isSelected} onCheckedChange={() => onToggleSelection(item.id)} />
                     <span className="text-xs">{item.name}</span>
-                  </div>
-                ))}
+                  </div>)}
               </div>
-            </div>
-          )}
+            </div>}
           
           {/* Container com scroll horizontal - só o gráfico */}
           <div className="flex-1 overflow-x-auto overflow-y-auto" ref={chartContainerRef}>
-            <div style={{ height: `${chartHeight}px`, width: `${calculateChartWidth()}px` }}>
+            <div style={{
+            height: `${chartHeight}px`,
+            width: `${calculateChartWidth()}px`
+          }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ganttData} layout="vertical" margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 5
-                }}>
+                top: 20,
+                right: 30,
+                left: 20,
+                bottom: 5
+              }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    type="number" 
-                    orientation="top" 
-                    domain={getFullXAxisDomain()} 
-                    tickFormatter={formatXAxisTick}
-                    tickCount={timeUnit === 'dias' ? 30 : timeUnit === 'semanas' ? 20 : 12}
-                    tick={{ fontSize: 12 }}
-                  />
+                  <XAxis type="number" orientation="top" domain={getFullXAxisDomain()} tickFormatter={formatXAxisTick} tickCount={timeUnit === 'dias' ? 30 : timeUnit === 'semanas' ? 20 : 12} tick={{
+                  fontSize: 12
+                }} />
                   <YAxis type="category" dataKey="name" hide />
                   <Tooltip content={<CustomTooltip />} />
                   
                   {/* Linha indicando hoje */}
                   {todayPosition !== null && <ReferenceLine x={todayPosition} stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="4 4" label={{
-                    value: "Hoje",
-                    position: "top",
-                    fill: "hsl(var(--destructive))"
-                  }} />}
+                  value: "Hoje",
+                  position: "top",
+                  fill: "hsl(var(--destructive))"
+                }} />}
                   
                   {/* Barra invisível para posicionar o início */}
                   <Bar dataKey="start" stackId="gantt" fill="transparent" />
@@ -503,30 +485,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
         </div>
         
         {/* Legenda */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{
-            backgroundColor: 'hsl(var(--primary))'
-          }} />
-            <span className="text-sm text-muted-foreground">Expedido</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{
-            backgroundColor: 'hsl(var(--success))'
-          }} />
-            <span className="text-sm text-muted-foreground">Entregue</span>
-          </div>
-          {onToggleSelection && <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border-2" style={{
-            backgroundColor: 'hsl(var(--accent))',
-            borderColor: 'hsl(var(--accent-foreground))'
-          }} />
-              <span className="text-sm text-muted-foreground">Selecionada</span>
-            </div>}
-          {onToggleSelection && <div className="text-sm text-muted-foreground ml-auto">
-              Use as caixas de seleção à esquerda para selecionar remessas
-            </div>}
-        </div>
+        
       </CardContent>
     </Card>;
 };
