@@ -41,6 +41,7 @@ export const useNotifications = () => {
       let remessas = 0
       let suporte = 0
       let subcontas = 0
+      let viagens = 0
 
       try {
         // RECEBIMENTO: For franqueados - entradas nos 4 status da página recebimento
@@ -199,6 +200,30 @@ export const useNotifications = () => {
           remessas = remessasCount || 0
         }
 
+        // VIAGENS: For franqueados - planned/pending trips in their deposits
+        if (isFranqueado || isAdmin) {
+          let viagensQuery = supabase
+            .from("viagens")
+            .select("id", { count: "exact" })
+            .in("status", ["planejada", "pendente"])
+
+          if (!isAdmin) {
+            // Filter by franquias owned by this franqueado
+            const { data: franquias } = await supabase
+              .from("franquias")
+              .select("id")
+              .eq("master_franqueado_id", user.id)
+            
+            const franquiaIds = franquias?.map(f => f.id) || []
+            if (franquiaIds.length > 0) {
+              viagensQuery = viagensQuery.in("deposito_id", franquiaIds)
+            }
+          }
+
+          const { count: viagensCount } = await viagensQuery
+          viagens = viagensCount || 0
+        }
+
         // SUPORTE: Open support tickets for current user
         const { count: suporteCount } = await supabase
           .from("chamados_suporte")
@@ -239,7 +264,7 @@ export const useNotifications = () => {
         remessas,
         suporte,
         subcontas,
-        viagens: motoristaNotifications,
+        viagens: viagens + motoristaNotifications, // Combine franqueado trips + motorista trips
       }
     },
     enabled: !!user?.id,
