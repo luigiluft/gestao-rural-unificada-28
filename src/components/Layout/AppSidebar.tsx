@@ -123,7 +123,7 @@ export function AppSidebar() {
         return notifications.suporte || 0
       case "Subcontas":
         return notifications.subcontas || 0
-      case "Viagens":
+      case "Planejamento":
         return notifications.viagens || 0
       case "Proof of Delivery":
         return notifications.viagens || 0

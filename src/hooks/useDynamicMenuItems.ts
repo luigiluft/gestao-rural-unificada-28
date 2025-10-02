@@ -61,7 +61,7 @@ const menuLabels = {
   'expedicao': 'Expedição',
   'divergencias': 'Divergências',
   'remessas': 'Remessas',
-  'viagens': 'Viagens',
+  'viagens': 'Planejamento',
   'proof-of-delivery': 'Prova de Entrega',
   'comprovantes': 'Comprovantes',
   'ocorrencias': 'Ocorrências',
