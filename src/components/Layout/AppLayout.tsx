@@ -61,7 +61,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <TutorialProvider>
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={false}>
         <AppLayoutContent>
           {children}
         </AppLayoutContent>

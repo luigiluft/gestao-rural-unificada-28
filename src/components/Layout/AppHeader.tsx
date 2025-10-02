@@ -77,7 +77,7 @@ export function AppHeader() {
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 shadow-card">
       {/* Left side - Menu toggle and Role indicator */}
       <div className="flex items-center gap-4 flex-1">
-        <SidebarTrigger className="md:hidden" />
+        <SidebarTrigger />
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Visão:</span>
           <Badge variant="secondary">{roleLabel}</Badge>
