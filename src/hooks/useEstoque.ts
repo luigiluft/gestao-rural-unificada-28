@@ -13,6 +13,8 @@ export interface EstoqueItem {
     nome: string
     codigo?: string
     unidade_medida: string
+    package_capacity?: number
+    containers_per_package?: number
   }
   franquias?: {
     nome: string
