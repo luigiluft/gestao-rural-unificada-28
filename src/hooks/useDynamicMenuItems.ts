@@ -61,7 +61,8 @@ const menuLabels = {
   'expedicao': 'Expedição',
   'divergencias': 'Divergências',
   'remessas': 'Remessas',
-  'viagens': 'Planejamento',
+  'planejamento': 'Planejamento',
+  'viagens': 'Viagens',
   'proof-of-delivery': 'Prova de Entrega',
   'comprovantes': 'Comprovantes',
   'ocorrencias': 'Ocorrências',
@@ -100,7 +101,8 @@ const iconMap = {
   'expedicao': Truck,
   'divergencias': AlertCircle,
   'remessas': Ship,
-  'viagens': MapPin,
+  'planejamento': MapPin,
+  'viagens': Truck,
   'proof-of-delivery': FileCheck,
   'comprovantes': Receipt,
   'ocorrencias': AlertTriangle,
@@ -164,6 +166,7 @@ export const useDynamicMenuItems = () => {
     // Páginas do TMS
     const tmsPages = [
       'remessas',
+      'planejamento',
       'viagens',
       'proof-of-delivery',
       'comprovantes',

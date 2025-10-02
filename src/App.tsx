@@ -37,6 +37,7 @@ import Inventario from "./pages/Inventario";
 import Remessas from "./pages/Remessas";
 
 import Viagens from "./pages/Viagens";
+import Planejamento from "./pages/Planejamento";
 import Agenda from "./pages/Agenda";
 import Tracking from "./pages/Tracking";
 import ProofOfDelivery from "./pages/ProofOfDelivery";
@@ -141,6 +142,7 @@ const App = () => {
               
               <Route path="remessas" element={<RequirePageAccess pageKey="remessas"><Remessas /></RequirePageAccess>} />
               
+              <Route path="planejamento" element={<RequirePageAccess pageKey="viagens"><Planejamento /></RequirePageAccess>} />
               <Route path="viagens" element={<RequirePageAccess pageKey="viagens"><Viagens /></RequirePageAccess>} />
               <Route path="veiculos" element={<RequirePageAccess pageKey="veiculos"><Veiculos /></RequirePageAccess>} />
               <Route path="motoristas" element={<RequirePageAccess pageKey="motoristas"><Motoristas /></RequirePageAccess>} />
