@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { ViagemMotorista } from '@/hooks/useMotoristaViagens'
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { useFinalizarViagemAposComprovante } from '@/hooks/useFinalizarViagemAposComprovante'
 
 interface MotoristaPhotoUploadProps {
   viagem: ViagemMotorista
@@ -46,6 +47,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
   const [isProcessingExif, setIsProcessingExif] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
+  const finalizarViagemMutation = useFinalizarViagemAposComprovante()
 
   // Buscar comprovante existente para esta viagem
   const { data: comprovante } = useQuery({
@@ -405,32 +407,20 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         throw new Error(updateData?.error || updateError?.message || 'Erro ao atualizar comprovante')
       }
 
-      // Marcar viagem como entregue se estiver finalizada via Edge Function
-      if (viagem.status === 'finalizada') {
-        const viagemPayload = {
-          action: 'update',
-          data: {
-            id: viagem.id,
-            status: 'entregue',
-            updated_at: new Date().toISOString()
-          }
-        }
-        console.log('[POD] manage-viagens payload', viagemPayload)
-        const { data: viagemData, error: viagemError } = await supabase.functions.invoke('manage-viagens', {
-          body: viagemPayload
-        })
-        console.log('[POD] manage-viagens result', { viagemData, viagemError })
-
-        if (viagemError || !viagemData?.success) {
-          console.error('[POD] Erro ao atualizar viagem', viagemError || viagemData)
-          throw new Error(viagemData?.error || viagemError?.message || 'Erro ao atualizar viagem')
-        }
-      }
-
       return comprovanteId
     },
-    onSuccess: () => {
-      toast.success('Comprovante enviado com sucesso! Viagem marcada como entregue.')
+    onSuccess: async () => {
+      toast.success('Comprovante enviado com sucesso!')
+      
+      // Finalizar viagem automaticamente após envio do comprovante
+      console.log('[POD] Finalizando viagem após comprovante', { viagemId: viagem.id, status: viagem.status })
+      try {
+        await finalizarViagemMutation.mutateAsync({ viagemId: viagem.id })
+      } catch (error) {
+        console.error('[POD] Erro ao finalizar viagem:', error)
+        // Não bloquear o fluxo se falhar a finalização
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['motorista-viagens'] })
       queryClient.invalidateQueries({ queryKey: ['comprovante-viagem', viagem.id] })
       onVoltar()

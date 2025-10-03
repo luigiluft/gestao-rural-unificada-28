@@ -49,6 +49,9 @@ serve(async (req) => {
       case 'iniciar_viagem':
         result = await iniciarViagem(supabaseClient, user.id, data.id)
         break
+      case 'finalizar_viagem':
+        result = await finalizarViagem(supabaseClient, user.id, data.viagemId)
+        break
       case 'delete':
         result = await deleteViagem(supabaseClient, user.id, data.id)
         break
@@ -227,6 +230,46 @@ async function iniciarViagem(supabase: any, userId: string, viagemId: string) {
 
   if (error) throw error
   return viagem
+}
+
+async function finalizarViagem(supabase: any, userId: string, viagemId: string) {
+  // Buscar motorista do usuário atual
+  const { data: motorista, error: motoristaError } = await supabase
+    .from('motoristas')
+    .select('id')
+    .eq('auth_user_id', userId)
+    .single()
+
+  if (motoristaError || !motorista) {
+    throw new Error('Motorista não encontrado')
+  }
+
+  // Verificar se a viagem pertence a este motorista
+  const { data: viagem, error: viagemError } = await supabase
+    .from('viagens')
+    .select('*')
+    .eq('id', viagemId)
+    .eq('motorista_id', motorista.id)
+    .single()
+
+  if (viagemError || !viagem) {
+    throw new Error('Viagem não encontrada ou não autorizada')
+  }
+
+  // Atualizar viagem para entregue
+  const { data: viagemAtualizada, error: updateError } = await supabase
+    .from('viagens')
+    .update({
+      status: 'entregue',
+      data_fim: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', viagemId)
+    .select()
+    .single()
+
+  if (updateError) throw updateError
+  return viagemAtualizada
 }
 
 async function deleteViagem(supabase: any, userId: string, viagemId: string) {
