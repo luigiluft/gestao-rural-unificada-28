@@ -409,21 +409,33 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
 
       return comprovanteId
     },
-    onSuccess: async () => {
+    onSuccess: async (comprovanteId) => {
+      console.log('[POD] Comprovante criado com sucesso, ID:', comprovanteId)
       toast.success('Comprovante enviado com sucesso!')
       
       // Finalizar viagem automaticamente após envio do comprovante
-      console.log('[POD] Finalizando viagem após comprovante', { viagemId: viagem.id, status: viagem.status })
+      console.log('[POD] Iniciando finalização da viagem', { 
+        viagemId: viagem.id, 
+        status: viagem.status,
+        numero: viagem.numero 
+      })
+      
       try {
-        await finalizarViagemMutation.mutateAsync({ viagemId: viagem.id })
+        const result = await finalizarViagemMutation.mutateAsync({ viagemId: viagem.id })
+        console.log('[POD] Viagem finalizada com sucesso:', result)
+        toast.success('Viagem marcada como entregue!')
       } catch (error) {
-        console.error('[POD] Erro ao finalizar viagem:', error)
-        // Não bloquear o fluxo se falhar a finalização
+        console.error('[POD] ERRO ao finalizar viagem:', error)
+        toast.error('Comprovante enviado, mas houve erro ao finalizar a viagem. Tente finalizar manualmente.')
       }
       
       queryClient.invalidateQueries({ queryKey: ['motorista-viagens'] })
       queryClient.invalidateQueries({ queryKey: ['comprovante-viagem', viagem.id] })
-      onVoltar()
+      
+      // Pequeno delay antes de voltar para dar tempo das queries atualizarem
+      setTimeout(() => {
+        onVoltar()
+      }, 1000)
     },
     onError: (error: any) => {
       console.error('Erro ao enviar fotos:', error)

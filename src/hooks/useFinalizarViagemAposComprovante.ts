@@ -20,18 +20,29 @@ export const useFinalizarViagemAposComprovante = () => {
         }
       })
 
-      console.log('[Finalizar Viagem] Resposta da Edge Function', { data, error })
+      console.log('[Finalizar Viagem] Resposta completa da Edge Function', { 
+        data, 
+        error,
+        hasData: !!data,
+        hasError: !!error,
+        dataSuccess: data?.success,
+        dataError: data?.error
+      })
 
       if (error) {
-        console.error('[Finalizar Viagem] Erro na Edge Function', error)
-        throw error
+        console.error('[Finalizar Viagem] Erro HTTP na chamada da Edge Function', error)
+        throw new Error(`Erro HTTP: ${error.message || JSON.stringify(error)}`)
       }
 
       if (!data?.success) {
-        console.error('[Finalizar Viagem] Edge Function retornou erro', data)
+        console.error('[Finalizar Viagem] Edge Function retornou erro no payload', {
+          data,
+          errorMessage: data?.error
+        })
         throw new Error(data?.error || 'Erro ao finalizar viagem')
       }
 
+      console.log('[Finalizar Viagem] Viagem finalizada com sucesso na Edge Function', data.data)
       return data.data
     },
     onSuccess: () => {
