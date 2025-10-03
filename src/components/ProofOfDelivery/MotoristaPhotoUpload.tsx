@@ -103,16 +103,17 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     }
   }
 
-  // Obter localização atual
+  // Obter localização atual e data
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          const now = new Date()
           setCurrentLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude
           })
-          toast.success('Localização capturada com sucesso!')
+          toast.success(`Localização e data capturadas: ${now.toLocaleString('pt-BR')}`)
         },
         (error) => {
           console.error('Erro ao obter localização:', error)
@@ -214,11 +215,12 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     setSelectedPhotos(newPhotos)
   }
 
-  // Mutation para upload de fotos
+  // Mutation para upload de fotos - agora permite enviar sem foto
   const uploadPhotosMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedPhotos || selectedPhotos.length === 0) {
-        throw new Error('Selecione pelo menos uma foto')
+      // Permitir envio sem fotos se tiver localização
+      if (!currentLocation && selectedPhotos.length === 0) {
+        throw new Error('Capture a localização e data ou adicione pelo menos uma foto')
       }
 
       // Criar ou atualizar comprovante via Edge Function
@@ -248,41 +250,43 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         comprovanteId = comprovanteData.data.id
       }
 
-      // Upload das fotos via Edge Function
-      for (const [index, photo] of selectedPhotos.entries()) {
-        const fileExt = photo.file.name.split('.').pop()
-        const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
-        const filePath = `comprovantes/${fileName}`
+      // Upload das fotos via Edge Function (se houver)
+      if (selectedPhotos.length > 0) {
+        for (const [index, photo] of selectedPhotos.entries()) {
+          const fileExt = photo.file.name.split('.').pop()
+          const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
+          const filePath = `comprovantes/${fileName}`
 
-        const { error: uploadError } = await supabase.storage
-          .from('comprovantes')
-          .upload(filePath, photo.file)
+          const { error: uploadError } = await supabase.storage
+            .from('comprovantes')
+            .upload(filePath, photo.file)
 
-        if (uploadError) throw uploadError
+          if (uploadError) throw uploadError
 
-        // Obter URL pública
-        const { data: { publicUrl } } = supabase.storage
-          .from('comprovantes')
-          .getPublicUrl(filePath)
+          // Obter URL pública
+          const { data: { publicUrl } } = supabase.storage
+            .from('comprovantes')
+            .getPublicUrl(filePath)
 
-        // Salvar registro da foto via Edge Function
-        const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
-          body: {
-            action: 'uploadPhoto',
-            data: {
-              comprovante_id: comprovanteId,
-              url_foto: publicUrl,
-              tipo: 'entrega',
-              descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
-              latitude: photo.exifData?.latitude,
-              longitude: photo.exifData?.longitude,
-              data_foto: photo.exifData?.dateTime?.toISOString()
+          // Salvar registro da foto via Edge Function
+          const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
+            body: {
+              action: 'uploadPhoto',
+              data: {
+                comprovante_id: comprovanteId,
+                url_foto: publicUrl,
+                tipo: 'entrega',
+                descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
+                latitude: photo.exifData?.latitude,
+                longitude: photo.exifData?.longitude,
+                data_foto: photo.exifData?.dateTime?.toISOString()
+              }
             }
-          }
-        })
+          })
 
-        if (fotoError || !fotoData?.success) {
-          throw new Error(fotoData?.error || 'Erro ao salvar foto')
+          if (fotoError || !fotoData?.success) {
+            throw new Error(fotoData?.error || 'Erro ao salvar foto')
+          }
         }
       }
 
@@ -325,7 +329,10 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       return comprovanteId
     },
     onSuccess: () => {
-      toast.success('Fotos enviadas com sucesso! Viagem marcada como entregue.')
+      const message = selectedPhotos.length > 0 
+        ? 'Comprovante enviado com sucesso! Viagem marcada como entregue.' 
+        : 'Localização e data registradas! Viagem marcada como entregue.'
+      toast.success(message)
       queryClient.invalidateQueries({ queryKey: ['motorista-viagens'] })
       queryClient.invalidateQueries({ queryKey: ['comprovante-viagem', viagem.id] })
       onVoltar()
@@ -388,7 +395,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Botão de localização */}
+            {/* Botão de localização e data */}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -397,7 +404,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
                 className="flex items-center gap-2"
               >
                 <MapPin className="h-4 w-4" />
-                {currentLocation ? 'Localização Capturada' : 'Capturar Localização'}
+                {currentLocation ? '✓ Localização e Data Capturadas' : 'Capturar Localização e Data'}
               </Button>
               {currentLocation && (
                 <Badge variant="outline" className="flex items-center gap-1">
@@ -407,28 +414,8 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               )}
             </div>
 
-            {/* Botões de captura e seleção */}
+            {/* Botão para selecionar foto */}
             <div className="space-y-3">
-              {/* Botão para tirar foto */}
-              <Button
-                variant="default"
-                onClick={takePhoto}
-                disabled={isCapturingPhoto}
-                className="w-full h-16"
-              >
-                {isCapturingPhoto ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Abrindo Câmera...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="h-5 w-5 mr-2" />
-                    📷 Tirar Foto
-                  </>
-                )}
-              </Button>
-
               {/* Botão para selecionar da galeria/arquivos */}
               <div>
                 <input
@@ -446,7 +433,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
                 >
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-5 w-5" />
-                    📁 Selecionar da Galeria
+                    📁 Selecionar Foto
                   </div>
                 </Button>
               </div>
@@ -527,18 +514,18 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             {/* Botão de envio */}
             <Button
               onClick={() => uploadPhotosMutation.mutate()}
-              disabled={selectedPhotos.length === 0 || uploadPhotosMutation.isPending || isProcessingExif}
+              disabled={(!currentLocation && selectedPhotos.length === 0) || uploadPhotosMutation.isPending || isProcessingExif}
               className="w-full h-16"
             >
               {uploadPhotosMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Enviando Fotos...
+                  Enviando Comprovante...
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Enviar Comprovante ({selectedPhotos.length} fotos)
+                  Enviar Comprovante ({selectedPhotos.length} foto{selectedPhotos.length !== 1 ? 's' : ''})
                 </>
               )}
             </Button>
