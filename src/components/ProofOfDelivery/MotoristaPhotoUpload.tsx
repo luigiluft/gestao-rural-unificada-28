@@ -270,28 +270,40 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
           }
 
       if (!comprovanteId) {
-        const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
-          body: {
-            action: 'create_comprovante',
-            data: {
-              codigo: `VGM-${viagem.numero}`,
-              cliente_nome: `Viagem ${viagem.numero}`,
-              produto_descricao: 'Carga da viagem',
-              status: 'pendente',
-              tracking_id: viagem.id,
-              observacoes: observacoes,
-              latitude: locationData.latitude,
-              longitude: locationData.longitude,
-              localizacao: locationData.latitude ? `${locationData.latitude}, ${locationData.longitude}` : null,
-              data_entrega: locationData.data_entrega
-            }
-          }
-        })
+        // Verificar se já existe comprovante para esta viagem
+        const { data: existingComprovante } = await supabase
+          .from('comprovantes_entrega')
+          .select('id')
+          .eq('tracking_id', viagem.id)
+          .maybeSingle()
 
-        if (comprovanteError || !comprovanteData?.success) {
-          throw new Error(comprovanteData?.error || 'Erro ao criar comprovante')
+        if (existingComprovante) {
+          comprovanteId = existingComprovante.id
+        } else {
+          // Criar novo comprovante com código único baseado em timestamp
+          const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
+            body: {
+              action: 'create_comprovante',
+              data: {
+                codigo: `VGM-${viagem.numero}-${Date.now()}`,
+                cliente_nome: `Viagem ${viagem.numero}`,
+                produto_descricao: 'Carga da viagem',
+                status: 'pendente',
+                tracking_id: viagem.id,
+                observacoes: observacoes,
+                latitude: locationData.latitude,
+                longitude: locationData.longitude,
+                localizacao: locationData.latitude ? `${locationData.latitude}, ${locationData.longitude}` : null,
+                data_entrega: locationData.data_entrega
+              }
+            }
+          })
+
+          if (comprovanteError || !comprovanteData?.success) {
+            throw new Error(comprovanteData?.error || 'Erro ao criar comprovante')
+          }
+          comprovanteId = comprovanteData.data.id
         }
-        comprovanteId = comprovanteData.data.id
       }
 
       // Upload das fotos via Edge Function
