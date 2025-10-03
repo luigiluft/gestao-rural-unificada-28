@@ -242,6 +242,12 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
   // Mutation para upload de fotos - sempre requer foto + localização + data
   const uploadPhotosMutation = useMutation({
     mutationFn: async () => {
+      console.log('[POD] Iniciando envio de comprovante', {
+        selectedPhotos,
+        viagem,
+        currentLocation
+      })
+
       // Validar requisitos mínimos
       if (selectedPhotos.length === 0) {
         throw new Error('Adicione pelo menos uma foto da carga descarregada')
@@ -249,6 +255,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       
       // Verificar se tem localização e data (via EXIF ou captura manual)
       const hasPhotoWithCompleteExif = selectedPhotos.some(photoHasCompleteExif)
+      console.log('[POD] Verificação de requisitos', { hasPhotoWithCompleteExif, currentLocation })
       if (!hasPhotoWithCompleteExif && !currentLocation) {
         throw new Error('É necessário capturar a localização e data ou usar uma foto que contenha essas informações')
       }
@@ -269,38 +276,46 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             data_entrega: currentLocation?.capturedAt?.toISOString()
           }
 
+      console.log('[POD] Dados de localização escolhidos', locationData)
+
       if (!comprovanteId) {
         // Verificar se já existe comprovante para esta viagem
-        const { data: existingComprovante } = await supabase
+        const { data: existingComprovante, error: existingErr } = await supabase
           .from('comprovantes_entrega')
-          .select('id')
+          .select('id, user_id')
           .eq('tracking_id', viagem.id)
           .maybeSingle()
+
+        console.log('[POD] Consulta comprovante existente', { existingComprovante, existingErr })
 
         if (existingComprovante) {
           comprovanteId = existingComprovante.id
         } else {
           // Criar novo comprovante com código único baseado em timestamp
-          const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
-            body: {
-              action: 'create_comprovante',
-              data: {
-                codigo: `VGM-${viagem.numero}-${Date.now()}`,
-                cliente_nome: `Viagem ${viagem.numero}`,
-                produto_descricao: 'Carga da viagem',
-                status: 'pendente',
-                tracking_id: viagem.id,
-                observacoes: observacoes,
-                latitude: locationData.latitude,
-                longitude: locationData.longitude,
-                localizacao: locationData.latitude ? `${locationData.latitude}, ${locationData.longitude}` : null,
-                data_entrega: locationData.data_entrega
-              }
+          const payload = {
+            action: 'create_comprovante',
+            data: {
+              codigo: `VGM-${viagem.numero}-${Date.now()}`,
+              cliente_nome: `Viagem ${viagem.numero}`,
+              produto_descricao: 'Carga da viagem',
+              status: 'pendente',
+              tracking_id: viagem.id,
+              observacoes: observacoes,
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              localizacao: locationData.latitude ? `${locationData.latitude}, ${locationData.longitude}` : null,
+              data_entrega: locationData.data_entrega
             }
+          }
+          console.log('[POD] create_comprovante payload', payload)
+          const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
+            body: payload
           })
+          console.log('[POD] create_comprovante result', { comprovanteData, comprovanteError })
 
           if (comprovanteError || !comprovanteData?.success) {
-            throw new Error(comprovanteData?.error || 'Erro ao criar comprovante')
+            console.error('[POD] Erro ao criar comprovante', comprovanteError || comprovanteData)
+            throw new Error(comprovanteData?.error || comprovanteError?.message || 'Erro ao criar comprovante')
           }
           comprovanteId = comprovanteData.data.id
         }
@@ -308,20 +323,27 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
 
       // Upload das fotos via Edge Function
       for (const [index, photo] of selectedPhotos.entries()) {
+        console.log('[POD] Iniciando upload da foto', { index, name: photo.file.name, size: photo.file.size, type: photo.file.type })
         const fileExt = photo.file.name.split('.').pop()
         const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
-        const filePath = `comprovantes/${fileName}`
-
+        const filePath = `${comprovanteId}/${fileName}`
+        
+        console.log('[POD] Storage upload', { bucket: 'comprovantes', filePath })
         const { error: uploadError } = await supabase.storage
           .from('comprovantes')
           .upload(filePath, photo.file)
 
-        if (uploadError) throw uploadError
+        if (uploadError) {
+          console.error('[POD] Erro no upload para Storage', uploadError)
+          throw new Error('Falha ao enviar arquivo ao Storage: ' + (uploadError.message || 'erro desconhecido'))
+        }
 
-        // Obter URL pública
-        const { data: { publicUrl } } = supabase.storage
+        // Obter URL (bucket é privado; ainda assim registramos path)
+        const { data: publicData } = supabase.storage
           .from('comprovantes')
           .getPublicUrl(filePath)
+        const publicUrl = publicData.publicUrl
+        console.log('[POD] URL gerada (pública se bucket for público)', { publicUrl, filePath })
 
         // Usar dados EXIF da foto ou dados capturados manualmente
         const photoLocationData = photoHasCompleteExif(photo)
@@ -336,60 +358,72 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               data_foto: currentLocation?.capturedAt?.toISOString()
             }
 
+        const uploadPhotoPayload = {
+          action: 'upload_photo',
+          data: {
+            comprovante_id: comprovanteId,
+            url_foto: publicUrl || filePath,
+            tipo: 'entrega',
+            descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
+            latitude: photoLocationData.latitude,
+            longitude: photoLocationData.longitude,
+            data_foto: photoLocationData.data_foto
+          }
+        }
+        console.log('[POD] upload_photo payload', uploadPhotoPayload)
         // Salvar registro da foto via Edge Function
         const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
-          body: {
-            action: 'upload_photo',
-            data: {
-              comprovante_id: comprovanteId,
-              url_foto: publicUrl,
-              tipo: 'entrega',
-              descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
-              latitude: photoLocationData.latitude,
-              longitude: photoLocationData.longitude,
-              data_foto: photoLocationData.data_foto
-            }
-          }
+          body: uploadPhotoPayload
         })
+        console.log('[POD] upload_photo result', { fotoData, fotoError })
 
         if (fotoError || !fotoData?.success) {
-          throw new Error(fotoData?.error || 'Erro ao salvar foto')
+          console.error('[POD] Erro ao salvar foto no banco', fotoError || fotoData)
+          throw new Error((fotoData?.error || fotoError?.message || 'Erro ao salvar foto'))
         }
       }
 
       // Atualizar status do comprovante via Edge Function
-      const { data: updateData, error: updateError } = await supabase.functions.invoke('manage-comprovantes', {
-        body: {
-          action: 'update_comprovante',
-          data: {
-            id: comprovanteId,
-            status: 'confirmado',
-            data_entrega: new Date().toISOString(),
-            total_fotos: selectedPhotos.length,
-            observacoes: observacoes
-          }
+      const updatePayload = {
+        action: 'update_comprovante',
+        data: {
+          id: comprovanteId,
+          status: 'confirmado',
+          data_entrega: new Date().toISOString(),
+          total_fotos: selectedPhotos.length,
+          observacoes: observacoes
         }
+      }
+      console.log('[POD] update_comprovante payload', updatePayload)
+      const { data: updateData, error: updateError } = await supabase.functions.invoke('manage-comprovantes', {
+        body: updatePayload
       })
+      console.log('[POD] update_comprovante result', { updateData, updateError })
 
       if (updateError || !updateData?.success) {
-        throw new Error(updateData?.error || 'Erro ao atualizar comprovante')
+        console.error('[POD] Erro ao atualizar comprovante', updateError || updateData)
+        throw new Error(updateData?.error || updateError?.message || 'Erro ao atualizar comprovante')
       }
 
       // Marcar viagem como entregue se estiver finalizada via Edge Function
       if (viagem.status === 'finalizada') {
-        const { data: viagemData, error: viagemError } = await supabase.functions.invoke('manage-viagens', {
-          body: {
-            action: 'update',
-            data: {
-              id: viagem.id,
-              status: 'entregue',
-              updated_at: new Date().toISOString()
-            }
+        const viagemPayload = {
+          action: 'update',
+          data: {
+            id: viagem.id,
+            status: 'entregue',
+            updated_at: new Date().toISOString()
           }
+        }
+        console.log('[POD] manage-viagens payload', viagemPayload)
+        const { data: viagemData, error: viagemError } = await supabase.functions.invoke('manage-viagens', {
+          body: viagemPayload
         })
+        console.log('[POD] manage-viagens result', { viagemData, viagemError })
 
         if (viagemError || !viagemData?.success) {
-          throw new Error(viagemData?.error || 'Erro ao atualizar viagem')
+          console.error('[POD] Erro ao atualizar viagem', viagemError || viagemData)
+          throw new Error(viagemData?.error || viagemError?.message || 'Erro ao atualizar viagem')
         }
       }
 
@@ -403,7 +437,8 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     },
     onError: (error: any) => {
       console.error('Erro ao enviar fotos:', error)
-      toast.error('Erro ao enviar fotos: ' + error.message)
+      if (error?.cause) console.error('Causa do erro:', error.cause)
+      toast.error('Erro ao enviar fotos: ' + (error?.message || 'erro desconhecido'))
     }
   })
 
