@@ -26,8 +26,9 @@ const Comprovantes = () => {
 
   const statusBadges = {
     pendente: { label: 'Pendente', variant: 'secondary' as const },
-    confirmado: { label: 'Confirmado', variant: 'default' as const },
-    rejeitado: { label: 'Rejeitado', variant: 'destructive' as const }
+    em_andamento: { label: 'Em Andamento', variant: 'default' as const },
+    entregue: { label: 'Entregue', variant: 'default' as const },
+    cancelado: { label: 'Cancelado', variant: 'destructive' as const }
   };
 
   const filteredComprovantes = comprovantes.filter(comprovante => {
@@ -71,8 +72,9 @@ const Comprovantes = () => {
           <SelectContent>
             <SelectItem value="all">Todos os Status</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="confirmado">Confirmado</SelectItem>
-            <SelectItem value="rejeitado">Rejeitado</SelectItem>
+            <SelectItem value="em_andamento">Em Andamento</SelectItem>
+            <SelectItem value="entregue">Entregue</SelectItem>
+            <SelectItem value="cancelado">Cancelado</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -86,7 +88,7 @@ const Comprovantes = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {comprovantes.filter(c => c.status === 'confirmado').length}
+              {comprovantes.filter(c => c.status === 'entregue').length}
             </div>
             <p className="text-xs text-muted-foreground">Hoje</p>
           </CardContent>

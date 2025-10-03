@@ -388,7 +388,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         action: 'update_comprovante',
         data: {
           id: comprovanteId,
-          status: 'confirmado',
+          status: 'entregue',
           data_entrega: new Date().toISOString(),
           total_fotos: selectedPhotos.length,
           observacoes: observacoes

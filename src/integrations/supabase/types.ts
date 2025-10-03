@@ -114,7 +114,7 @@ export type Database = {
           observacoes: string | null
           produto_descricao: string | null
           recebido_por: string | null
-          status: string
+          status: Database["public"]["Enums"]["comprovante_status"]
           tem_assinatura: boolean
           total_fotos: number
           tracking_id: string | null
@@ -134,7 +134,7 @@ export type Database = {
           observacoes?: string | null
           produto_descricao?: string | null
           recebido_por?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["comprovante_status"]
           tem_assinatura?: boolean
           total_fotos?: number
           tracking_id?: string | null
@@ -154,7 +154,7 @@ export type Database = {
           observacoes?: string | null
           produto_descricao?: string | null
           recebido_por?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["comprovante_status"]
           tem_assinatura?: boolean
           total_fotos?: number
           tracking_id?: string | null
@@ -3212,6 +3212,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_total_fotos: {
+        Args: { p_comprovante_id: string }
+        Returns: number
+      }
       is_ancestor: {
         Args: { _child: string; _parent: string }
         Returns: boolean
@@ -3272,6 +3276,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "franqueado" | "produtor" | "motorista"
+      comprovante_status: "pendente" | "em_andamento" | "entregue" | "cancelado"
       entrada_status:
         | "aguardando_transporte"
         | "em_transferencia"
@@ -3452,6 +3457,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "franqueado", "produtor", "motorista"],
+      comprovante_status: ["pendente", "em_andamento", "entregue", "cancelado"],
       entrada_status: [
         "aguardando_transporte",
         "em_transferencia",

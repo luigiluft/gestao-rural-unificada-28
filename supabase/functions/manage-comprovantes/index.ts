@@ -61,7 +61,18 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error in manage-comprovantes:', error)
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    
+    // Structured error response
+    const errorResponse = {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: (error as any)?.code || 'UNKNOWN_ERROR',
+        details: (error as any)?.details || null
+      }
+    }
+    
+    return new Response(JSON.stringify(errorResponse), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
@@ -69,9 +80,24 @@ serve(async (req) => {
 })
 
 async function createComprovante(supabase: any, userId: string, data: any) {
-  // Ensure status is valid (pendente, em_andamento, entregue, cancelado)
+  // Sanitize status: map common values to valid enum values
+  const statusMap: Record<string, string> = {
+    'confirmado': 'entregue',
+    'confirmed': 'entregue',
+    'completed': 'entregue'
+  }
+  
+  let status = data.status || 'pendente'
+  status = statusMap[status] || status
+  
+  // Ensure status is valid enum value
   const validStatus = ['pendente', 'em_andamento', 'entregue', 'cancelado']
-  const status = validStatus.includes(data.status) ? data.status : 'pendente'
+  if (!validStatus.includes(status)) {
+    console.warn(`Invalid status "${data.status}" mapped to "pendente"`)
+    status = 'pendente'
+  }
+  
+  console.log(`Creating comprovante with status: ${status}`)
   
   const { data: comprovante, error } = await supabase
     .from('comprovantes_entrega')
@@ -85,12 +111,38 @@ async function createComprovante(supabase: any, userId: string, data: any) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('Error creating comprovante:', error)
+    throw error
+  }
+  
+  console.log(`Comprovante created successfully: ${comprovante.id}`)
   return comprovante
 }
 
 async function updateComprovante(supabase: any, userId: string, data: any) {
   const { id, ...updateData } = data
+  
+  // Sanitize status if present
+  if (updateData.status) {
+    const statusMap: Record<string, string> = {
+      'confirmado': 'entregue',
+      'confirmed': 'entregue',
+      'completed': 'entregue'
+    }
+    
+    let status = statusMap[updateData.status] || updateData.status
+    const validStatus = ['pendente', 'em_andamento', 'entregue', 'cancelado']
+    
+    if (!validStatus.includes(status)) {
+      console.warn(`Invalid status "${updateData.status}" - keeping current value`)
+      delete updateData.status
+    } else {
+      updateData.status = status
+    }
+  }
+  
+  console.log(`Updating comprovante ${id} with:`, updateData)
   
   const { data: comprovante, error } = await supabase
     .from('comprovantes_entrega')
@@ -102,12 +154,19 @@ async function updateComprovante(supabase: any, userId: string, data: any) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('Error updating comprovante:', error)
+    throw error
+  }
+  
+  console.log(`Comprovante updated successfully: ${id}`)
   return comprovante
 }
 
 async function uploadPhoto(supabase: any, userId: string, data: any) {
   const { comprovante_id, url_foto, tipo, descricao, latitude, longitude, data_foto } = data
+  
+  console.log(`Uploading photo for comprovante ${comprovante_id}`)
   
   const { data: foto, error } = await supabase
     .from('comprovante_fotos')
@@ -124,28 +183,21 @@ async function uploadPhoto(supabase: any, userId: string, data: any) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error('Error inserting photo:', error)
+    throw error
+  }
 
-  // Update comprovante total photos count
-  // Get current count first
-  const { data: comprovante, error: fetchError } = await supabase
-    .from('comprovantes_entrega')
-    .select('total_fotos')
-    .eq('id', comprovante_id)
-    .single()
+  console.log(`Photo inserted successfully: ${foto.id}`)
 
-  if (!fetchError && comprovante) {
-    const { error: updateError } = await supabase
-      .from('comprovantes_entrega')
-      .update({ 
-        total_fotos: (comprovante.total_fotos || 0) + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', comprovante_id)
+  // Use atomic RPC function to increment total_fotos
+  const { data: newTotal, error: rpcError } = await supabase
+    .rpc('increment_total_fotos', { p_comprovante_id: comprovante_id })
 
-    if (updateError) {
-      console.error('Error updating photos count:', updateError)
-    }
+  if (rpcError) {
+    console.error('Error incrementing photos count:', rpcError)
+  } else {
+    console.log(`Photos count incremented to: ${newTotal}`)
   }
 
   return foto

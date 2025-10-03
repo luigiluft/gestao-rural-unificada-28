@@ -9,8 +9,8 @@ export const useComprovantesEntrega = (filters?: { status?: string }) => {
         .from("comprovantes_entrega")
         .select("*")
 
-      if (filters?.status) {
-        query = query.eq("status", filters.status)
+      if (filters?.status && filters.status !== 'all') {
+        query = query.eq("status", filters.status as any)
       }
 
       const { data, error } = await query.order("created_at", { ascending: false })

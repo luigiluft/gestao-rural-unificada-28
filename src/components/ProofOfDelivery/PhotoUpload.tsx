@@ -176,7 +176,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({ deliveryId, onPhotoUpl
       const { error: updateError } = await supabase
         .from('comprovantes_entrega')
         .update({
-          status: 'confirmado',
+          status: 'entregue',
           recebido_por: recebidoPor,
           documento_recebedor: documentoRecebedor || null,
           observacoes: observacoes || null,
