@@ -272,7 +272,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       if (!comprovanteId) {
         const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
           body: {
-            action: 'create',
+            action: 'create_comprovante',
             data: {
               codigo: `VGM-${viagem.numero}`,
               cliente_nome: `Viagem ${viagem.numero}`,
@@ -327,7 +327,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         // Salvar registro da foto via Edge Function
         const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
           body: {
-            action: 'uploadPhoto',
+            action: 'upload_photo',
             data: {
               comprovante_id: comprovanteId,
               url_foto: publicUrl,
@@ -348,7 +348,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       // Atualizar status do comprovante via Edge Function
       const { data: updateData, error: updateError } = await supabase.functions.invoke('manage-comprovantes', {
         body: {
-          action: 'update',
+          action: 'update_comprovante',
           data: {
             id: comprovanteId,
             status: 'confirmado',
