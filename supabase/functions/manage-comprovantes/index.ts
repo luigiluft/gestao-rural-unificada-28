@@ -69,12 +69,16 @@ serve(async (req) => {
 })
 
 async function createComprovante(supabase: any, userId: string, data: any) {
+  // Ensure status is valid (pendente, em_andamento, entregue, cancelado)
+  const validStatus = ['pendente', 'em_andamento', 'entregue', 'cancelado']
+  const status = validStatus.includes(data.status) ? data.status : 'pendente'
+  
   const { data: comprovante, error } = await supabase
     .from('comprovantes_entrega')
     .insert({
       user_id: userId,
       ...data,
-      status: 'pendente',
+      status,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -122,13 +126,13 @@ async function uploadPhoto(supabase: any, userId: string, data: any) {
 
   if (error) throw error
 
-  // Update comprovante total photos count
+  // Update comprovante total photos count using a simple update
   const { error: updateError } = await supabase
-    .rpc('increment', {
-      table_name: 'comprovantes_entrega',
-      row_id: comprovante_id,
-      column_name: 'total_fotos'
+    .from('comprovantes_entrega')
+    .update({ 
+      total_fotos: supabase.raw('total_fotos + 1')
     })
+    .eq('id', comprovante_id)
 
   if (updateError) {
     console.error('Error updating photos count:', updateError)
