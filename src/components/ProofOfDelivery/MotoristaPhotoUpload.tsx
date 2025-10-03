@@ -41,7 +41,7 @@ interface PhotoWithExif {
 export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viagem, onVoltar }) => {
   const [selectedPhotos, setSelectedPhotos] = useState<PhotoWithExif[]>([])
   const [observacoes, setObservacoes] = useState('')
-  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null)
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number, capturedAt: Date} | null>(null)
   const [isCapturingPhoto, setIsCapturingPhoto] = useState(false)
   const [isProcessingExif, setIsProcessingExif] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -111,7 +111,8 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
           const now = new Date()
           setCurrentLocation({
             lat: position.coords.latitude,
-            lng: position.coords.longitude
+            lng: position.coords.longitude,
+            capturedAt: now
           })
           toast.success(`Localização e data capturadas: ${now.toLocaleString('pt-BR')}`)
         },
@@ -143,6 +144,29 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     } else {
       toast.error('Geolocalização não é suportada neste navegador.')
     }
+  }
+  
+  // Verificar se uma foto tem dados EXIF completos (localização E data)
+  const photoHasCompleteExif = (photo: PhotoWithExif): boolean => {
+    return !!(
+      photo.exifData?.latitude && 
+      photo.exifData?.longitude && 
+      photo.exifData?.dateTime
+    )
+  }
+  
+  // Verificar se tem dados suficientes para enviar
+  const hasRequiredData = (): boolean => {
+    if (selectedPhotos.length === 0) return false
+    
+    // Verificar se alguma foto tem EXIF completo
+    const hasPhotoWithCompleteExif = selectedPhotos.some(photoHasCompleteExif)
+    
+    // Se tem foto com EXIF completo, OK
+    if (hasPhotoWithCompleteExif) return true
+    
+    // Se não tem EXIF completo, precisa ter capturado localização/data manualmente
+    return currentLocation !== null
   }
 
   // Função para tirar foto - agora funciona tanto no mobile quanto desktop com PWA Elements
@@ -215,16 +239,35 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
     setSelectedPhotos(newPhotos)
   }
 
-  // Mutation para upload de fotos - agora permite enviar sem foto
+  // Mutation para upload de fotos - sempre requer foto + localização + data
   const uploadPhotosMutation = useMutation({
     mutationFn: async () => {
-      // Permitir envio sem fotos se tiver localização
-      if (!currentLocation && selectedPhotos.length === 0) {
-        throw new Error('Capture a localização e data ou adicione pelo menos uma foto')
+      // Validar requisitos mínimos
+      if (selectedPhotos.length === 0) {
+        throw new Error('Adicione pelo menos uma foto da carga descarregada')
+      }
+      
+      // Verificar se tem localização e data (via EXIF ou captura manual)
+      const hasPhotoWithCompleteExif = selectedPhotos.some(photoHasCompleteExif)
+      if (!hasPhotoWithCompleteExif && !currentLocation) {
+        throw new Error('É necessário capturar a localização e data ou usar uma foto que contenha essas informações')
       }
 
       // Criar ou atualizar comprovante via Edge Function
       let comprovanteId = comprovante?.id
+      
+      // Usar localização da foto com EXIF ou da captura manual
+      const locationData = hasPhotoWithCompleteExif 
+        ? {
+            latitude: selectedPhotos.find(photoHasCompleteExif)?.exifData?.latitude,
+            longitude: selectedPhotos.find(photoHasCompleteExif)?.exifData?.longitude,
+            data_entrega: selectedPhotos.find(photoHasCompleteExif)?.exifData?.dateTime?.toISOString()
+          }
+        : {
+            latitude: currentLocation?.lat,
+            longitude: currentLocation?.lng,
+            data_entrega: currentLocation?.capturedAt?.toISOString()
+          }
 
       if (!comprovanteId) {
         const { data: comprovanteData, error: comprovanteError } = await supabase.functions.invoke('manage-comprovantes', {
@@ -237,9 +280,10 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
               status: 'pendente',
               tracking_id: viagem.id,
               observacoes: observacoes,
-              latitude: currentLocation?.lat,
-              longitude: currentLocation?.lng,
-              localizacao: currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : null
+              latitude: locationData.latitude,
+              longitude: locationData.longitude,
+              localizacao: locationData.latitude ? `${locationData.latitude}, ${locationData.longitude}` : null,
+              data_entrega: locationData.data_entrega
             }
           }
         })
@@ -250,43 +294,54 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
         comprovanteId = comprovanteData.data.id
       }
 
-      // Upload das fotos via Edge Function (se houver)
-      if (selectedPhotos.length > 0) {
-        for (const [index, photo] of selectedPhotos.entries()) {
-          const fileExt = photo.file.name.split('.').pop()
-          const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
-          const filePath = `comprovantes/${fileName}`
+      // Upload das fotos via Edge Function
+      for (const [index, photo] of selectedPhotos.entries()) {
+        const fileExt = photo.file.name.split('.').pop()
+        const fileName = `${comprovanteId}-${index}-${Date.now()}.${fileExt}`
+        const filePath = `comprovantes/${fileName}`
 
-          const { error: uploadError } = await supabase.storage
-            .from('comprovantes')
-            .upload(filePath, photo.file)
+        const { error: uploadError } = await supabase.storage
+          .from('comprovantes')
+          .upload(filePath, photo.file)
 
-          if (uploadError) throw uploadError
+        if (uploadError) throw uploadError
 
-          // Obter URL pública
-          const { data: { publicUrl } } = supabase.storage
-            .from('comprovantes')
-            .getPublicUrl(filePath)
+        // Obter URL pública
+        const { data: { publicUrl } } = supabase.storage
+          .from('comprovantes')
+          .getPublicUrl(filePath)
 
-          // Salvar registro da foto via Edge Function
-          const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
-            body: {
-              action: 'uploadPhoto',
-              data: {
-                comprovante_id: comprovanteId,
-                url_foto: publicUrl,
-                tipo: 'entrega',
-                descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
-                latitude: photo.exifData?.latitude,
-                longitude: photo.exifData?.longitude,
-                data_foto: photo.exifData?.dateTime?.toISOString()
-              }
+        // Usar dados EXIF da foto ou dados capturados manualmente
+        const photoLocationData = photoHasCompleteExif(photo)
+          ? {
+              latitude: photo.exifData?.latitude,
+              longitude: photo.exifData?.longitude,
+              data_foto: photo.exifData?.dateTime?.toISOString()
             }
-          })
+          : {
+              latitude: currentLocation?.lat,
+              longitude: currentLocation?.lng,
+              data_foto: currentLocation?.capturedAt?.toISOString()
+            }
 
-          if (fotoError || !fotoData?.success) {
-            throw new Error(fotoData?.error || 'Erro ao salvar foto')
+        // Salvar registro da foto via Edge Function
+        const { data: fotoData, error: fotoError } = await supabase.functions.invoke('manage-comprovantes', {
+          body: {
+            action: 'uploadPhoto',
+            data: {
+              comprovante_id: comprovanteId,
+              url_foto: publicUrl,
+              tipo: 'entrega',
+              descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
+              latitude: photoLocationData.latitude,
+              longitude: photoLocationData.longitude,
+              data_foto: photoLocationData.data_foto
+            }
           }
+        })
+
+        if (fotoError || !fotoData?.success) {
+          throw new Error(fotoData?.error || 'Erro ao salvar foto')
         }
       }
 
@@ -329,10 +384,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
       return comprovanteId
     },
     onSuccess: () => {
-      const message = selectedPhotos.length > 0 
-        ? 'Comprovante enviado com sucesso! Viagem marcada como entregue.' 
-        : 'Localização e data registradas! Viagem marcada como entregue.'
-      toast.success(message)
+      toast.success('Comprovante enviado com sucesso! Viagem marcada como entregue.')
       queryClient.invalidateQueries({ queryKey: ['motorista-viagens'] })
       queryClient.invalidateQueries({ queryKey: ['comprovante-viagem', viagem.id] })
       onVoltar()
@@ -396,21 +448,30 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Botão de localização e data */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={getCurrentLocation}
-                className="flex items-center gap-2"
-              >
-                <MapPin className="h-4 w-4" />
-                {currentLocation ? '✓ Localização e Data Capturadas' : 'Capturar Localização e Data'}
-              </Button>
-              {currentLocation && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <Check className="h-3 w-3" />
-                  GPS Ativo
-                </Badge>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={getCurrentLocation}
+                  className="flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4" />
+                  {currentLocation ? '✓ Localização e Data Capturadas' : 'Capturar Localização e Data'}
+                </Button>
+                {currentLocation && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Check className="h-3 w-3" />
+                    GPS Ativo
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Aviso se não tem EXIF completo e não capturou localização */}
+              {selectedPhotos.length > 0 && !selectedPhotos.some(photoHasCompleteExif) && !currentLocation && (
+                <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                  ⚠️ Esta foto não contém localização ou data. Capture manualmente para poder enviar.
+                </div>
               )}
             </div>
 
@@ -514,7 +575,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
             {/* Botão de envio */}
             <Button
               onClick={() => uploadPhotosMutation.mutate()}
-              disabled={(!currentLocation && selectedPhotos.length === 0) || uploadPhotosMutation.isPending || isProcessingExif}
+              disabled={!hasRequiredData() || uploadPhotosMutation.isPending || isProcessingExif}
               className="w-full h-16"
             >
               {uploadPhotosMutation.isPending ? (
@@ -529,6 +590,18 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
                 </>
               )}
             </Button>
+            
+            {/* Mensagem de ajuda */}
+            {selectedPhotos.length === 0 && (
+              <div className="text-xs text-center text-muted-foreground">
+                Adicione pelo menos uma foto para enviar o comprovante
+              </div>
+            )}
+            {selectedPhotos.length > 0 && !hasRequiredData() && (
+              <div className="text-xs text-center text-orange-600">
+                Esta foto não contém localização ou data. Clique em "Capturar Localização e Data" acima.
+              </div>
+            )}
 
             {/* Status do comprovante */}
             {comprovante && (
