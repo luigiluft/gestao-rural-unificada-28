@@ -363,7 +363,7 @@ export const MotoristaPhotoUpload: React.FC<MotoristaPhotoUploadProps> = ({ viag
           data: {
             comprovante_id: comprovanteId,
             url_foto: publicUrl || filePath,
-            tipo: 'entrega',
+            tipo: 'comprovante_entrega',
             descricao: `Foto ${index + 1} da entrega da viagem ${viagem.numero}`,
             latitude: photoLocationData.latitude,
             longitude: photoLocationData.longitude,
