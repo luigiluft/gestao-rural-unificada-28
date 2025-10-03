@@ -107,7 +107,7 @@ async function updateComprovante(supabase: any, userId: string, data: any) {
 }
 
 async function uploadPhoto(supabase: any, userId: string, data: any) {
-  const { comprovante_id, url_foto, tipo, descricao, latitude, longitude } = data
+  const { comprovante_id, url_foto, tipo, descricao, latitude, longitude, data_foto } = data
   
   const { data: foto, error } = await supabase
     .from('comprovante_fotos')
@@ -118,7 +118,7 @@ async function uploadPhoto(supabase: any, userId: string, data: any) {
       descricao,
       latitude,
       longitude,
-      data_foto: new Date().toISOString(),
+      data_foto: data_foto || new Date().toISOString(),
       created_at: new Date().toISOString()
     })
     .select()
@@ -126,16 +126,26 @@ async function uploadPhoto(supabase: any, userId: string, data: any) {
 
   if (error) throw error
 
-  // Update comprovante total photos count using a simple update
-  const { error: updateError } = await supabase
+  // Update comprovante total photos count
+  // Get current count first
+  const { data: comprovante, error: fetchError } = await supabase
     .from('comprovantes_entrega')
-    .update({ 
-      total_fotos: supabase.raw('total_fotos + 1')
-    })
+    .select('total_fotos')
     .eq('id', comprovante_id)
+    .single()
 
-  if (updateError) {
-    console.error('Error updating photos count:', updateError)
+  if (!fetchError && comprovante) {
+    const { error: updateError } = await supabase
+      .from('comprovantes_entrega')
+      .update({ 
+        total_fotos: (comprovante.total_fotos || 0) + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', comprovante_id)
+
+    if (updateError) {
+      console.error('Error updating photos count:', updateError)
+    }
   }
 
   return foto
