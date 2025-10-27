@@ -34,7 +34,8 @@ import {
   UserCircle,
   UserPlus,
   Users,
-  Wheat
+  Wheat,
+  FileText
 } from "lucide-react"
 
 export interface MenuItem {
@@ -81,6 +82,7 @@ const menuLabels = {
   'perfil': 'Perfil',
   'subcontas': 'Subcontas',
   'perfis-funcionarios': 'Perfis de Funcionários',
+  'faturas': 'Faturas',
   'instrucoes': 'Instruções',
   'suporte': 'Suporte'
 }
@@ -121,6 +123,7 @@ const iconMap = {
   'perfil': UserCircle,
   'subcontas': UserPlus,
   'perfis-funcionarios': Badge,
+  'faturas': FileText,
   'instrucoes': BookOpen,
   'suporte': HelpCircle
 }
@@ -148,6 +151,7 @@ export const useDynamicMenuItems = () => {
       'perfil',
       'subcontas',
       'perfis-funcionarios',
+      'faturas',
       'instrucoes',
       'suporte'
     ]

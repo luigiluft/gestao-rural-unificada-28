@@ -55,6 +55,7 @@ import InstrucoesAdmin from "./pages/InstrucoesAdmin";
 import InstrucoesFranqueado from "./pages/InstrucoesFranqueado";
 import InstrucoesProdutor from "./pages/InstrucoesProdutor";
 import Divergencias from "./pages/Divergencias";
+import Faturas from "./pages/Faturas";
 import DemoDashboard from "./pages/Demo/DemoDashboard";
 import DemoEntradas from "./pages/Demo/DemoEntradas";
 import DemoEstoque from "./pages/Demo/DemoEstoque";
@@ -131,6 +132,7 @@ const App = () => {
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
               <Route path="perfis-funcionarios" element={<RequirePageAccess pageKey="perfis-funcionarios"><PerfisFuncionarios /></RequirePageAccess>} />
+              <Route path="faturas" element={<RequirePageAccess pageKey="faturas"><Faturas /></RequirePageAccess>} />
               
               {/* Legacy route redirect */}
               <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />
