@@ -1,0 +1,179 @@
+import { useState } from "react"
+import { useContratos, useContratoStats } from "@/hooks/useContratos"
+import { TablePageLayout } from "@/components/ui/table-page-layout"
+import { Button } from "@/components/ui/button"
+import { StatCard } from "@/components/ui/stat-card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Plus, FileText, Calendar, DollarSign, AlertTriangle } from "lucide-react"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { useNavigate } from "react-router-dom"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+export default function Contratos() {
+  const navigate = useNavigate()
+  const [statusFilter, setStatusFilter] = useState<'ativo' | 'suspenso' | 'expirado' | 'cancelado' | undefined>()
+  
+  const { data: contratos, isLoading } = useContratos({ status: statusFilter })
+  const { data: stats } = useContratoStats()
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value)
+  }
+
+  const formatDate = (date: string) => {
+    return format(new Date(date), 'dd/MM/yyyy', { locale: ptBR })
+  }
+
+  const getStatusBadge = (status: string, dataFim: string | null) => {
+    if (status === 'cancelado') {
+      return <Badge variant="destructive">Cancelado</Badge>
+    }
+    
+    if (status === 'suspenso') {
+      return <Badge variant="outline">Suspenso</Badge>
+    }
+    
+    if (!dataFim) {
+      return <Badge variant="default">Ativo</Badge>
+    }
+    
+    const now = new Date()
+    const fim = new Date(dataFim)
+    const diasRestantes = Math.ceil((fim.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (diasRestantes < 0) {
+      return <Badge variant="destructive">Expirado</Badge>
+    } else if (diasRestantes <= 30) {
+      return <Badge variant="outline" className="border-yellow-500 text-yellow-700">A Vencer</Badge>
+    }
+    
+    return <Badge variant="default">Ativo</Badge>
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total de Contratos"
+          value={{ value: stats?.total || 0, label: '' }}
+          icon={FileText}
+          trend="neutral"
+        />
+        <StatCard
+          title="Contratos Ativos"
+          value={{ value: stats?.ativos || 0, label: '' }}
+          icon={Calendar}
+          trend="up"
+        />
+        <StatCard
+          title="A Vencer (30 dias)"
+          value={{ value: stats?.aVencer || 0, label: '' }}
+          icon={AlertTriangle}
+          trend="down"
+        />
+        <StatCard
+          title="Vencidos"
+          value={{ value: stats?.vencidos || 0, label: '' }}
+          icon={DollarSign}
+          trend="down"
+        />
+      </div>
+
+      {/* Tabela de Contratos */}
+      <TablePageLayout
+        title="Contratos de Serviço"
+        description="Gerencie os contratos de serviço com produtores"
+        actionButton={
+          <Button onClick={() => navigate('/contratos/novo')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Contrato
+          </Button>
+        }
+        filterSection={
+          <div className="flex gap-4">
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativo">Ativos</SelectItem>
+                <SelectItem value="suspenso">Suspensos</SelectItem>
+                <SelectItem value="cancelado">Cancelados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        }
+        tableContent={
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Número</TableHead>
+                <TableHead>Franquia</TableHead>
+                <TableHead>Produtor</TableHead>
+                <TableHead>Início</TableHead>
+                <TableHead>Término</TableHead>
+                <TableHead>Valor Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 8 }).map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : contratos?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    Nenhum contrato encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                contratos?.map((contrato) => (
+                  <TableRow 
+                    key={contrato.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/contratos/${contrato.id}`)}
+                  >
+                    <TableCell className="font-medium">{contrato.numero_contrato}</TableCell>
+                    <TableCell>{contrato.franquias?.nome}</TableCell>
+                    <TableCell>{contrato.produtores_profiles?.nome}</TableCell>
+                    <TableCell>{formatDate(contrato.data_inicio)}</TableCell>
+                    <TableCell>{contrato.data_fim ? formatDate(contrato.data_fim) : '-'}</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>{getStatusBadge(contrato.status, contrato.data_fim)}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/contratos/${contrato.id}`)
+                        }}
+                      >
+                        Ver Detalhes
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        }
+      />
+    </div>
+  )
+}
