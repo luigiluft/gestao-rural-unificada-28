@@ -15,6 +15,7 @@ import {
   Calendar,
   Car,
   ClipboardList,
+  DollarSign,
   FileCheck,
   Grid2X2,
   Grid3X3,
@@ -28,6 +29,7 @@ import {
   Settings,
   Shield,
   Ship,
+  TrendingUp,
   TreePine,
   Truck,
   User,
@@ -83,6 +85,8 @@ const menuLabels = {
   'subcontas': 'Subcontas',
   'perfis-funcionarios': 'Perfis de Funcionários',
   'faturas': 'Faturas',
+  'financeiro': 'Financeiro',
+  'royalties': 'Royalties',
   'instrucoes': 'Instruções',
   'suporte': 'Suporte'
 }
@@ -124,6 +128,8 @@ const iconMap = {
   'subcontas': UserPlus,
   'perfis-funcionarios': Badge,
   'faturas': FileText,
+  'financeiro': DollarSign,
+  'royalties': TrendingUp,
   'instrucoes': BookOpen,
   'suporte': HelpCircle
 }
@@ -152,6 +158,8 @@ export const useDynamicMenuItems = () => {
       'subcontas',
       'perfis-funcionarios',
       'faturas',
+      'financeiro',
+      'royalties',
       'instrucoes',
       'suporte'
     ]
