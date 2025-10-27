@@ -1593,7 +1593,7 @@ export type Database = {
           responsavel_id: string | null
           severidade: string
           status: string
-          tempo_resolucao: unknown | null
+          tempo_resolucao: unknown
           tipo: string
           titulo: string
           total_fotos: number
@@ -1617,7 +1617,7 @@ export type Database = {
           responsavel_id?: string | null
           severidade?: string
           status?: string
-          tempo_resolucao?: unknown | null
+          tempo_resolucao?: unknown
           tipo: string
           titulo: string
           total_fotos?: number
@@ -1641,7 +1641,7 @@ export type Database = {
           responsavel_id?: string | null
           severidade?: string
           status?: string
-          tempo_resolucao?: unknown | null
+          tempo_resolucao?: unknown
           tipo?: string
           titulo?: string
           total_fotos?: number
@@ -3030,14 +3030,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      alocar_produtos_orfaos: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      auto_allocate_positions: {
-        Args: { p_wave_id: string }
-        Returns: boolean
-      }
+      alocar_produtos_orfaos: { Args: never; Returns: number }
+      auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
       calculate_viagem_peso_total: {
         Args: { p_viagem_id: string }
         Returns: number
@@ -3064,22 +3058,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      clean_completed_wave_reservations: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      clean_expired_reservations: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      clean_orphaned_data: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      clean_orphaned_divergencias: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      clean_completed_wave_reservations: { Args: never; Returns: number }
+      clean_expired_reservations: { Args: never; Returns: number }
+      clean_orphaned_data: { Args: never; Returns: Json }
+      clean_orphaned_divergencias: { Args: never; Returns: Json }
       complete_allocation_and_create_stock: {
         Args: {
           p_barcode_posicao: string
@@ -3089,10 +3071,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      complete_invite_signup: {
-        Args: { _email: string } | { _email: string; _user_id: string }
-        Returns: Json
-      }
+      complete_invite_signup:
+        | { Args: { _email: string }; Returns: Json }
+        | { Args: { _email: string; _user_id: string }; Returns: boolean }
       complete_pallet_allocation_and_create_stock: {
         Args: {
           p_barcode_pallet: string
@@ -3108,14 +3089,8 @@ export type Database = {
         Args: { p_pallet_id: string }
         Returns: boolean
       }
-      define_wave_positions: {
-        Args: { p_wave_id: string }
-        Returns: Json
-      }
-      diagnose_user_signup: {
-        Args: { _email: string }
-        Returns: string
-      }
+      define_wave_positions: { Args: { p_wave_id: string }; Returns: Json }
+      diagnose_user_signup: { Args: { _email: string }; Returns: string }
       find_or_create_produto: {
         Args: {
           p_codigo_ean?: string
@@ -3137,34 +3112,25 @@ export type Database = {
           user_id: string
         }[]
       }
-      fix_incorrectly_occupied_positions: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      fix_position_occupancy_status: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      fix_incorrectly_occupied_positions: { Args: never; Returns: number }
+      fix_position_occupancy_status: { Args: never; Returns: number }
       franqueado_can_view_producer: {
         Args: { _franqueado_id: string; _produtor_id: string }
         Returns: boolean
       }
-      generate_inventory_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_pallet_barcode: {
-        Args:
-          | Record<PropertyKey, never>
-          | { p_entrada_id: string; p_numero_pallet: number }
-        Returns: string
-      }
+      generate_inventory_number: { Args: never; Returns: string }
+      generate_pallet_barcode:
+        | { Args: never; Returns: string }
+        | {
+            Args: { p_entrada_id: string; p_numero_pallet: number }
+            Returns: string
+          }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_estoque_from_movimentacoes: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           deposito_id: string
           franquia_nome: string
@@ -3177,10 +3143,7 @@ export type Database = {
           valor_unitario: number
         }[]
       }
-      get_invite_email: {
-        Args: { _invite_token: string }
-        Returns: string
-      }
+      get_invite_email: { Args: { _invite_token: string }; Returns: string }
       get_producer_available_deposits: {
         Args: { _producer_id: string }
         Returns: {
@@ -3190,14 +3153,8 @@ export type Database = {
           franqueado_nome: string
         }[]
       }
-      get_user_franquia: {
-        Args: { _user_id: string }
-        Returns: string
-      }
-      get_user_franquia_id: {
-        Args: { _user_id: string }
-        Returns: string
-      }
+      get_user_franquia: { Args: { _user_id: string }; Returns: string }
+      get_user_franquia_id: { Args: { _user_id: string }; Returns: string }
       has_permission: {
         Args: {
           _perm: Database["public"]["Enums"]["permission_code"]
@@ -3220,10 +3177,7 @@ export type Database = {
         Args: { _child: string; _parent: string }
         Returns: boolean
       }
-      is_subaccount: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_subaccount: { Args: { _user_id: string }; Returns: boolean }
       link_motorista_to_auth_user: {
         Args: { p_auth_user_id: string; p_cpf: string }
         Returns: boolean
@@ -3232,22 +3186,10 @@ export type Database = {
         Args: { _destinatario: string; _emitente: string }
         Returns: boolean
       }
-      migrate_existing_divergencias: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      process_entrada_itens_without_produto: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      process_orphaned_invites: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      process_saida_items: {
-        Args: { p_saida_id: string }
-        Returns: boolean
-      }
+      migrate_existing_divergencias: { Args: never; Returns: number }
+      process_entrada_itens_without_produto: { Args: never; Returns: number }
+      process_orphaned_invites: { Args: never; Returns: Json }
+      process_saida_items: { Args: { p_saida_id: string }; Returns: undefined }
       produto_tem_posicao_fisica: {
         Args: {
           p_deposito_id: string
@@ -3256,14 +3198,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      refresh_estoque_simple: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      reset_wave_positions: {
-        Args: { p_wave_id: string }
-        Returns: boolean
-      }
+      refresh_estoque_simple: { Args: never; Returns: undefined }
+      reset_wave_positions: { Args: { p_wave_id: string }; Returns: boolean }
       validar_e_alocar_estoque_fefo: {
         Args: {
           p_deposito_id: string
