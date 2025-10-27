@@ -69,25 +69,20 @@ export default function Catalogo() {
     }
     
     try {
-      const { data: response, error } = await supabase.functions.invoke('manage-estoque', {
-        body: { 
-          action: 'create_produto', 
-          data: {
-            user_id: user.id,
-            nome: values.nome.trim(),
-            unidade_medida: values.unidade_medida,
-            codigo: values.codigo?.trim() || null,
-            descricao: values.descricao?.trim() || null,
-            ativo: values.ativo,
-          }
-        }
-      })
+      const { data: newProduto, error } = await supabase
+        .from('produtos')
+        .insert({
+          user_id: user.id,
+          nome: values.nome.trim(),
+          unidade_medida: values.unidade_medida,
+          codigo: values.codigo?.trim() || null,
+          descricao: values.descricao?.trim() || null,
+          ativo: values.ativo,
+        })
+        .select()
+        .single()
 
       if (error) throw error
-
-      if (!response?.success) {
-        throw new Error(response?.error || 'Erro ao cadastrar produto')
-      }
 
       toast({ description: "Produto cadastrado com sucesso." })
       setOpen(false)
@@ -103,20 +98,17 @@ export default function Catalogo() {
   const { data: produtos = [], isLoading, error } = useQuery<Produto[]>({
     queryKey: ["produtos"],
     queryFn: async () => {
-      const { data: response, error } = await supabase.functions.invoke('manage-estoque', {
-        body: { action: 'list_produtos' }
-      })
+      const { data: produtos, error } = await supabase
+        .from('produtos')
+        .select('*')
+        .order('nome', { ascending: true })
 
       if (error) {
         console.error("Erro ao buscar produtos:", error)
         throw error
       }
 
-      if (!response?.success) {
-        throw new Error(response?.error || 'Erro ao buscar produtos')
-      }
-
-      return response.data || []
+      return produtos || []
     },
   })
 
