@@ -190,6 +190,220 @@ export type Database = {
         }
         Relationships: []
       }
+      contrato_janelas_entrega: {
+        Row: {
+          ativo: boolean
+          capacidade_max_pallets: number | null
+          contrato_id: string
+          created_at: string
+          dia_semana: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          capacidade_max_pallets?: number | null
+          contrato_id: string
+          created_at?: string
+          dia_semana: number
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          capacidade_max_pallets?: number | null
+          contrato_id?: string
+          created_at?: string
+          dia_semana?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_janelas_entrega_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contrato_servicos_itens: {
+        Row: {
+          ativo: boolean
+          contrato_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          quantidade_incluida: number | null
+          quantidade_minima: number | null
+          tipo_servico: Database["public"]["Enums"]["tipo_servico_contrato"]
+          updated_at: string
+          valor_excedente: number | null
+          valor_unitario: number
+        }
+        Insert: {
+          ativo?: boolean
+          contrato_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          quantidade_incluida?: number | null
+          quantidade_minima?: number | null
+          tipo_servico: Database["public"]["Enums"]["tipo_servico_contrato"]
+          updated_at?: string
+          valor_excedente?: number | null
+          valor_unitario: number
+        }
+        Update: {
+          ativo?: boolean
+          contrato_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          quantidade_incluida?: number | null
+          quantidade_minima?: number | null
+          tipo_servico?: Database["public"]["Enums"]["tipo_servico_contrato"]
+          updated_at?: string
+          valor_excedente?: number | null
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_servicos_itens_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contrato_sla: {
+        Row: {
+          ativo: boolean
+          contrato_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          penalidade_percentual: number | null
+          tipo_sla: Database["public"]["Enums"]["tipo_sla"]
+          unidade: Database["public"]["Enums"]["unidade_sla"]
+          updated_at: string
+          valor_esperado: number
+        }
+        Insert: {
+          ativo?: boolean
+          contrato_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          penalidade_percentual?: number | null
+          tipo_sla: Database["public"]["Enums"]["tipo_sla"]
+          unidade: Database["public"]["Enums"]["unidade_sla"]
+          updated_at?: string
+          valor_esperado: number
+        }
+        Update: {
+          ativo?: boolean
+          contrato_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          penalidade_percentual?: number | null
+          tipo_sla?: Database["public"]["Enums"]["tipo_sla"]
+          unidade?: Database["public"]["Enums"]["unidade_sla"]
+          updated_at?: string
+          valor_esperado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_sla_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contratos_servico: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          data_fim: string | null
+          data_inicio: string
+          dia_vencimento: number
+          franquia_id: string
+          id: string
+          numero_contrato: string
+          observacoes: string | null
+          produtor_id: string
+          status: Database["public"]["Enums"]["status_contrato"]
+          tipo_cobranca: Database["public"]["Enums"]["tipo_cobranca"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          dia_vencimento?: number
+          franquia_id: string
+          id?: string
+          numero_contrato: string
+          observacoes?: string | null
+          produtor_id: string
+          status?: Database["public"]["Enums"]["status_contrato"]
+          tipo_cobranca?: Database["public"]["Enums"]["tipo_cobranca"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          dia_vencimento?: number
+          franquia_id?: string
+          id?: string
+          numero_contrato?: string
+          observacoes?: string | null
+          produtor_id?: string
+          status?: Database["public"]["Enums"]["status_contrato"]
+          tipo_cobranca?: Database["public"]["Enums"]["tipo_cobranca"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_servico_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "contratos_servico_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_servico_produtor_id_fkey"
+            columns: ["produtor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       delivery_assignments: {
         Row: {
           assigned_at: string
@@ -1018,6 +1232,179 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      fatura_calculos_detalhados: {
+        Row: {
+          created_at: string
+          detalhes_json: Json
+          fatura_id: string
+          id: string
+          tipo_calculo: string
+        }
+        Insert: {
+          created_at?: string
+          detalhes_json: Json
+          fatura_id: string
+          id?: string
+          tipo_calculo: string
+        }
+        Update: {
+          created_at?: string
+          detalhes_json?: Json
+          fatura_id?: string
+          id?: string
+          tipo_calculo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fatura_calculos_detalhados_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "faturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fatura_itens: {
+        Row: {
+          created_at: string
+          descricao: string
+          detalhes_calculo: Json | null
+          fatura_id: string
+          id: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          quantidade: number
+          tipo_servico: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          detalhes_calculo?: Json | null
+          fatura_id: string
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          quantidade: number
+          tipo_servico: string
+          valor_total: number
+          valor_unitario: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          detalhes_calculo?: Json | null
+          fatura_id?: string
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          quantidade?: number
+          tipo_servico?: string
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fatura_itens_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "faturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faturas: {
+        Row: {
+          contrato_id: string | null
+          created_at: string
+          data_emissao: string
+          data_pagamento: string | null
+          data_vencimento: string
+          forma_pagamento: string | null
+          franquia_id: string
+          gerada_automaticamente: boolean | null
+          id: string
+          numero_fatura: string
+          observacoes: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          produtor_id: string
+          status: Database["public"]["Enums"]["status_fatura"]
+          updated_at: string
+          valor_acrescimos: number | null
+          valor_descontos: number | null
+          valor_servicos: number
+          valor_total: number
+        }
+        Insert: {
+          contrato_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_pagamento?: string | null
+          data_vencimento: string
+          forma_pagamento?: string | null
+          franquia_id: string
+          gerada_automaticamente?: boolean | null
+          id?: string
+          numero_fatura: string
+          observacoes?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          produtor_id: string
+          status?: Database["public"]["Enums"]["status_fatura"]
+          updated_at?: string
+          valor_acrescimos?: number | null
+          valor_descontos?: number | null
+          valor_servicos?: number
+          valor_total?: number
+        }
+        Update: {
+          contrato_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_pagamento?: string | null
+          data_vencimento?: string
+          forma_pagamento?: string | null
+          franquia_id?: string
+          gerada_automaticamente?: boolean | null
+          id?: string
+          numero_fatura?: string
+          observacoes?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          produtor_id?: string
+          status?: Database["public"]["Enums"]["status_fatura"]
+          updated_at?: string
+          valor_acrescimos?: number | null
+          valor_descontos?: number | null
+          valor_servicos?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_produtor_id_fkey"
+            columns: ["produtor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       fazendas: {
         Row: {
@@ -3125,6 +3512,11 @@ export type Database = {
             Args: { p_entrada_id: string; p_numero_pallet: number }
             Returns: string
           }
+      gerar_numero_contrato: {
+        Args: { p_franquia_id: string }
+        Returns: string
+      }
+      gerar_numero_fatura: { Args: { p_franquia_id: string }; Returns: string }
       get_current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
@@ -3270,7 +3662,33 @@ export type Database = {
         | "financeiro.manage"
         | "royalties.view"
         | "royalties.manage"
+        | "contratos.view"
+        | "contratos.manage"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
+      status_contrato: "ativo" | "suspenso" | "cancelado" | "expirado"
+      status_fatura:
+        | "rascunho"
+        | "pendente"
+        | "pago"
+        | "vencido"
+        | "cancelado"
+        | "contestado"
+      tipo_cobranca: "mensal" | "quinzenal" | "por_demanda"
+      tipo_servico_contrato:
+        | "armazenagem_pallet_dia"
+        | "entrada_item"
+        | "saida_item"
+        | "taxa_fixa_mensal"
+        | "movimentacao_interna"
+        | "separacao_picking"
+        | "repaletizacao"
+      tipo_sla:
+        | "tempo_processamento_entrada"
+        | "tempo_preparacao_saida"
+        | "prazo_entrega"
+        | "taxa_avarias_max"
+        | "tempo_resposta_divergencia"
+      unidade_sla: "horas" | "dias" | "percentual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3458,8 +3876,37 @@ export const Constants = {
         "financeiro.manage",
         "royalties.view",
         "royalties.manage",
+        "contratos.view",
+        "contratos.manage",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
+      status_contrato: ["ativo", "suspenso", "cancelado", "expirado"],
+      status_fatura: [
+        "rascunho",
+        "pendente",
+        "pago",
+        "vencido",
+        "cancelado",
+        "contestado",
+      ],
+      tipo_cobranca: ["mensal", "quinzenal", "por_demanda"],
+      tipo_servico_contrato: [
+        "armazenagem_pallet_dia",
+        "entrada_item",
+        "saida_item",
+        "taxa_fixa_mensal",
+        "movimentacao_interna",
+        "separacao_picking",
+        "repaletizacao",
+      ],
+      tipo_sla: [
+        "tempo_processamento_entrada",
+        "tempo_preparacao_saida",
+        "prazo_entrega",
+        "taxa_avarias_max",
+        "tempo_resposta_divergencia",
+      ],
+      unidade_sla: ["horas", "dias", "percentual"],
     },
   },
 } as const
