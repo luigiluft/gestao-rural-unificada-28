@@ -3266,6 +3266,10 @@ export type Database = {
         | "controle-acesso.view"
         | "faturas.view"
         | "faturas.manage"
+        | "financeiro.view"
+        | "financeiro.manage"
+        | "royalties.view"
+        | "royalties.manage"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
     }
     CompositeTypes: {
@@ -3450,6 +3454,10 @@ export const Constants = {
         "controle-acesso.view",
         "faturas.view",
         "faturas.manage",
+        "financeiro.view",
+        "financeiro.manage",
+        "royalties.view",
+        "royalties.manage",
       ],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
     },
