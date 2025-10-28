@@ -13,6 +13,7 @@ import { Calendar, Truck, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight 
 import { useUpdateViagemData } from '@/hooks/useUpdateViagemData';
 import { format, addDays, subDays, isSameDay, differenceInCalendarDays, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ViagemDetailsDialog } from './ViagemDetailsDialog';
 interface Viagem {
   id: string;
   numero: string;
@@ -149,6 +150,8 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isTodayVisible, setIsTodayVisible] = useState(true);
   const [todayDirection, setTodayDirection] = useState<'left' | 'right'>('left');
+  const [selectedViagem, setSelectedViagem] = useState<Viagem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayColumnRef = useRef<HTMLDivElement>(null);
   const updateViagemData = useUpdateViagemData();
@@ -419,7 +422,15 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
                   const viagensNaData = viagensByDate[dateKey] || [];
                   return <SortableContext key={dateIndex} id={dateIndex.toString()} items={viagensNaData.map(v => `${v.id}-${dateIndex}`)} strategy={verticalListSortingStrategy}>
                         <DroppableColumn dateIndex={dateIndex}>
-                          {viagensNaData.map(viagem => <SortableViagemCard key={`${viagem.id}-${dateIndex}`} viagem={viagem} dateIndex={dateIndex} onClick={() => onViagemSelect?.(viagem)} />)}
+                          {viagensNaData.map(viagem => <SortableViagemCard 
+                            key={`${viagem.id}-${dateIndex}`} 
+                            viagem={viagem} 
+                            dateIndex={dateIndex} 
+                            onClick={() => {
+                              setSelectedViagem(viagem);
+                              setIsDialogOpen(true);
+                            }} 
+                          />)}
                         </DroppableColumn>
                       </SortableContext>;
                 })}
@@ -461,5 +472,18 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
             <span>{config.label}</span>
           </div>)}
       </div>
+
+      {/* Dialog de Detalhes da Viagem */}
+      {selectedViagem && (
+        <ViagemDetailsDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          viagem={selectedViagem}
+          onUpdate={(updatedViagem) => {
+            // Atualizar a viagem localmente se necessário
+            onViagemSelect?.(updatedViagem);
+          }}
+        />
+      )}
     </div>;
 };
