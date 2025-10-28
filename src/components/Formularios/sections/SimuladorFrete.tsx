@@ -93,9 +93,16 @@ export function SimuladorFrete({
       
       // Calcular usando o user_id como franqueado_id para franqueados
       const franqueadoId = profile?.role === 'franqueado' ? profile.user_id : undefined
-      const resultado = await calcularFrete(franqueadoId, pesoTotal)
+      const calculationResult = await calcularFrete(franqueadoId, pesoTotal)
       
-      if (resultado && onFreteCalculado) {
+      if (calculationResult && onFreteCalculado) {
+        // Incluir distância, origem e destino no resultado
+        const resultado = {
+          ...calculationResult,
+          distancia_km: parseFloat(simulacao.distancia),
+          origem: franquiaNome,
+          destino: fazendaNome
+        }
         onFreteCalculado(resultado)
       }
       

@@ -155,11 +155,9 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
       ...dados,
       valor_frete_calculado: resultado.valor_total,
       prazo_entrega_calculado: resultado.prazo_entrega,
-      frete_origem: franquiaNome,
-      frete_destino: fazendas.find(f => f.id === dados.fazenda_id)?.nome || '',
-      frete_distancia: resultado.faixa_aplicada ? 
-        (Number(resultado.faixa_aplicada.distancia_min) + Number(resultado.faixa_aplicada.distancia_max)) / 2 : 
-        undefined
+      frete_origem: resultado.origem || franquiaNome,
+      frete_destino: resultado.destino || fazendas.find(f => f.id === dados.fazenda_id)?.nome || '',
+      frete_distancia: resultado.distancia_km || undefined
     }
     onDadosChange(updatedDados)
   }

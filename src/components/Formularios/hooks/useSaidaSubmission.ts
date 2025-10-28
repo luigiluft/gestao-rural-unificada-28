@@ -18,6 +18,11 @@ interface DadosSaida {
   observacoes?: string
   janelaEntregaDias?: number
   fazenda_id?: string
+  frete_distancia?: number
+  frete_origem?: string
+  frete_destino?: string
+  valor_frete_calculado?: number
+  prazo_entrega_calculado?: number
 }
 
 export function useSaidaSubmission() {
@@ -75,6 +80,11 @@ export function useSaidaSubmission() {
         data_inicio_janela: dataInicioJanela.toISOString().split('T')[0],
         data_fim_janela: dataFimJanela.toISOString().split('T')[0],
         janela_entrega_dias: janelaEntregaDias,
+        // CRITICAL: Incluir campos de frete
+        frete_distancia: dados.frete_distancia || null,
+        frete_origem: dados.frete_origem || null,
+        frete_destino: dados.frete_destino || null,
+        valor_frete_calculado: dados.valor_frete_calculado || null,
         itens: itens.map(item => ({
           user_id: user!.id,
           produto_id: item.produto_id,
