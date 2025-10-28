@@ -91,6 +91,8 @@ export const useViagemSaidasDetails = (viagemId: string | undefined) => {
     queryFn: async () => {
       if (!viagemId) return []
       
+      console.log('🔍 Fetching saidas for viagem:', viagemId)
+      
       const { data, error } = await supabase
         .from("saidas")
         .select(`
@@ -99,7 +101,7 @@ export const useViagemSaidasDetails = (viagemId: string | undefined) => {
           frete_destino,
           tipo_saida,
           fazenda_id,
-          fazenda:fazenda_id (
+          fazendas!saidas_fazenda_id_fkey (
             id,
             nome,
             tipo_logradouro,
@@ -124,7 +126,12 @@ export const useViagemSaidasDetails = (viagemId: string | undefined) => {
         `)
         .eq("viagem_id", viagemId)
       
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error fetching saidas:', error)
+        throw error
+      }
+      
+      console.log('✅ Fetched saidas:', data)
       return data || []
     },
     enabled: !!viagemId

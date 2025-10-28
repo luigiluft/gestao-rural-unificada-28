@@ -96,15 +96,26 @@ const SortableViagemCard: React.FC<SortableViagemCardProps> = ({
     },
     disabled: isDragDisabled
   });
+  
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.8 : 1,
     zIndex: isDragging ? 1000 : 'auto'
   };
+  
   const statusConfig = statusBadges[viagem.status as keyof typeof statusBadges] || statusBadges.planejada;
+  
+  // Handle double click to open details
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onClick) {
+      onClick();
+    }
+  };
+  
   return <div ref={setNodeRef} style={style} {...attributes} {...listeners} className={isDragDisabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}>
-      <Card className={`mb-2 hover:shadow-md transition-shadow ${isDragging ? 'shadow-lg' : ''} ${isDragDisabled ? 'opacity-90' : ''}`} onClick={onClick}>
+      <Card className={`mb-2 hover:shadow-md transition-shadow ${isDragging ? 'shadow-lg' : ''} ${isDragDisabled ? 'opacity-90' : ''}`} onDoubleClick={handleDoubleClick}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
