@@ -17,7 +17,7 @@ export const useContratoDetalhes = (contratoId: string | undefined) => {
             cnpj,
             endereco
           ),
-          produtores_profiles:produtor_id!inner (
+          produtor:profiles!produtor_id (
             nome,
             cpf_cnpj,
             email,
@@ -25,7 +25,7 @@ export const useContratoDetalhes = (contratoId: string | undefined) => {
           )
         `)
         .eq('id', contratoId)
-        .single()
+        .maybeSingle()
 
       if (contratoError) throw contratoError
 

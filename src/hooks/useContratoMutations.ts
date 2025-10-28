@@ -8,9 +8,21 @@ export const useContratoMutations = () => {
 
   const createContrato = useMutation({
     mutationFn: async (data: ContratoFormData) => {
+      const insertData = {
+        numero_contrato: data.numero_contrato,
+        franquia_id: data.franquia_id,
+        produtor_id: data.produtor_id,
+        data_inicio: data.data_inicio,
+        data_fim: data.data_fim || null,
+        dia_vencimento: data.dia_vencimento,
+        tipo_cobranca: data.tipo_cobranca,
+        observacoes: data.observacoes || null,
+        status: data.status,
+      }
+      
       const { data: contrato, error } = await supabase
         .from('contratos_servico')
-        .insert([data])
+        .insert([insertData])
         .select()
         .single()
 

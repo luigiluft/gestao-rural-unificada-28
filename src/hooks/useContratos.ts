@@ -18,7 +18,7 @@ export const useContratos = (filters?: {
             nome,
             cnpj
           ),
-          produtores_profiles:produtor_id!inner (
+          produtor:profiles!produtor_id (
             nome,
             cpf_cnpj
           )

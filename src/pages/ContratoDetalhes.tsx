@@ -65,7 +65,7 @@ export default function ContratoDetalhes() {
           <div>
             <h1 className="text-2xl font-bold">Contrato {contrato.numero_contrato}</h1>
             <p className="text-muted-foreground">
-              {contrato.franquias?.nome} → {contrato.produtores_profiles?.nome}
+              {contrato.franquias?.nome} → {contrato.produtor?.nome}
             </p>
           </div>
         </div>

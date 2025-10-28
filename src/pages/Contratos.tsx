@@ -62,27 +62,26 @@ export default function Contratos() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total de Contratos"
-          value={{ value: stats?.total || 0, label: '' }}
+          value={stats?.total || 0}
           icon={FileText}
-          trend="neutral"
         />
         <StatCard
           title="Contratos Ativos"
-          value={{ value: stats?.ativos || 0, label: '' }}
+          value={stats?.ativos || 0}
           icon={Calendar}
-          trend="up"
+          variant="success"
         />
         <StatCard
           title="A Vencer (30 dias)"
-          value={{ value: stats?.aVencer || 0, label: '' }}
+          value={stats?.aVencer || 0}
           icon={AlertTriangle}
-          trend="down"
+          variant="warning"
         />
         <StatCard
           title="Vencidos"
-          value={{ value: stats?.vencidos || 0, label: '' }}
+          value={stats?.vencidos || 0}
           icon={DollarSign}
-          trend="down"
+          variant="destructive"
         />
       </div>
 
@@ -150,7 +149,7 @@ export default function Contratos() {
                   >
                     <TableCell className="font-medium">{contrato.numero_contrato}</TableCell>
                     <TableCell>{contrato.franquias?.nome}</TableCell>
-                    <TableCell>{contrato.produtores_profiles?.nome}</TableCell>
+                    <TableCell>{contrato.produtor?.nome}</TableCell>
                     <TableCell>{formatDate(contrato.data_inicio)}</TableCell>
                     <TableCell>{contrato.data_fim ? formatDate(contrato.data_fim) : '-'}</TableCell>
                     <TableCell>-</TableCell>

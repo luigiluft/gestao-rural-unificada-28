@@ -27,14 +27,14 @@ export const janelaEntregaSchema = z.object({
 })
 
 export const contratoSchema = z.object({
-  numero_contrato: z.string(),
+  numero_contrato: z.string().min(1, "Número do contrato é obrigatório"),
   franquia_id: z.string().uuid("ID da franquia inválido"),
   produtor_id: z.string().uuid("ID do produtor inválido"),
   data_inicio: z.string().min(1, "Data de início é obrigatória"),
-  data_fim: z.string().optional(),
+  data_fim: z.string().optional().nullable(),
   dia_vencimento: z.number().min(1).max(31),
   tipo_cobranca: z.enum(['mensal', 'quinzenal']),
-  observacoes: z.string().optional(),
+  observacoes: z.string().optional().nullable(),
   status: z.enum(['ativo', 'suspenso', 'expirado', 'cancelado']).default('ativo'),
 })
 
