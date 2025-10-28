@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, X, ArrowUpDown } from 'lucide-react';
+import { CalendarIcon, X, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 interface RemessaData {
@@ -45,7 +45,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
 }) => {
   const [timeUnit, setTimeUnit] = useState<TimeUnit>('dias');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [isTodayVisible, setIsTodayVisible] = useState(true);
+  const [todayDirection, setTodayDirection] = useState<'left' | 'right'>('left');
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const todayLineRef = useRef<HTMLDivElement>(null);
 
   // Função para obter a data base para todos os cálculos (sempre usa a data mínima)
   const getBaseDate = (): Date => {
@@ -261,6 +264,57 @@ const GanttChart: React.FC<GanttChartProps> = ({
     scrollToToday();
   }, [ganttData.length, timeUnit]);
 
+  // Detectar visibilidade da linha "Hoje" e direção
+  useEffect(() => {
+    const scrollContainer = chartContainerRef.current;
+    if (!scrollContainer) return;
+
+    const checkTodayVisibility = () => {
+      if (!scrollContainer) return;
+      const todayPos = getTodayPosition();
+      if (todayPos === null) return;
+
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const domain = getFullXAxisDomain();
+      const domainRange = domain[1] - domain[0];
+      const scrollWidth = scrollContainer.scrollWidth;
+      const containerWidth = scrollContainer.clientWidth;
+
+      // Calcular posição em pixels da linha de hoje
+      const normalizedPos = (todayPos - domain[0]) / domainRange;
+      const todayPixelPos = normalizedPos * scrollWidth;
+
+      // Calcular posição visível no container
+      const scrollLeft = scrollContainer.scrollLeft;
+      const visibleStart = scrollLeft;
+      const visibleEnd = scrollLeft + containerWidth;
+
+      // Verificar se hoje está visível
+      const isVisible = todayPixelPos >= visibleStart && todayPixelPos <= visibleEnd;
+      setIsTodayVisible(isVisible);
+
+      // Determinar direção se não estiver visível
+      if (!isVisible) {
+        if (todayPixelPos < visibleStart) {
+          setTodayDirection('left'); // Hoje está à esquerda
+        } else {
+          setTodayDirection('right'); // Hoje está à direita
+        }
+      }
+    };
+
+    // Verificar inicialmente
+    const timer = setTimeout(checkTodayVisibility, 200);
+
+    // Verificar durante scroll
+    scrollContainer.addEventListener('scroll', checkTodayVisibility);
+
+    return () => {
+      clearTimeout(timer);
+      scrollContainer.removeEventListener('scroll', checkTodayVisibility);
+    };
+  }, [ganttData.length, timeUnit]);
+
   // Função para obter cor baseada no status
   const getBarColor = (status: string, isSelected: boolean) => {
     switch (status) {
@@ -404,10 +458,6 @@ const GanttChart: React.FC<GanttChartProps> = ({
             </div>
             
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={scrollToToday} className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Voltar para Hoje
-              </Button>
               <Button variant="outline" size="sm" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="flex items-center gap-2">
                 <ArrowUpDown className="h-4 w-4" />
                 {sortOrder === 'asc' ? 'Mais próximas primeiro' : 'Mais distantes primeiro'}
@@ -426,7 +476,30 @@ const GanttChart: React.FC<GanttChartProps> = ({
           </div>
         </CardHeader>
       <CardContent>
-        <div className="flex w-full max-h-[600px]">
+        <div className="flex w-full max-h-[600px] relative">
+          {/* Setas para voltar para hoje */}
+          {!isTodayVisible && todayDirection === 'left' && (
+            <Button
+              variant="default"
+              size="icon"
+              className="absolute left-36 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg h-12 w-12 bg-primary hover:bg-primary/90"
+              onClick={scrollToToday}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          )}
+          
+          {!isTodayVisible && todayDirection === 'right' && (
+            <Button
+              variant="default"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg h-12 w-12 bg-primary hover:bg-primary/90"
+              onClick={scrollToToday}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+          )}
+
           {/* Coluna fixa de remessas */}
           {onToggleSelection && <div className="w-32 flex-shrink-0 border-r border-border overflow-y-auto">
               <div className="text-sm font-medium text-muted-foreground mb-2 px-2 py-1 bg-background sticky top-0 z-10">
