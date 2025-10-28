@@ -101,7 +101,7 @@ export const useViagemSaidasDetails = (viagemId: string | undefined) => {
           frete_destino,
           tipo_saida,
           fazenda_id,
-          fazendas!saidas_fazenda_id_fkey (
+          fazenda:fazenda_id (
             id,
             nome,
             tipo_logradouro,

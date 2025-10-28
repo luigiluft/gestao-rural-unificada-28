@@ -116,16 +116,21 @@ export const ViagemDetailsDialog = ({
   };
 
   // Processar destinos únicos a partir de fazendas
+  console.log('🏠 Processando destinos. Total de saídas:', saidas?.length)
+  console.log('📦 Estrutura da primeira saída:', saidas?.[0])
+  
   const destinos = saidas
-    .filter((s: any) => s.fazendas || s.frete_destino)
+    .filter((s: any) => s.fazenda || s.frete_destino)
     .map((s: any) => ({
-      id: s.fazendas?.id || s.id,
-      nome: s.fazendas?.nome || 'Destino',
-      endereco: s.fazendas ? formatarEndereco(s.fazendas) : s.frete_destino || 'Endereço não informado'
+      id: s.fazenda?.id || s.id,
+      nome: s.fazenda?.nome || 'Destino',
+      endereco: s.fazenda ? formatarEndereco(s.fazenda) : s.frete_destino || 'Endereço não informado'
     }))
     .filter((destino, index, self) => 
       index === self.findIndex(d => d.id === destino.id)
-    );
+    )
+  
+  console.log('🎯 Destinos únicos processados:', destinos)
 
   // Processar produtos
   const produtos = saidas.flatMap((saida: any) => 
@@ -134,7 +139,7 @@ export const ViagemDetailsDialog = ({
       produto_codigo: item.produtos?.codigo || '',
       quantidade: item.quantidade,
       lote: item.lote || 'Sem lote',
-      destino: saida.fazendas?.nome || saida.frete_destino || 'Destino não informado',
+      destino: saida.fazenda?.nome || saida.frete_destino || 'Destino não informado',
       saida_id: saida.id
     }))
   );
