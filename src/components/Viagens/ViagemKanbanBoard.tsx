@@ -27,7 +27,7 @@ interface ViagemKanbanBoardProps {
   viagens: Viagem[];
   onViagemSelect?: (viagem: Viagem) => void;
 }
-type ViewType = 'daily' | 'weekly' | 'monthly';
+
 const statusBadges = {
   planejada: {
     label: 'Planejada',
@@ -145,7 +145,6 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
   viagens,
   onViagemSelect
 }) => {
-  const [viewType, setViewType] = useState<ViewType>('daily');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isTodayVisible, setIsTodayVisible] = useState(true);
@@ -174,13 +173,13 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
   // Gerar datas para timeline - período expandido para scroll contínuo
   const dates = useMemo(() => {
     const today = new Date();
-    const daysToShow = viewType === 'daily' ? 90 : viewType === 'weekly' ? 180 : 365;
+    const daysToShow = 90; // Visualização diária fixa
     const daysBefore = Math.floor(daysToShow / 2);
     const startDate = subDays(today, daysBefore);
     return Array.from({
       length: daysToShow
     }, (_, i) => addDays(startDate, i));
-  }, [viewType]);
+  }, []);
 
   // Organizar viagens por data de início real ou previsão
   const viagensByDate = useMemo(() => {
@@ -300,7 +299,7 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     // Delay para garantir que o DOM está renderizado
     const timer = setTimeout(scrollToToday, 100);
     return () => clearTimeout(timer);
-  }, [dates, viewType]);
+  }, [dates]);
 
   // Detectar visibilidade da coluna "Hoje" e direção
   useEffect(() => {
@@ -360,7 +359,6 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
       {/* Controles */}
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <div className="flex gap-2">
-          
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Status" />
@@ -371,19 +369,6 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
               <SelectItem value="em_andamento">Em Andamento</SelectItem>
               <SelectItem value="concluida">Concluída</SelectItem>
               <SelectItem value="cancelada">Cancelada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex gap-2">
-          <Select value={viewType} onValueChange={(value: ViewType) => setViewType(value)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Diário</SelectItem>
-              <SelectItem value="weekly">Semanal</SelectItem>
-              <SelectItem value="monthly">Mensal</SelectItem>
             </SelectContent>
           </Select>
         </div>
