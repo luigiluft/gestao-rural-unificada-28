@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Calendar, Truck, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Calendar, Truck, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUpdateViagemData } from '@/hooks/useUpdateViagemData';
 import { format, addDays, subDays, isSameDay, differenceInCalendarDays, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -148,7 +148,10 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
   const [viewType, setViewType] = useState<ViewType>('daily');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isTodayVisible, setIsTodayVisible] = useState(true);
+  const [todayDirection, setTodayDirection] = useState<'left' | 'right'>('left');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const todayColumnRef = useRef<HTMLDivElement>(null);
   const updateViagemData = useUpdateViagemData();
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, {
     coordinateGetter: sortableKeyboardCoordinates
@@ -298,6 +301,47 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
     const timer = setTimeout(scrollToToday, 100);
     return () => clearTimeout(timer);
   }, [dates, viewType]);
+
+  // Detectar visibilidade da coluna "Hoje" e direção
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const checkTodayVisibility = () => {
+      if (!todayColumnRef.current || !scrollContainer) return;
+
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const todayRect = todayColumnRef.current.getBoundingClientRect();
+
+      // Verificar se a coluna de hoje está visível
+      const isVisible = (
+        todayRect.left >= containerRect.left &&
+        todayRect.right <= containerRect.right
+      );
+
+      setIsTodayVisible(isVisible);
+
+      // Determinar direção se não estiver visível
+      if (!isVisible) {
+        if (todayRect.left < containerRect.left) {
+          setTodayDirection('left'); // Hoje está à esquerda
+        } else {
+          setTodayDirection('right'); // Hoje está à direita
+        }
+      }
+    };
+
+    // Verificar inicialmente
+    const timer = setTimeout(checkTodayVisibility, 200);
+
+    // Verificar durante scroll
+    scrollContainer.addEventListener('scroll', checkTodayVisibility);
+
+    return () => {
+      clearTimeout(timer);
+      scrollContainer.removeEventListener('scroll', checkTodayVisibility);
+    };
+  }, [dates]);
   const scrollToToday = () => {
     if (!scrollContainerRef.current) return;
     const today = new Date();
@@ -342,16 +386,11 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
               <SelectItem value="monthly">Mensal</SelectItem>
             </SelectContent>
           </Select>
-          
-          <Button variant="outline" size="sm" onClick={scrollToToday}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Voltar para Hoje
-          </Button>
         </div>
       </div>
 
       {/* Timeline Kanban Container Responsivo */}
-      <div className="w-full max-w-full overflow-hidden">
+      <div className="w-full max-w-full overflow-hidden relative">
         <div className="border rounded-lg bg-background">
           <div ref={scrollContainerRef} className="overflow-x-auto overflow-y-hidden h-[600px] scrollbar-thin scrollbar-thumb-border scrollbar-track-background">
             <div style={{
@@ -363,7 +402,11 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
             }}>
                 {dates.map((date, index) => {
                 const isToday = isSameDay(date, new Date());
-                return <div key={index} className={`flex-shrink-0 w-48 p-3 border-r text-center ${isToday ? 'bg-primary/10 border-primary' : ''}`}>
+                return <div 
+                      key={index} 
+                      ref={isToday ? todayColumnRef : undefined}
+                      className={`flex-shrink-0 w-48 p-3 border-r text-center ${isToday ? 'bg-primary/10 border-primary' : ''}`}
+                    >
                       <div className={`font-medium ${isToday ? 'text-primary' : ''}`}>
                         {format(date, 'EEE', {
                       locale: ptBR
@@ -400,6 +443,29 @@ export const ViagemKanbanBoard: React.FC<ViagemKanbanBoardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Setas para voltar para hoje */}
+        {!isTodayVisible && todayDirection === 'left' && (
+          <Button
+            variant="default"
+            size="icon"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg h-12 w-12 bg-primary hover:bg-primary/90"
+            onClick={scrollToToday}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+        )}
+        
+        {!isTodayVisible && todayDirection === 'right' && (
+          <Button
+            variant="default"
+            size="icon"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-full shadow-lg h-12 w-12 bg-primary hover:bg-primary/90"
+            onClick={scrollToToday}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        )}
       </div>
 
       {/* Legenda */}
