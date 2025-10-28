@@ -501,16 +501,17 @@ const GanttChart: React.FC<GanttChartProps> = ({
           )}
 
           {/* Coluna fixa de remessas */}
-          {onToggleSelection && <div className="w-32 flex-shrink-0 border-r border-border overflow-y-auto">
-              <div className="text-sm font-medium text-muted-foreground px-2 bg-background sticky top-0 z-10" style={{ height: '20px' }}>
+          {onToggleSelection && <div className="w-32 flex-shrink-0 border-r border-border overflow-y-hidden">
+              <div className="text-sm font-medium text-muted-foreground px-2 bg-background" style={{ height: '20px', lineHeight: '20px' }}>
                 Remessas
               </div>
-              <div className="flex flex-col" style={{ paddingTop: '20px' }}>
-                {ganttData.map(item => <div key={item.id} className="flex items-center gap-2 px-2" style={{
-              height: `${BAR_HEIGHT}px`
+              <div className="flex flex-col" style={{ marginTop: '20px' }}>
+                {ganttData.map(item => <div key={item.id} className="flex items-center justify-start gap-2 px-2" style={{
+              height: `${BAR_HEIGHT}px`,
+              minHeight: `${BAR_HEIGHT}px`
             }}>
                     <Checkbox checked={item.isSelected} onCheckedChange={() => onToggleSelection(item.id)} />
-                    <span className="text-xs">{item.name}</span>
+                    <span className="text-xs truncate">{item.name}</span>
                   </div>)}
               </div>
             </div>}
