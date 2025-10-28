@@ -2765,6 +2765,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "saidas_fazenda_id_fkey"
+            columns: ["fazenda_id"]
+            isOneToOne: false
+            referencedRelation: "fazendas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "saidas_viagem_id_fkey"
             columns: ["viagem_id"]
             isOneToOne: false
