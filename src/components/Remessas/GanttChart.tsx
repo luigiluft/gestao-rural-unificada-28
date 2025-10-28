@@ -502,10 +502,10 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
           {/* Coluna fixa de remessas */}
           {onToggleSelection && <div className="w-32 flex-shrink-0 border-r border-border overflow-y-auto">
-              <div className="text-sm font-medium text-muted-foreground mb-2 px-2 py-1 bg-background sticky top-0 z-10">
+              <div className="text-sm font-medium text-muted-foreground px-2 bg-background sticky top-0 z-10" style={{ height: '20px' }}>
                 Remessas
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col" style={{ paddingTop: '20px' }}>
                 {ganttData.map(item => <div key={item.id} className="flex items-center gap-2 px-2" style={{
               height: `${BAR_HEIGHT}px`
             }}>
@@ -527,12 +527,12 @@ const GanttChart: React.FC<GanttChartProps> = ({
                 right: 30,
                 left: 20,
                 bottom: 5
-              }}>
+              }} barCategoryGap="0%" barGap={0}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" orientation="top" domain={getFullXAxisDomain()} tickFormatter={formatXAxisTick} tickCount={timeUnit === 'dias' ? 30 : timeUnit === 'semanas' ? 20 : 12} tick={{
                   fontSize: 12
                 }} />
-                  <YAxis type="category" dataKey="name" hide />
+                  <YAxis type="category" dataKey="name" hide width={0} />
                   <Tooltip content={<CustomTooltip />} />
                   
                   {/* Linha indicando hoje */}
