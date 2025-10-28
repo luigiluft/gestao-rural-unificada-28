@@ -17,6 +17,7 @@ interface DadosSaida {
   produtorDestinatario?: { user_id: string }
   observacoes?: string
   janelaEntregaDias?: number
+  fazenda_id?: string
 }
 
 export function useSaidaSubmission() {
@@ -69,6 +70,7 @@ export function useSaidaSubmission() {
         criado_por_franqueado: true,
         status_aprovacao_produtor: dados.produtorDestinatario ? "pendente" : "nao_aplicavel",
         produtor_destinatario_id: dados.produtorDestinatario?.user_id || null,
+        fazenda_id: dados.fazenda_id || null,
         // CRITICAL: Incluir campos de janela de entrega
         data_inicio_janela: dataInicioJanela.toISOString().split('T')[0],
         data_fim_janela: dataFimJanela.toISOString().split('T')[0],

@@ -99,25 +99,42 @@ export const ViagemDetailsDialog = ({
   const statusConfig = statusBadges[viagem.status as keyof typeof statusBadges] || statusBadges.planejada;
   const motoristaAtual = motoristas.find(m => m.id === viagem.motorista_id);
 
-  // Processar destinos únicos a partir de frete_destino
+  // Função para formatar endereço completo
+  const formatarEndereco = (fazenda: any) => {
+    if (!fazenda) return null;
+    
+    const partes = [];
+    if (fazenda.tipo_logradouro && fazenda.nome_logradouro) {
+      partes.push(`${fazenda.tipo_logradouro} ${fazenda.nome_logradouro}`);
+      if (fazenda.numero) partes[0] += `, ${fazenda.numero}`;
+    }
+    if (fazenda.bairro) partes.push(fazenda.bairro);
+    if (fazenda.municipio && fazenda.uf) partes.push(`${fazenda.municipio}/${fazenda.uf}`);
+    if (fazenda.cep) partes.push(`CEP: ${fazenda.cep}`);
+    
+    return partes.join(' - ');
+  };
+
+  // Processar destinos únicos a partir de fazendas
   const destinos = saidas
-    .filter(s => s.frete_destino)
-    .map(s => ({
-      id: s.id,
-      endereco: s.frete_destino || 'Endereço não informado'
+    .filter((s: any) => s.fazenda || s.frete_destino)
+    .map((s: any) => ({
+      id: s.fazenda?.id || s.id,
+      nome: s.fazenda?.nome || 'Destino',
+      endereco: s.fazenda ? formatarEndereco(s.fazenda) : s.frete_destino || 'Endereço não informado'
     }))
     .filter((destino, index, self) => 
-      index === self.findIndex(d => d.endereco === destino.endereco)
+      index === self.findIndex(d => d.id === destino.id)
     );
 
   // Processar produtos
-  const produtos = saidas.flatMap(saida => 
-    (saida.saida_itens || []).map(item => ({
+  const produtos = saidas.flatMap((saida: any) => 
+    (saida.saida_itens || []).map((item: any) => ({
       produto_nome: item.produtos?.nome || 'Produto não identificado',
       produto_codigo: item.produtos?.codigo || '',
       quantidade: item.quantidade,
       lote: item.lote || 'Sem lote',
-      destino: saida.frete_destino || 'Destino não informado',
+      destino: saida.fazenda?.nome || saida.frete_destino || 'Destino não informado',
       saida_id: saida.id
     }))
   );
@@ -214,9 +231,12 @@ export const ViagemDetailsDialog = ({
               {destinos.map((destino, idx) => (
                 <Card key={destino.id || idx}>
                   <CardContent className="pt-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <div className="text-sm">{destino.endereco}</div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                        <div className="font-semibold text-sm">{destino.nome}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground ml-6">{destino.endereco}</div>
                     </div>
                   </CardContent>
                 </Card>

@@ -98,6 +98,19 @@ export const useViagemSaidasDetails = (viagemId: string | undefined) => {
           data_saida,
           frete_destino,
           tipo_saida,
+          fazenda_id,
+          fazenda:fazenda_id (
+            id,
+            nome,
+            tipo_logradouro,
+            nome_logradouro,
+            numero,
+            complemento,
+            bairro,
+            municipio,
+            uf,
+            cep
+          ),
           saida_itens (
             id,
             quantidade,
