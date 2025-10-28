@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
@@ -82,5 +82,38 @@ export const useDesalocarSaidaViagem = () => {
         variant: "destructive",
       })
     },
+  })
+}
+
+export const useViagemSaidasDetails = (viagemId: string | undefined) => {
+  return useQuery({
+    queryKey: ["viagem-saidas-details", viagemId],
+    queryFn: async () => {
+      if (!viagemId) return []
+      
+      const { data, error } = await supabase
+        .from("saidas")
+        .select(`
+          id,
+          data_saida,
+          frete_destino,
+          tipo_saida,
+          saida_itens (
+            id,
+            quantidade,
+            lote,
+            produto_id,
+            produtos (
+              nome,
+              codigo
+            )
+          )
+        `)
+        .eq("viagem_id", viagemId)
+      
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!viagemId
   })
 }

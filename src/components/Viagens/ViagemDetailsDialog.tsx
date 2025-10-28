@@ -22,11 +22,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Truck, User, Package, DollarSign, MapPin } from 'lucide-react';
+import { Calendar, Truck, User, Package, DollarSign, MapPin, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMotoristas } from '@/hooks/useMotoristas';
 import { useUpdateViagem } from '@/hooks/useUpdateViagem';
+import { useViagemSaidasDetails } from '@/hooks/useViagemSaidas';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const viagemSchema = z.object({
   numero: z.string().min(1, 'Número da viagem é obrigatório'),
@@ -60,6 +64,7 @@ export const ViagemDetailsDialog = ({
   onUpdate 
 }: ViagemDetailsDialogProps) => {
   const { data: motoristas = [] } = useMotoristas();
+  const { data: saidas = [], isLoading: isLoadingSaidas } = useViagemSaidasDetails(viagem?.id);
 
   const form = useForm<ViagemFormData>({
     resolver: zodResolver(viagemSchema),
@@ -93,6 +98,29 @@ export const ViagemDetailsDialog = ({
 
   const statusConfig = statusBadges[viagem.status as keyof typeof statusBadges] || statusBadges.planejada;
   const motoristaAtual = motoristas.find(m => m.id === viagem.motorista_id);
+
+  // Processar destinos únicos a partir de frete_destino
+  const destinos = saidas
+    .filter(s => s.frete_destino)
+    .map(s => ({
+      id: s.id,
+      endereco: s.frete_destino || 'Endereço não informado'
+    }))
+    .filter((destino, index, self) => 
+      index === self.findIndex(d => d.endereco === destino.endereco)
+    );
+
+  // Processar produtos
+  const produtos = saidas.flatMap(saida => 
+    (saida.saida_itens || []).map(item => ({
+      produto_nome: item.produtos?.nome || 'Produto não identificado',
+      produto_codigo: item.produtos?.codigo || '',
+      quantidade: item.quantidade,
+      lote: item.lote || 'Sem lote',
+      destino: saida.frete_destino || 'Destino não informado',
+      saida_id: saida.id
+    }))
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,6 +189,101 @@ export const ViagemDetailsDialog = ({
             </CardContent>
           </Card>
         </div>
+
+        <Separator className="my-6" />
+
+        {/* Destinos da Viagem */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold">Destinos da Viagem</h3>
+          </div>
+          
+          {isLoadingSaidas ? (
+            <div className="text-sm text-muted-foreground">Carregando destinos...</div>
+          ) : destinos.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground">
+                  Nenhum destino vinculado a esta viagem
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3">
+              {destinos.map((destino, idx) => (
+                <Card key={destino.id || idx}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="text-sm">{destino.endereco}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Separator className="my-6" />
+
+        {/* Produtos e Itens */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold">Produtos e Itens</h3>
+          </div>
+          
+          {isLoadingSaidas ? (
+            <div className="text-sm text-muted-foreground">Carregando produtos...</div>
+          ) : produtos.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground">
+                  Nenhum produto vinculado a esta viagem
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[300px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="text-right">Quantidade</TableHead>
+                        <TableHead>Lote</TableHead>
+                        <TableHead>Destino</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {produtos.map((produto, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <div className="font-medium">{produto.produto_nome}</div>
+                            {produto.produto_codigo && (
+                              <div className="text-xs text-muted-foreground">
+                                Cód: {produto.produto_codigo}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {produto.quantidade}
+                          </TableCell>
+                          <TableCell className="text-sm">{produto.lote}</TableCell>
+                          <TableCell className="text-sm">{produto.destino}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <Separator className="my-6" />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
