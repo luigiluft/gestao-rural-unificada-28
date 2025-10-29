@@ -286,7 +286,7 @@ export default function GerenciarPosicoes() {
         </TabsContent>
 
         <TabsContent value="mapa">
-          <WarehouseMapViewer depositoId={selectedDepositoId} />
+          <WarehouseMapViewer depositoId={depositoId} />
         </TabsContent>
       </Tabs>
 
