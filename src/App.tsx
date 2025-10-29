@@ -38,7 +38,6 @@ import Remessas from "./pages/Remessas";
 
 import Viagens from "./pages/Viagens";
 import Planejamento from "./pages/Planejamento";
-import Agenda from "./pages/Agenda";
 import Tracking from "./pages/Tracking";
 import ProofOfDelivery from "./pages/ProofOfDelivery";
 import Comprovantes from "./pages/Comprovantes";
@@ -155,7 +154,6 @@ const App = () => {
               <Route path="viagens" element={<RequirePageAccess pageKey="viagens"><Viagens /></RequirePageAccess>} />
               <Route path="veiculos" element={<RequirePageAccess pageKey="veiculos"><Veiculos /></RequirePageAccess>} />
               <Route path="motoristas" element={<RequirePageAccess pageKey="motoristas"><Motoristas /></RequirePageAccess>} />
-              <Route path="agenda" element={<RequirePageAccess pageKey="agenda"><Agenda /></RequirePageAccess>} />
               <Route path="tracking" element={<RequirePageAccess pageKey="tracking"><Tracking /></RequirePageAccess>} />
               <Route path="proof-of-delivery" element={<RequirePageAccess pageKey="proof-of-delivery"><ProofOfDelivery /></RequirePageAccess>} />
               <Route path="comprovantes" element={<RequirePageAccess pageKey="comprovantes"><Comprovantes /></RequirePageAccess>} />

@@ -185,7 +185,6 @@ export const useDynamicMenuItems = () => {
       'ocorrencias',
       'veiculos',
       'motoristas',
-      'agenda',
       'tracking',
       'tabela-frete'
     ]
