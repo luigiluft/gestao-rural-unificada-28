@@ -99,6 +99,8 @@ export const useViagemSaidasDetails = (viagemId: string | undefined) => {
           id,
           data_saida,
           frete_destino,
+          frete_distancia,
+          peso_total,
           tipo_saida,
           fazenda_id,
           fazenda:fazenda_id (

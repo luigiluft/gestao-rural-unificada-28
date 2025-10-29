@@ -115,7 +115,12 @@ export const ViagemDetailsDialog = ({
     return partes.join(' - ');
   };
 
-  // Processar destinos únicos a partir de fazendas
+  // Calcular totais a partir das saídas
+  const pesoTotal = saidas.reduce((acc: number, s: any) => acc + (Number(s.peso_total) || 0), 0);
+  const distanciaTotal = saidas.reduce((acc: number, s: any) => acc + (Number(s.frete_distancia) || 0), 0);
+  const totalRemessas = saidas.length;
+  
+  console.log('📊 Totais calculados:', { pesoTotal, distanciaTotal, totalRemessas })
   console.log('🏠 Processando destinos. Total de saídas:', saidas?.length)
   console.log('📦 Estrutura da primeira saída:', saidas?.[0])
   
@@ -164,7 +169,7 @@ export const ViagemDetailsDialog = ({
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{viagem.total_remessas || 0}</div>
+              <div className="text-2xl font-bold">{totalRemessas}</div>
               <div className="text-xs text-muted-foreground">
                 {viagem.remessas_entregues || 0} entregues
               </div>
@@ -177,7 +182,7 @@ export const ViagemDetailsDialog = ({
               <MapPin className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{viagem.distancia_total || 0} km</div>
+              <div className="text-2xl font-bold">{distanciaTotal.toFixed(0)} km</div>
               <div className="text-xs text-muted-foreground">
                 {viagem.distancia_percorrida || 0} km percorridos
               </div>
@@ -190,7 +195,7 @@ export const ViagemDetailsDialog = ({
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{viagem.peso_total || 0} kg</div>
+              <div className="text-2xl font-bold">{pesoTotal.toFixed(0)} kg</div>
             </CardContent>
           </Card>
           
