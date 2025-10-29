@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WarehouseMapViewer } from "@/components/WMS/WarehouseMapViewer";
 import { Package, MapPin, Calendar, User, Trash2, Eye, ArrowRightLeft, MoreHorizontal, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -240,9 +241,10 @@ export default function GerenciarPosicoes() {
       </div>
 
       <Tabs defaultValue="estoque" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="estoque">Pallets em Estoque</TabsTrigger>
           <TabsTrigger value="avariados">Pallets Avariados</TabsTrigger>
+          <TabsTrigger value="mapa">Mapa do Armazém</TabsTrigger>
         </TabsList>
         
         <TabsContent value="estoque" className="space-y-4">
@@ -281,6 +283,10 @@ export default function GerenciarPosicoes() {
               <PalletTable positions={palletPositionsAvariados} isAvariados={true} />
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="mapa">
+          <WarehouseMapViewer depositoId={selectedDepositoId} />
         </TabsContent>
       </Tabs>
 
