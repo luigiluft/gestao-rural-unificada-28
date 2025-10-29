@@ -109,6 +109,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     isAvaria?: boolean
   }>>([])
   const [showPalletLabels, setShowPalletLabels] = useState<{ [key: string]: boolean }>({})
+  const [duplicatingPallets, setDuplicatingPallets] = useState<Set<string>>(new Set())
 
   const getNextPalletNumber = () => {
     const existingNumbers = typedPallets.map(p => p.numero_pallet).sort((a, b) => a - b)
@@ -490,27 +491,35 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   }
 
   const handleDuplicatePallet = async (templatePallet: ExtendedEntradaPallet) => {
-    // Check if there are enough products to duplicate
-    const requiredProducts: { [key: string]: number } = {}
-    templatePallet.entrada_pallet_itens?.forEach(item => {
-      requiredProducts[item.entrada_item_id] = Number(item.quantidade)
-    })
-
-    // Check availability
-    for (const [itemId, neededQuantity] of Object.entries(requiredProducts)) {
-      const available = getQuantidadeDisponivel(itemId)
-      if (available < neededQuantity) {
-        const produto = entradaItens.find(i => i.id === itemId)
-        toast({
-          title: "Estoque insuficiente",
-          description: `Não há ${produto?.nome_produto} suficiente para criar mais um pallet.`,
-          variant: "destructive"
-        })
-        return
-      }
+    // Prevent duplicate operations
+    if (duplicatingPallets.has(templatePallet.id)) {
+      return
     }
 
+    // Mark as duplicating
+    setDuplicatingPallets(prev => new Set(prev).add(templatePallet.id))
+
     try {
+      // Check if there are enough products to duplicate
+      const requiredProducts: { [key: string]: number } = {}
+      templatePallet.entrada_pallet_itens?.forEach(item => {
+        requiredProducts[item.entrada_item_id] = Number(item.quantidade)
+      })
+
+      // Check availability
+      for (const [itemId, neededQuantity] of Object.entries(requiredProducts)) {
+        const available = getQuantidadeDisponivel(itemId)
+        if (available < neededQuantity) {
+          const produto = entradaItens.find(i => i.id === itemId)
+          toast({
+            title: "Estoque insuficiente",
+            description: `Não há ${produto?.nome_produto} suficiente para criar mais um pallet.`,
+            variant: "destructive"
+          })
+          return
+        }
+      }
+
       const totalQuantidadeTemplate = templatePallet.entrada_pallet_itens?.reduce((acc, item) => acc + item.quantidade, 0) || 0
       
       const newPalletData = await createPallet.mutateAsync({
@@ -543,6 +552,13 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
         title: "Erro ao duplicar",
         description: "Erro ao criar pallet. Tente novamente.",
         variant: "destructive"
+      })
+    } finally {
+      // Always remove from duplicating set
+      setDuplicatingPallets(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(templatePallet.id)
+        return newSet
       })
     }
   }
@@ -909,7 +925,7 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDuplicatePallet(group.template)}
-                      disabled={!canAddMorePallets(group.template)}
+                      disabled={!canAddMorePallets(group.template) || duplicatingPallets.has(group.template.id)}
                       className="h-7 w-7 p-0"
                       title="Adicionar mais um pallet igual"
                     >
