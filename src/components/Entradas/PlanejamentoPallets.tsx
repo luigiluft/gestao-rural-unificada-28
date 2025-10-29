@@ -111,14 +111,19 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
   const [showPalletLabels, setShowPalletLabels] = useState<{ [key: string]: boolean }>({})
   const [duplicatingPallets, setDuplicatingPallets] = useState<Set<string>>(new Set())
 
-  const getNextPalletNumber = () => {
-    const existingNumbers = typedPallets.map(p => p.numero_pallet).sort((a, b) => a - b)
-    for (let i = 1; i <= existingNumbers.length + 1; i++) {
-      if (!existingNumbers.includes(i)) {
-        return i
-      }
-    }
-    return existingNumbers.length + 1
+  const getNextPalletNumber = async (entradaId: string) => {
+    const { data: existingPallets, error } = await supabase
+      .from("entrada_pallets")
+      .select("numero_pallet")
+      .eq("entrada_id", entradaId)
+      .order("numero_pallet", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    
+    if (error) throw error
+    
+    // Se não há pallets, retorna 1. Caso contrário, retorna o maior + 1
+    return (existingPallets?.numero_pallet || 0) + 1
   }
 
   // Group pallets by content
@@ -161,14 +166,16 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
     }
 
     // Determinar descrição automática baseada no conteúdo
+    const proximoNumero = await getNextPalletNumber(entradaId)
+
     let autoDescricao = newPallet.descricao || null
     if (hasAvaria) {
-      autoDescricao = `Pallet ${getNextPalletNumber()} - Avaria`
+      autoDescricao = `Pallet ${proximoNumero} - Avaria`
     }
 
     const palletData = await createPallet.mutateAsync({
       entrada_id: entradaId,
-      numero_pallet: getNextPalletNumber(),
+      numero_pallet: proximoNumero,
       descricao: autoDescricao,
       peso_total: null,
       quantidade_atual: selectedProductsForNewPallet.reduce((acc, product) => acc + product.quantidade, 0),
@@ -522,9 +529,11 @@ export const PlanejamentoPallets = ({ entradaId, entradaItens }: PlanejamentoPal
 
       const totalQuantidadeTemplate = templatePallet.entrada_pallet_itens?.reduce((acc, item) => acc + item.quantidade, 0) || 0
       
+      const proximoNumero = await getNextPalletNumber(entradaId)
+      
       const newPalletData = await createPallet.mutateAsync({
         entrada_id: entradaId,
-        numero_pallet: getNextPalletNumber(),
+        numero_pallet: proximoNumero,
         descricao: templatePallet.descricao,
         peso_total: templatePallet.peso_total,
         quantidade_atual: totalQuantidadeTemplate,

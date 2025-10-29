@@ -62,14 +62,31 @@ export const useCreatePallet = () => {
 
   return useMutation({
     mutationFn: async (pallet: Omit<EntradaPallet, "id" | "created_at" | "updated_at">) => {
-      const { data, error } = await supabase
-        .from("entrada_pallets")
-        .insert(pallet)
-        .select()
-        .single()
+      const retries = 3
+      let lastError: any = null
 
-      if (error) throw error
-      return data
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          const { data, error } = await supabase
+            .from("entrada_pallets")
+            .insert(pallet)
+            .select()
+            .single()
+
+          if (error) throw error
+          return data
+        } catch (error: any) {
+          lastError = error
+          // Se for erro de duplicate key e ainda temos tentativas, incrementa o número
+          if (error.code === '23505' && attempt < retries - 1) {
+            pallet.numero_pallet += 1
+            continue
+          }
+          break
+        }
+      }
+      
+      throw lastError
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["entrada-pallets", data.entrada_id] })
