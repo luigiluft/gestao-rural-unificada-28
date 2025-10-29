@@ -65,8 +65,10 @@ export const useFluxoData = (
     // Processar entradas (A Caminho - incluindo produtos ainda não alocados)
     entradas.forEach(entrada => {
       // Produtos em trânsito
-      if (entrada?.status_aprovacao === 'aguardando_transporte' || 
-          entrada?.status_aprovacao === 'em_transferencia') {
+      if (entrada?.status_aprovacao === 'planejamento' ||
+          entrada?.status_aprovacao === 'aguardando_transporte' || 
+          entrada?.status_aprovacao === 'em_transferencia' ||
+          entrada?.status_aprovacao === 'aguardando_conferencia') {
         entrada?.entrada_itens?.forEach(item => {
           if (item?.produto_id && typeof item?.quantidade === 'number') {
             const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;

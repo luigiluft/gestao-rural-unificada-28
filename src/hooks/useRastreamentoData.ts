@@ -32,7 +32,7 @@ export const useRastreamentoEntradas = () => {
             produtos(nome, unidade_medida)
           )
         `)
-        .in("status_aprovacao", ["aguardando_transporte", "em_transferencia"])
+        .in("status_aprovacao", ["planejamento", "aguardando_transporte", "em_transferencia", "aguardando_conferencia"])
         .order("created_at", { ascending: false })
 
       // If not admin, filter by user_id
