@@ -4,15 +4,17 @@ import { OrbitControls, PerspectiveCamera, Grid, Text } from "@react-three/drei"
 import { useWarehouseMap } from "@/hooks/useWarehouseMap"
 import { WarehouseStats } from "./WarehouseStats"
 import { PositionCube } from "./PositionCube"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Box, RotateCcw, Filter, Bug } from "lucide-react"
+import { Box, RotateCcw, Filter, Bug, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useQueryClient } from "@tanstack/react-query"
+import { useToast } from "@/hooks/use-toast"
 
 interface WarehouseMapViewerProps {
   depositoId?: string
@@ -145,7 +149,9 @@ function Scene({
 
 export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const { data, isLoading } = useWarehouseMap(depositoId)
-  const [selectedFloor, setSelectedFloor] = useState(1) // Começar no andar 1 por padrão
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const [selectedFloor, setSelectedFloor] = useState(1)
   const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
   const [cameraKey, setCameraKey] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
@@ -158,76 +164,102 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const code = (r: number, m: number, a: number) => 
     `R${String(r).padStart(2,'0')}-M${String(m).padStart(2,'0')}-A${String(a).padStart(2,'0')}`
   
-  // Calcular diagnósticos para R01-A01 (precisa estar antes dos early returns)
+  // Calcular diagnósticos MULTI-ANDAR para Rua 01 (todos os andares)
   const getDiagnostics = () => {
     if (!data || !diagnostics) return null
     
     const targetRua = 1
-    const targetAndar = 1
+    const results: Record<string, {
+      expected: number
+      present: number
+      rendered: number
+      missing: string[]
+      filtered: string[]
+    }> = {}
     
-    // Posições esperadas: R01-M01-A01 até R01-M{maxModulo}-A01
-    const expectedCodes = []
-    for (let m = 1; m <= data.dimensions.maxModulo; m++) {
-      expectedCodes.push(code(targetRua, m, targetAndar))
+    const allMissingPositions: any[] = []
+    
+    // Para cada andar (1 até maxAndar)
+    for (let andar = 1; andar <= data.dimensions.maxAndar; andar++) {
+      // Posições esperadas: R01-M01-A{andar} até R01-M{maxModulo}-A{andar}
+      const expectedCodes = []
+      for (let m = 1; m <= data.dimensions.maxModulo; m++) {
+        expectedCodes.push(code(targetRua, m, andar))
+      }
+      
+      // Posições presentes nos dados (do banco)
+      const presentInData = new Set(
+        data.positions
+          .filter((p: any) => p.rua === targetRua && p.andar === andar)
+          .map((p: any) => p.codigo)
+      )
+      
+      // Posições que passam pelos filtros (renderizadas)
+      const renderedInScene = new Set(
+        data.positions
+          .filter((p: any) => {
+            const floorMatch = selectedFloor === 0 || p.andar === selectedFloor
+            const ruaMatch = p.rua >= ruaRange[0] && p.rua <= ruaRange[1]
+            const moduloMatch = p.modulo >= moduloRange[0] && p.modulo <= moduloRange[1]
+            const occupiedMatch = !showOnlyOccupied || p.ocupado
+            return p.rua === targetRua && p.andar === andar && 
+                   floorMatch && ruaMatch && moduloMatch && occupiedMatch
+          })
+          .map((p: any) => p.codigo)
+      )
+      
+      // Faltando no banco
+      const missing = expectedCodes.filter(c => !presentInData.has(c))
+      
+      // Filtradas (existem no banco mas não renderizadas)
+      const filtered = Array.from(presentInData).filter(c => !renderedInScene.has(c))
+      
+      // Adicionar posições faltantes para ghost cubes
+      const missingInAndar = expectedCodes
+        .filter(c => !presentInData.has(c))
+        .map(c => {
+          const parts = c.match(/R(\d+)-M(\d+)-A(\d+)/)
+          return parts ? {
+            codigo: c,
+            rua: parseInt(parts[1]),
+            modulo: parseInt(parts[2]),
+            andar: parseInt(parts[3])
+          } : null
+        })
+        .filter(Boolean)
+      
+      allMissingPositions.push(...missingInAndar)
+      
+      results[`A${String(andar).padStart(2,'0')}`] = {
+        expected: expectedCodes.length,
+        present: presentInData.size,
+        rendered: renderedInScene.size,
+        missing,
+        filtered
+      }
     }
     
-    // Posições presentes nos dados (do banco)
-    const presentInData = new Set(
-      data.positions
-        .filter((p: any) => p.rua === targetRua && p.andar === targetAndar)
-        .map((p: any) => p.codigo)
-    )
-    
-    // Posições que passam pelos filtros (renderizadas)
-    const renderedInScene = new Set(
-      data.positions
-        .filter((p: any) => {
-          const floorMatch = selectedFloor === 0 || p.andar === selectedFloor
-          const ruaMatch = p.rua >= ruaRange[0] && p.rua <= ruaRange[1]
-          const moduloMatch = p.modulo >= moduloRange[0] && p.modulo <= moduloRange[1]
-          const occupiedMatch = !showOnlyOccupied || p.ocupado
-          return p.rua === targetRua && p.andar === targetAndar && 
-                 floorMatch && ruaMatch && moduloMatch && occupiedMatch
-        })
-        .map((p: any) => p.codigo)
-    )
-    
-    // Faltando no banco
-    const missingInDB = expectedCodes.filter(c => !presentInData.has(c))
-    
-    // Filtradas (existem no banco mas não renderizadas)
-    const filteredOut = Array.from(presentInData).filter(c => !renderedInScene.has(c))
-    
-    // Posições faltantes para ghost cubes
-    const missingPositions = expectedCodes
-      .filter(c => !renderedInScene.has(c))
-      .map(c => {
-        const parts = c.match(/R(\d+)-M(\d+)-A(\d+)/)
-        return parts ? {
-          codigo: c,
-          rua: parseInt(parts[1]),
-          modulo: parseInt(parts[2]),
-          andar: parseInt(parts[3])
-        } : null
-      })
-      .filter(Boolean)
-    
     return {
-      expectedCodes,
-      presentInData: Array.from(presentInData),
-      renderedInScene: Array.from(renderedInScene),
-      missingInDB,
-      filteredOut,
-      missingPositions
+      byFloor: results,
+      missingPositions: allMissingPositions
     }
   }
   
   const diagnosticData = getDiagnostics()
   
-  // Log automático ao carregar ou mudar filtros (useEffect PRECISA estar antes dos early returns!)
+  // Handler para forçar reload dos dados
+  const handleForceReload = () => {
+    queryClient.invalidateQueries({ queryKey: ['warehouse-map', depositoId] })
+    toast({
+      title: "Dados recarregados",
+      description: "Buscando posições atualizadas do banco de dados"
+    })
+  }
+  
+  // Log automático MULTI-ANDAR ao carregar ou mudar filtros
   useEffect(() => {
     if (diagnostics && diagnosticData && data) {
-      console.log('🔍 === DIAGNÓSTICO WMS ===')
+      console.log('🔍 === DIAGNÓSTICO WMS MULTI-ANDAR (RUA 01) ===')
       console.log('Filtros ativos:', {
         selectedFloor,
         ruaRange,
@@ -235,23 +267,49 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
         showOnlyOccupied,
         depositoId
       })
-      console.table({
-        'Esperadas (R01-A01)': diagnosticData.expectedCodes.length,
-        'No Banco': diagnosticData.presentInData.length,
-        'Renderizadas': diagnosticData.renderedInScene.length,
-        'Faltando no Banco': diagnosticData.missingInDB.length,
-        'Filtradas': diagnosticData.filteredOut.length
+      
+      // Resumo geral
+      let totalExpected = 0
+      let totalPresent = 0
+      let totalRendered = 0
+      let totalMissing = 0
+      let totalFiltered = 0
+      
+      Object.values(diagnosticData.byFloor).forEach((floor: any) => {
+        totalExpected += floor.expected
+        totalPresent += floor.present
+        totalRendered += floor.rendered
+        totalMissing += floor.missing.length
+        totalFiltered += floor.filtered.length
       })
       
-      if (diagnosticData.missingInDB.length > 0) {
-        console.warn('❌ Posições faltando no banco:', diagnosticData.missingInDB)
-      }
+      console.table({
+        'Total Esperadas (R01 todos andares)': totalExpected,
+        'Total no Banco': totalPresent,
+        'Total Renderizadas': totalRendered,
+        'Total Faltando no Banco': totalMissing,
+        'Total Filtradas': totalFiltered
+      })
       
-      if (diagnosticData.filteredOut.length > 0) {
-        console.warn('⚠️ Posições filtradas (existem no banco mas não renderizadas):', diagnosticData.filteredOut)
-      }
-      
-      console.log('✅ Posições renderizadas:', diagnosticData.renderedInScene)
+      // Detalhes por andar
+      console.log('\n📊 DETALHES POR ANDAR:')
+      Object.entries(diagnosticData.byFloor).forEach(([andar, stats]: [string, any]) => {
+        console.log(`\n${andar}:`, {
+          esperadas: stats.expected,
+          presentes: stats.present,
+          renderizadas: stats.rendered,
+          faltando: stats.missing.length,
+          filtradas: stats.filtered.length
+        })
+        
+        if (stats.missing.length > 0) {
+          console.warn(`  ❌ ${andar} - Faltando no banco:`, stats.missing)
+        }
+        
+        if (stats.filtered.length > 0) {
+          console.warn(`  ⚠️ ${andar} - Filtradas:`, stats.filtered)
+        }
+      })
     }
   }, [diagnostics, data, selectedFloor, ruaRange, moduloRange, showOnlyOccupied, depositoId])
   
@@ -369,6 +427,15 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                 >
                   <Bug className="h-4 w-4 mr-2" />
                   Diagnóstico
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleForceReload}
+                  title="Recarregar dados do banco"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Recarregar
                 </Button>
                 <Button
                   variant="outline"
@@ -508,55 +575,80 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
             </div>
           </div>
 
-          {/* Painel de diagnóstico */}
+          {/* Painel de diagnóstico MULTI-ANDAR */}
           {diagnostics && diagnosticData && (
-            <div className="mt-4 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/20 space-y-3">
-              <div className="flex items-center gap-2 font-semibold text-yellow-900 dark:text-yellow-100">
-                <Bug className="h-5 w-5" />
-                Modo Diagnóstico: Rua 01, Andar 01
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                  <div className="text-xs text-muted-foreground">Esperadas</div>
-                  <div className="text-lg font-bold">{diagnosticData.expectedCodes.length}</div>
+            <Card className="mt-4">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Bug className="h-4 w-4" />
+                    Diagnóstico Multi-Andar (Rua 01)
+                  </CardTitle>
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                  <div className="text-xs text-muted-foreground">No Banco</div>
-                  <div className="text-lg font-bold text-blue-600">{diagnosticData.presentInData.length}</div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Resumo por andar */}
+                <div className="space-y-2 text-xs">
+                  {Object.entries(diagnosticData.byFloor).map(([andar, stats]: [string, any]) => (
+                    <div key={andar} className="flex items-center justify-between border-b pb-2">
+                      <span className="font-mono font-semibold">R01-{andar}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">
+                          {stats.rendered}/{stats.expected} renderizadas
+                        </span>
+                        {stats.missing.length > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            {stats.missing.length} faltando DB
+                          </Badge>
+                        )}
+                        {stats.filtered.length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {stats.filtered.length} filtradas
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                  <div className="text-xs text-muted-foreground">Renderizadas</div>
-                  <div className="text-lg font-bold text-green-600">{diagnosticData.renderedInScene.length}</div>
+                
+                {/* Detalhes expandíveis */}
+                <Collapsible>
+                  <CollapsibleTrigger className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    Ver detalhes dos problemas ▼
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 space-y-2">
+                    {Object.entries(diagnosticData.byFloor).map(([andar, stats]: [string, any]) => (
+                      <div key={`details-${andar}`}>
+                        {stats.missing.length > 0 && (
+                          <Alert variant="destructive" className="py-2">
+                            <AlertTitle className="text-xs font-semibold mb-1">
+                              {andar}: Posições faltando no banco
+                            </AlertTitle>
+                            <AlertDescription className="text-xs font-mono">
+                              {stats.missing.join(', ')}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {stats.filtered.length > 0 && (
+                          <Alert className="py-2">
+                            <AlertTitle className="text-xs font-semibold mb-1">
+                              {andar}: Posições filtradas (existem mas não renderizam)
+                            </AlertTitle>
+                            <AlertDescription className="text-xs font-mono">
+                              {stats.filtered.join(', ')}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+                
+                <div className="text-xs text-muted-foreground pt-2 border-t">
+                  💡 Cubos magenta = posições faltando no banco. Verifique console para logs detalhados.
                 </div>
-                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                  <div className="text-xs text-muted-foreground">Faltando DB</div>
-                  <div className="text-lg font-bold text-red-600">{diagnosticData.missingInDB.length}</div>
-                </div>
-                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
-                  <div className="text-xs text-muted-foreground">Filtradas</div>
-                  <div className="text-lg font-bold text-orange-600">{diagnosticData.filteredOut.length}</div>
-                </div>
-              </div>
-              
-              {diagnosticData.missingInDB.length > 0 && (
-                <div className="text-xs bg-red-100 dark:bg-red-950/30 p-2 rounded">
-                  <span className="font-semibold text-red-900 dark:text-red-100">❌ Faltando no banco:</span>{" "}
-                  {diagnosticData.missingInDB.join(', ')}
-                </div>
-              )}
-              
-              {diagnosticData.filteredOut.length > 0 && (
-                <div className="text-xs bg-orange-100 dark:bg-orange-950/30 p-2 rounded">
-                  <span className="font-semibold text-orange-900 dark:text-orange-100">⚠️ Filtradas pelos controles:</span>{" "}
-                  {diagnosticData.filteredOut.join(', ')}
-                </div>
-              )}
-              
-              <div className="text-xs text-muted-foreground">
-                💡 Cubos magenta wireframe = posições esperadas mas não renderizadas. Verifique os logs do console para mais detalhes.
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           )}
 
           <div className="mt-4 space-y-2">
