@@ -7,7 +7,6 @@ export interface AuditPositionMetadata {
   ativo: boolean
   ocupado: boolean
   deposito_id: string
-  created_by: string | null
   created_at: string
   updated_at: string
 }

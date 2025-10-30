@@ -10,7 +10,6 @@ interface PositionData {
   id: string
   ativo: boolean
   deposito_id: string
-  created_by: string | null
   created_at: string
   updated_at: string
   palletInfo?: {
@@ -65,7 +64,6 @@ export function useWarehouseMap(depositoId?: string, includeInactive: boolean = 
           ocupado,
           ativo,
           deposito_id,
-          created_by,
           created_at,
           updated_at,
           pallet_positions (
@@ -117,7 +115,6 @@ export function useWarehouseMap(depositoId?: string, includeInactive: boolean = 
           id: pos.id,
           ativo: pos.ativo,
           deposito_id: pos.deposito_id,
-          created_by: pos.created_by,
           created_at: pos.created_at,
           updated_at: pos.updated_at,
           palletInfo

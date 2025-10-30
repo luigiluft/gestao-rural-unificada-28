@@ -11,7 +11,6 @@ interface PositionMetadata {
   ativo: boolean
   ocupado: boolean
   deposito_id: string
-  created_by: string | null
   created_at: string
   updated_at: string
 }
@@ -54,7 +53,7 @@ Deno.serve(async (req) => {
     // Fetch ALL positions for this deposito (no RLS)
     const { data: allPositions, error: positionsError } = await serviceClient
       .from('storage_positions')
-      .select('id, codigo, ativo, ocupado, deposito_id, created_by, created_at, updated_at')
+      .select('id, codigo, ativo, ocupado, deposito_id, created_at, updated_at')
       .eq('deposito_id', depositoId)
       .order('codigo')
 
