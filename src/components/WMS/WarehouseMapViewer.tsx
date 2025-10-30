@@ -139,12 +139,12 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
   const [cameraKey, setCameraKey] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
-  const [ruaRange, setRuaRange] = useState<[number, number]>([1, 14])
+  const [ruaRange, setRuaRange] = useState<[number, number]>([1, 7])
   const [moduloRange, setModuloRange] = useState<[number, number]>([1, 25])
   const [showOnlyOccupied, setShowOnlyOccupied] = useState(false)
   
   // Atualizar ranges quando os dados carregarem
-  if (data && ruaRange[1] === 14 && data.dimensions.maxRua !== 14) {
+  if (data && ruaRange[1] === 7 && data.dimensions.maxRua !== 7) {
     setRuaRange([1, data.dimensions.maxRua])
   }
   if (data && moduloRange[1] === 25 && data.dimensions.maxModulo !== 25) {
@@ -184,7 +184,7 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   
   const handleResetFilters = () => {
     setSelectedFloor(0)
-    setRuaRange([1, data?.dimensions.maxRua || 14])
+    setRuaRange([1, data?.dimensions.maxRua || 7])
     setModuloRange([1, data?.dimensions.maxModulo || 25])
     setShowOnlyOccupied(false)
   }
