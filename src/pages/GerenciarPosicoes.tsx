@@ -15,11 +15,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePalletPositions, usePalletPositionsAvariados, useRemovePalletAllocation, useReallocatePallet } from "@/hooks/usePalletPositions";
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
 import { usePalletDetails } from "@/hooks/usePalletDetails";
+import { useTodasFranquias } from "@/hooks/useDepositosDisponiveis";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function GerenciarPosicoes() {
-  const [selectedDepositoId, setSelectedDepositoId] = useState<string>();
+  // Estado para seleção de depósito (fallback para depósito padrão)
+  const [selectedDepositoForMap, setSelectedDepositoForMap] = useState<string>(
+    '75edbf21-1efa-4397-8d0c-dddca9d572aa'
+  );
   const [reallocateDialog, setReallocateDialog] = useState<{
     open: boolean;
     pallet?: any;
@@ -31,12 +35,13 @@ export default function GerenciarPosicoes() {
   const [newPositionId, setNewPositionId] = useState<string>("");
   const [observacoes, setObservacoes] = useState<string>("");
   
-  const { data: palletPositions, isLoading } = usePalletPositions(selectedDepositoId);
-  const { data: palletPositionsAvariados, isLoading: isLoadingAvariados } = usePalletPositionsAvariados(selectedDepositoId);
+  // Buscar todas as franquias disponíveis
+  const { data: franquias, isLoading: isLoadingFranquias } = useTodasFranquias();
   
-  // Extrair depositoId do primeiro pallet para usar no availablePositions
-  const depositoId = palletPositions?.[0]?.entrada_pallets?.entradas?.deposito_id;
-  const { data: availablePositions } = useAvailablePositions(depositoId);
+  // Usar o depósito selecionado para buscar dados
+  const { data: palletPositions, isLoading } = usePalletPositions(selectedDepositoForMap);
+  const { data: palletPositionsAvariados, isLoading: isLoadingAvariados } = usePalletPositionsAvariados(selectedDepositoForMap);
+  const { data: availablePositions } = useAvailablePositions(selectedDepositoForMap);
   const { data: palletDetails } = usePalletDetails(detailsDialog.pallet?.pallet_id);
   const removeAllocation = useRemovePalletAllocation();
   const reallocatePallet = useReallocatePallet();
@@ -214,7 +219,7 @@ export default function GerenciarPosicoes() {
     </div>
   );
 
-  if (isLoading || isLoadingAvariados) {
+  if (isLoading || isLoadingAvariados || isLoadingFranquias) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex justify-between items-center">
@@ -237,6 +242,31 @@ export default function GerenciarPosicoes() {
         <div>
           <h1 className="text-3xl font-bold">Gerenciar Posições</h1>
           <p className="text-muted-foreground">Visualize e gerencie pallets nas posições</p>
+        </div>
+      </div>
+
+      {/* Seletor de Depósito */}
+      <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
+        <Label htmlFor="deposito-select" className="font-medium whitespace-nowrap">
+          Depósito:
+        </Label>
+        <Select 
+          value={selectedDepositoForMap} 
+          onValueChange={setSelectedDepositoForMap}
+        >
+          <SelectTrigger id="deposito-select" className="w-[300px]">
+            <SelectValue placeholder="Selecione um depósito" />
+          </SelectTrigger>
+          <SelectContent>
+            {franquias?.map((franquia) => (
+              <SelectItem key={franquia.id} value={franquia.id}>
+                {franquia.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="text-sm text-muted-foreground">
+          {palletPositions?.length || 0} pallet(s) em estoque
         </div>
       </div>
 
@@ -286,7 +316,7 @@ export default function GerenciarPosicoes() {
         </TabsContent>
 
         <TabsContent value="mapa">
-          <WarehouseMapViewer depositoId={depositoId} />
+          <WarehouseMapViewer depositoId={selectedDepositoForMap} />
         </TabsContent>
       </Tabs>
 
@@ -391,7 +421,7 @@ export default function GerenciarPosicoes() {
             <div>
               <Label htmlFor="newPosition">Nova Posição</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                Depósito: {depositoId} | Posições disponíveis: {availablePositions?.length || 0}
+                Posições disponíveis: {availablePositions?.length || 0}
               </p>
               <Select value={newPositionId} onValueChange={setNewPositionId}>
                 <SelectTrigger>
