@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Grid, Text } from "@react-three/drei"
 import { useWarehouseMap } from "@/hooks/useWarehouseMap"
@@ -7,7 +7,7 @@ import { PositionCube } from "./PositionCube"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Box, RotateCcw, Filter } from "lucide-react"
+import { Box, RotateCcw, Filter, Bug } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
@@ -42,7 +42,9 @@ function Scene({
   ruaRange,
   moduloRange,
   showOnlyOccupied,
-  selectedPositionCodigo 
+  selectedPositionCodigo,
+  diagnostics,
+  missingPositions 
 }: any) {
   const [hoveredPosition, setHoveredPosition] = useState<string | null>(null)
 
@@ -123,6 +125,14 @@ function Scene({
         />
       ))}
 
+      {/* Ghost cubes para posições esperadas mas não renderizadas (modo diagnóstico) */}
+      {diagnostics && missingPositions.map((pos: any) => (
+        <mesh key={`ghost-${pos.codigo}`} position={[pos.rua * 1.2, pos.andar * 1.2, pos.modulo * 1.2]}>
+          <boxGeometry args={[0.7, 0.7, 0.7]} />
+          <meshBasicMaterial color="#ff00ff" wireframe opacity={0.3} transparent />
+        </mesh>
+      ))}
+
       {hoveredPosition && (
         <mesh position={[0, -1, 0]}>
           <planeGeometry args={[1, 1]} />
@@ -135,10 +145,11 @@ function Scene({
 
 export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const { data, isLoading } = useWarehouseMap(depositoId)
-  const [selectedFloor, setSelectedFloor] = useState(0)
+  const [selectedFloor, setSelectedFloor] = useState(1) // Começar no andar 1 por padrão
   const [selectedPosition, setSelectedPosition] = useState<SelectedPosition | null>(null)
   const [cameraKey, setCameraKey] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
+  const [diagnostics, setDiagnostics] = useState(false)
   const [ruaRange, setRuaRange] = useState<[number, number]>([1, 7])
   const [moduloRange, setModuloRange] = useState<[number, number]>([1, 25])
   const [showOnlyOccupied, setShowOnlyOccupied] = useState(false)
@@ -183,11 +194,112 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   }
   
   const handleResetFilters = () => {
-    setSelectedFloor(0)
+    setSelectedFloor(1) // Resetar para andar 1 (mais comum)
     setRuaRange([1, data?.dimensions.maxRua || 7])
     setModuloRange([1, data?.dimensions.maxModulo || 25])
     setShowOnlyOccupied(false)
   }
+  
+  // Helper para formatar código com zero padding
+  const code = (r: number, m: number, a: number) => 
+    `R${String(r).padStart(2,'0')}-M${String(m).padStart(2,'0')}-A${String(a).padStart(2,'0')}`
+  
+  // Calcular diagnósticos para R01-A01
+  const getDiagnostics = () => {
+    if (!data || !diagnostics) return null
+    
+    const targetRua = 1
+    const targetAndar = 1
+    
+    // Posições esperadas: R01-M01-A01 até R01-M{maxModulo}-A01
+    const expectedCodes = []
+    for (let m = 1; m <= data.dimensions.maxModulo; m++) {
+      expectedCodes.push(code(targetRua, m, targetAndar))
+    }
+    
+    // Posições presentes nos dados (do banco)
+    const presentInData = new Set(
+      data.positions
+        .filter((p: any) => p.rua === targetRua && p.andar === targetAndar)
+        .map((p: any) => p.codigo)
+    )
+    
+    // Posições que passam pelos filtros (renderizadas)
+    const renderedInScene = new Set(
+      data.positions
+        .filter((p: any) => {
+          const floorMatch = selectedFloor === 0 || p.andar === selectedFloor
+          const ruaMatch = p.rua >= ruaRange[0] && p.rua <= ruaRange[1]
+          const moduloMatch = p.modulo >= moduloRange[0] && p.modulo <= moduloRange[1]
+          const occupiedMatch = !showOnlyOccupied || p.ocupado
+          return p.rua === targetRua && p.andar === targetAndar && 
+                 floorMatch && ruaMatch && moduloMatch && occupiedMatch
+        })
+        .map((p: any) => p.codigo)
+    )
+    
+    // Faltando no banco
+    const missingInDB = expectedCodes.filter(c => !presentInData.has(c))
+    
+    // Filtradas (existem no banco mas não renderizadas)
+    const filteredOut = Array.from(presentInData).filter(c => !renderedInScene.has(c))
+    
+    // Posições faltantes para ghost cubes
+    const missingPositions = expectedCodes
+      .filter(c => !renderedInScene.has(c))
+      .map(c => {
+        const parts = c.match(/R(\d+)-M(\d+)-A(\d+)/)
+        return parts ? {
+          codigo: c,
+          rua: parseInt(parts[1]),
+          modulo: parseInt(parts[2]),
+          andar: parseInt(parts[3])
+        } : null
+      })
+      .filter(Boolean)
+    
+    return {
+      expectedCodes,
+      presentInData: Array.from(presentInData),
+      renderedInScene: Array.from(renderedInScene),
+      missingInDB,
+      filteredOut,
+      missingPositions
+    }
+  }
+  
+  const diagnosticData = getDiagnostics()
+  
+  // Log automático ao carregar ou mudar filtros (apenas em modo diagnóstico)
+  useEffect(() => {
+    if (diagnostics && diagnosticData) {
+      console.log('🔍 === DIAGNÓSTICO WMS ===')
+      console.log('Filtros ativos:', {
+        selectedFloor,
+        ruaRange,
+        moduloRange,
+        showOnlyOccupied,
+        depositoId
+      })
+      console.table({
+        'Esperadas (R01-A01)': diagnosticData.expectedCodes.length,
+        'No Banco': diagnosticData.presentInData.length,
+        'Renderizadas': diagnosticData.renderedInScene.length,
+        'Faltando no Banco': diagnosticData.missingInDB.length,
+        'Filtradas': diagnosticData.filteredOut.length
+      })
+      
+      if (diagnosticData.missingInDB.length > 0) {
+        console.warn('❌ Posições faltando no banco:', diagnosticData.missingInDB)
+      }
+      
+      if (diagnosticData.filteredOut.length > 0) {
+        console.warn('⚠️ Posições filtradas (existem no banco mas não renderizadas):', diagnosticData.filteredOut)
+      }
+      
+      console.log('✅ Posições renderizadas:', diagnosticData.renderedInScene)
+    }
+  }, [diagnostics, diagnosticData, selectedFloor, ruaRange, moduloRange, showOnlyOccupied])
   
   // Calcular estatísticas dos itens filtrados
   const getFilteredStats = () => {
@@ -245,6 +357,14 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   {showFilters ? "Ocultar" : "Mostrar"} Filtros
+                </Button>
+                <Button
+                  variant={diagnostics ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDiagnostics(!diagnostics)}
+                >
+                  <Bug className="h-4 w-4 mr-2" />
+                  Diagnóstico
                 </Button>
                 <Button
                   variant="outline"
@@ -343,6 +463,8 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                   moduloRange={moduloRange}
                   showOnlyOccupied={showOnlyOccupied}
                   selectedPositionCodigo={selectedPosition?.codigo}
+                  diagnostics={diagnostics}
+                  missingPositions={diagnosticData?.missingPositions || []}
                 />
               </Suspense>
             </Canvas>
@@ -381,6 +503,57 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
               </div>
             </div>
           </div>
+
+          {/* Painel de diagnóstico */}
+          {diagnostics && diagnosticData && (
+            <div className="mt-4 p-4 border rounded-lg bg-yellow-50 dark:bg-yellow-950/20 space-y-3">
+              <div className="flex items-center gap-2 font-semibold text-yellow-900 dark:text-yellow-100">
+                <Bug className="h-5 w-5" />
+                Modo Diagnóstico: Rua 01, Andar 01
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
+                  <div className="text-xs text-muted-foreground">Esperadas</div>
+                  <div className="text-lg font-bold">{diagnosticData.expectedCodes.length}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
+                  <div className="text-xs text-muted-foreground">No Banco</div>
+                  <div className="text-lg font-bold text-blue-600">{diagnosticData.presentInData.length}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
+                  <div className="text-xs text-muted-foreground">Renderizadas</div>
+                  <div className="text-lg font-bold text-green-600">{diagnosticData.renderedInScene.length}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
+                  <div className="text-xs text-muted-foreground">Faltando DB</div>
+                  <div className="text-lg font-bold text-red-600">{diagnosticData.missingInDB.length}</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-2 rounded border">
+                  <div className="text-xs text-muted-foreground">Filtradas</div>
+                  <div className="text-lg font-bold text-orange-600">{diagnosticData.filteredOut.length}</div>
+                </div>
+              </div>
+              
+              {diagnosticData.missingInDB.length > 0 && (
+                <div className="text-xs bg-red-100 dark:bg-red-950/30 p-2 rounded">
+                  <span className="font-semibold text-red-900 dark:text-red-100">❌ Faltando no banco:</span>{" "}
+                  {diagnosticData.missingInDB.join(', ')}
+                </div>
+              )}
+              
+              {diagnosticData.filteredOut.length > 0 && (
+                <div className="text-xs bg-orange-100 dark:bg-orange-950/30 p-2 rounded">
+                  <span className="font-semibold text-orange-900 dark:text-orange-100">⚠️ Filtradas pelos controles:</span>{" "}
+                  {diagnosticData.filteredOut.join(', ')}
+                </div>
+              )}
+              
+              <div className="text-xs text-muted-foreground">
+                💡 Cubos magenta wireframe = posições esperadas mas não renderizadas. Verifique os logs do console para mais detalhes.
+              </div>
+            </div>
+          )}
 
           <div className="mt-4 space-y-2">
             <div className="text-sm text-muted-foreground text-center">
