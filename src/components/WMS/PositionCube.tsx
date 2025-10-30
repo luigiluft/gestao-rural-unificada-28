@@ -8,9 +8,11 @@ interface PositionCubeProps {
   codigo: string
   onClick: () => void
   onHover: (hovered: boolean) => void
+  rua: number
+  isSelected?: boolean
 }
 
-export function PositionCube({ position, occupied, codigo, onClick, onHover }: PositionCubeProps) {
+export function PositionCube({ position, occupied, codigo, onClick, onHover, rua, isSelected }: PositionCubeProps) {
   const [hovered, setHovered] = useState(false)
   const meshRef = useRef<Mesh>(null)
 
@@ -30,10 +32,21 @@ export function PositionCube({ position, occupied, codigo, onClick, onHover }: P
     onClick()
   }
 
-  // Cores: verde para livre, vermelho para ocupado
-  const baseColor = occupied ? "#ef4444" : "#22c55e"
-  const emissiveColor = hovered ? "#ffffff" : "#000000"
-  const emissiveIntensity = hovered ? 0.3 : 0
+  // Cores por rua (gradiente de verde para azul) quando livre
+  // Vermelho quando ocupado, amarelo quando selecionado
+  const getColorByRua = (ruaNum: number) => {
+    const hue = 120 + (ruaNum * 15) // De verde (120) para azul (270)
+    return `hsl(${hue}, 70%, 50%)`
+  }
+  
+  const baseColor = isSelected 
+    ? "#fbbf24" // Amarelo para selecionado
+    : occupied 
+    ? "#ef4444" // Vermelho para ocupado
+    : getColorByRua(rua) // Gradiente para livre
+    
+  const emissiveColor = hovered || isSelected ? "#ffffff" : "#000000"
+  const emissiveIntensity = hovered || isSelected ? 0.3 : 0
 
   return (
     <mesh
@@ -43,7 +56,7 @@ export function PositionCube({ position, occupied, codigo, onClick, onHover }: P
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >
-      <boxGeometry args={[0.85, 0.85, 0.85]} />
+      <boxGeometry args={[0.7, 0.7, 0.7]} />
       <meshStandardMaterial
         color={baseColor}
         emissive={emissiveColor}
