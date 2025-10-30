@@ -32,7 +32,7 @@ interface SelectedPosition {
   } | null
 }
 
-function Scene({ positions, selectedFloor, onPositionClick }: any) {
+function Scene({ positions, selectedFloor, onPositionClick, dimensions }: any) {
   const [hoveredPosition, setHoveredPosition] = useState<string | null>(null)
 
   // Filtrar posições pelo andar selecionado
@@ -40,9 +40,16 @@ function Scene({ positions, selectedFloor, onPositionClick }: any) {
     ? positions
     : positions.filter((p: any) => p.andar === selectedFloor)
 
+  // Calcular posição inicial da câmera baseada nas dimensões reais
+  const cameraPosition: [number, number, number] = [
+    dimensions.maxRua * 1.5,
+    dimensions.maxAndar * 2.5,
+    dimensions.maxModulo * 1.5
+  ]
+
   return (
     <>
-      <PerspectiveCamera makeDefault position={[15, 15, 15]} fov={60} />
+      <PerspectiveCamera makeDefault position={cameraPosition} fov={60} />
       <OrbitControls
         enableDamping
         dampingFactor={0.05}
@@ -177,13 +184,25 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                   positions={data.positions}
                   selectedFloor={selectedFloor}
                   onPositionClick={setSelectedPosition}
+                  dimensions={data.dimensions}
                 />
               </Suspense>
             </Canvas>
           </div>
 
-          <div className="mt-4 text-sm text-muted-foreground text-center">
-            <p>🖱️ Arraste para rotacionar • 🔍 Scroll para zoom • 🖱️ Clique nos cubos para detalhes</p>
+          <div className="mt-4 space-y-2">
+            <div className="text-sm text-muted-foreground text-center">
+              <p>🖱️ Arraste para rotacionar • 🔍 Scroll para zoom • 🖱️ Clique nos cubos para detalhes</p>
+            </div>
+            <div className="text-xs text-muted-foreground text-center bg-muted/50 rounded-md p-2">
+              Renderizando{" "}
+              <span className="font-semibold text-foreground">
+                {selectedFloor === 0 ? data.positions.length : data.positions.filter((p: any) => p.andar === selectedFloor).length}
+              </span>
+              {" "}de{" "}
+              <span className="font-semibold text-foreground">{data.positions.length}</span>
+              {" "}posições • Dimensões: {data.dimensions.maxRua}R × {data.dimensions.maxModulo}M × {data.dimensions.maxAndar}A
+            </div>
           </div>
         </CardContent>
       </Card>
