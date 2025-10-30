@@ -154,57 +154,11 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const [moduloRange, setModuloRange] = useState<[number, number]>([1, 25])
   const [showOnlyOccupied, setShowOnlyOccupied] = useState(false)
   
-  // Atualizar ranges quando os dados carregarem
-  if (data && ruaRange[1] === 7 && data.dimensions.maxRua !== 7) {
-    setRuaRange([1, data.dimensions.maxRua])
-  }
-  if (data && moduloRange[1] === 25 && data.dimensions.maxModulo !== 25) {
-    setModuloRange([1, data.dimensions.maxModulo])
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-        <Skeleton className="h-[600px] w-full" />
-      </div>
-    )
-  }
-
-  if (!data || data.positions.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-12">
-          <div className="text-center">
-            <Box className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma posição cadastrada</h3>
-            <p className="text-muted-foreground">Configure as posições do armazém para visualizar o mapa 3D</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const handleResetCamera = () => {
-    setCameraKey(prev => prev + 1)
-  }
-  
-  const handleResetFilters = () => {
-    setSelectedFloor(1) // Resetar para andar 1 (mais comum)
-    setRuaRange([1, data?.dimensions.maxRua || 7])
-    setModuloRange([1, data?.dimensions.maxModulo || 25])
-    setShowOnlyOccupied(false)
-  }
-  
   // Helper para formatar código com zero padding
   const code = (r: number, m: number, a: number) => 
     `R${String(r).padStart(2,'0')}-M${String(m).padStart(2,'0')}-A${String(a).padStart(2,'0')}`
   
-  // Calcular diagnósticos para R01-A01
+  // Calcular diagnósticos para R01-A01 (precisa estar antes dos early returns)
   const getDiagnostics = () => {
     if (!data || !diagnostics) return null
     
@@ -270,9 +224,9 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   
   const diagnosticData = getDiagnostics()
   
-  // Log automático ao carregar ou mudar filtros (apenas em modo diagnóstico)
+  // Log automático ao carregar ou mudar filtros (useEffect PRECISA estar antes dos early returns!)
   useEffect(() => {
-    if (diagnostics && diagnosticData) {
+    if (diagnostics && diagnosticData && data) {
       console.log('🔍 === DIAGNÓSTICO WMS ===')
       console.log('Filtros ativos:', {
         selectedFloor,
@@ -299,7 +253,57 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
       
       console.log('✅ Posições renderizadas:', diagnosticData.renderedInScene)
     }
-  }, [diagnostics, diagnosticData, selectedFloor, ruaRange, moduloRange, showOnlyOccupied])
+  }, [diagnostics, data, selectedFloor, ruaRange, moduloRange, showOnlyOccupied, depositoId])
+  
+  // Atualizar ranges quando os dados carregarem
+  useEffect(() => {
+    if (data) {
+      if (ruaRange[1] === 7 && data.dimensions.maxRua !== 7) {
+        setRuaRange([1, data.dimensions.maxRua])
+      }
+      if (moduloRange[1] === 25 && data.dimensions.maxModulo !== 25) {
+        setModuloRange([1, data.dimensions.maxModulo])
+      }
+    }
+  }, [data])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-[600px] w-full" />
+      </div>
+    )
+  }
+
+  if (!data || data.positions.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-12">
+          <div className="text-center">
+            <Box className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhuma posição cadastrada</h3>
+            <p className="text-muted-foreground">Configure as posições do armazém para visualizar o mapa 3D</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const handleResetCamera = () => {
+    setCameraKey(prev => prev + 1)
+  }
+  
+  const handleResetFilters = () => {
+    setSelectedFloor(1) // Resetar para andar 1 (mais comum)
+    setRuaRange([1, data?.dimensions.maxRua || 7])
+    setModuloRange([1, data?.dimensions.maxModulo || 25])
+    setShowOnlyOccupied(false)
+  }
   
   // Calcular estatísticas dos itens filtrados
   const getFilteredStats = () => {
