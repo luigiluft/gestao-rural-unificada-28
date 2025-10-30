@@ -2,6 +2,7 @@ import { Suspense, useState, useEffect } from "react"
 import { Canvas } from "@react-three/fiber"
 import { OrbitControls, PerspectiveCamera, Grid, Text } from "@react-three/drei"
 import { useWarehouseMap } from "@/hooks/useWarehouseMap"
+import { useStorageAudit, type AuditPositionMetadata } from "@/hooks/useStorageAudit"
 import { WarehouseStats } from "./WarehouseStats"
 import { PositionCube } from "./PositionCube"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -148,7 +149,6 @@ function Scene({
 }
 
 export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
-  const { data, isLoading } = useWarehouseMap(depositoId)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [selectedFloor, setSelectedFloor] = useState(1)
@@ -156,9 +156,14 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const [cameraKey, setCameraKey] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
   const [diagnostics, setDiagnostics] = useState(false)
+  const [includeInactive, setIncludeInactive] = useState(false)
+  const [auditMode, setAuditMode] = useState(false)
   const [ruaRange, setRuaRange] = useState<[number, number]>([1, 7])
   const [moduloRange, setModuloRange] = useState<[number, number]>([1, 25])
   const [showOnlyOccupied, setShowOnlyOccupied] = useState(false)
+  
+  const { data, isLoading } = useWarehouseMap(depositoId, includeInactive)
+  const { data: auditData, isLoading: auditLoading } = useStorageAudit(depositoId, auditMode)
   
   // Helper para formatar código com zero padding
   const code = (r: number, m: number, a: number) => 
@@ -168,6 +173,8 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   const getDiagnostics = () => {
     if (!data || !diagnostics) return null
     
+    const auditPositions = auditData?.positions || []
+    
     const targetRua = 1
     const results: Record<string, {
       expected: number
@@ -175,6 +182,11 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
       rendered: number
       missing: string[]
       filtered: string[]
+      missingDetails: Array<{
+        codigo: string
+        reason: string
+        metadata?: AuditPositionMetadata
+      }>
     }> = {}
     
     const allMissingPositions: any[] = []
@@ -214,6 +226,41 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
       // Filtradas (existem no banco mas não renderizadas)
       const filtered = Array.from(presentInData).filter(c => !renderedInScene.has(c))
       
+      // Analyze missing positions with audit data
+      const missingDetails = missing.map(codigo => {
+        const auditPos = auditPositions.find(p => p.codigo === codigo)
+        
+        if (!auditPos) {
+          return {
+            codigo,
+            reason: '❌ Não existe no banco de dados',
+            metadata: undefined
+          }
+        }
+        
+        if (!auditPos.ativo) {
+          return {
+            codigo,
+            reason: '⚠️ Posição inativa (ativo=false)',
+            metadata: auditPos
+          }
+        }
+        
+        if (auditPos.deposito_id !== depositoId) {
+          return {
+            codigo,
+            reason: `🔴 deposito_id incorreto: ${auditPos.deposito_id}`,
+            metadata: auditPos
+          }
+        }
+        
+        return {
+          codigo,
+          reason: '🔒 Bloqueada por RLS (permissões)',
+          metadata: auditPos
+        }
+      })
+      
       // Adicionar posições faltantes para ghost cubes
       const missingInAndar = expectedCodes
         .filter(c => !presentInData.has(c))
@@ -235,7 +282,8 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
         present: presentInData.size,
         rendered: renderedInScene.size,
         missing,
-        filtered
+        filtered,
+        missingDetails
       }
     }
     
@@ -249,17 +297,30 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
   
   // Handler para forçar reload dos dados
   const handleForceReload = () => {
-    queryClient.invalidateQueries({ queryKey: ['warehouse-map', depositoId] })
+    queryClient.invalidateQueries({ queryKey: ['warehouse-map'] })
+    queryClient.invalidateQueries({ queryKey: ['storage-audit'] })
     toast({
       title: "Dados recarregados",
       description: "Buscando posições atualizadas do banco de dados"
     })
   }
   
+  const handleToggleAudit = () => {
+    setAuditMode(!auditMode)
+    if (!auditMode) {
+      toast({
+        title: "Modo Auditoria Ativado",
+        description: "Comparando dados com e sem RLS..."
+      })
+    }
+  }
+  
   // Log automático MULTI-ANDAR ao carregar ou mudar filtros
   useEffect(() => {
     if (diagnostics && diagnosticData && data) {
       console.log('🔍 === DIAGNÓSTICO WMS MULTI-ANDAR (RUA 01) ===')
+      console.log('Modo Auditoria:', auditMode)
+      console.log('Incluir Inativas:', includeInactive)
       console.log('Filtros ativos:', {
         selectedFloor,
         ruaRange,
@@ -267,6 +328,14 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
         showOnlyOccupied,
         depositoId
       })
+      
+      if (auditData) {
+        console.log('📊 Auditoria (sem RLS):', {
+          totalNoAudit: auditData.totalPositions,
+          franquiaId: auditData.franquiaId,
+          masterFranqueadoId: auditData.masterFranqueadoId
+        })
+      }
       
       // Resumo geral
       let totalExpected = 0
@@ -285,10 +354,11 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
       
       console.table({
         'Total Esperadas (R01 todos andares)': totalExpected,
-        'Total no Banco': totalPresent,
+        'Total no Banco (com RLS)': totalPresent,
         'Total Renderizadas': totalRendered,
-        'Total Faltando no Banco': totalMissing,
-        'Total Filtradas': totalFiltered
+        'Total Faltando': totalMissing,
+        'Total Filtradas': totalFiltered,
+        'Total no Audit (sem RLS)': auditData?.totalPositions || 'N/A'
       })
       
       // Detalhes por andar
@@ -303,7 +373,13 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
         })
         
         if (stats.missing.length > 0) {
-          console.warn(`  ❌ ${andar} - Faltando no banco:`, stats.missing)
+          console.warn(`  ❌ ${andar} - Faltando:`, stats.missing)
+          if (stats.missingDetails && stats.missingDetails.length > 0) {
+            console.log(`  🔍 Análise das faltantes:`)
+            stats.missingDetails.forEach((detail: any) => {
+              console.log(`    ${detail.codigo}: ${detail.reason}`, detail.metadata || '')
+            })
+          }
         }
         
         if (stats.filtered.length > 0) {
@@ -311,7 +387,7 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
         }
       })
     }
-  }, [diagnostics, data, selectedFloor, ruaRange, moduloRange, showOnlyOccupied, depositoId])
+  }, [diagnostics, data, selectedFloor, ruaRange, moduloRange, showOnlyOccupied, depositoId, auditMode, auditData, includeInactive])
   
   // Atualizar ranges quando os dados carregarem
   useEffect(() => {
@@ -411,7 +487,7 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -429,6 +505,15 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                   Diagnóstico
                 </Button>
                 <Button
+                  variant={auditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleToggleAudit}
+                  disabled={!diagnostics}
+                  title="Modo auditoria (sem RLS)"
+                >
+                  🔍 Auditoria
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={handleForceReload}
@@ -437,6 +522,15 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Recarregar
                 </Button>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeInactive}
+                    onChange={(e) => setIncludeInactive(e.target.checked)}
+                    className="rounded"
+                  />
+                  Incluir inativas
+                </label>
                 <Button
                   variant="outline"
                   size="icon"
@@ -583,6 +677,12 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Bug className="h-4 w-4" />
                     Diagnóstico Multi-Andar (Rua 01)
+                    {auditMode && auditData && (
+                      <Badge variant="secondary" className="ml-2">
+                        Auditoria: {auditData.totalPositions} posições (sem RLS)
+                      </Badge>
+                    )}
+                    {auditLoading && <span className="ml-2 text-xs">⏳ Carregando auditoria...</span>}
                   </CardTitle>
                 </div>
               </CardHeader>
@@ -598,7 +698,7 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                         </span>
                         {stats.missing.length > 0 && (
                           <Badge variant="destructive" className="text-xs">
-                            {stats.missing.length} faltando DB
+                            {stats.missing.length} {auditMode ? 'ocultas por RLS' : 'faltando DB'}
                           </Badge>
                         )}
                         {stats.filtered.length > 0 && (
@@ -619,16 +719,44 @@ export function WarehouseMapViewer({ depositoId }: WarehouseMapViewerProps) {
                   <CollapsibleContent className="mt-2 space-y-2">
                     {Object.entries(diagnosticData.byFloor).map(([andar, stats]: [string, any]) => (
                       <div key={`details-${andar}`}>
-                        {stats.missing.length > 0 && (
+                        {stats.missing.length > 0 && auditMode && stats.missingDetails && stats.missingDetails.length > 0 && (
                           <Alert variant="destructive" className="py-2">
                             <AlertTitle className="text-xs font-semibold mb-1">
-                              {andar}: Posições faltando no banco
+                              {andar}: Análise Detalhada ({stats.missing.length} posições)
                             </AlertTitle>
-                            <AlertDescription className="text-xs font-mono">
-                              {stats.missing.join(', ')}
+                            <AlertDescription className="text-xs space-y-1 mt-2">
+                              {stats.missingDetails.map((detail: any, idx: number) => (
+                                <div key={idx} className="border-l-2 border-destructive/50 pl-2 py-1">
+                                  <div className="font-mono font-semibold">{detail.codigo}</div>
+                                  <div className="text-muted-foreground">{detail.reason}</div>
+                                  {detail.metadata && (
+                                    <div className="text-[10px] mt-1 space-y-0.5">
+                                      <div>ID: {detail.metadata.id.slice(0, 8)}...</div>
+                                      <div>Ativo: {detail.metadata.ativo ? '✅' : '❌'}</div>
+                                      <div>Ocupado: {detail.metadata.ocupado ? '✅' : '❌'}</div>
+                                      <div>Criado: {new Date(detail.metadata.created_at).toLocaleDateString()}</div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </AlertDescription>
                           </Alert>
                         )}
+                        
+                        {stats.missing.length > 0 && !auditMode && (
+                          <Alert variant="destructive" className="py-2">
+                            <AlertTitle className="text-xs font-semibold mb-1">
+                              {andar}: Posições faltando ({stats.missing.length})
+                            </AlertTitle>
+                            <AlertDescription className="text-xs font-mono">
+                              {stats.missing.join(', ')}
+                              <div className="mt-2 text-muted-foreground">
+                                💡 Ative "Auditoria" para análise detalhada
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        
                         {stats.filtered.length > 0 && (
                           <Alert className="py-2">
                             <AlertTitle className="text-xs font-semibold mb-1">

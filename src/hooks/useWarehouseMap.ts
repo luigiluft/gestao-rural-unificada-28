@@ -8,6 +8,11 @@ interface PositionData {
   ocupado: boolean
   codigo: string
   id: string
+  ativo: boolean
+  deposito_id: string
+  created_by: string | null
+  created_at: string
+  updated_at: string
   palletInfo?: {
     numero_pallet: number
     descricao: string | null
@@ -40,9 +45,9 @@ function parsePositionCode(codigo: string): { rua: number; modulo: number; andar
   }
 }
 
-export function useWarehouseMap(depositoId?: string) {
+export function useWarehouseMap(depositoId?: string, includeInactive: boolean = false) {
   return useQuery({
-    queryKey: ["warehouse-map", depositoId],
+    queryKey: ["warehouse-map", depositoId, includeInactive],
     queryFn: async (): Promise<WarehouseMapData> => {
       if (!depositoId) {
         return {
@@ -52,13 +57,17 @@ export function useWarehouseMap(depositoId?: string) {
         }
       }
 
-      const { data: positions, error } = await supabase
+      let query = supabase
         .from("storage_positions")
         .select(`
           id,
           codigo,
           ocupado,
           ativo,
+          deposito_id,
+          created_by,
+          created_at,
+          updated_at,
           pallet_positions (
             id,
             entrada_pallets (
@@ -68,7 +77,12 @@ export function useWarehouseMap(depositoId?: string) {
           )
         `)
         .eq("deposito_id", depositoId)
-        .eq("ativo", true)
+      
+      if (!includeInactive) {
+        query = query.eq("ativo", true)
+      }
+
+      const { data: positions, error } = await query
 
       if (error) throw error
 
@@ -101,6 +115,11 @@ export function useWarehouseMap(depositoId?: string) {
           ocupado: pos.ocupado,
           codigo: pos.codigo,
           id: pos.id,
+          ativo: pos.ativo,
+          deposito_id: pos.deposito_id,
+          created_by: pos.created_by,
+          created_at: pos.created_at,
+          updated_at: pos.updated_at,
           palletInfo
         })
       })
