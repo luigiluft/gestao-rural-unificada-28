@@ -334,6 +334,53 @@ export type Database = {
           },
         ]
       }
+      contrato_slas: {
+        Row: {
+          ativo: boolean | null
+          contrato_id: string
+          created_at: string | null
+          descricao: string
+          id: string
+          penalidade_descumprimento: string | null
+          tipo_sla: string
+          unidade_medida: string
+          updated_at: string | null
+          valor_meta: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          contrato_id: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          penalidade_descumprimento?: string | null
+          tipo_sla: string
+          unidade_medida: string
+          updated_at?: string | null
+          valor_meta: number
+        }
+        Update: {
+          ativo?: boolean | null
+          contrato_id?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          penalidade_descumprimento?: string | null
+          tipo_sla?: string
+          unidade_medida?: string
+          updated_at?: string | null
+          valor_meta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_slas_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_servico: {
         Row: {
           created_at: string

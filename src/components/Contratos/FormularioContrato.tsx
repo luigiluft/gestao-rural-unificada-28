@@ -270,8 +270,41 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
         if (servicosError) throw servicosError
       }
 
-      // TODO: Implementar inserção de SLAs e Janelas após criar as migrações
-      // As tabelas contrato_slas e contrato_janelas_entrega serão criadas em breve
+      // Inserir SLAs se fornecidos
+      if (values.slas && values.slas.length > 0) {
+        const slasData = values.slas.map(sla => ({
+          contrato_id: contrato.id,
+          tipo_sla: sla.tipo_sla,
+          descricao: sla.descricao,
+          valor_meta: sla.valor_meta,
+          unidade_medida: sla.unidade_medida,
+          penalidade_descumprimento: sla.penalidade_descumprimento,
+        }))
+
+        const { error: slasError } = await supabase
+          .from('contrato_slas')
+          .insert(slasData as any)
+
+        if (slasError) throw slasError
+      }
+
+      // Inserir Janelas de Entrega se fornecidas
+      if (values.janelas_entrega && values.janelas_entrega.length > 0) {
+        const janelasData = values.janelas_entrega.map(janela => ({
+          contrato_id: contrato.id,
+          dia_semana: janela.dia_semana,
+          hora_inicio: janela.horario_inicio,
+          hora_fim: janela.horario_fim,
+          capacidade_max_pallets: janela.capacidade_maxima,
+          observacoes: janela.observacoes,
+        }))
+
+        const { error: janelasError } = await supabase
+          .from('contrato_janelas_entrega')
+          .insert(janelasData as any)
+
+        if (janelasError) throw janelasError
+      }
 
       return contrato
     },
