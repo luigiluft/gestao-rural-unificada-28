@@ -152,7 +152,6 @@ export const useDynamicMenuItems = () => {
       'saidas',
       'rastreio',
       'tabelas-frete',
-      'contratos',
       'faturas',
       'financeiro',
       'royalties',
