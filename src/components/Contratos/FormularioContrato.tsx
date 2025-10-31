@@ -49,6 +49,11 @@ const contratoSchema = z.object({
     .min(1, "Dia deve ser entre 1 e 31")
     .max(31, "Dia deve ser entre 1 e 31"),
   observacoes: z.string().max(500, "Observações muito longas").optional(),
+  // Valores dos serviços
+  valor_recebimento: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
+  valor_armazenagem: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
+  valor_expedicao_pallet: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
+  valor_expedicao_peca: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
 }).refine(
   (data) => {
     if (data.data_fim) {
@@ -154,6 +159,10 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       tipo_cobranca: 'mensal',
       dia_vencimento: 10,
       observacoes: '',
+      valor_recebimento: undefined,
+      valor_armazenagem: undefined,
+      valor_expedicao_pallet: undefined,
+      valor_expedicao_peca: undefined,
     },
   })
 
@@ -181,14 +190,70 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       if (values.observacoes) insertData.observacoes = values.observacoes
       if (user?.id) insertData.criado_por = user.id
 
-      const { data, error } = await supabase
+      const { data: contrato, error } = await supabase
         .from('contratos_servico')
         .insert(insertData)
         .select()
         .single()
 
       if (error) throw error
-      return data
+
+      // Inserir itens de serviço se valores foram fornecidos
+      const servicosItens = []
+      
+      if (values.valor_recebimento) {
+        servicosItens.push({
+          contrato_id: contrato.id,
+          tipo_servico: 'recebimento',
+          descricao: 'Serviço de Recebimento',
+          valor_unitario: values.valor_recebimento,
+          quantidade_incluida: 0,
+          valor_excedente: values.valor_recebimento,
+        })
+      }
+
+      if (values.valor_armazenagem) {
+        servicosItens.push({
+          contrato_id: contrato.id,
+          tipo_servico: 'armazenagem_pallet',
+          descricao: 'Serviço de Armazenagem por Pallet',
+          valor_unitario: values.valor_armazenagem,
+          quantidade_incluida: 0,
+          valor_excedente: values.valor_armazenagem,
+        })
+      }
+
+      if (values.valor_expedicao_pallet) {
+        servicosItens.push({
+          contrato_id: contrato.id,
+          tipo_servico: 'expedicao',
+          descricao: 'Serviço de Expedição por Pallet',
+          valor_unitario: values.valor_expedicao_pallet,
+          quantidade_incluida: 0,
+          valor_excedente: values.valor_expedicao_pallet,
+        })
+      }
+
+      if (values.valor_expedicao_peca) {
+        servicosItens.push({
+          contrato_id: contrato.id,
+          tipo_servico: 'expedicao',
+          descricao: 'Serviço de Expedição por Peça',
+          valor_unitario: values.valor_expedicao_peca,
+          quantidade_incluida: 0,
+          valor_excedente: values.valor_expedicao_peca,
+        })
+      }
+
+      if (servicosItens.length > 0) {
+        const { error: servicosError } = await supabase
+          .from('contrato_servicos_itens')
+          .insert(servicosItens)
+
+        if (servicosError) throw servicosError
+      }
+
+      return contrato
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contratos'] })
@@ -388,12 +453,98 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
               />
             </div>
 
+            {/* Valores dos Serviços */}
+            <div className="col-span-full">
+              <h3 className="text-lg font-semibold mb-4">Valores dos Serviços</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="valor_recebimento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor Recebimento (R$/pallet)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="valor_armazenagem"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor Armazenagem (R$/pallet/mês)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="valor_expedicao_pallet"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor Expedição Pallet (R$/pallet)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="valor_expedicao_peca"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor Expedição Peça (R$/peça)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
             {/* Observações */}
             <FormField
               control={form.control}
               name="observacoes"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-full">
                   <FormLabel>Observações</FormLabel>
                   <FormControl>
                     <Textarea
