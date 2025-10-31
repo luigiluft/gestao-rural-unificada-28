@@ -33,6 +33,7 @@ import {
   TreePine,
   Truck,
   User,
+  FolderOpen,
   UserCircle,
   UserPlus,
   Users,
@@ -92,6 +93,7 @@ const menuLabels = {
 }
 
 const iconMap = {
+  'cadastro': FolderOpen,
   'dashboard': Home,
   'catalogo': Package,
   'entradas': ArrowDownToLine,
@@ -145,23 +147,27 @@ export const useDynamicMenuItems = () => {
     // Ordem específica definida pelo usuário
     const orderedPages = [
       'dashboard',
-      'catalogo', 
       'entradas',
       'estoque',
       'saidas',
       'rastreio',
       'tabelas-frete',
-      'produtores',
-      'fazendas',
-      'perfil',
-      'subcontas',
-      'perfis-funcionarios',
       'contratos',
       'faturas',
       'financeiro',
       'royalties',
       'instrucoes',
       'suporte'
+    ]
+
+    // Páginas de Cadastro
+    const cadastroPages = [
+      'perfil',
+      'subcontas',
+      'perfis-funcionarios',
+      'catalogo',
+      'fazendas',
+      'produtores'
     ]
 
     // Páginas do WMS
@@ -282,6 +288,46 @@ export const useDynamicMenuItems = () => {
           label: 'TMS',
           icon: Truck,
           subItems: tmsSubItems
+        })
+      }
+    }
+
+    // Verificar se tem permissão para pelo menos uma página de Cadastro
+    const hasCadastroPermission = cadastroPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasCadastroPermission) {
+      const cadastroSubItems: MenuItem[] = []
+      
+      cadastroPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          cadastroSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (cadastroSubItems.length > 0) {
+        // Inserir Cadastro após TMS ou WMS
+        const tmsIndex = items.findIndex(item => item.path === '/tms')
+        const wmsIndex = items.findIndex(item => item.path === '/wms')
+        const insertIndex = tmsIndex !== -1 ? tmsIndex + 1 : wmsIndex !== -1 ? wmsIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/cadastro',
+          label: 'Cadastro',
+          icon: FolderOpen,
+          subItems: cadastroSubItems
         })
       }
     }
