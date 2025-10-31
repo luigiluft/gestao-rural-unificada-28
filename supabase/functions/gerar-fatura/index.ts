@@ -133,51 +133,89 @@ Deno.serve(async (req) => {
       let quantidadeUtilizada = 0
       let detalhesCalculo: any = {}
 
-      if (servico.tipo_servico === 'recebimento') {
-        // Contar entradas confirmadas no período
-        const { count } = await supabase
+      if (servico.tipo_servico === 'entrada_item') {
+        // Contar pallets de entradas confirmadas no período
+        const { data: entradas } = await supabase
           .from('entradas')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .eq('user_id', contrato.produtor_id)
           .eq('deposito_id', contrato.franquia_id)
           .eq('status_aprovacao', 'confirmado')
-          .gte('data_entrada', periodoInicio.toISOString())
-          .lte('data_entrada', periodoFim.toISOString())
+          .gte('data_entrada', periodoInicio.toISOString().split('T')[0])
+          .lte('data_entrada', periodoFim.toISOString().split('T')[0])
 
-        quantidadeUtilizada = count || 0
-        detalhesCalculo = { tipo: 'recebimento', entradas_confirmadas: count }
+        if (entradas && entradas.length > 0) {
+          const entradaIds = entradas.map(e => e.id)
+          
+          const { count: palletCount } = await supabase
+            .from('entrada_pallets')
+            .select('*', { count: 'exact', head: true })
+            .in('entrada_id', entradaIds)
+          
+          quantidadeUtilizada = palletCount || 0
+        } else {
+          quantidadeUtilizada = 0
+        }
+        
+        detalhesCalculo = { tipo: 'entrada_item', pallets_recebidos: quantidadeUtilizada, entradas_confirmadas: entradas?.length || 0 }
 
-      } else if (servico.tipo_servico === 'expedicao') {
-        // Contar saídas expedidas no período
-        const { count } = await supabase
+      } else if (servico.tipo_servico === 'saida_item') {
+        // Contar itens de saídas expedidas no período
+        const { data: saidas } = await supabase
           .from('saidas')
-          .select('*', { count: 'exact', head: true })
-          .eq('produtor_id', contrato.produtor_id)
+          .select('id')
+          .eq('user_id', contrato.produtor_id)
           .eq('deposito_id', contrato.franquia_id)
           .eq('status', 'expedido')
-          .gte('data_expedicao', periodoInicio.toISOString())
-          .lte('data_expedicao', periodoFim.toISOString())
+          .gte('data_saida', periodoInicio.toISOString().split('T')[0])
+          .lte('data_saida', periodoFim.toISOString().split('T')[0])
 
-        quantidadeUtilizada = count || 0
-        detalhesCalculo = { tipo: 'expedicao', saidas_expedidas: count }
-
-      } else if (servico.tipo_servico === 'armazenagem') {
-        // Calcular pallet-dias (média de estoque no período × dias)
-        const diasNoPeriodo = Math.ceil((periodoFim.getTime() - periodoInicio.getTime()) / (1000 * 60 * 60 * 24))
+        if (saidas && saidas.length > 0) {
+          const saidaIds = saidas.map(s => s.id)
+          
+          const { count: itemCount } = await supabase
+            .from('saida_itens')
+            .select('*', { count: 'exact', head: true })
+            .in('saida_id', saidaIds)
+          
+          quantidadeUtilizada = itemCount || 0
+        } else {
+          quantidadeUtilizada = 0
+        }
         
-        const { data: estoqueData } = await supabase
-          .from('estoque')
-          .select('quantidade_atual')
+        detalhesCalculo = { tipo: 'saida_item', itens_expedidos: quantidadeUtilizada, saidas_expedidas: saidas?.length || 0 }
+
+      } else if (servico.tipo_servico === 'armazenagem_pallet_dia') {
+        // Calcular pallet-dias (pallets em estoque × dias no período)
+        const diasNoPeriodo = Math.ceil((periodoFim.getTime() - periodoInicio.getTime()) / (1000 * 60 * 60 * 24)) + 1
+        
+        // Buscar entradas do produtor no depósito
+        const { data: entradas } = await supabase
+          .from('entradas')
+          .select('id')
           .eq('user_id', contrato.produtor_id)
           .eq('deposito_id', contrato.franquia_id)
 
-        const quantidadeMedia = estoqueData?.reduce((sum, e) => sum + (e.quantidade_atual || 0), 0) || 0
-        quantidadeUtilizada = Math.round(quantidadeMedia * diasNoPeriodo)
+        if (entradas && entradas.length > 0) {
+          const entradaIds = entradas.map(e => e.id)
+          
+          // Contar pallets com quantidade atual > 0
+          const { count: palletCount } = await supabase
+            .from('entrada_pallets')
+            .select('*', { count: 'exact', head: true })
+            .in('entrada_id', entradaIds)
+            .gt('quantidade_atual', 0)
+          
+          const totalPallets = palletCount || 0
+          quantidadeUtilizada = totalPallets * diasNoPeriodo
+        } else {
+          quantidadeUtilizada = 0
+        }
         
         detalhesCalculo = { 
-          tipo: 'armazenagem', 
+          tipo: 'armazenagem_pallet_dia', 
           dias_no_periodo: diasNoPeriodo,
-          quantidade_media: quantidadeMedia,
+          pallets_em_estoque: Math.round(quantidadeUtilizada / diasNoPeriodo),
           pallet_dias: quantidadeUtilizada
         }
       }
