@@ -78,26 +78,25 @@ Deno.serve(async (req) => {
     let periodoInicio: Date
     let periodoFim: Date
 
+    // Para faturas em rascunho, calcular do início do mês atual até hoje
     switch (contrato.tipo_cobranca) {
       case 'mensal':
-        periodoInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1)
-        periodoFim = new Date(hoje.getFullYear(), hoje.getMonth(), 0)
+        periodoInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+        periodoFim = new Date(hoje)
         break
       case 'semanal':
         periodoFim = new Date(hoje)
-        periodoFim.setDate(hoje.getDate() - 1)
         periodoInicio = new Date(periodoFim)
         periodoInicio.setDate(periodoFim.getDate() - 6)
         break
       case 'quinzenal':
         periodoFim = new Date(hoje)
-        periodoFim.setDate(hoje.getDate() - 1)
         periodoInicio = new Date(periodoFim)
         periodoInicio.setDate(periodoFim.getDate() - 14)
         break
       case 'anual':
-        periodoInicio = new Date(hoje.getFullYear() - 1, hoje.getMonth(), 1)
-        periodoFim = new Date(hoje.getFullYear(), hoje.getMonth(), 0)
+        periodoInicio = new Date(hoje.getFullYear(), 0, 1)
+        periodoFim = new Date(hoje)
         break
       default:
         throw new Error('Tipo de cobrança inválido')
@@ -105,25 +104,26 @@ Deno.serve(async (req) => {
 
     console.log('Período:', periodoInicio.toISOString(), 'até', periodoFim.toISOString())
 
-    // Verificar se já existe fatura para este período
-    const { data: faturaExistente } = await supabase
+    // Verificar se já existe fatura em rascunho para este contrato
+    const { data: faturaRascunho } = await supabase
       .from('faturas')
       .select('id, numero_fatura')
       .eq('contrato_id', contrato_id)
-      .eq('periodo_inicio', periodoInicio.toISOString().split('T')[0])
-      .eq('periodo_fim', periodoFim.toISOString().split('T')[0])
+      .eq('status', 'rascunho')
       .maybeSingle()
 
-    if (faturaExistente) {
-      return new Response(
-        JSON.stringify({ 
-          error: `Já existe fatura para este período: ${faturaExistente.numero_fatura}` 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    // Se existe rascunho, deletar os itens antigos para recalcular
+    if (faturaRascunho) {
+      console.log('Atualizando fatura em rascunho:', faturaRascunho.numero_fatura)
+      
+      const { error: deleteItensError } = await supabase
+        .from('fatura_itens')
+        .delete()
+        .eq('fatura_id', faturaRascunho.id)
+      
+      if (deleteItensError) {
+        console.error('Erro ao deletar itens antigos:', deleteItensError)
+      }
     }
 
     // Calcular quantidade utilizada por tipo de serviço
@@ -257,46 +257,67 @@ Deno.serve(async (req) => {
     const valorServicos = calculos.reduce((sum, c) => sum + c.valor_total, 0)
     const valorTotal = valorServicos // Pode adicionar descontos/acréscimos depois
 
-    // Gerar número da fatura
-    const anoMes = hoje.toISOString().slice(0, 7).replace('-', '')
-    const { count } = await supabase
-      .from('faturas')
-      .select('*', { count: 'exact', head: true })
-      .like('numero_fatura', `FAT-${anoMes}-%`)
+    let faturaData: any
 
-    const sequencial = String((count || 0) + 1).padStart(3, '0')
-    const numeroFatura = `FAT-${anoMes}-${sequencial}`
+    // Se já existe rascunho, atualizar; senão, criar nova
+    if (faturaRascunho) {
+      const { data: faturaAtualizada, error: faturaError } = await supabase
+        .from('faturas')
+        .update({
+          periodo_fim: periodoFim.toISOString().split('T')[0],
+          valor_servicos: valorServicos,
+          valor_total: valorTotal,
+          observacoes: `Fatura atualizada automaticamente - Período: ${periodoInicio.toLocaleDateString('pt-BR')} até ${periodoFim.toLocaleDateString('pt-BR')}`
+        })
+        .eq('id', faturaRascunho.id)
+        .select()
+        .single()
 
-    console.log('Número da fatura:', numeroFatura)
+      if (faturaError) throw faturaError
+      faturaData = faturaAtualizada
+      console.log('Fatura atualizada:', faturaData.id)
+    } else {
+      // Gerar número da fatura
+      const anoMes = hoje.toISOString().slice(0, 7).replace('-', '')
+      const { count } = await supabase
+        .from('faturas')
+        .select('*', { count: 'exact', head: true })
+        .like('numero_fatura', `FAT-${anoMes}-%`)
 
-    // Calcular data de vencimento
-    const dataVencimento = new Date(periodoFim)
-    dataVencimento.setDate(dataVencimento.getDate() + (contrato.dia_vencimento || 10))
+      const sequencial = String((count || 0) + 1).padStart(3, '0')
+      const numeroFatura = `FAT-${anoMes}-${sequencial}`
 
-    // Inserir fatura com status 'rascunho' (em andamento)
-    const { data: faturaData, error: faturaError } = await supabase
-      .from('faturas')
-      .insert({
-        numero_fatura: numeroFatura,
-        contrato_id: contrato_id,
-        franquia_id: contrato.franquia_id,
-        produtor_id: contrato.produtor_id,
-        periodo_inicio: periodoInicio.toISOString().split('T')[0],
-        periodo_fim: periodoFim.toISOString().split('T')[0],
-        status: 'rascunho', // Fatura em andamento
-        data_emissao: hoje.toISOString().split('T')[0],
-        data_vencimento: dataVencimento.toISOString().split('T')[0],
-        valor_servicos: valorServicos,
-        valor_total: valorTotal,
-        status: 'pendente',
-        observacoes: `Fatura gerada automaticamente para o período de ${periodoInicio.toLocaleDateString('pt-BR')} a ${periodoFim.toLocaleDateString('pt-BR')}`
-      })
-      .select()
-      .single()
+      console.log('Número da fatura:', numeroFatura)
 
-    if (faturaError) throw faturaError
+      // Calcular data de vencimento (início do próximo mês + dias de vencimento)
+      const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1)
+      const dataVencimento = new Date(proximoMes)
+      dataVencimento.setDate(dataVencimento.getDate() + (contrato.dia_vencimento || 10) - 1)
 
-    console.log('Fatura criada:', faturaData.id)
+      // Inserir nova fatura em rascunho
+      const { data: novaFatura, error: faturaError } = await supabase
+        .from('faturas')
+        .insert({
+          numero_fatura: numeroFatura,
+          contrato_id: contrato_id,
+          franquia_id: contrato.franquia_id,
+          produtor_id: contrato.produtor_id,
+          periodo_inicio: periodoInicio.toISOString().split('T')[0],
+          periodo_fim: periodoFim.toISOString().split('T')[0],
+          status: 'rascunho',
+          data_emissao: hoje.toISOString().split('T')[0],
+          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          valor_servicos: valorServicos,
+          valor_total: valorTotal,
+          observacoes: `Fatura em andamento - Período: ${periodoInicio.toLocaleDateString('pt-BR')} até ${periodoFim.toLocaleDateString('pt-BR')}`
+        })
+        .select()
+        .single()
+
+      if (faturaError) throw faturaError
+      faturaData = novaFatura
+      console.log('Fatura criada:', faturaData.id)
+    }
 
     // Inserir itens da fatura
     const itensParaInserir = calculos.map(calc => ({

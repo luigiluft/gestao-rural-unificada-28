@@ -18,11 +18,14 @@ import { useFaturaItens } from "@/hooks/useFaturaItens"
 import { useAtualizarFatura } from "@/hooks/useAtualizarFatura"
 import { useAuth } from "@/contexts/AuthContext"
 import { useContratos } from "@/hooks/useContratos"
+import { useInicializarFatura } from "@/hooks/useInicializarFatura"
+import { LoadingState } from "@/components/ui/loading-state"
 
 export default function Faturas() {
   const { user } = useAuth()
   const [selectedFatura, setSelectedFatura] = useState<any | null>(null)
 
+  const { isInitializing } = useInicializarFatura(user?.id)
   const { data: faturas = [], isLoading } = useFaturas({ incluir_rascunho: true })
   const { data: contratos = [] } = useContratos()
   const atualizarFatura = useAtualizarFatura()
@@ -68,10 +71,14 @@ export default function Faturas() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isInitializing) {
     return (
-      <div className="p-6">
-        <div className="text-muted-foreground">Carregando faturas...</div>
+      <div className="container mx-auto py-8">
+        <LoadingState 
+          variant="spinner" 
+          text="Gerando fatura atualizada..." 
+          fullHeight 
+        />
       </div>
     )
   }
