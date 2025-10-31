@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form"
+import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -34,6 +34,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { useState, useEffect } from "react"
+import { Plus, Trash2 } from "lucide-react"
+import { slaSchema, janelaEntregaSchema } from "@/lib/validations/contrato.schemas"
 
 const contratoSchema = z.object({
   franquia_id: z.string().min(1, "Selecione uma franquia"),
@@ -54,6 +56,9 @@ const contratoSchema = z.object({
   valor_armazenagem: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
   valor_expedicao_pallet: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
   valor_expedicao_peca: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
+  // SLAs e Janelas de Entrega
+  slas: z.array(slaSchema).optional(),
+  janelas_entrega: z.array(janelaEntregaSchema).optional(),
 }).refine(
   (data) => {
     if (data.data_fim) {
@@ -163,7 +168,19 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       valor_armazenagem: undefined,
       valor_expedicao_pallet: undefined,
       valor_expedicao_peca: undefined,
+      slas: [],
+      janelas_entrega: [],
     },
+  })
+
+  const { fields: slaFields, append: appendSla, remove: removeSla } = useFieldArray({
+    control: form.control,
+    name: "slas",
+  })
+
+  const { fields: janelaFields, append: appendJanela, remove: removeJanela } = useFieldArray({
+    control: form.control,
+    name: "janelas_entrega",
   })
 
   // Atualizar franquia_id quando o franqueado tem sua franquia carregada
@@ -252,6 +269,9 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
 
         if (servicosError) throw servicosError
       }
+
+      // TODO: Implementar inserção de SLAs e Janelas após criar as migrações
+      // As tabelas contrato_slas e contrato_janelas_entrega serão criadas em breve
 
       return contrato
     },
@@ -564,6 +584,270 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
                 </FormItem>
               )}
             />
+
+            {/* SLAs */}
+            <div className="col-span-full space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">SLAs (Opcional)</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendSla({
+                    tipo_sla: 'prazo_recebimento',
+                    descricao: '',
+                    valor_meta: 0,
+                    unidade_medida: '',
+                    penalidade_descumprimento: '',
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar SLA
+                </Button>
+              </div>
+
+              {slaFields.map((field, index) => (
+                <div key={field.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">SLA {index + 1}</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSla(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`slas.${index}.tipo_sla`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de SLA *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="prazo_recebimento">Prazo de Recebimento</SelectItem>
+                              <SelectItem value="prazo_expedicao">Prazo de Expedição</SelectItem>
+                              <SelectItem value="disponibilidade_estoque">Disponibilidade de Estoque</SelectItem>
+                              <SelectItem value="acuracia_inventario">Acurácia de Inventário</SelectItem>
+                              <SelectItem value="outro">Outro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`slas.${index}.valor_meta`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor Meta *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`slas.${index}.descricao`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrição *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Recebimento em até 24h" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`slas.${index}.unidade_medida`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unidade de Medida *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: horas, dias, %" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`slas.${index}.penalidade_descumprimento`}
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Penalidade por Descumprimento</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Descreva a penalidade aplicável"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Janelas de Entrega */}
+            <div className="col-span-full space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Janelas de Entrega (Opcional)</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendJanela({
+                    dia_semana: 1,
+                    horario_inicio: '08:00',
+                    horario_fim: '18:00',
+                    capacidade_maxima: undefined,
+                    observacoes: '',
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Janela
+                </Button>
+              </div>
+
+              {janelaFields.map((field, index) => (
+                <div key={field.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Janela {index + 1}</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeJanela(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`janelas_entrega.${index}.dia_semana`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dia da Semana *</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(parseInt(value))} 
+                            value={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0">Domingo</SelectItem>
+                              <SelectItem value="1">Segunda-feira</SelectItem>
+                              <SelectItem value="2">Terça-feira</SelectItem>
+                              <SelectItem value="3">Quarta-feira</SelectItem>
+                              <SelectItem value="4">Quinta-feira</SelectItem>
+                              <SelectItem value="5">Sexta-feira</SelectItem>
+                              <SelectItem value="6">Sábado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`janelas_entrega.${index}.capacidade_maxima`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Capacidade Máxima</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Ex: 10 pallets"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`janelas_entrega.${index}.horario_inicio`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Horário Início *</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`janelas_entrega.${index}.horario_fim`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Horário Fim *</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name={`janelas_entrega.${index}.observacoes`}
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Observações</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Observações sobre a janela de entrega"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <DialogFooter>
               <Button
