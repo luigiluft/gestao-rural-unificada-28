@@ -1,6 +1,4 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,56 +13,26 @@ import {
 import { FileText, Download, Eye } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-
-interface Fatura {
-  id: string
-  numero: string
-  data_emissao: string
-  data_vencimento: string
-  valor: number
-  status: 'pendente' | 'pago' | 'vencido'
-  descricao: string
-}
+import { useFaturas } from "@/hooks/useFaturas"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Faturas() {
-  const [selectedFatura, setSelectedFatura] = useState<Fatura | null>(null)
+  const { user } = useAuth()
+  const [selectedFatura, setSelectedFatura] = useState<any | null>(null)
 
-  const { data: faturas = [], isLoading } = useQuery<Fatura[]>({
-    queryKey: ["faturas"],
-    queryFn: async () => {
-      // TODO: Implementar busca de faturas no banco
-      // Por enquanto retorna dados mockados
-      return [
-        {
-          id: "1",
-          numero: "FAT-2024-001",
-          data_emissao: "2024-01-15",
-          data_vencimento: "2024-02-15",
-          valor: 1500.00,
-          status: "pago",
-          descricao: "Fatura referente a Janeiro/2024"
-        },
-        {
-          id: "2",
-          numero: "FAT-2024-002",
-          data_emissao: "2024-02-15",
-          data_vencimento: "2024-03-15",
-          valor: 1800.00,
-          status: "pendente",
-          descricao: "Fatura referente a Fevereiro/2024"
-        }
-      ]
-    },
-  })
+  const { data: faturas = [], isLoading } = useFaturas()
 
-  const getStatusBadge = (status: Fatura['status']) => {
+  const getStatusBadge = (status: string) => {
     const statusConfig = {
+      rascunho: { label: "Em Andamento", variant: "outline" as const },
       pendente: { label: "Pendente", variant: "secondary" as const },
       pago: { label: "Pago", variant: "default" as const },
-      vencido: { label: "Vencido", variant: "destructive" as const }
+      vencido: { label: "Vencido", variant: "destructive" as const },
+      cancelado: { label: "Cancelado", variant: "destructive" as const },
+      contestado: { label: "Contestado", variant: "destructive" as const }
     }
     
-    const config = statusConfig[status]
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pendente
     return <Badge variant={config.variant}>{config.label}</Badge>
   }
 
@@ -122,12 +90,17 @@ export default function Faturas() {
             ) : (
               faturas.map((fatura) => (
                 <TableRow key={fatura.id}>
-                  <TableCell className="font-medium">{fatura.numero}</TableCell>
+                  <TableCell className="font-medium">{fatura.numero_fatura}</TableCell>
                   <TableCell>{formatDate(fatura.data_emissao)}</TableCell>
                   <TableCell>{formatDate(fatura.data_vencimento)}</TableCell>
-                  <TableCell>{formatCurrency(fatura.valor)}</TableCell>
+                  <TableCell>{formatCurrency(fatura.valor_total || 0)}</TableCell>
                   <TableCell>{getStatusBadge(fatura.status)}</TableCell>
-                  <TableCell>{fatura.descricao}</TableCell>
+                  <TableCell>
+                    {fatura.periodo_inicio && fatura.periodo_fim 
+                      ? `Fatura referente a ${format(new Date(fatura.periodo_inicio), 'MMMM/yyyy', { locale: ptBR })}`
+                      : '-'
+                    }
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       <Button
