@@ -7,10 +7,14 @@ export const useFaturaMutations = () => {
 
   const gerarFatura = useMutation({
     mutationFn: async (contratoId: string) => {
-      // TODO: Implementar geração de fatura
-      // Por enquanto, vamos apenas simular
-      toast.info('Funcionalidade de geração automática será implementada em breve')
-      return null
+      const { data, error } = await supabase.functions.invoke('gerar-fatura', {
+        body: { contrato_id: contratoId }
+      })
+
+      if (error) throw error
+      if (data.error) throw new Error(data.error)
+      
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faturas'] })
