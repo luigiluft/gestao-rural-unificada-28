@@ -204,8 +204,8 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       if (values.valor_recebimento) {
         servicosItens.push({
           contrato_id: contrato.id,
-          tipo_servico: 'recebimento',
-          descricao: 'Serviço de Recebimento',
+          tipo_servico: 'entrada_item',
+          descricao: 'Serviço de Recebimento por Pallet',
           valor_unitario: values.valor_recebimento,
           quantidade_incluida: 0,
           valor_excedente: values.valor_recebimento,
@@ -215,8 +215,8 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       if (values.valor_armazenagem) {
         servicosItens.push({
           contrato_id: contrato.id,
-          tipo_servico: 'armazenagem_pallet',
-          descricao: 'Serviço de Armazenagem por Pallet',
+          tipo_servico: 'armazenagem_pallet_dia',
+          descricao: 'Serviço de Armazenagem por Pallet/Dia',
           valor_unitario: values.valor_armazenagem,
           quantidade_incluida: 0,
           valor_excedente: values.valor_armazenagem,
@@ -226,7 +226,7 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       if (values.valor_expedicao_pallet) {
         servicosItens.push({
           contrato_id: contrato.id,
-          tipo_servico: 'expedicao',
+          tipo_servico: 'saida_item',
           descricao: 'Serviço de Expedição por Pallet',
           valor_unitario: values.valor_expedicao_pallet,
           quantidade_incluida: 0,
@@ -237,8 +237,8 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
       if (values.valor_expedicao_peca) {
         servicosItens.push({
           contrato_id: contrato.id,
-          tipo_servico: 'expedicao',
-          descricao: 'Serviço de Expedição por Peça',
+          tipo_servico: 'saida_item',
+          descricao: 'Serviço de Expedição por Peça/Volume',
           valor_unitario: values.valor_expedicao_peca,
           quantidade_incluida: 0,
           valor_excedente: values.valor_expedicao_peca,
