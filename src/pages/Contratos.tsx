@@ -14,10 +14,12 @@ import { ptBR } from "date-fns/locale"
 import { useNavigate } from "react-router-dom"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FormularioContrato } from "@/components/Contratos/FormularioContrato"
 
 export default function Contratos() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'suspenso' | 'expirado' | 'cancelado' | undefined>()
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const { userRole, isAdmin, isFranqueado } = useUserRole()
   const { user } = useAuth()
   const [franquiaId, setFranquiaId] = useState<string | undefined>()
@@ -115,12 +117,15 @@ export default function Contratos() {
         />
       </div>
 
+      {/* Formulário de Novo Contrato */}
+      <FormularioContrato open={isFormOpen} onOpenChange={setIsFormOpen} />
+
       {/* Tabela de Contratos */}
       <TablePageLayout
         title="Contratos de Serviço"
         description="Gerencie os contratos de serviço com produtores"
         actionButton={
-          <Button onClick={() => navigate('/contratos/novo')}>
+          <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Contrato
           </Button>
