@@ -167,7 +167,8 @@ export const useDynamicMenuItems = () => {
       'perfis-funcionarios',
       'catalogo',
       'fazendas',
-      'produtores'
+      'produtores',
+      'contratos'
     ]
 
     // Páginas do WMS

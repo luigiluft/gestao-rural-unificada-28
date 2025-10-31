@@ -1,6 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useContratos, useContratoStats } from "@/hooks/useContratos"
 import { TablePageLayout } from "@/components/ui/table-page-layout"
+import { useUserRole } from "@/hooks/useUserRole"
+import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/ui/stat-card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -15,8 +18,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function Contratos() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'suspenso' | 'expirado' | 'cancelado' | undefined>()
+  const { userRole, isAdmin, isFranqueado } = useUserRole()
+  const { user } = useAuth()
+  const [franquiaId, setFranquiaId] = useState<string | undefined>()
+
+  // Para franqueados, buscar a franquia deles
+  useEffect(() => {
+    const fetchFranquia = async () => {
+      if (!isFranqueado || !user?.id) return
+      
+      const { data } = await supabase
+        .from('franquias')
+        .select('id')
+        .eq('master_franqueado_id', user.id)
+        .single()
+      
+      if (data) {
+        setFranquiaId(data.id)
+      }
+    }
+
+    if (isFranqueado) {
+      fetchFranquia()
+    }
+  }, [isFranqueado, user?.id])
   
-  const { data: contratos, isLoading } = useContratos({ status: statusFilter })
+  const { data: contratos, isLoading } = useContratos({ 
+    status: statusFilter,
+    franquia_id: isAdmin ? undefined : franquiaId 
+  })
   const { data: stats } = useContratoStats()
 
   const formatCurrency = (value: number) => {
