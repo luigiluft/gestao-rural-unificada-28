@@ -1,9 +1,67 @@
 import { TablePageLayout } from "@/components/ui/table-page-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 import { DollarSign, Receipt, TrendingUp } from "lucide-react"
+import { useFaturas, useFaturaStats } from "@/hooks/useFaturas"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 export default function Financeiro() {
+  const { user } = useAuth()
+  
+  // Buscar franquia do usuário logado
+  const { data: franquia } = useQuery({
+    queryKey: ['franquia-usuario', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null
+      
+      const { data, error } = await supabase
+        .from('franquias')
+        .select('id')
+        .eq('master_franqueado_id', user.id)
+        .single()
+      
+      if (error) throw error
+      return data
+    },
+    enabled: !!user?.id
+  })
+
+  const { data: faturas = [], isLoading } = useFaturas({ 
+    franquia_id: franquia?.id 
+  })
+  const { data: stats } = useFaturaStats()
+  
+  // Calcular valores
+  const receitaTotal = stats?.receitaTotal || 0
+  const receitaPendente = stats?.receitaPendente || 0
+  
+  // TODO: Calcular royalties (5% da receita, por exemplo)
+  const royalties = receitaTotal * 0.05
+  const saldoLiquido = receitaTotal - royalties
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value)
+  }
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      pendente: "secondary",
+      pago: "default",
+      vencido: "destructive",
+      cancelado: "outline"
+    }
+    return <Badge variant={variants[status] || "default"}>{status}</Badge>
+  }
+
   return (
     <TablePageLayout
       title="Financeiro"
@@ -20,7 +78,7 @@ export default function Financeiro() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">R$ 0,00</div>
+                <div className="text-2xl font-bold">{formatCurrency(receitaTotal)}</div>
                 <p className="text-xs text-muted-foreground">
                   Faturas pagas pelos clientes
                 </p>
@@ -34,7 +92,7 @@ export default function Financeiro() {
                 <Receipt className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">R$ 0,00</div>
+                <div className="text-2xl font-bold">{formatCurrency(royalties)}</div>
                 <p className="text-xs text-muted-foreground">
                   Contas a pagar para a Luft
                 </p>
@@ -48,7 +106,7 @@ export default function Financeiro() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">R$ 0,00</div>
+                <div className="text-2xl font-bold">{formatCurrency(saldoLiquido)}</div>
                 <p className="text-xs text-muted-foreground">
                   Receita - Royalties
                 </p>
@@ -66,15 +124,51 @@ export default function Financeiro() {
             <TabsContent value="faturas" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Faturas Pagas pelos Clientes</CardTitle>
+                  <CardTitle>Faturas dos Clientes</CardTitle>
                   <CardDescription>
-                    Histórico de pagamentos recebidos dos produtores
+                    Histórico de faturamento dos produtores
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    Nenhuma fatura encontrada
-                  </div>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      Carregando...
+                    </div>
+                  ) : faturas.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      Nenhuma fatura encontrada
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Número</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Período</TableHead>
+                          <TableHead>Emissão</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {faturas.map((fatura) => (
+                          <TableRow key={fatura.id}>
+                            <TableCell className="font-medium">{fatura.numero_fatura}</TableCell>
+                            <TableCell>{fatura.produtores_profiles?.nome}</TableCell>
+                            <TableCell>
+                              {format(new Date(fatura.periodo_inicio), 'dd/MM/yy', { locale: ptBR })} - {' '}
+                              {format(new Date(fatura.periodo_fim), 'dd/MM/yy', { locale: ptBR })}
+                            </TableCell>
+                            <TableCell>{format(new Date(fatura.data_emissao), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                            <TableCell>{format(new Date(fatura.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                            <TableCell className="text-right font-medium">{formatCurrency(fatura.valor_total)}</TableCell>
+                            <TableCell>{getStatusBadge(fatura.status)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -89,7 +183,7 @@ export default function Financeiro() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    Nenhuma conta a pagar
+                    Funcionalidade em desenvolvimento
                   </div>
                 </CardContent>
               </Card>

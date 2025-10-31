@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client"
 export const useFaturas = (filters?: {
   status?: 'pendente' | 'pago' | 'vencido' | 'cancelado'
   contrato_id?: string
+  franquia_id?: string
   mes?: string
 }) => {
   return useQuery({
@@ -21,7 +22,7 @@ export const useFaturas = (filters?: {
           franquias:franquia_id (
             nome
           ),
-          produtores_profiles:produtor_id!inner (
+          produtores_profiles:produtor_id (
             nome
           )
         `)
@@ -34,6 +35,10 @@ export const useFaturas = (filters?: {
 
       if (filters?.contrato_id) {
         query = query.eq('contrato_id', filters.contrato_id)
+      }
+
+      if (filters?.franquia_id) {
+        query = query.eq('franquia_id', filters.franquia_id)
       }
 
       const { data, error } = await query
