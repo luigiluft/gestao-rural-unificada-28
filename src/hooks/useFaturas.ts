@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 
 export const useFaturas = (filters?: {
-  status?: 'pendente' | 'pago' | 'vencido' | 'cancelado'
+  status?: 'rascunho' | 'pendente' | 'pago' | 'vencido' | 'cancelado'
   contrato_id?: string
   franquia_id?: string
   mes?: string
+  incluir_rascunho?: boolean // Novo filtro para incluir rascunhos
 }) => {
   return useQuery({
     queryKey: ['faturas', filters],
@@ -27,6 +28,11 @@ export const useFaturas = (filters?: {
           )
         `)
         .order('data_emissao', { ascending: false })
+
+      // Por padrão, excluir rascunhos a menos que explicitamente solicitado
+      if (!filters?.incluir_rascunho) {
+        query = query.neq('status', 'rascunho')
+      }
 
       // Apply status filter
       if (filters?.status) {

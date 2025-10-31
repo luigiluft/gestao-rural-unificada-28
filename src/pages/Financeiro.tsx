@@ -3,16 +3,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { DollarSign, Receipt, TrendingUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DollarSign, Receipt, TrendingUp, Lock } from "lucide-react"
 import { useFaturas, useFaturaStats } from "@/hooks/useFaturas"
+import { useFaturaMutations } from "@/hooks/useFaturaMutations"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
+import { useUserRole } from "@/hooks/useUserRole"
+
 export default function Financeiro() {
   const { user } = useAuth()
+  const { userRole } = useUserRole()
+  const { fecharFatura } = useFaturaMutations()
   
   // Buscar franquia do usuário logado
   const { data: franquia } = useQuery({
@@ -32,8 +38,11 @@ export default function Financeiro() {
     enabled: !!user?.id
   })
 
+  // Franqueados veem todas as faturas (incluindo rascunhos)
+  // Produtores veem apenas faturas fechadas
   const { data: faturas = [], isLoading } = useFaturas({ 
-    franquia_id: franquia?.id 
+    franquia_id: franquia?.id,
+    incluir_rascunho: userRole === 'franqueado' || userRole === 'admin'
   })
   const { data: stats } = useFaturaStats()
   
@@ -54,12 +63,22 @@ export default function Financeiro() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      rascunho: "outline",
       pendente: "secondary",
       pago: "default",
       vencido: "destructive",
       cancelado: "outline"
     }
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>
+    
+    const labels: Record<string, string> = {
+      rascunho: "Em Andamento",
+      pendente: "Pendente",
+      pago: "Pago",
+      vencido: "Vencido",
+      cancelado: "Cancelado"
+    }
+    
+    return <Badge variant={variants[status] || "default"}>{labels[status] || status}</Badge>
   }
 
   return (
@@ -149,6 +168,9 @@ export default function Financeiro() {
                           <TableHead>Vencimento</TableHead>
                           <TableHead className="text-right">Valor</TableHead>
                           <TableHead>Status</TableHead>
+                          {(userRole === 'franqueado' || userRole === 'admin') && (
+                            <TableHead>Ações</TableHead>
+                          )}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -164,6 +186,21 @@ export default function Financeiro() {
                             <TableCell>{format(new Date(fatura.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(fatura.valor_total)}</TableCell>
                             <TableCell>{getStatusBadge(fatura.status)}</TableCell>
+                            {(userRole === 'franqueado' || userRole === 'admin') && (
+                              <TableCell>
+                                {fatura.status === 'rascunho' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => fecharFatura.mutate(fatura.id)}
+                                    disabled={fecharFatura.isPending}
+                                  >
+                                    <Lock className="h-4 w-4 mr-1" />
+                                    Fechar
+                                  </Button>
+                                )}
+                              </TableCell>
+                            )}
                           </TableRow>
                         ))}
                       </TableBody>

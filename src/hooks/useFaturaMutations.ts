@@ -69,9 +69,30 @@ export const useFaturaMutations = () => {
     },
   })
 
+  const fecharFatura = useMutation({
+    mutationFn: async (faturaId: string) => {
+      const { data, error } = await supabase.functions.invoke('fechar-fatura', {
+        body: { fatura_id: faturaId },
+      })
+
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['faturas'] })
+      toast.success('Fatura fechada com sucesso!')
+    },
+    onError: (error) => {
+      toast.error('Erro ao fechar fatura: ' + error.message)
+    },
+  })
+
   return {
     gerarFatura,
     registrarPagamento,
     cancelarFatura,
+    fecharFatura,
   }
 }

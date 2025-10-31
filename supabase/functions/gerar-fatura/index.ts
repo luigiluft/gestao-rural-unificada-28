@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
     const dataVencimento = new Date(periodoFim)
     dataVencimento.setDate(dataVencimento.getDate() + (contrato.dia_vencimento || 10))
 
-    // Inserir fatura
+    // Inserir fatura com status 'rascunho' (em andamento)
     const { data: faturaData, error: faturaError } = await supabase
       .from('faturas')
       .insert({
@@ -283,6 +283,7 @@ Deno.serve(async (req) => {
         produtor_id: contrato.produtor_id,
         periodo_inicio: periodoInicio.toISOString().split('T')[0],
         periodo_fim: periodoFim.toISOString().split('T')[0],
+        status: 'rascunho', // Fatura em andamento
         data_emissao: hoje.toISOString().split('T')[0],
         data_vencimento: dataVencimento.toISOString().split('T')[0],
         valor_servicos: valorServicos,

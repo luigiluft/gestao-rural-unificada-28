@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.gerar-fatura]
 verify_jwt = true
+
+[functions.fechar-fatura]
+verify_jwt = true

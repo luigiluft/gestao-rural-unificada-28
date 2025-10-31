@@ -1367,8 +1367,10 @@ export type Database = {
           contrato_id: string | null
           created_at: string
           data_emissao: string
+          data_fechamento: string | null
           data_pagamento: string | null
           data_vencimento: string
+          fechada_por: string | null
           forma_pagamento: string | null
           franquia_id: string
           gerada_automaticamente: boolean | null
@@ -1389,8 +1391,10 @@ export type Database = {
           contrato_id?: string | null
           created_at?: string
           data_emissao?: string
+          data_fechamento?: string | null
           data_pagamento?: string | null
           data_vencimento: string
+          fechada_por?: string | null
           forma_pagamento?: string | null
           franquia_id: string
           gerada_automaticamente?: boolean | null
@@ -1411,8 +1415,10 @@ export type Database = {
           contrato_id?: string | null
           created_at?: string
           data_emissao?: string
+          data_fechamento?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
+          fechada_por?: string | null
           forma_pagamento?: string | null
           franquia_id?: string
           gerada_automaticamente?: boolean | null
