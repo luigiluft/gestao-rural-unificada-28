@@ -264,7 +264,14 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
     },
     onError: (error: any) => {
       console.error('Erro ao criar contrato:', error)
-      toast.error('Erro ao criar contrato: ' + error.message)
+      
+      // Verificar se é erro de número de contrato duplicado
+      if (error.message?.includes('contratos_servico_numero_contrato_key') || 
+          error.message?.includes('duplicate key')) {
+        toast.error('Este número de contrato já existe. Por favor, use um número diferente.')
+      } else {
+        toast.error('Erro ao criar contrato: ' + error.message)
+      }
     },
   })
 
