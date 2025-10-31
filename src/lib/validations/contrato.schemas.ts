@@ -1,21 +1,20 @@
 import { z } from "zod"
 
 export const servicoContratoSchema = z.object({
-  tipo_servico: z.enum(['armazenagem_ton', 'armazenagem_pallet', 'movimentacao', 'expedicao', 'recebimento', 'outro']),
-  descricao: z.string().min(1, "Descrição é obrigatória"),
-  unidade_medida: z.string().min(1, "Unidade de medida é obrigatória"),
-  quantidade_contratada: z.number().positive("Quantidade deve ser positiva").optional(),
+  tipo_servico: z.enum(['armazenagem_pallet_dia', 'entrada_item', 'saida_item', 'taxa_fixa_mensal', 'movimentacao_interna', 'separacao_picking', 'repaletizacao']),
+  descricao: z.string().optional(),
+  quantidade_incluida: z.number().nonnegative("Quantidade incluída deve ser não negativa").optional(),
+  quantidade_minima: z.number().nonnegative("Quantidade mínima deve ser não negativa").optional(),
   valor_unitario: z.number().positive("Valor unitário deve ser positivo"),
-  percentual_repasse: z.number().min(0).max(100, "Percentual deve estar entre 0 e 100"),
-  observacoes: z.string().optional(),
+  valor_excedente: z.number().positive("Valor excedente deve ser positivo").optional(),
 })
 
 export const slaSchema = z.object({
-  tipo_sla: z.enum(['prazo_recebimento', 'prazo_expedicao', 'disponibilidade_estoque', 'acuracia_inventario', 'outro']),
-  descricao: z.string().min(1, "Descrição é obrigatória"),
-  valor_meta: z.number().positive("Valor meta deve ser positivo"),
-  unidade_medida: z.string().min(1, "Unidade de medida é obrigatória"),
-  penalidade_descumprimento: z.string().optional(),
+  tipo_sla: z.enum(['tempo_processamento_entrada', 'tempo_preparacao_saida', 'prazo_entrega', 'taxa_avarias_max', 'tempo_resposta_divergencia']),
+  descricao: z.string().optional(),
+  valor_esperado: z.number().positive("Valor meta deve ser positivo"),
+  unidade: z.enum(['horas', 'dias', 'percentual']),
+  penalidade_percentual: z.number().min(0).max(100).optional(),
 })
 
 export const janelaEntregaSchema = z.object({
@@ -33,9 +32,12 @@ export const contratoSchema = z.object({
   data_inicio: z.string().min(1, "Data de início é obrigatória"),
   data_fim: z.string().optional().nullable(),
   dia_vencimento: z.number().min(1).max(31),
-  tipo_cobranca: z.enum(['mensal', 'quinzenal']),
+  tipo_cobranca: z.enum(['mensal', 'quinzenal', 'por_demanda']),
   observacoes: z.string().optional().nullable(),
   status: z.enum(['ativo', 'suspenso', 'expirado', 'cancelado']).default('ativo'),
+  servicos: z.array(servicoContratoSchema).optional(),
+  slas: z.array(slaSchema).optional(),
+  janelas_entrega: z.array(janelaEntregaSchema).optional(),
 })
 
 export const faturaSchema = z.object({

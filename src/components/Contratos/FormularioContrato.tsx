@@ -1,19 +1,9 @@
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { supabase } from "@/integrations/supabase/client"
-import { useAuth } from "@/contexts/AuthContext"
-import { useUserRole } from "@/hooks/useUserRole"
+import { z } from "zod"
+import { contratoSchema, servicoContratoSchema } from "@/lib/validations/contrato.schemas"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -33,78 +23,25 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { useState, useEffect } from "react"
-import { Plus, Trash2 } from "lucide-react"
-import { slaSchema, janelaEntregaSchema } from "@/lib/validations/contrato.schemas"
+import { supabase } from "@/integrations/supabase/client"
+import { Plus, Trash2, Save } from "lucide-react"
+import { useContratoDetalhes } from "@/hooks/useContratoDetalhes"
+import { useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { useAuth } from "@/contexts/AuthContext"
+import { useUserRole } from "@/hooks/useUserRole"
 
-const contratoSchema = z.object({
-  franquia_id: z.string().min(1, "Selecione uma franquia"),
-  produtor_id: z.string().min(1, "Selecione um produtor"),
-  numero_contrato: z.string()
-    .min(1, "Número do contrato é obrigatório")
-    .max(50, "Número muito longo"),
-  data_inicio: z.string().min(1, "Data de início é obrigatória"),
-  data_fim: z.string().optional(),
-  tipo_cobranca: z.enum(['mensal', 'quinzenal', 'por_demanda']),
-  dia_vencimento: z.coerce
-    .number()
-    .min(1, "Dia deve ser entre 1 e 31")
-    .max(31, "Dia deve ser entre 1 e 31"),
-  observacoes: z.string().max(500, "Observações muito longas").optional(),
-  // Valores dos serviços
-  valor_recebimento: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
-  valor_armazenagem: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
-  valor_expedicao_pallet: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
-  valor_expedicao_peca: z.coerce.number().min(0, "Valor deve ser não negativo").optional(),
-  // SLAs e Janelas de Entrega
-  slas: z.array(slaSchema).optional(),
-  janelas_entrega: z.array(janelaEntregaSchema).optional(),
-}).refine(
-  (data) => {
-    if (data.data_fim) {
-      return new Date(data.data_fim) > new Date(data.data_inicio)
-    }
-    return true
-  },
-  {
-    message: "Data de término deve ser posterior à data de início",
-    path: ["data_fim"],
-  }
-)
-
-type ContratoFormValues = z.infer<typeof contratoSchema>
+type FormValues = z.infer<typeof contratoSchema>
 
 interface FormularioContratoProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  contratoId?: string
+  onSuccess?: () => void
 }
 
-export function FormularioContrato({ open, onOpenChange }: FormularioContratoProps) {
+export function FormularioContrato({ contratoId, onSuccess }: FormularioContratoProps) {
   const { user } = useAuth()
   const { isAdmin, isFranqueado } = useUserRole()
-  const queryClient = useQueryClient()
-  const [franquiaIdDoFranqueado, setFranquiaIdDoFranqueado] = useState<string>()
-
-  // Buscar franquia do franqueado logado
-  useEffect(() => {
-    const fetchFranquia = async () => {
-      if (!isFranqueado || !user?.id) return
-      
-      const { data } = await supabase
-        .from('franquias')
-        .select('id')
-        .eq('master_franqueado_id', user.id)
-        .single()
-      
-      if (data) {
-        setFranquiaIdDoFranqueado(data.id)
-      }
-    }
-
-    if (isFranqueado) {
-      fetchFranquia()
-    }
-  }, [isFranqueado, user?.id])
+  const { data: contratoData } = useContratoDetalhes(contratoId)
 
   // Buscar franquias (apenas para admin)
   const { data: franquias } = useQuery({
@@ -122,55 +59,83 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
     enabled: isAdmin
   })
 
-  // Buscar produtores (filtrados por franquia se for franqueado)
+  // Buscar produtores
   const { data: produtores } = useQuery({
-    queryKey: ['produtores-select', franquiaIdDoFranqueado],
+    queryKey: ['produtores-select'],
     queryFn: async () => {
-      // Buscar profiles com role produtor
-      let query = supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('user_id, nome')
         .eq('role', 'produtor')
+        .order('nome')
       
-      const { data: allProdutores, error: profilesError } = await query
-      
-      if (profilesError) throw profilesError
-      
-      // Se for franqueado, filtrar por franquia através da tabela produtores
-      if (isFranqueado && franquiaIdDoFranqueado) {
-        const { data: produtoresFranquia } = await supabase
-          .from('produtores')
-          .select('user_id')
-          .eq('franquia_id', franquiaIdDoFranqueado)
-          .eq('ativo', true)
-        
-        const userIds = produtoresFranquia?.map(p => p.user_id) || []
-        return allProdutores?.filter(p => userIds.includes(p.user_id)) || []
-      }
-      
-      return allProdutores
+      if (error) throw error
+      return data
     },
-    enabled: !!(isAdmin || franquiaIdDoFranqueado)
   })
 
-  const form = useForm<ContratoFormValues>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(contratoSchema),
     defaultValues: {
-      franquia_id: franquiaIdDoFranqueado || '',
-      produtor_id: '',
-      numero_contrato: '',
-      data_inicio: new Date().toISOString().split('T')[0],
-      data_fim: '',
-      tipo_cobranca: 'mensal',
+      numero_contrato: "",
+      franquia_id: "",
+      produtor_id: "",
+      data_inicio: "",
+      data_fim: "",
       dia_vencimento: 10,
-      observacoes: '',
-      valor_recebimento: undefined,
-      valor_armazenagem: undefined,
-      valor_expedicao_pallet: undefined,
-      valor_expedicao_peca: undefined,
+      tipo_cobranca: "mensal",
+      observacoes: "",
+      status: "ativo",
+      servicos: [],
       slas: [],
       janelas_entrega: [],
     },
+  })
+
+  // Load existing data when editing
+  useEffect(() => {
+    if (contratoData?.contrato && contratoId) {
+      const { contrato, servicos, slas, janelas } = contratoData
+      
+      form.reset({
+        numero_contrato: contrato.numero_contrato,
+        franquia_id: contrato.franquia_id,
+        produtor_id: contrato.produtor_id,
+        data_inicio: contrato.data_inicio,
+        data_fim: contrato.data_fim || "",
+        dia_vencimento: contrato.dia_vencimento,
+        tipo_cobranca: contrato.tipo_cobranca,
+        observacoes: contrato.observacoes || "",
+        status: contrato.status,
+        servicos: servicos.map(s => ({
+          tipo_servico: s.tipo_servico,
+          descricao: s.descricao || "",
+          quantidade_incluida: s.quantidade_incluida || 0,
+          quantidade_minima: s.quantidade_minima || 0,
+          valor_unitario: s.valor_unitario,
+          valor_excedente: s.valor_excedente || undefined,
+        })),
+        slas: slas.map(s => ({
+          tipo_sla: s.tipo_sla,
+          descricao: s.descricao || "",
+          valor_esperado: s.valor_esperado,
+          unidade: s.unidade,
+          penalidade_percentual: s.penalidade_percentual || undefined,
+        })),
+        janelas_entrega: janelas.map(j => ({
+          dia_semana: j.dia_semana,
+          horario_inicio: j.hora_inicio,
+          horario_fim: j.hora_fim,
+          capacidade_maxima: j.capacidade_max_pallets || undefined,
+          observacoes: j.observacoes || "",
+        })),
+      })
+    }
+  }, [contratoData, contratoId, form])
+
+  const { fields: servicoFields, append: appendServico, remove: removeServico } = useFieldArray({
+    control: form.control,
+    name: "servicos",
   })
 
   const { fields: slaFields, append: appendSla, remove: removeSla } = useFieldArray({
@@ -183,724 +148,752 @@ export function FormularioContrato({ open, onOpenChange }: FormularioContratoPro
     name: "janelas_entrega",
   })
 
-  // Atualizar franquia_id quando o franqueado tem sua franquia carregada
-  useEffect(() => {
-    if (franquiaIdDoFranqueado) {
-      form.setValue('franquia_id', franquiaIdDoFranqueado)
-    }
-  }, [franquiaIdDoFranqueado, form])
+  const onSubmit = async (data: FormValues) => {
+    try {
+      let contratoIdToUse = contratoId
 
-  const createContratoMutation = useMutation({
-    mutationFn: async (values: ContratoFormValues) => {
-      const insertData: any = {
-        numero_contrato: values.numero_contrato,
-        data_inicio: values.data_inicio,
-        tipo_cobranca: values.tipo_cobranca,
-        dia_vencimento: values.dia_vencimento,
-        status: 'ativo',
+      if (contratoId) {
+        // Update existing contract
+        const { error: updateError } = await supabase
+          .from('contratos_servico')
+          .update({
+            numero_contrato: data.numero_contrato,
+            franquia_id: data.franquia_id,
+            produtor_id: data.produtor_id,
+            data_inicio: data.data_inicio,
+            data_fim: data.data_fim || null,
+            dia_vencimento: data.dia_vencimento,
+            tipo_cobranca: data.tipo_cobranca,
+            observacoes: data.observacoes || null,
+            status: data.status,
+          })
+          .eq('id', contratoId)
+
+        if (updateError) throw updateError
+        
+        // Delete existing servicos, slas, and janelas to recreate them
+        await supabase.from('contrato_servicos_itens').delete().eq('contrato_id', contratoId)
+        await supabase.from('contrato_sla').delete().eq('contrato_id', contratoId)
+        await supabase.from('contrato_janelas_entrega').delete().eq('contrato_id', contratoId)
+      } else {
+        // Create new contract
+        const { data: contrato, error: contratoError } = await supabase
+          .from('contratos_servico')
+          .insert([{
+            numero_contrato: data.numero_contrato,
+            franquia_id: data.franquia_id,
+            produtor_id: data.produtor_id,
+            data_inicio: data.data_inicio,
+            data_fim: data.data_fim || null,
+            dia_vencimento: data.dia_vencimento,
+            tipo_cobranca: data.tipo_cobranca,
+            observacoes: data.observacoes || null,
+            status: data.status,
+          }])
+          .select()
+          .single()
+
+        if (contratoError) {
+          if (contratoError.code === '23505') {
+            toast.error('Este número de contrato já existe. Por favor, use um número diferente.')
+            return
+          }
+          throw contratoError
+        }
+        
+        contratoIdToUse = contrato.id
       }
 
-      // Adicionar campos opcionais
-      if (values.franquia_id) insertData.franquia_id = values.franquia_id
-      if (values.produtor_id) insertData.produtor_id = values.produtor_id
-      if (values.data_fim) insertData.data_fim = values.data_fim
-      if (values.observacoes) insertData.observacoes = values.observacoes
-      if (user?.id) insertData.criado_por = user.id
+      // Insert Servicos if any
+      if (data.servicos && data.servicos.length > 0) {
+        const servicosData = data.servicos.map(servico => ({
+          contrato_id: contratoIdToUse,
+          tipo_servico: servico.tipo_servico,
+          descricao: servico.descricao || null,
+          quantidade_incluida: servico.quantidade_incluida || 0,
+          quantidade_minima: servico.quantidade_minima || 0,
+          valor_unitario: servico.valor_unitario,
+          valor_excedente: servico.valor_excedente || null,
+        }))
 
-      const { data: contrato, error } = await supabase
-        .from('contratos_servico')
-        .insert(insertData)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Inserir itens de serviço se valores foram fornecidos
-      const servicosItens = []
-      
-      if (values.valor_recebimento) {
-        servicosItens.push({
-          contrato_id: contrato.id,
-          tipo_servico: 'entrada_item',
-          descricao: 'Serviço de Recebimento por Pallet',
-          valor_unitario: values.valor_recebimento,
-          quantidade_incluida: 0,
-          valor_excedente: values.valor_recebimento,
-        })
-      }
-
-      if (values.valor_armazenagem) {
-        servicosItens.push({
-          contrato_id: contrato.id,
-          tipo_servico: 'armazenagem_pallet_dia',
-          descricao: 'Serviço de Armazenagem por Pallet/Dia',
-          valor_unitario: values.valor_armazenagem,
-          quantidade_incluida: 0,
-          valor_excedente: values.valor_armazenagem,
-        })
-      }
-
-      if (values.valor_expedicao_pallet) {
-        servicosItens.push({
-          contrato_id: contrato.id,
-          tipo_servico: 'saida_item',
-          descricao: 'Serviço de Expedição por Pallet',
-          valor_unitario: values.valor_expedicao_pallet,
-          quantidade_incluida: 0,
-          valor_excedente: values.valor_expedicao_pallet,
-        })
-      }
-
-      if (values.valor_expedicao_peca) {
-        servicosItens.push({
-          contrato_id: contrato.id,
-          tipo_servico: 'saida_item',
-          descricao: 'Serviço de Expedição por Peça/Volume',
-          valor_unitario: values.valor_expedicao_peca,
-          quantidade_incluida: 0,
-          valor_excedente: values.valor_expedicao_peca,
-        })
-      }
-
-      if (servicosItens.length > 0) {
         const { error: servicosError } = await supabase
           .from('contrato_servicos_itens')
-          .insert(servicosItens)
+          .insert(servicosData)
 
         if (servicosError) throw servicosError
       }
 
-      // Inserir SLAs se fornecidos
-      if (values.slas && values.slas.length > 0) {
-        const slasData = values.slas.map(sla => ({
-          contrato_id: contrato.id,
+      // Insert SLAs if any
+      if (data.slas && data.slas.length > 0) {
+        const slasData = data.slas.map(sla => ({
+          contrato_id: contratoIdToUse,
           tipo_sla: sla.tipo_sla,
-          descricao: sla.descricao,
-          valor_meta: sla.valor_meta,
-          unidade_medida: sla.unidade_medida,
-          penalidade_descumprimento: sla.penalidade_descumprimento,
+          descricao: sla.descricao || null,
+          valor_esperado: sla.valor_esperado,
+          unidade: sla.unidade,
+          penalidade_percentual: sla.penalidade_percentual || null,
         }))
 
         const { error: slasError } = await supabase
-          .from('contrato_slas')
-          .insert(slasData as any)
+          .from('contrato_sla')
+          .insert(slasData)
 
         if (slasError) throw slasError
       }
 
-      // Inserir Janelas de Entrega se fornecidas
-      if (values.janelas_entrega && values.janelas_entrega.length > 0) {
-        const janelasData = values.janelas_entrega.map(janela => ({
-          contrato_id: contrato.id,
+      // Insert Janelas de Entrega if any
+      if (data.janelas_entrega && data.janelas_entrega.length > 0) {
+        const janelasData = data.janelas_entrega.map(janela => ({
+          contrato_id: contratoIdToUse,
           dia_semana: janela.dia_semana,
           hora_inicio: janela.horario_inicio,
           hora_fim: janela.horario_fim,
-          capacidade_max_pallets: janela.capacidade_maxima,
-          observacoes: janela.observacoes,
+          capacidade_max_pallets: janela.capacidade_maxima || null,
+          observacoes: janela.observacoes || null,
         }))
 
         const { error: janelasError } = await supabase
           .from('contrato_janelas_entrega')
-          .insert(janelasData as any)
+          .insert(janelasData)
 
         if (janelasError) throw janelasError
       }
 
-      return contrato
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] })
-      queryClient.invalidateQueries({ queryKey: ['contrato-stats'] })
-      toast.success('Contrato criado com sucesso!')
-      form.reset()
-      onOpenChange(false)
-    },
-    onError: (error: any) => {
-      console.error('Erro ao criar contrato:', error)
-      
-      // Verificar se é erro de número de contrato duplicado
-      if (error.message?.includes('contratos_servico_numero_contrato_key') || 
-          error.message?.includes('duplicate key')) {
-        toast.error('Este número de contrato já existe. Por favor, use um número diferente.')
-      } else {
-        toast.error('Erro ao criar contrato: ' + error.message)
-      }
-    },
-  })
-
-  const onSubmit = (values: ContratoFormValues) => {
-    createContratoMutation.mutate(values)
+      toast.success(contratoId ? 'Contrato atualizado com sucesso!' : 'Contrato criado com sucesso!')
+      if (!contratoId) form.reset()
+      onSuccess?.()
+    } catch (error: any) {
+      toast.error(`Erro ao ${contratoId ? 'atualizar' : 'criar'} contrato: ` + error.message)
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Novo Contrato de Serviço</DialogTitle>
-          <DialogDescription>
-            Preencha os dados do contrato de serviço com o produtor
-          </DialogDescription>
-        </DialogHeader>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">
+            {contratoId ? 'Editar Contrato' : 'Novo Contrato'}
+          </h3>
+        </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Franquia - apenas visível para admin */}
-              {isAdmin && (
-                <FormField
-                  control={form.control}
-                  name="franquia_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Franquia *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a franquia" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {franquias?.map((franquia) => (
-                            <SelectItem key={franquia.id} value={franquia.id}>
-                              {franquia.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Número do Contrato */}
+          <FormField
+            control={form.control}
+            name="numero_contrato"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Número do Contrato *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: CTR-2025-001" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              {/* Produtor */}
-              <FormField
-                control={form.control}
-                name="produtor_id"
-                render={({ field }) => (
-                  <FormItem className={isAdmin ? '' : 'md:col-span-2'}>
-                    <FormLabel>Produtor *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o produtor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {produtores?.map((produtor) => (
-                          <SelectItem key={produtor.user_id} value={produtor.user_id}>
-                            {produtor.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Número do Contrato */}
-              <FormField
-                control={form.control}
-                name="numero_contrato"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número do Contrato *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: CTR-2025-001"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Data de Início */}
-              <FormField
-                control={form.control}
-                name="data_inicio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Início *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Data de Término */}
-              <FormField
-                control={form.control}
-                name="data_fim"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Término</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Deixe vazio para contrato indeterminado
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Tipo de Cobrança */}
-              <FormField
-                control={form.control}
-                name="tipo_cobranca"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Cobrança *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="mensal">Mensal</SelectItem>
-                        <SelectItem value="quinzenal">Quinzenal</SelectItem>
-                        <SelectItem value="por_demanda">Por Demanda</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Dia de Vencimento */}
-              <FormField
-                control={form.control}
-                name="dia_vencimento"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dia de Vencimento *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={31}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Dia do mês (1 a 31)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Valores dos Serviços */}
-            <div className="col-span-full">
-              <h3 className="text-lg font-semibold mb-4">Valores dos Serviços</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="valor_recebimento"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor Recebimento (R$/pallet)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="valor_armazenagem"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor Armazenagem (R$/pallet/mês)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="valor_expedicao_pallet"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor Expedição Pallet (R$/pallet)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="valor_expedicao_peca"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valor Expedição Peça (R$/peça)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Observações */}
-            <FormField
-              control={form.control}
-              name="observacoes"
-              render={({ field }) => (
-                <FormItem className="col-span-full">
-                  <FormLabel>Observações</FormLabel>
+          {/* Franquia */}
+          <FormField
+            control={form.control}
+            name="franquia_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Franquia *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <Textarea
-                      placeholder="Observações adicionais sobre o contrato"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a franquia" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <SelectContent>
+                    {franquias?.map((franquia) => (
+                      <SelectItem key={franquia.id} value={franquia.id}>
+                        {franquia.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            {/* SLAs */}
-            <div className="col-span-full space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">SLAs (Opcional)</h3>
+          {/* Produtor */}
+          <FormField
+            control={form.control}
+            name="produtor_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Produtor *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o produtor" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {produtores?.map((produtor) => (
+                      <SelectItem key={produtor.user_id} value={produtor.user_id}>
+                        {produtor.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Data de Início */}
+          <FormField
+            control={form.control}
+            name="data_inicio"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Data de Início *</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Data de Término */}
+          <FormField
+            control={form.control}
+            name="data_fim"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Data de Término</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormDescription>Deixe vazio para contrato indeterminado</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Tipo de Cobrança */}
+          <FormField
+            control={form.control}
+            name="tipo_cobranca"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Cobrança *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="mensal">Mensal</SelectItem>
+                    <SelectItem value="quinzenal">Quinzenal</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Dia de Vencimento */}
+          <FormField
+            control={form.control}
+            name="dia_vencimento"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dia de Vencimento *</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="31"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Status */}
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativo</SelectItem>
+                    <SelectItem value="suspenso">Suspenso</SelectItem>
+                    <SelectItem value="expirado">Expirado</SelectItem>
+                    <SelectItem value="cancelado">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Observações */}
+        <FormField
+          control={form.control}
+          name="observacoes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Observações</FormLabel>
+              <FormControl>
+                <Textarea {...field} rows={3} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Serviços Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Serviços Contratados</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendServico({
+                tipo_servico: "armazenagem_pallet_dia",
+                descricao: "",
+                quantidade_incluida: 0,
+                quantidade_minima: 0,
+                valor_unitario: 0,
+                valor_excedente: 0,
+              })}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Serviço
+            </Button>
+          </div>
+
+          {servicoFields.map((field, index) => (
+            <Card key={field.id}>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`servicos.${index}.tipo_servico`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Serviço *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="armazenagem_pallet_dia">Armazenagem Pallet/Dia</SelectItem>
+                            <SelectItem value="entrada_item">Entrada Item</SelectItem>
+                            <SelectItem value="saida_item">Saída Item</SelectItem>
+                            <SelectItem value="taxa_fixa_mensal">Taxa Fixa Mensal</SelectItem>
+                            <SelectItem value="movimentacao_interna">Movimentação Interna</SelectItem>
+                            <SelectItem value="separacao_picking">Separação/Picking</SelectItem>
+                            <SelectItem value="repaletizacao">Repaletização</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`servicos.${index}.descricao`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`servicos.${index}.valor_unitario`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor Unitário *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`servicos.${index}.quantidade_incluida`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantidade Incluída</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`servicos.${index}.quantidade_minima`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantidade Mínima</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`servicos.${index}.valor_excedente`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor Excedente</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => appendSla({
-                    tipo_sla: 'prazo_recebimento',
-                    descricao: '',
-                    valor_meta: 0,
-                    unidade_medida: '',
-                    penalidade_descumprimento: '',
-                  })}
+                  className="mt-4"
+                  onClick={() => removeServico(index)}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar SLA
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover Serviço
                 </Button>
-              </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-              {slaFields.map((field, index) => (
-                <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">SLA {index + 1}</h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSla(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+        {/* SLAs Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">SLAs</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendSla({
+                tipo_sla: "tempo_processamento_entrada",
+                descricao: "",
+                valor_esperado: 0,
+                unidade: "horas",
+                penalidade_percentual: 0,
+              })}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar SLA
+            </Button>
+          </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name={`slas.${index}.tipo_sla`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de SLA *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="prazo_recebimento">Prazo de Recebimento</SelectItem>
-                              <SelectItem value="prazo_expedicao">Prazo de Expedição</SelectItem>
-                              <SelectItem value="disponibilidade_estoque">Disponibilidade de Estoque</SelectItem>
-                              <SelectItem value="acuracia_inventario">Acurácia de Inventário</SelectItem>
-                              <SelectItem value="outro">Outro</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`slas.${index}.valor_meta`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Valor Meta *</FormLabel>
+          {slaFields.map((field, index) => (
+            <Card key={field.id}>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`slas.${index}.tipo_sla`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de SLA *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                            />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          <SelectContent>
+                            <SelectItem value="tempo_processamento_entrada">Tempo Processamento Entrada</SelectItem>
+                            <SelectItem value="tempo_preparacao_saida">Tempo Preparação Saída</SelectItem>
+                            <SelectItem value="prazo_entrega">Prazo Entrega</SelectItem>
+                            <SelectItem value="taxa_avarias_max">Taxa Avarias Máx</SelectItem>
+                            <SelectItem value="tempo_resposta_divergencia">Tempo Resposta Divergência</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name={`slas.${index}.descricao`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Descrição *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: Recebimento em até 24h" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name={`slas.${index}.descricao`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name={`slas.${index}.unidade_medida`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Unidade de Medida *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: horas, dias, %" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name={`slas.${index}.valor_esperado`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Valor Meta *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name={`slas.${index}.penalidade_descumprimento`}
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Penalidade por Descumprimento</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name={`slas.${index}.unidade`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unidade *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Textarea
-                              placeholder="Descreva a penalidade aplicável"
-                              {...field}
-                            />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          <SelectContent>
+                            <SelectItem value="horas">Horas</SelectItem>
+                            <SelectItem value="dias">Dias</SelectItem>
+                            <SelectItem value="percentual">Percentual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`slas.${index}.penalidade_percentual`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Penalidade (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01"
+                            max="100"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              ))}
-            </div>
 
-            {/* Janelas de Entrega */}
-            <div className="col-span-full space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Janelas de Entrega (Opcional)</h3>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => appendJanela({
-                    dia_semana: 1,
-                    horario_inicio: '08:00',
-                    horario_fim: '18:00',
-                    capacidade_maxima: undefined,
-                    observacoes: '',
-                  })}
+                  className="mt-4"
+                  onClick={() => removeSla(index)}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Janela
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover SLA
                 </Button>
-              </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-              {janelaFields.map((field, index) => (
-                <div key={field.id} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Janela {index + 1}</h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeJanela(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+        {/* Janelas de Entrega Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Janelas de Entrega</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendJanela({
+                dia_semana: 1,
+                horario_inicio: "08:00",
+                horario_fim: "17:00",
+                capacidade_maxima: 10,
+                observacoes: "",
+              })}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Janela
+            </Button>
+          </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name={`janelas_entrega.${index}.dia_semana`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dia da Semana *</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))} 
-                            value={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="0">Domingo</SelectItem>
-                              <SelectItem value="1">Segunda-feira</SelectItem>
-                              <SelectItem value="2">Terça-feira</SelectItem>
-                              <SelectItem value="3">Quarta-feira</SelectItem>
-                              <SelectItem value="4">Quinta-feira</SelectItem>
-                              <SelectItem value="5">Sexta-feira</SelectItem>
-                              <SelectItem value="6">Sábado</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`janelas_entrega.${index}.capacidade_maxima`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Capacidade Máxima</FormLabel>
+          {janelaFields.map((field, index) => (
+            <Card key={field.id}>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`janelas_entrega.${index}.dia_semana`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dia da Semana *</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value.toString()}>
                           <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Ex: 10 pallets"
-                              {...field}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                              value={field.value ?? ''}
-                            />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          <SelectContent>
+                            <SelectItem value="0">Domingo</SelectItem>
+                            <SelectItem value="1">Segunda-feira</SelectItem>
+                            <SelectItem value="2">Terça-feira</SelectItem>
+                            <SelectItem value="3">Quarta-feira</SelectItem>
+                            <SelectItem value="4">Quinta-feira</SelectItem>
+                            <SelectItem value="5">Sexta-feira</SelectItem>
+                            <SelectItem value="6">Sábado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name={`janelas_entrega.${index}.horario_inicio`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Horário Início *</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name={`janelas_entrega.${index}.horario_inicio`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Horário de Início *</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name={`janelas_entrega.${index}.horario_fim`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Horário Fim *</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name={`janelas_entrega.${index}.horario_fim`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Horário de Fim *</FormLabel>
+                        <FormControl>
+                          <Input type="time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name={`janelas_entrega.${index}.observacoes`}
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Observações</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Observações sobre a janela de entrega"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name={`janelas_entrega.${index}.capacidade_maxima`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Capacidade Máxima (Pallets)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`janelas_entrega.${index}.observacoes`}
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Observações</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={2} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              ))}
-            </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={createContratoMutation.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={createContratoMutation.isPending}
-              >
-                {createContratoMutation.isPending ? 'Criando...' : 'Criar Contrato'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => removeJanela(index)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover Janela
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Button type="submit">
+          <Save className="h-4 w-4 mr-2" />
+          {contratoId ? "Salvar Alterações" : "Criar Contrato"}
+        </Button>
+      </form>
+    </Form>
   )
 }

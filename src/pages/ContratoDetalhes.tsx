@@ -8,16 +8,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, FileText, Calendar, DollarSign, AlertCircle, Receipt } from "lucide-react"
+import { ArrowLeft, FileText, Calendar, DollarSign, AlertCircle, Receipt, Edit } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { FormularioContrato } from "@/components/Contratos/FormularioContrato"
+import { useState } from "react"
 
 export default function ContratoDetalhes() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { data, isLoading } = useContratoDetalhes(id)
+  const { data, isLoading, refetch } = useContratoDetalhes(id)
   const { cancelContrato } = useContratoMutations()
   const { gerarFatura } = useFaturaMutations()
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -70,6 +74,27 @@ export default function ContratoDetalhes() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Contrato
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Editar Contrato</DialogTitle>
+              </DialogHeader>
+              <FormularioContrato 
+                contratoId={id}
+                onSuccess={() => {
+                  setEditDialogOpen(false)
+                  refetch()
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+
           <Button 
             variant="outline"
             onClick={() => gerarFatura.mutate(contrato.id)}

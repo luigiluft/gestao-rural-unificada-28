@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormularioContrato } from "@/components/Contratos/FormularioContrato"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export default function Contratos() {
   const navigate = useNavigate()
@@ -118,7 +119,14 @@ export default function Contratos() {
       </div>
 
       {/* Formulário de Novo Contrato */}
-      <FormularioContrato open={isFormOpen} onOpenChange={setIsFormOpen} />
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Novo Contrato de Serviço</DialogTitle>
+          </DialogHeader>
+          <FormularioContrato onSuccess={() => setIsFormOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       {/* Tabela de Contratos */}
       <TablePageLayout
