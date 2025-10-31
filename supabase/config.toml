@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.manage-notifications]
 verify_jwt = true
+
+[functions.gerar-fatura]
+verify_jwt = true
