@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { DollarSign, Receipt, TrendingUp, Lock } from "lucide-react"
 import { useFaturas, useFaturaStats } from "@/hooks/useFaturas"
 import { useFaturaMutations } from "@/hooks/useFaturaMutations"
+import { useRoyalties } from "@/hooks/useRoyalties"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -46,13 +47,21 @@ export default function Financeiro() {
   })
   const { data: stats } = useFaturaStats()
   
+  // Buscar royalties em aberto (rascunho e pendente)
+  const { data: royaltiesData = [], isLoading: isLoadingRoyalties } = useRoyalties({
+    franquia_id: franquia?.id
+  })
+  
+  // Filtrar royalties em aberto
+  const royaltiesEmAberto = royaltiesData.filter(r => r.status === 'rascunho' || r.status === 'pendente')
+  
   // Calcular valores
   const receitaTotal = stats?.receitaTotal || 0
   const receitaPendente = stats?.receitaPendente || 0
   
-  // TODO: Calcular royalties (5% da receita, por exemplo)
-  const royalties = receitaTotal * 0.05
-  const saldoLiquido = receitaTotal - royalties
+  // Calcular total de royalties em aberto
+  const totalRoyalties = royaltiesEmAberto.reduce((sum, r) => sum + Number(r.valor_total || 0), 0)
+  const saldoLiquido = receitaTotal - totalRoyalties
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -111,7 +120,7 @@ export default function Financeiro() {
                 <Receipt className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(royalties)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalRoyalties)}</div>
                 <p className="text-xs text-muted-foreground">
                   Contas a pagar para a Luft
                 </p>
@@ -219,9 +228,47 @@ export default function Financeiro() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-32 text-muted-foreground">
-                    Funcionalidade em desenvolvimento
-                  </div>
+                  {isLoadingRoyalties ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      Carregando...
+                    </div>
+                  ) : royaltiesEmAberto.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-muted-foreground">
+                      Nenhum royalty em aberto
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Número</TableHead>
+                          <TableHead>Período</TableHead>
+                          <TableHead>Emissão</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                          <TableHead className="text-right">Valor Base</TableHead>
+                          <TableHead className="text-right">Royalties</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {royaltiesEmAberto.map((royalty) => (
+                          <TableRow key={royalty.id}>
+                            <TableCell className="font-medium">{royalty.numero_royalty}</TableCell>
+                            <TableCell>
+                              {format(new Date(royalty.periodo_inicio), 'dd/MM/yy', { locale: ptBR })} - {' '}
+                              {format(new Date(royalty.periodo_fim), 'dd/MM/yy', { locale: ptBR })}
+                            </TableCell>
+                            <TableCell>{format(new Date(royalty.data_emissao), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                            <TableCell>{format(new Date(royalty.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(Number(royalty.valor_base || 0))}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(Number(royalty.valor_royalties || 0))}</TableCell>
+                            <TableCell className="text-right font-medium">{formatCurrency(Number(royalty.valor_total || 0))}</TableCell>
+                            <TableCell>{getStatusBadge(royalty.status)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
