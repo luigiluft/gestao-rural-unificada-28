@@ -15,7 +15,7 @@ import { useCreateTabelaFrete } from '@/hooks/useTabelasFrete';
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
-  tipo: z.enum(["regional", "nacional", "internacional"]),
+  tipo: z.enum(["distancia", "peso", "fixo"]),
   franqueado_id: z.string().uuid(),
   ativo: z.boolean().default(true),
   faixas: z.array(z.object({
@@ -56,7 +56,7 @@ const NovaTabelaFrete = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: "",
-      tipo: "regional",
+      tipo: "distancia",
       franqueado_id: "a695e2b8-a539-4374-ba04-8c2055c485ea",
       ativo: true,
       faixas: faixasPadrao as Array<{
@@ -146,9 +146,9 @@ const NovaTabelaFrete = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="regional">Regional</SelectItem>
-                          <SelectItem value="nacional">Nacional</SelectItem>
-                          <SelectItem value="internacional">Internacional</SelectItem>
+                          <SelectItem value="distancia">Por Distância</SelectItem>
+                          <SelectItem value="peso">Por Peso</SelectItem>
+                          <SelectItem value="fixo">Valor Fixo</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
