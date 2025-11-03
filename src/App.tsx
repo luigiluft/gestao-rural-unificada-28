@@ -60,6 +60,7 @@ import Royalties from "./pages/Royalties";
 import Contratos from "./pages/Contratos";
 import ContratoDetalhes from "./pages/ContratoDetalhes";
 import ContratosFranquias from "./pages/ContratosFranquias";
+import ContratoFranquiaForm from "./pages/ContratoFranquiaForm";
 import DemoDashboard from "./pages/Demo/DemoDashboard";
 import DemoEntradas from "./pages/Demo/DemoEntradas";
 import DemoEstoque from "./pages/Demo/DemoEstoque";
@@ -138,6 +139,8 @@ const App = () => {
               <Route path="contratos" element={<RequirePageAccess pageKey="contratos"><Contratos /></RequirePageAccess>} />
               <Route path="contratos/:id" element={<RequirePageAccess pageKey="contratos"><ContratoDetalhes /></RequirePageAccess>} />
               <Route path="contratos-franquias" element={<RequireAdmin><ContratosFranquias /></RequireAdmin>} />
+              <Route path="contratos-franquias/novo" element={<RequireAdmin><ContratoFranquiaForm /></RequireAdmin>} />
+              <Route path="contratos-franquias/:id/editar" element={<RequireAdmin><ContratoFranquiaForm /></RequireAdmin>} />
               <Route path="faturas" element={<RequirePageAccess pageKey="faturas"><Faturas /></RequirePageAccess>} />
               <Route path="financeiro" element={<RequirePageAccess pageKey="financeiro"><Financeiro /></RequirePageAccess>} />
               <Route path="royalties" element={<RequirePageAccess pageKey="royalties"><Royalties /></RequirePageAccess>} />
