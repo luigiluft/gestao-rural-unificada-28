@@ -12,6 +12,7 @@ import Entradas from "./pages/Entradas";
 import Estoque from "./pages/Estoque";
 import Saidas from "./pages/Saidas";
 import Rastreio from "./pages/Rastreio";
+import RastreamentoWMS from "./pages/RastreamentoWMS";
 
 import Suporte from "./pages/Suporte";
 import Perfil from "./pages/Perfil";
@@ -122,6 +123,7 @@ const App = () => {
               <Route path="estoque" element={<RequirePageAccess pageKey="estoque"><Estoque /></RequirePageAccess>} />
               <Route path="saidas" element={<RequirePageAccess pageKey="saidas"><Saidas /></RequirePageAccess>} />
               <Route path="rastreio" element={<RequirePageAccess pageKey="rastreio"><Rastreio /></RequirePageAccess>} />
+              <Route path="rastreamento-wms" element={<RequirePageAccess pageKey="rastreamento-wms"><RastreamentoWMS /></RequirePageAccess>} />
               <Route path="usuarios" element={<RequirePageAccess pageKey="usuarios"><Usuarios /></RequirePageAccess>} />
               <Route path="franquias" element={<RequirePageAccess pageKey="franquias"><Franquias /></RequirePageAccess>} />
               <Route path="franqueados" element={<RequirePageAccess pageKey="franqueados"><Franqueados /></RequirePageAccess>} />

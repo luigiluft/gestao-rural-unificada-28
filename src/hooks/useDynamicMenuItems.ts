@@ -55,7 +55,7 @@ const menuLabels = {
   'entradas': 'Entradas',
   'estoque': 'Estoque',
   'saidas': 'Saídas',
-  'rastreio': 'Rastreamento',
+  'rastreio': 'Rastreamento Produtor',
   'recebimento': 'Recebimento',
   'alocacao-pallets': 'Alocação de Pallets',
   'gerenciar-posicoes': 'Gerenciar Posições',
@@ -63,6 +63,7 @@ const menuLabels = {
   'separacao': 'Separação',
   'expedicao': 'Expedição',
   'divergencias': 'Divergências',
+  'rastreamento-wms': 'Rastreamento WMS',
   'remessas': 'Remessas',
   'planejamento': 'Planejamento',
   'viagens': 'Viagens',
@@ -72,7 +73,7 @@ const menuLabels = {
   'veiculos': 'Veículos',
   'motoristas': 'Motoristas',
   'agenda': 'Agenda',
-  'tracking': 'Rastreamento',
+  'tracking': 'Rastreamento TMS',
   'tabela-frete': 'Tabela de Frete',
   'franqueados': 'Franqueados',
   'produtores': 'Produtores',
@@ -108,6 +109,7 @@ const iconMap = {
   'separacao': PackageOpen,
   'expedicao': Truck,
   'divergencias': AlertCircle,
+  'rastreamento-wms': MapPin,
   'remessas': Ship,
   'planejamento': MapPin,
   'viagens': Truck,
@@ -181,7 +183,8 @@ export const useDynamicMenuItems = () => {
       'inventario',
       'separacao',
       'expedicao',
-      'divergencias'
+      'divergencias',
+      'rastreamento-wms'
     ]
 
     // Páginas do TMS
