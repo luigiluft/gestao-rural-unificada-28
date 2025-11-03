@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -188,95 +189,110 @@ const NovaTabelaFrete = () => {
               </p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {form.watch('faixas').map((_, index) => {
-                  const faixa = form.watch(`faixas.${index}`);
-                  return (
-                    <Card key={index} className="border-2">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">
-                          Faixa {index + 1}: {faixa.distancia_min}-{faixa.distancia_max} km
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <FormField
-                          control={form.control}
-                          name={`faixas.${index}.valor_ate_300kg`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Valor até 300kg (R$)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`faixas.${index}.valor_por_kg_301_999`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Valor por kg (301-999kg) (R$)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`faixas.${index}.pedagio_por_ton`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Pedágio por tonelada (R$)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`faixas.${index}.prazo_dias`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Prazo (dias)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Faixa</TableHead>
+                      <TableHead>Distância (km)</TableHead>
+                      <TableHead>Valor até 300kg (R$)</TableHead>
+                      <TableHead>Valor/kg 301-999kg (R$)</TableHead>
+                      <TableHead>Pedágio/ton (R$)</TableHead>
+                      <TableHead className="w-[120px]">Prazo (dias)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {form.watch('faixas').map((faixa, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">
+                          Faixa {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          {faixa.distancia_min} - {faixa.distancia_max}
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`faixas.${index}.valor_ate_300kg`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    className="w-32"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`faixas.${index}.valor_por_kg_301_999`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    className="w-32"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`faixas.${index}.pedagio_por_ton`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    className="w-28"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`faixas.${index}.prazo_dias`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    className="w-20"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
