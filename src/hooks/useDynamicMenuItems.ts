@@ -84,7 +84,8 @@ const menuLabels = {
   'perfil': 'Perfil',
   'subcontas': 'Subcontas',
   'perfis-funcionarios': 'Perfis de Funcionários',
-  'contratos': 'Contratos',
+  'contratos': 'Contratos de Serviço',
+  'contratos-franquias': 'Contratos com Franquias',
   'faturas': 'Faturas',
   'financeiro': 'Financeiro',
   'royalties': 'Royalties',
@@ -129,6 +130,7 @@ const iconMap = {
   'subcontas': UserPlus,
   'perfis-funcionarios': Badge,
   'contratos': FileCheck,
+  'contratos-franquias': FileText,
   'faturas': FileText,
   'financeiro': DollarSign,
   'royalties': TrendingUp,
@@ -167,7 +169,8 @@ export const useDynamicMenuItems = () => {
       'catalogo',
       'fazendas',
       'produtores',
-      'contratos'
+      'contratos',
+      'contratos-franquias'
     ]
 
     // Páginas do WMS
