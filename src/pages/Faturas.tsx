@@ -128,20 +128,43 @@ export default function Faturas() {
                 </Button>
               </div>
               <div className="space-y-2">
-                {itensAtivos.map((item: any) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
-                    <div className="flex-1">
-                      <p className="font-medium">{item.descricao_servico}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Utilizado: {item.quantidade_utilizada} | Faturado: {item.quantidade_faturada} unidades
-                      </p>
+                {itensAtivos.map((item: any) => {
+                  const tipoServicoLabels: Record<string, { label: string, variant: "default" | "secondary" | "outline" }> = {
+                    entrada_item: { label: "Recebimento de Pallets", variant: "default" },
+                    saida_item: { label: "Expedição de Itens", variant: "secondary" },
+                    armazenagem_pallet_dia: { label: "Armazenagem Diária", variant: "outline" }
+                  }
+                  
+                  const tipoConfig = tipoServicoLabels[item.tipo_servico] || { label: item.tipo_servico, variant: "outline" }
+                  
+                  return (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={tipoConfig.variant}>{tipoConfig.label}</Badge>
+                        </div>
+                        <p className="font-medium">{item.descricao}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-sm text-muted-foreground">
+                            Quantidade: {item.quantidade} unidades
+                          </p>
+                          {item.detalhes_calculo && (
+                            <p className="text-xs text-muted-foreground">
+                              {item.detalhes_calculo.dias && `${item.detalhes_calculo.dias} dias`}
+                              {item.detalhes_calculo.quantidade_pallets && ` • ${item.detalhes_calculo.quantidade_pallets} pallets`}
+                              {item.detalhes_calculo.quantidade_itens && ` • ${item.detalhes_calculo.quantidade_itens} itens`}
+                              {item.detalhes_calculo.pallets_em_estoque && ` • ${item.detalhes_calculo.pallets_em_estoque} pallets em estoque`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(item.valor_total || 0)}</p>
+                        <p className="text-xs text-muted-foreground">{formatCurrency(item.valor_unitario || 0)}/un</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(item.valor_total || 0)}</p>
-                      <p className="text-xs text-muted-foreground">{formatCurrency(item.valor_unitario || 0)}/un</p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
