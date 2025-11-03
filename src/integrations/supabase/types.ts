@@ -3125,7 +3125,7 @@ export type Database = {
           id: string
           nome: string
           origem: string | null
-          tipo: string
+          tipo: string | null
           unidade: string
           updated_at: string
           user_id: string
@@ -3140,7 +3140,7 @@ export type Database = {
           id?: string
           nome: string
           origem?: string | null
-          tipo: string
+          tipo?: string | null
           unidade?: string
           updated_at?: string
           user_id: string
@@ -3155,7 +3155,7 @@ export type Database = {
           id?: string
           nome?: string
           origem?: string | null
-          tipo?: string
+          tipo?: string | null
           unidade?: string
           updated_at?: string
           user_id?: string

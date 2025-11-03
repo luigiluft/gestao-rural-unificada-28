@@ -62,7 +62,7 @@ export const useCreateTabelaFrete = () => {
           user_id: data.franqueado_id,
           franqueado_id: data.franqueado_id,
           nome: data.nome,
-          tipo: data.tipo || 'regional',
+          tipo: data.tipo || null,
           origem: '',
           data_vigencia: new Date().toISOString().split('T')[0],
           valor_base: 0
