@@ -53,8 +53,38 @@ export const faturaSchema = z.object({
   observacoes: z.string().optional(),
 })
 
+export const contratoFranquiaSchema = z.object({
+  numero_contrato: z.string().min(1, "Número do contrato é obrigatório"),
+  franquia_id: z.string().uuid("ID da franquia inválido"),
+  data_inicio: z.string().min(1, "Data de início é obrigatória"),
+  data_fim: z.string().optional().nullable(),
+  dia_vencimento: z.number().min(1).max(31),
+  tipo_royalty: z.enum(['percentual_faturamento', 'valor_fixo_mensal', 'margem_por_servico']),
+  percentual_faturamento: z.number().min(0).max(100).optional(),
+  valor_fixo_mensal: z.number().nonnegative().optional(),
+  margens_servico: z.record(z.number().nonnegative()).optional(),
+  observacoes: z.string().optional().nullable(),
+  status: z.enum(['ativo', 'suspenso', 'cancelado']).default('ativo'),
+})
+
+export const royaltySchema = z.object({
+  numero_royalty: z.string().optional(),
+  contrato_franquia_id: z.string().uuid("ID do contrato inválido"),
+  franquia_id: z.string().uuid("ID da franquia inválido"),
+  periodo_inicio: z.string().min(1),
+  periodo_fim: z.string().min(1),
+  data_emissao: z.string().min(1),
+  data_vencimento: z.string().min(1),
+  valor_base: z.number().nonnegative(),
+  valor_royalties: z.number().nonnegative(),
+  valor_total: z.number().nonnegative(),
+  observacoes: z.string().optional(),
+})
+
 export type ServicoContratoFormData = z.infer<typeof servicoContratoSchema>
 export type SLAFormData = z.infer<typeof slaSchema>
 export type JanelaEntregaFormData = z.infer<typeof janelaEntregaSchema>
 export type ContratoFormData = z.infer<typeof contratoSchema>
 export type FaturaFormData = z.infer<typeof faturaSchema>
+export type ContratoFranquiaFormData = z.infer<typeof contratoFranquiaSchema>
+export type RoyaltyFormData = z.infer<typeof royaltySchema>

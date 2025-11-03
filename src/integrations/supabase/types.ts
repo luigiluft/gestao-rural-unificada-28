@@ -190,6 +190,68 @@ export type Database = {
         }
         Relationships: []
       }
+      contrato_franquia: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          data_fim: string | null
+          data_inicio: string
+          dia_vencimento: number
+          franquia_id: string
+          id: string
+          margens_servico: Json | null
+          numero_contrato: string
+          observacoes: string | null
+          percentual_faturamento: number | null
+          status: string
+          tipo_royalty: string
+          updated_at: string
+          valor_fixo_mensal: number | null
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          dia_vencimento?: number
+          franquia_id: string
+          id?: string
+          margens_servico?: Json | null
+          numero_contrato: string
+          observacoes?: string | null
+          percentual_faturamento?: number | null
+          status?: string
+          tipo_royalty: string
+          updated_at?: string
+          valor_fixo_mensal?: number | null
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          dia_vencimento?: number
+          franquia_id?: string
+          id?: string
+          margens_servico?: Json | null
+          numero_contrato?: string
+          observacoes?: string | null
+          percentual_faturamento?: number | null
+          status?: string
+          tipo_royalty?: string
+          updated_at?: string
+          valor_fixo_mensal?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_franquia_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contrato_janelas_entrega: {
         Row: {
           ativo: boolean
@@ -2554,6 +2616,146 @@ export type Database = {
             columns: ["saida_id"]
             isOneToOne: false
             referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      royalties: {
+        Row: {
+          contrato_franquia_id: string | null
+          created_at: string
+          data_emissao: string
+          data_fechamento: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          fechada_por: string | null
+          forma_pagamento: string | null
+          franquia_id: string
+          gerada_automaticamente: boolean | null
+          id: string
+          numero_royalty: string
+          observacoes: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status: string
+          updated_at: string
+          valor_acrescimos: number | null
+          valor_base: number
+          valor_descontos: number | null
+          valor_royalties: number
+          valor_total: number
+        }
+        Insert: {
+          contrato_franquia_id?: string | null
+          created_at?: string
+          data_emissao: string
+          data_fechamento?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          fechada_por?: string | null
+          forma_pagamento?: string | null
+          franquia_id: string
+          gerada_automaticamente?: boolean | null
+          id?: string
+          numero_royalty: string
+          observacoes?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status?: string
+          updated_at?: string
+          valor_acrescimos?: number | null
+          valor_base?: number
+          valor_descontos?: number | null
+          valor_royalties?: number
+          valor_total?: number
+        }
+        Update: {
+          contrato_franquia_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_fechamento?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          fechada_por?: string | null
+          forma_pagamento?: string | null
+          franquia_id?: string
+          gerada_automaticamente?: boolean | null
+          id?: string
+          numero_royalty?: string
+          observacoes?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          status?: string
+          updated_at?: string
+          valor_acrescimos?: number | null
+          valor_base?: number
+          valor_descontos?: number | null
+          valor_royalties?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "royalties_contrato_franquia_id_fkey"
+            columns: ["contrato_franquia_id"]
+            isOneToOne: false
+            referencedRelation: "contrato_franquia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalties_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      royalty_itens: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          detalhes_calculo: Json | null
+          id: string
+          margem_unitaria: number | null
+          percentual_royalty: number | null
+          quantidade: number
+          royalty_id: string
+          tipo_servico: string
+          valor_faturado: number
+          valor_royalty: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          detalhes_calculo?: Json | null
+          id?: string
+          margem_unitaria?: number | null
+          percentual_royalty?: number | null
+          quantidade: number
+          royalty_id: string
+          tipo_servico: string
+          valor_faturado: number
+          valor_royalty: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          detalhes_calculo?: Json | null
+          id?: string
+          margem_unitaria?: number | null
+          percentual_royalty?: number | null
+          quantidade?: number
+          royalty_id?: string
+          tipo_servico?: string
+          valor_faturado?: number
+          valor_royalty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "royalty_itens_royalty_id_fkey"
+            columns: ["royalty_id"]
+            isOneToOne: false
+            referencedRelation: "royalties"
             referencedColumns: ["id"]
           },
         ]
