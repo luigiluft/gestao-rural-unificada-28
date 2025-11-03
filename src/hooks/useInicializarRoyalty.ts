@@ -6,22 +6,25 @@ import { useGerarRoyalty } from "./useGerarRoyalty"
 export const useInicializarRoyalty = (franquiaId?: string) => {
   const gerarRoyalty = useGerarRoyalty()
 
-  // Buscar contratos ativos da franquia
+  // Buscar contratos ativos - todos ou de uma franquia específica
   const { data: contratos, isLoading: contratosLoading } = useQuery({
     queryKey: ["contratos-franquia-ativos", franquiaId],
     queryFn: async () => {
-      if (!franquiaId) return []
-
-      const { data, error } = await supabase
+      let query = supabase
         .from("contrato_franquia")
         .select("id, franquia_id")
-        .eq("franquia_id", franquiaId)
         .eq("status", "ativo")
 
+      // Se tiver franquiaId, filtrar por ela (visão franqueado)
+      if (franquiaId) {
+        query = query.eq("franquia_id", franquiaId)
+      }
+
+      const { data, error } = await query
       if (error) throw error
       return data || []
     },
-    enabled: !!franquiaId,
+    // Sempre enabled - busca todos os contratos se não tiver franquiaId (admin)
   })
 
   // Buscar royalties em rascunho para cada contrato

@@ -65,7 +65,7 @@ serve(async (req) => {
     const periodoInicio = new Date(now.getFullYear(), now.getMonth(), 1)
     const periodoFim = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 
-    // Get closed invoices in period
+    // Get invoices in period (including drafts for estimation)
     const { data: faturas, error: faturasError } = await supabase
       .from('faturas')
       .select(`
@@ -76,7 +76,7 @@ serve(async (req) => {
         contratos_servico!inner(franquia_id)
       `)
       .eq('contratos_servico.franquia_id', contrato.franquia_id)
-      .in('status', ['pendente', 'pago'])
+      .in('status', ['rascunho', 'pendente', 'pago'])
       .gte('data_emissao', periodoInicio.toISOString().split('T')[0])
       .lte('data_emissao', periodoFim.toISOString().split('T')[0])
 
