@@ -141,17 +141,12 @@ export default function ContratoFranquiaForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {franquias?.map((franquia) => {
-                            const profileNome = Array.isArray(franquia.profiles) 
-                              ? franquia.profiles[0]?.nome 
-                              : (franquia.profiles as any)?.nome
-                            
-                            return (
-                              <SelectItem key={franquia.id} value={franquia.id}>
-                                {franquia.nome}{profileNome ? ` - ${profileNome}` : ''}
-                              </SelectItem>
-                            )
-                          })}
+                          {franquias?.map((franquia: any) => (
+                            <SelectItem key={franquia.id} value={franquia.id}>
+                              {franquia.nome}
+                            </SelectItem>
+                          ))}
+
                         </SelectContent>
                       </Select>
                       <FormMessage />
