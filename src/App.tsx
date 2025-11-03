@@ -44,6 +44,7 @@ import ProofOfDelivery from "./pages/ProofOfDelivery";
 import Comprovantes from "./pages/Comprovantes";
 import Ocorrencias from "./pages/Ocorrencias";
 import TabelasFrete from "./pages/TabelasFrete";
+import NovaTabelaFrete from "./pages/NovaTabelaFrete";
 import TabelaFrete from "./pages/TabelaFrete";
 import Veiculos from "./pages/Veiculos";
 import Motoristas from "./pages/Motoristas";
@@ -166,6 +167,7 @@ const App = () => {
               <Route path="comprovantes" element={<RequirePageAccess pageKey="comprovantes"><Comprovantes /></RequirePageAccess>} />
               <Route path="ocorrencias" element={<RequirePageAccess pageKey="ocorrencias"><Ocorrencias /></RequirePageAccess>} />
               <Route path="tabelas-frete" element={<RequirePageAccess pageKey="tabelas-frete"><TabelasFrete /></RequirePageAccess>} />
+              <Route path="tabelas-frete/nova" element={<RequirePageAccess pageKey="tabelas-frete"><NovaTabelaFrete /></RequirePageAccess>} />
               <Route path="tabela-frete" element={<RequirePageAccess pageKey="tabela-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="tabela-frete/:id" element={<RequirePageAccess pageKey="tabela-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />

@@ -4,14 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { 
   Calculator, 
   MapPin, 
@@ -23,35 +18,18 @@ import {
   Route,
   Eye
 } from 'lucide-react';
-import { useTabelasFrete, useCreateTabelaFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
+import { useTabelasFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
 import { useSimuladorFrete } from '@/hooks/useSimuladorFrete';
 import { useNavigate } from 'react-router-dom';
-
-const formSchema = z.object({
-  nome: z.string().min(1, "Nome é obrigatório"),
-  tipo: z.string().default("regional"),
-  franqueado_email: z.string().email("Email inválido")
-});
 
 const TabelasFrete = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFilter, setTipoFilter] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { data: tabelasFrete = [], isLoading } = useTabelasFrete();
-  const createTabelaMutation = useCreateTabelaFrete();
   const deleteTabelaMutation = useDeleteTabelaFrete();
   const { simulacao, setSimulacao, calcularFrete } = useSimuladorFrete();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      nome: "",
-      tipo: "regional", 
-      franqueado_email: "lucca+2@luft.com.br"
-    }
-  });
 
   const tiposBadges = {
     regional: { label: 'Regional', variant: 'default' as const },
@@ -65,34 +43,6 @@ const TabelasFrete = () => {
     return matchesSearch && matchesTipo;
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // ID do franqueado específico
-    const franqueado_id = "a695e2b8-a539-4374-ba04-8c2055c485ea";
-    
-    // Dados das faixas conforme especificação
-    const faixas = [
-      { distancia_min: 0, distancia_max: 50, valor_ate_300kg: 250, valor_por_kg_301_999: 0.80, pedagio_por_ton: 5, prazo_dias: 3 },
-      { distancia_min: 51, distancia_max: 150, valor_ate_300kg: 300, valor_por_kg_301_999: 1.00, pedagio_por_ton: 10, prazo_dias: 4 },
-      { distancia_min: 151, distancia_max: 300, valor_ate_300kg: 400, valor_por_kg_301_999: 1.20, pedagio_por_ton: 15, prazo_dias: 5 },
-      { distancia_min: 301, distancia_max: 500, valor_ate_300kg: 550, valor_por_kg_301_999: 1.40, pedagio_por_ton: 20, prazo_dias: 6 },
-      { distancia_min: 501, distancia_max: 800, valor_ate_300kg: 750, valor_por_kg_301_999: 1.60, pedagio_por_ton: 25, prazo_dias: 7 },
-      { distancia_min: 801, distancia_max: 1200, valor_ate_300kg: 1000, valor_por_kg_301_999: 1.80, pedagio_por_ton: 30, prazo_dias: 8 },
-      { distancia_min: 1201, distancia_max: 1600, valor_ate_300kg: 1300, valor_por_kg_301_999: 2.00, pedagio_por_ton: 35, prazo_dias: 9 },
-      { distancia_min: 1601, distancia_max: 2000, valor_ate_300kg: 1600, valor_por_kg_301_999: 2.20, pedagio_por_ton: 40, prazo_dias: 10 },
-      { distancia_min: 2001, distancia_max: 2500, valor_ate_300kg: 2000, valor_por_kg_301_999: 2.40, pedagio_por_ton: 45, prazo_dias: 11 },
-      { distancia_min: 2501, distancia_max: 3000, valor_ate_300kg: 2500, valor_por_kg_301_999: 2.60, pedagio_por_ton: 50, prazo_dias: 12 }
-    ];
-
-    await createTabelaMutation.mutateAsync({
-      franqueado_id,
-      nome: values.nome,
-      tipo: values.tipo,
-      faixas
-    });
-
-    setIsDialogOpen(false);
-    form.reset();
-  };
 
   const handleCalcularFrete = async () => {
     try {
@@ -112,82 +62,10 @@ const TabelasFrete = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Tabela
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Nova Tabela de Frete</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="nome"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome da Tabela</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Tabela Padrão" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="tipo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="regional">Regional</SelectItem>
-                          <SelectItem value="nacional">Nacional</SelectItem>
-                          <SelectItem value="internacional">Internacional</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="franqueado_email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email do Franqueado</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={createTabelaMutation.isPending}>
-                    {createTabelaMutation.isPending ? 'Salvando...' : 'Criar Tabela'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => navigate('/tabelas-frete/nova')}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Tabela de Frete
+        </Button>
       </div>
 
       {/* Cards de Estatísticas */}
