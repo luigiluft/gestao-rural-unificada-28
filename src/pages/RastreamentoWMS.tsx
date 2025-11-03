@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { StatusFluxoChart } from '@/components/WMS/StatusFluxoChart';
 
 const RastreamentoWMS = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -123,20 +124,7 @@ const RastreamentoWMS = () => {
         </TabsList>
 
         <TabsContent value="fluxo" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Movimentações em Andamento</CardTitle>
-              <CardDescription>
-                Acompanhe todas as operações em execução no armazém
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EmptyState 
-                title="Nenhuma movimentação ativa"
-                description="Quando houver operações em andamento, elas aparecerão aqui"
-              />
-            </CardContent>
-          </Card>
+          <StatusFluxoChart />
         </TabsContent>
 
         <TabsContent value="posicoes">
