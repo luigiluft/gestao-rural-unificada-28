@@ -74,7 +74,7 @@ const menuLabels = {
   'motoristas': 'Motoristas',
   'agenda': 'Agenda',
   'tracking': 'Rastreamento TMS',
-  'tabela-frete': 'Tabela de Frete',
+  'tabelas-frete': 'Tabelas de Frete',
   'franqueados': 'Franqueados',
   'produtores': 'Produtores',
   'fazendas': 'Fazendas',
@@ -120,7 +120,7 @@ const iconMap = {
   'motoristas': User,
   'agenda': Calendar,
   'tracking': MapPin,
-  'tabela-frete': Calculator,
+  'tabelas-frete': Calculator,
   'franqueados': Building2,
   'produtores': Wheat,
   'fazendas': TreePine,
@@ -197,8 +197,7 @@ export const useDynamicMenuItems = () => {
       'ocorrencias',
       'veiculos',
       'motoristas',
-      'tracking',
-      'tabela-frete'
+      'tracking'
     ]
 
     // Adicionar itens na ordem especificada
