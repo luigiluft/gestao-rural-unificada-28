@@ -14,6 +14,10 @@ export const useFaturaItens = (faturaId?: string) => {
         .order("created_at", { ascending: true })
 
       if (error) throw error
+      
+      // Log para debug
+      console.log('Fatura itens recebidos:', data)
+      
       return data || []
     },
     enabled: !!faturaId,

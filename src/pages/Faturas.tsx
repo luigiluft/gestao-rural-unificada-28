@@ -129,6 +129,8 @@ export default function Faturas() {
               </div>
               <div className="space-y-2">
                 {itensAtivos.map((item: any) => {
+                  console.log('Item da fatura:', item)
+                  
                   const tipoServicoLabels: Record<string, { label: string, variant: "default" | "secondary" | "outline" }> = {
                     entrada_item: { label: "Recebimento de Pallets", variant: "default" },
                     saida_item: { label: "Expedição de Itens", variant: "secondary" },
@@ -137,30 +139,45 @@ export default function Faturas() {
                   
                   const tipoConfig = tipoServicoLabels[item.tipo_servico] || { label: item.tipo_servico, variant: "outline" }
                   
+                  // Parse detalhes_calculo se for string
+                  let detalhesCalculo = item.detalhes_calculo
+                  if (typeof detalhesCalculo === 'string') {
+                    try {
+                      detalhesCalculo = JSON.parse(detalhesCalculo)
+                    } catch (e) {
+                      console.error('Erro ao parsear detalhes_calculo:', e)
+                      detalhesCalculo = null
+                    }
+                  }
+                  
                   return (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                    <div key={item.id} className="flex items-center justify-between p-4 bg-background rounded-lg border hover:border-primary/50 transition-colors">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant={tipoConfig.variant}>{tipoConfig.label}</Badge>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant={tipoConfig.variant} className="font-medium">
+                            {tipoConfig.label}
+                          </Badge>
                         </div>
-                        <p className="font-medium">{item.descricao}</p>
-                        <div className="flex items-center gap-3 mt-1">
+                        <p className="font-medium text-base mb-1">{item.descricao}</p>
+                        <div className="flex flex-col gap-1">
                           <p className="text-sm text-muted-foreground">
-                            Quantidade: {item.quantidade} unidades
+                            Quantidade: <span className="font-medium">{item.quantidade}</span> unidades
                           </p>
-                          {item.detalhes_calculo && (
+                          {detalhesCalculo && (
                             <p className="text-xs text-muted-foreground">
-                              {item.detalhes_calculo.dias && `${item.detalhes_calculo.dias} dias`}
-                              {item.detalhes_calculo.quantidade_pallets && ` • ${item.detalhes_calculo.quantidade_pallets} pallets`}
-                              {item.detalhes_calculo.quantidade_itens && ` • ${item.detalhes_calculo.quantidade_itens} itens`}
-                              {item.detalhes_calculo.pallets_em_estoque && ` • ${item.detalhes_calculo.pallets_em_estoque} pallets em estoque`}
+                              {detalhesCalculo.dias && `${detalhesCalculo.dias} dias no período`}
+                              {detalhesCalculo.quantidade_pallets && ` • ${detalhesCalculo.quantidade_pallets} pallets recebidos`}
+                              {detalhesCalculo.quantidade_itens && ` • ${detalhesCalculo.quantidade_itens} itens expedidos`}
+                              {detalhesCalculo.pallets_em_estoque && ` • ${detalhesCalculo.pallets_em_estoque} pallets em estoque`}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(item.valor_total || 0)}</p>
-                        <p className="text-xs text-muted-foreground">{formatCurrency(item.valor_unitario || 0)}/un</p>
+                      <div className="text-right ml-4">
+                        <p className="text-lg font-bold text-primary">{formatCurrency(item.valor_total || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatCurrency(item.valor_unitario || 0)}/unidade
+                        </p>
                       </div>
                     </div>
                   )
