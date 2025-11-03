@@ -38,3 +38,18 @@ verify_jwt = true
 
 [functions.fechar-fatura]
 verify_jwt = true
+
+[functions.gerar-royalty]
+verify_jwt = true
+
+[functions.fechar-royalty]
+verify_jwt = true
+
+[functions.auto-fechar-faturas]
+verify_jwt = false
+
+[functions.auto-fechar-royalties]
+verify_jwt = false
+
+[functions.storage-positions-audit]
+verify_jwt = true
