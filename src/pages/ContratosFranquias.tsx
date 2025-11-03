@@ -117,10 +117,6 @@ export default function ContratosFranquias() {
                   </TableRow>
                 ) : contratos && contratos.length > 0 ? (
                   contratos.map((contrato) => {
-                    const profiles = contrato.franquias?.profiles
-                    const franqueadoNome = profiles 
-                      ? (Array.isArray(profiles) ? profiles[0]?.nome : (profiles as any)?.nome)
-                      : undefined
                     
                     return (
                       <TableRow key={contrato.id}>
@@ -128,11 +124,6 @@ export default function ContratosFranquias() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{contrato.franquias?.nome}</div>
-                            {franqueadoNome && (
-                              <div className="text-sm text-muted-foreground">
-                                {franqueadoNome}
-                              </div>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell>{getTipoRoyaltyLabel(contrato.tipo_royalty)}</TableCell>

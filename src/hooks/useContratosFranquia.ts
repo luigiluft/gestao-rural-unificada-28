@@ -12,19 +12,7 @@ export const useContratosFranquia = (filters?: UseContratosFranquiaFilters) => {
     queryFn: async () => {
       let query = supabase
         .from('contrato_franquia')
-        .select(`
-          *,
-          franquias (
-            id,
-            nome,
-            cnpj,
-            master_franqueado_id,
-            profiles!franquias_master_franqueado_id_fkey (
-              nome,
-              email
-            )
-          )
-        `)
+        .select(`*`)
         .order('created_at', { ascending: false })
 
       if (filters?.status) {
@@ -53,13 +41,7 @@ export const useContratoFranquiaById = (id: string) => {
           *,
           franquias (
             id,
-            nome,
-            cnpj,
-            master_franqueado_id,
-            profiles!franquias_master_franqueado_id_fkey (
-              nome,
-              email
-            )
+            nome
           )
         `)
         .eq('id', id)
