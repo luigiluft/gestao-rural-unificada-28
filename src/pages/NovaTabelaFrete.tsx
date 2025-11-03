@@ -1,21 +1,22 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Download, Upload } from 'lucide-react';
 import { useCreateTabelaFrete } from '@/hooks/useTabelasFrete';
+import { exportToCSV } from '@/utils/csvExport';
+import { importFromCSV } from '@/utils/csvImport';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
-  tipo: z.enum(["distancia", "peso", "fixo"]),
   franqueado_id: z.string().uuid(),
   ativo: z.boolean().default(true),
   faixas: z.array(z.object({
@@ -51,12 +52,13 @@ const faixasPadrao: Array<{
 const NovaTabelaFrete = () => {
   const navigate = useNavigate();
   const createTabelaMutation = useCreateTabelaFrete();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: "",
-      tipo: "distancia",
       franqueado_id: "a695e2b8-a539-4374-ba04-8c2055c485ea",
       ativo: true,
       faixas: faixasPadrao as Array<{
@@ -75,7 +77,6 @@ const NovaTabelaFrete = () => {
       await createTabelaMutation.mutateAsync({
         franqueado_id: values.franqueado_id,
         nome: values.nome,
-        tipo: values.tipo,
         faixas: values.faixas as Array<{
           distancia_min: number;
           distancia_max: number;
@@ -88,6 +89,85 @@ const NovaTabelaFrete = () => {
       navigate('/tabelas-frete');
     } catch (error) {
       console.error('Erro ao criar tabela:', error);
+    }
+  };
+
+  const handleExportCSV = () => {
+    try {
+      const faixas = form.getValues('faixas');
+      
+      const columns = [
+        { key: 'distancia_min', label: 'Distância Mínima (km)', visible: true },
+        { key: 'distancia_max', label: 'Distância Máxima (km)', visible: true },
+        { key: 'valor_ate_300kg', label: 'Valor até 300kg', visible: true },
+        { key: 'valor_por_kg_301_999', label: 'Valor por kg (301-999kg)', visible: true },
+        { key: 'pedagio_por_ton', label: 'Pedágio por ton', visible: true },
+        { key: 'prazo_dias', label: 'Prazo (dias)', visible: true },
+      ];
+
+      exportToCSV({
+        data: faixas,
+        columns,
+        filename: `tabela-frete-${form.getValues('nome') || 'nova'}`,
+      });
+
+      toast({
+        title: "CSV exportado com sucesso",
+        description: "O arquivo foi baixado para o seu computador",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao exportar CSV",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const result = await importFromCSV(file);
+      
+      if (result.errors.length > 0) {
+        toast({
+          title: "Avisos durante importação",
+          description: result.errors.join('\n'),
+          variant: "destructive",
+        });
+      }
+
+      if (result.data.length > 0) {
+        // Map CSV data to form fields
+        const faixas = result.data.map((row: any) => ({
+          distancia_min: row['Distância Mínima (km)'] || row.distancia_min || 0,
+          distancia_max: row['Distância Máxima (km)'] || row.distancia_max || 0,
+          valor_ate_300kg: row['Valor até 300kg'] || row.valor_ate_300kg || 0,
+          valor_por_kg_301_999: row['Valor por kg (301-999kg)'] || row.valor_por_kg_301_999 || 0,
+          pedagio_por_ton: row['Pedágio por ton'] || row.pedagio_por_ton || 0,
+          prazo_dias: row['Prazo (dias)'] || row.prazo_dias || 0,
+        }));
+
+        form.setValue('faixas', faixas);
+        
+        toast({
+          title: "CSV importado com sucesso",
+          description: `${result.data.length} faixas foram carregadas`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao importar CSV",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -118,44 +198,22 @@ const NovaTabelaFrete = () => {
               <CardTitle>Informações Básicas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="nome"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome da Tabela *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Tabela Regional Sul" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tipo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="distancia">Por Distância</SelectItem>
-                          <SelectItem value="peso">Por Peso</SelectItem>
-                          <SelectItem value="fixo">Valor Fixo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="nome"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Tabela *</FormLabel>
+                    <FormDescription>
+                      Ex: "Tabela de Frete Normal", "Tabela de Frete Expresso"
+                    </FormDescription>
+                    <FormControl>
+                      <Input placeholder="Ex: Tabela de Frete Normal" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -183,10 +241,41 @@ const NovaTabelaFrete = () => {
           {/* Faixas de Distância */}
           <Card>
             <CardHeader>
-              <CardTitle>Faixas de Distância</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Configure os valores para cada faixa de distância (0-3.000 km)
-              </p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Faixas de Distância</CardTitle>
+                  <CardDescription>
+                    Configure os valores para cada faixa de distância (0-3.000 km)
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar CSV
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Importar CSV
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportCSV}
+                    className="hidden"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">

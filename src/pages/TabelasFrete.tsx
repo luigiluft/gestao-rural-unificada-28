@@ -25,22 +25,14 @@ import { useNavigate } from 'react-router-dom';
 const TabelasFrete = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [tipoFilter, setTipoFilter] = useState('all');
 
   const { data: tabelasFrete = [], isLoading } = useTabelasFrete();
   const deleteTabelaMutation = useDeleteTabelaFrete();
   const { simulacao, setSimulacao, calcularFrete } = useSimuladorFrete();
 
-  const tiposBadges = {
-    regional: { label: 'Regional', variant: 'default' as const },
-    nacional: { label: 'Nacional', variant: 'secondary' as const },
-    internacional: { label: 'Internacional', variant: 'outline' as const }
-  };
-
   const filteredTabelas = tabelasFrete.filter(tabela => {
     const matchesSearch = tabela.nome.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTipo = tipoFilter === 'all' || tabela.tipo === tipoFilter;
-    return matchesSearch && matchesTipo;
+    return matchesSearch;
   });
 
 
@@ -130,17 +122,6 @@ const TabelasFrete = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
             />
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Tipos</SelectItem>
-                <SelectItem value="regional">Regional</SelectItem>
-                <SelectItem value="nacional">Nacional</SelectItem>
-                <SelectItem value="internacional">Internacional</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Tabela de Fretes */}
@@ -150,7 +131,6 @@ const TabelasFrete = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Tipo</TableHead>
                     <TableHead>Faixas</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Criada em</TableHead>
@@ -160,13 +140,13 @@ const TabelasFrete = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         Carregando tabelas...
                       </TableCell>
                     </TableRow>
                   ) : filteredTabelas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         Nenhuma tabela de frete encontrada.
                       </TableCell>
                     </TableRow>
@@ -174,11 +154,6 @@ const TabelasFrete = () => {
                     filteredTabelas.map((tabela) => (
                       <TableRow key={tabela.id}>
                         <TableCell className="font-medium">{tabela.nome}</TableCell>
-                        <TableCell>
-                          <Badge variant={tiposBadges[tabela.tipo as keyof typeof tiposBadges]?.variant || 'default'}>
-                            {tiposBadges[tabela.tipo as keyof typeof tiposBadges]?.label || tabela.tipo}
-                          </Badge>
-                        </TableCell>
                         <TableCell>{tabela.frete_faixas?.length || 0} faixas</TableCell>
                         <TableCell>
                           <Badge variant={tabela.ativo ? 'default' : 'secondary'}>
