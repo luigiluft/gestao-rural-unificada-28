@@ -89,7 +89,7 @@ const TabelaFrete = () => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => navigate(`/tabelas-frete/editar/${tabela.id}`)}>
             <Edit className="h-4 w-4 mr-2" />
             Editar
           </Button>

@@ -132,3 +132,64 @@ export const useDeleteTabelaFrete = () => {
     }
   })
 }
+
+export const useUpdateTabelaFrete = () => {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+
+  return useMutation({
+    mutationFn: async (data: {
+      id: string
+      nome: string
+      ativo: boolean
+      faixas: Omit<FreteFaixa, 'id' | 'tabela_frete_id'>[]
+    }) => {
+      // Update table
+      const { error: tabelaError } = await supabase
+        .from("tabelas_frete")
+        .update({
+          nome: data.nome,
+          ativo: data.ativo,
+        })
+        .eq("id", data.id)
+
+      if (tabelaError) throw tabelaError
+
+      // Delete existing ranges
+      const { error: deleteError } = await supabase
+        .from("frete_faixas")
+        .delete()
+        .eq("tabela_frete_id", data.id)
+
+      if (deleteError) throw deleteError
+
+      // Create new ranges
+      const faixasData = data.faixas.map(faixa => ({
+        ...faixa,
+        tabela_frete_id: data.id
+      }))
+
+      const { error: faixasError } = await supabase
+        .from("frete_faixas")
+        .insert(faixasData)
+
+      if (faixasError) throw faixasError
+
+      return data.id
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tabelas-frete"] })
+      toast({
+        title: "Tabela atualizada com sucesso",
+        description: "As alterações foram salvas."
+      })
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar tabela",
+        description: error.message,
+        variant: "destructive"
+      })
+    }
+  })
+}
