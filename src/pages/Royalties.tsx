@@ -14,6 +14,7 @@ import {
 import { useRoyalties, useRoyaltyStats } from "@/hooks/useRoyalties"
 import { useFecharRoyalty } from "@/hooks/useFecharRoyalty"
 import { useGerarRoyalty } from "@/hooks/useGerarRoyalty"
+import { useInicializarRoyalty } from "@/hooks/useInicializarRoyalty"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { FileText, RefreshCw, Check, DollarSign, TrendingUp, Calendar } from "lucide-react"
@@ -21,6 +22,10 @@ import { useNavigate } from "react-router-dom"
 
 export default function Royalties() {
   const navigate = useNavigate()
+  
+  // Inicializar royalties automaticamente para contratos ativos
+  useInicializarRoyalty()
+  
   const { data: stats } = useRoyaltyStats()
   const { data: royaltiesPendentes } = useRoyalties({ status: 'pendente' })
   const { data: royaltiesPagos } = useRoyalties({ status: 'pago' })
