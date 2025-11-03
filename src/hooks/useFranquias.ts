@@ -9,7 +9,7 @@ export const useFranquias = () => {
         .from("franquias")
         .select(`
           *,
-          profiles:master_franqueado_id (
+          profiles:master_franqueado_id!left (
             nome,
             email
           )
