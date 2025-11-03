@@ -20,7 +20,7 @@ serve(async (req) => {
 
     const hoje = new Date().toISOString().split('T')[0]
 
-    // Get draft royalties with due date <= today
+    // Buscar royalties em rascunho com data de vencimento <= hoje
     const { data: royalties, error: royaltiesError } = await supabase
       .from('royalties')
       .select('id, numero_royalty, data_vencimento, contrato_franquia_id')
@@ -39,12 +39,12 @@ serve(async (req) => {
       erros: [] as any[]
     }
 
-    // Close each royalty
+    // Fechar cada royalty
     for (const royalty of royalties || []) {
       try {
         console.log(`Fechando royalty ${royalty.numero_royalty}...`)
 
-        // Call fechar-royalty function
+        // Chamar função fechar-royalty
         const { data, error } = await supabase.functions.invoke('fechar-royalty', {
           body: { royalty_id: royalty.id }
         })
