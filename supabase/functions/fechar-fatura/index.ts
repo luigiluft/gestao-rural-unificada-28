@@ -50,7 +50,10 @@ serve(async (req) => {
       .select(`
         *,
         contratos_servico!inner(
-          franquia_id
+          franquia_id,
+          produtor_id,
+          numero_contrato,
+          dia_vencimento
         )
       `)
       .eq('id', fatura_id)
@@ -119,6 +122,50 @@ serve(async (req) => {
     }
 
     console.log('Fatura fechada com sucesso:', faturaFechada);
+
+    // Criar nova fatura em rascunho para o próximo período
+    const now = new Date();
+    const proximoPeriodoInicio = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const proximoPeriodoFim = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+    // Gerar número para próxima fatura
+    const anoMes = proximoPeriodoInicio.toISOString().slice(0, 7).replace('-', '');
+    const { count } = await supabaseClient
+      .from('faturas')
+      .select('*', { count: 'exact', head: true })
+      .like('numero_fatura', `FAT-${anoMes}-%`);
+
+    const sequencial = String((count || 0) + 1).padStart(3, '0');
+    const proximoNumero = `FAT-${anoMes}-${sequencial}`;
+
+    // Calcular vencimento do próximo período
+    const dataVencimento = new Date(proximoPeriodoInicio);
+    dataVencimento.setDate(dataVencimento.getDate() + (fatura.contratos_servico.dia_vencimento || 10) - 1);
+
+    const { error: novaFaturaError } = await supabaseClient
+      .from('faturas')
+      .insert({
+        contrato_id: fatura.contrato_id,
+        franquia_id: fatura.franquia_id,
+        produtor_id: fatura.produtor_id,
+        numero_fatura: proximoNumero,
+        data_emissao: now.toISOString().split('T')[0],
+        data_vencimento: dataVencimento.toISOString().split('T')[0],
+        periodo_inicio: proximoPeriodoInicio.toISOString().split('T')[0],
+        periodo_fim: proximoPeriodoFim.toISOString().split('T')[0],
+        valor_servicos: 0,
+        valor_impostos: 0,
+        valor_total: 0,
+        status: 'rascunho',
+        observacoes: 'Fatura em andamento - aguardando movimentações'
+      });
+
+    if (novaFaturaError) {
+      console.error('Error creating next period draft:', novaFaturaError);
+      // Não retornar erro, pois a fatura foi fechada com sucesso
+    } else {
+      console.log('Nova fatura em rascunho criada para próximo período:', proximoNumero);
+    }
 
     return new Response(
       JSON.stringify({ 

@@ -3479,6 +3479,21 @@ export type Database = {
       }
       alocar_produtos_orfaos: { Args: never; Returns: number }
       auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
+      calcular_servicos_periodo: {
+        Args: {
+          p_contrato_id: string
+          p_data_fim: string
+          p_data_inicio: string
+        }
+        Returns: {
+          descricao: string
+          detalhes_calculo: Json
+          quantidade: number
+          tipo_servico: Database["public"]["Enums"]["tipo_servico_contrato"]
+          valor_total: number
+          valor_unitario: number
+        }[]
+      }
       calculate_viagem_peso_total: {
         Args: { p_viagem_id: string }
         Returns: number

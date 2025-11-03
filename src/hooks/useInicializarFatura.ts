@@ -12,18 +12,10 @@ export const useInicializarFatura = (userId?: string) => {
     queryFn: async () => {
       if (!userId) return null
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", userId)
-        .single()
-
-      if (!profile) return null
-
       const { data, error } = await supabase
         .from("contratos_servico")
         .select("id, status")
-        .eq("produtor_id", profile.id)
+        .eq("produtor_id", userId)
         .eq("status", "ativo")
         .maybeSingle()
 
