@@ -78,7 +78,7 @@ export default function Produtores() {
     },
   });
 
-  // Fetch produtores with profiles
+  // Fetch produtores with profiles (excluding subaccounts)
   const { data: produtores, isLoading, error } = useQuery({
     queryKey: ["produtores-list"],
     queryFn: async () => {
@@ -91,8 +91,20 @@ export default function Produtores() {
         if (produtoresError) throw produtoresError;
         if (!produtoresData || produtoresData.length === 0) return [];
 
-        // Then get profiles for those users
-        const userIds = produtoresData.map(p => p.user_id);
+        // Get subaccounts (child_user_id from user_hierarchy)
+        const { data: hierarchyData } = await supabase
+          .from("user_hierarchy")
+          .select("child_user_id");
+        
+        const subaccountIds = new Set(hierarchyData?.map(h => h.child_user_id) || []);
+
+        // Filter out subaccounts - only keep master producers
+        const masterProdutores = produtoresData.filter(p => !subaccountIds.has(p.user_id));
+
+        if (masterProdutores.length === 0) return [];
+
+        // Then get profiles for master producers only
+        const userIds = masterProdutores.map(p => p.user_id);
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("user_id, nome, email")
@@ -104,7 +116,7 @@ export default function Produtores() {
         }
 
         // Combine the data
-        return produtoresData.map((p: any) => {
+        return masterProdutores.map((p: any) => {
           const profile = profilesData?.find(prof => prof.user_id === p.user_id);
           return {
             user_id: p.user_id,
