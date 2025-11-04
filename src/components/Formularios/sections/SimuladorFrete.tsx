@@ -48,6 +48,7 @@ export function SimuladorFrete({
   const [distancia, setDistancia] = useState<string>('')
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false)
   const [resultados, setResultados] = useState<any[]>([])
+  const [tabelaSelecionada, setTabelaSelecionada] = useState<string | null>(null)
 
   const handleCalcularDistancia = async () => {
     if (!franquiaCoords || !fazendaCoords) {
@@ -93,15 +94,18 @@ export function SimuladorFrete({
 
       setResultados(resultadosCalculo)
       
-      // Retornar o resultado da primeira tabela (menor valor) para o formulário
-      if (onFreteCalculado && resultadosCalculo.length > 0) {
-        const melhorResultado = resultadosCalculo[0]
-        onFreteCalculado({
-          ...melhorResultado,
-          distancia_km: parseFloat(distancia),
-          origem: franquiaNome,
-          destino: fazendaNome
-        })
+      // Auto-selecionar a primeira tabela (melhor preço) por padrão
+      if (resultadosCalculo.length > 0) {
+        setTabelaSelecionada(resultadosCalculo[0].tabela_id)
+        if (onFreteCalculado) {
+          const melhorResultado = resultadosCalculo[0]
+          onFreteCalculado({
+            ...melhorResultado,
+            distancia_km: parseFloat(distancia),
+            origem: franquiaNome,
+            destino: fazendaNome
+          })
+        }
       }
       
       toast.success(`${resultadosCalculo.length} tabela(s) calculada(s) com sucesso!`)
@@ -219,27 +223,46 @@ export function SimuladorFrete({
         {resultados.length > 0 && (
           <div className="mt-6 space-y-4">
             <h4 className="font-semibold text-foreground">
-              Resultados de {resultados.length} Tabela(s) de Frete
+              Resultados de {resultados.length} Tabela(s) de Frete - Selecione uma opção
             </h4>
             
             {resultados.map((resultado, index) => (
-              <div 
-                key={resultado.tabela_id} 
-                className={`p-4 rounded-lg space-y-3 ${
-                  index === 0 
-                    ? 'bg-primary/10 border-2 border-primary' 
-                    : 'bg-muted border border-border'
+              <button
+                type="button"
+                key={resultado.tabela_id}
+                onClick={() => {
+                  setTabelaSelecionada(resultado.tabela_id)
+                  if (onFreteCalculado) {
+                    onFreteCalculado({
+                      ...resultado,
+                      distancia_km: parseFloat(distancia),
+                      origem: franquiaNome,
+                      destino: fazendaNome
+                    })
+                  }
+                }}
+                className={`w-full p-4 rounded-lg space-y-3 text-left transition-all ${
+                  tabelaSelecionada === resultado.tabela_id
+                    ? 'bg-primary/10 border-2 border-primary shadow-md' 
+                    : 'bg-muted border border-border hover:border-primary/50'
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <h5 className="font-semibold text-foreground">
                     {resultado.tabela_nome}
                   </h5>
-                  {index === 0 && (
-                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                      Melhor Preço
-                    </span>
-                  )}
+                  <div className="flex gap-2">
+                    {index === 0 && (
+                      <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                        Melhor Preço
+                      </span>
+                    )}
+                    {tabelaSelecionada === resultado.tabela_id && (
+                      <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
+                        Selecionada
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -260,12 +283,12 @@ export function SimuladorFrete({
                   
                   <div>
                     <span className="text-muted-foreground">Total:</span>
-                    <p className={`font-bold ${index === 0 ? 'text-primary' : ''}`}>
+                    <p className={`font-bold ${tabelaSelecionada === resultado.tabela_id ? 'text-primary' : ''}`}>
                       {formatarMoeda(resultado.valor_total)}
                     </p>
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
