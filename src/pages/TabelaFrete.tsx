@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit, Trash2, Calculator, MapPin, Clock, DollarSign } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Edit, Trash2, Copy, MapPin, Clock } from 'lucide-react';
 import { useTabelasFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
+import { useDuplicateTabelaFrete } from '@/hooks/useDuplicateTabelaFrete';
 const TabelaFrete = () => {
   const {
     id
@@ -16,6 +20,10 @@ const TabelaFrete = () => {
     isLoading
   } = useTabelasFrete();
   const deleteTabelaMutation = useDeleteTabelaFrete();
+  const duplicateMutation = useDuplicateTabelaFrete();
+  
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [novoNome, setNovoNome] = useState('');
 
   // If no ID provided, redirect to first table
   React.useEffect(() => {
@@ -76,6 +84,26 @@ const TabelaFrete = () => {
       navigate('/tabelas-frete');
     }
   };
+
+  const handleDuplicate = async () => {
+    if (!novoNome.trim()) {
+      return;
+    }
+    
+    await duplicateMutation.mutateAsync({
+      originalId: tabela.id,
+      novoNome: novoNome.trim()
+    });
+    
+    setDuplicateDialogOpen(false);
+    setNovoNome('');
+    navigate('/tabelas-frete');
+  };
+
+  const openDuplicateDialog = () => {
+    setNovoNome(`${tabela.nome} (Cópia)`);
+    setDuplicateDialogOpen(true);
+  };
   return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -96,6 +124,10 @@ const TabelaFrete = () => {
           <Button variant="outline" onClick={() => navigate(`/tabelas-frete/editar/${tabela.id}`)}>
             <Edit className="h-4 w-4 mr-2" />
             Editar
+          </Button>
+          <Button variant="outline" onClick={openDuplicateDialog}>
+            <Copy className="h-4 w-4 mr-2" />
+            Duplicar
           </Button>
           <Button variant="outline" onClick={handleDelete} disabled={deleteTabelaMutation.isPending}>
             <Trash2 className="h-4 w-4 mr-2" />
@@ -176,6 +208,40 @@ const TabelaFrete = () => {
             </div>}
         </CardContent>
       </Card>
+
+      {/* Dialog de Duplicação */}
+      <Dialog open={duplicateDialogOpen} onOpenChange={setDuplicateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicar Tabela de Frete</DialogTitle>
+            <DialogDescription>
+              Digite o nome para a nova tabela duplicada. Todas as faixas de frete serão copiadas.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="novo-nome">Nome da nova tabela</Label>
+              <Input
+                id="novo-nome"
+                value={novoNome}
+                onChange={(e) => setNovoNome(e.target.value)}
+                placeholder="Digite o nome da tabela..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDuplicate} 
+              disabled={!novoNome.trim() || duplicateMutation.isPending}
+            >
+              {duplicateMutation.isPending ? 'Duplicando...' : 'Duplicar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 export default TabelaFrete;
