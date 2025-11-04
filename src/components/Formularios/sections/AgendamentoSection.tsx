@@ -18,7 +18,9 @@ import {
 import { useDiasUteisExpedicao, useJanelaEntregaDias } from "@/hooks/useConfiguracoesSistema"
 import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
+import { useDisponibilidadePorData } from "@/hooks/useDisponibilidadePorData"
 import { useState, useEffect } from "react"
+import { addMonths, startOfMonth, endOfMonth } from "date-fns"
 
 interface AgendamentoSectionProps {
   dados: DadosSaida
@@ -36,6 +38,41 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
   const totalDias = calculateTotalBusinessDaysRequired(diasUteisExpedicao, dados.prazo_entrega_calculado)
   const minDateString = getMinScheduleDateWithFreight(diasUteisExpedicao, dados.prazo_entrega_calculado)
   const minDate = new Date(minDateString)
+
+  // Calcular range de datas para o calendário (mês atual + próximo mês)
+  const calendarStart = startOfMonth(new Date())
+  const calendarEnd = endOfMonth(addMonths(new Date(), 1))
+  
+  // Hook para disponibilidade por data (só para retirada no depósito)
+  const { data: disponibilidadePorData = {} } = useDisponibilidadePorData(
+    calendarStart,
+    calendarEnd,
+    dados.tipo_saida === 'retirada_deposito' ? dados.depositoId : undefined
+  )
+
+  // Preparar modifiers para o calendário
+  const datesHigh: Date[] = []
+  const datesMedium: Date[] = []
+  const datesLow: Date[] = []
+
+  Object.entries(disponibilidadePorData).forEach(([dateString, nivel]) => {
+    const date = new Date(dateString + 'T00:00:00')
+    if (nivel === 'high') datesHigh.push(date)
+    else if (nivel === 'medium') datesMedium.push(date)
+    else if (nivel === 'low') datesLow.push(date)
+  })
+
+  const modifiers = {
+    high: datesHigh,
+    medium: datesMedium,
+    low: datesLow,
+  }
+
+  const modifiersClassNames = {
+    high: 'rdp-day_high',
+    medium: 'rdp-day_medium',
+    low: 'rdp-day_low',
+  }
 
 // Ajuste automático da data: define a mínima quando vazio ou anterior ao mínimo
 useEffect(() => {
@@ -116,14 +153,39 @@ useEffect(() => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  disabled={(date) => date < minDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
+                <div className="space-y-3">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => date < minDate}
+                    modifiers={modifiers}
+                    modifiersClassNames={modifiersClassNames}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  
+                  {/* Legenda de disponibilidade - só mostrar para retirada no depósito */}
+                  {dados.tipo_saida === 'retirada_deposito' && (
+                    <div className="px-3 pb-3 border-t pt-3">
+                      <p className="text-xs font-medium mb-2">Disponibilidade de horários:</p>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded bg-green-100 border border-green-300" />
+                          <span className="text-xs">Alta disponibilidade (60%+)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded bg-yellow-100 border border-yellow-300" />
+                          <span className="text-xs">Média disponibilidade (30-59%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded bg-red-100 border border-red-300" />
+                          <span className="text-xs">Baixa disponibilidade (&lt;30%)</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </PopoverContent>
             </Popover>
             
