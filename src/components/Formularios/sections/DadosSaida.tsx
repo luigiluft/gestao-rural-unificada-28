@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
 
-import { useProfile, useProdutoresComEstoqueNaFranquia, useFazendas } from "@/hooks/useProfile"
+import { useProfile, useFazendas } from "@/hooks/useProfile"
+import { useProdutoresParaSaida } from "@/hooks/useProdutoresParaSaida"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useState, useEffect } from "react"
@@ -31,7 +32,7 @@ interface DadosSaidaProps {
 export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoMopp }: DadosSaidaProps) {
   const { user } = useAuth()
   const { data: profile } = useProfile()
-  const { data: produtoresComEstoque } = useProdutoresComEstoqueNaFranquia()
+  const { data: produtoresParaSaida = [] } = useProdutoresParaSaida()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
   const janelaEntregaDias = useJanelaEntregaDias()
@@ -198,7 +199,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
                   <SelectValue placeholder="Selecione o produtor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {produtoresComEstoque?.map((produtor) => (
+                  {produtoresParaSaida?.map((produtor) => (
                     <SelectItem key={produtor.user_id} value={produtor.user_id}>
                       {produtor.nome}
                     </SelectItem>

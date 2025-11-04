@@ -3,13 +3,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useSimuladorFrete } from "@/hooks/useSimuladorFrete"
+import { useCalcularFreteMultiplasTabelas } from "@/hooks/useCalcularFreteMultiplasTabelas"
 import { useProfile, useFazendas } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
 import { Loader2, Calculator, MapPin } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import type { Coordinates } from "@/services/routingService"
+import { calculateDistance } from "@/services/routingService"
 
 interface SimuladorFreteProps {
   pesoTotal: number
@@ -42,14 +43,11 @@ export function SimuladorFrete({
   const targetProdutorId = isProdutor ? user?.id : produtorDestinatarioId
   const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetProdutorId)
 
-  const { 
-    simulacao, 
-    setSimulacao, 
-    calcularFrete, 
-    calcularDistanciaAutomatica,
-    isCalculatingDistance 
-  } = useSimuladorFrete()
-  const [calculando, setCalculando] = useState(false)
+  const { calcularFreteTodasTabelas, calculando } = useCalcularFreteMultiplasTabelas()
+  
+  const [distancia, setDistancia] = useState<string>('')
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false)
+  const [resultados, setResultados] = useState<any[]>([])
 
   const handleCalcularDistancia = async () => {
     if (!franquiaCoords || !fazendaCoords) {
@@ -57,61 +55,59 @@ export function SimuladorFrete({
       return
     }
 
+    setIsCalculatingDistance(true)
     try {
-      await calcularDistanciaAutomatica(franquiaCoords, fazendaCoords)
+      const distanciaCalculada = await calculateDistance(franquiaCoords, fazendaCoords)
+      setDistancia(distanciaCalculada.toString())
       toast.success("Distância calculada automaticamente!")
     } catch (error: any) {
       console.error("Erro ao calcular distância:", error)
       toast.error(error.message || "Erro ao calcular distância")
+    } finally {
+      setIsCalculatingDistance(false)
     }
   }
 
   const handleCalcular = async () => {
-    console.log("Tentando calcular frete:", { 
-      franquiaNome, 
-      fazendaNome, 
-      distancia: simulacao.distancia, 
-      pesoTotal 
-    })
-    
-    if (!simulacao.distancia || pesoTotal <= 0) {
+    if (!distancia || parseFloat(distancia) <= 0 || pesoTotal <= 0) {
       toast.error("Informe a distância para calcular o frete")
       return
     }
 
-    setCalculando(true)
-    
+    if (!profile?.user_id || profile.role !== 'franqueado') {
+      toast.error("Apenas franqueados podem calcular frete")
+      return
+    }
+
     try {
-      // Usar peso total dos itens
-      const simulacaoComPeso = {
-        ...simulacao,
-        origem: franquiaNome || 'Franquia',
-        destino: fazendaNome || 'Fazenda',
-        peso: pesoTotal.toString()
+      const resultadosCalculo = await calcularFreteTodasTabelas(
+        profile.user_id,
+        parseFloat(distancia),
+        pesoTotal
+      )
+
+      if (resultadosCalculo.length === 0) {
+        toast.error("Nenhuma tabela de frete se aplica a esta distância")
+        return
       }
-      setSimulacao(simulacaoComPeso)
+
+      setResultados(resultadosCalculo)
       
-      // Calcular usando o user_id como franqueado_id para franqueados
-      const franqueadoId = profile?.role === 'franqueado' ? profile.user_id : undefined
-      const calculationResult = await calcularFrete(franqueadoId, pesoTotal)
-      
-      if (calculationResult && onFreteCalculado) {
-        // Incluir distância, origem e destino no resultado
-        const resultado = {
-          ...calculationResult,
-          distancia_km: parseFloat(simulacao.distancia),
+      // Retornar o resultado da primeira tabela (menor valor) para o formulário
+      if (onFreteCalculado && resultadosCalculo.length > 0) {
+        const melhorResultado = resultadosCalculo[0]
+        onFreteCalculado({
+          ...melhorResultado,
+          distancia_km: parseFloat(distancia),
           origem: franquiaNome,
           destino: fazendaNome
-        }
-        onFreteCalculado(resultado)
+        })
       }
       
-      toast.success("Frete calculado com sucesso!")
+      toast.success(`${resultadosCalculo.length} tabela(s) calculada(s) com sucesso!`)
     } catch (error: any) {
       console.error("Erro ao calcular frete:", error)
       toast.error(error.message || "Erro ao calcular frete")
-    } finally {
-      setCalculando(false)
     }
   }
 
@@ -167,8 +163,8 @@ export function SimuladorFrete({
                 id="distancia"
                 type="number"
                 placeholder="Ex: 408"
-                value={simulacao.distancia}
-                onChange={(e) => setSimulacao(prev => ({ ...prev, distancia: e.target.value }))}
+                value={distancia}
+                onChange={(e) => setDistancia(e.target.value)}
               />
               {franquiaCoords && fazendaCoords && (
                 <Button
@@ -204,7 +200,7 @@ export function SimuladorFrete({
 
         <Button 
           onClick={handleCalcular} 
-          disabled={calculando || pesoTotal <= 0 || !simulacao.distancia || parseFloat(simulacao.distancia) <= 0}
+          disabled={calculando || pesoTotal <= 0 || !distancia || parseFloat(distancia) <= 0}
           className="w-full"
         >
           {calculando ? (
@@ -220,40 +216,57 @@ export function SimuladorFrete({
           )}
         </Button>
 
-        {simulacao.resultado && (
-          <div className="mt-6 p-4 bg-muted rounded-lg space-y-3">
-            <h4 className="font-semibold text-foreground">Resultado do Cálculo</h4>
+        {resultados.length > 0 && (
+          <div className="mt-6 space-y-4">
+            <h4 className="font-semibold text-foreground">
+              Resultados de {resultados.length} Tabela(s) de Frete
+            </h4>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Tabela:</span>
-                <p className="font-medium">{simulacao.resultado.tabela_nome}</p>
+            {resultados.map((resultado, index) => (
+              <div 
+                key={resultado.tabela_id} 
+                className={`p-4 rounded-lg space-y-3 ${
+                  index === 0 
+                    ? 'bg-primary/10 border-2 border-primary' 
+                    : 'bg-muted border border-border'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <h5 className="font-semibold text-foreground">
+                    {resultado.tabela_nome}
+                  </h5>
+                  {index === 0 && (
+                    <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                      Melhor Preço
+                    </span>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Prazo:</span>
+                    <p className="font-medium">{resultado.prazo_entrega} dias úteis</p>
+                  </div>
+                  
+                  <div>
+                    <span className="text-muted-foreground">Valor do Frete:</span>
+                    <p className="font-medium">{formatarMoeda(resultado.valor_frete)}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="text-muted-foreground">Pedágio:</span>
+                    <p className="font-medium">{formatarMoeda(resultado.valor_pedagio)}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="text-muted-foreground">Total:</span>
+                    <p className={`font-bold ${index === 0 ? 'text-primary' : ''}`}>
+                      {formatarMoeda(resultado.valor_total)}
+                    </p>
+                  </div>
+                </div>
               </div>
-              
-              <div>
-                <span className="text-muted-foreground">Prazo:</span>
-                <p className="font-medium">{simulacao.resultado.prazo_entrega} dias úteis</p>
-              </div>
-              
-              <div>
-                <span className="text-muted-foreground">Valor do Frete:</span>
-                <p className="font-medium">{formatarMoeda(simulacao.resultado.valor_frete)}</p>
-              </div>
-              
-              <div>
-                <span className="text-muted-foreground">Pedágio:</span>
-                <p className="font-medium">{formatarMoeda(simulacao.resultado.valor_pedagio)}</p>
-              </div>
-            </div>
-            
-            <div className="pt-3 border-t border-border">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold">Total:</span>
-                <span className="text-lg font-bold text-primary">
-                  {formatarMoeda(simulacao.resultado.valor_total)}
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
         )}
       </CardContent>
