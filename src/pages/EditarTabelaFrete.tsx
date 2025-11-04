@@ -200,7 +200,7 @@ const EditarTabelaFrete = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate(`/tabela-frete/${id}`)}
+          onClick={() => navigate('/tabelas-frete')}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -413,7 +413,7 @@ const EditarTabelaFrete = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(`/tabela-frete/${id}`)}
+              onClick={() => navigate('/tabelas-frete')}
             >
               Cancelar
             </Button>
