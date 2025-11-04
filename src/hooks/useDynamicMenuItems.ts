@@ -169,6 +169,8 @@ export const useDynamicMenuItems = () => {
       'perfis-funcionarios',
       'catalogo',
       'fazendas',
+      'franquias',
+      'franqueados',
       'produtores',
       'contratos',
       'contratos-franquias',
