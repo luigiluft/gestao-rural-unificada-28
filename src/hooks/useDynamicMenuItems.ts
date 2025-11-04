@@ -155,7 +155,6 @@ export const useDynamicMenuItems = () => {
       'estoque',
       'saidas',
       'rastreio',
-      'tabelas-frete',
       'faturas',
       'financeiro',
       'royalties',
@@ -172,7 +171,8 @@ export const useDynamicMenuItems = () => {
       'fazendas',
       'produtores',
       'contratos',
-      'contratos-franquias'
+      'contratos-franquias',
+      'tabelas-frete'
     ]
 
     // Páginas do WMS
