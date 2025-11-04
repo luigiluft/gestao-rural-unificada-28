@@ -7,35 +7,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Calculator, 
-  MapPin, 
-  Truck, 
-  DollarSign, 
-  Plus,
-  Edit,
-  Trash2,
-  Route,
-  Eye
-} from 'lucide-react';
+import { Calculator, MapPin, Truck, DollarSign, Plus, Edit, Trash2, Route, Eye } from 'lucide-react';
 import { useTabelasFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
 import { useSimuladorFrete } from '@/hooks/useSimuladorFrete';
 import { useNavigate } from 'react-router-dom';
-
 const TabelasFrete = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-
-  const { data: tabelasFrete = [], isLoading } = useTabelasFrete();
+  const {
+    data: tabelasFrete = [],
+    isLoading
+  } = useTabelasFrete();
   const deleteTabelaMutation = useDeleteTabelaFrete();
-  const { simulacao, setSimulacao, calcularFrete } = useSimuladorFrete();
-
+  const {
+    simulacao,
+    setSimulacao,
+    calcularFrete
+  } = useSimuladorFrete();
   const filteredTabelas = tabelasFrete.filter(tabela => {
     const matchesSearch = tabela.nome.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
-
-
   const handleCalcularFrete = async () => {
     try {
       await calcularFrete();
@@ -43,9 +35,7 @@ const TabelasFrete = () => {
       console.error('Erro ao calcular frete:', error);
     }
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Tabelas de Frete</h1>
@@ -84,26 +74,8 @@ const TabelasFrete = () => {
             <p className="text-xs text-muted-foreground">Em uso</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faixas de Distância</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">10</div>
-            <p className="text-xs text-muted-foreground">0-3.000 km</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Franqueados</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">Com tabela</p>
-          </CardContent>
-        </Card>
+        
+        
       </div>
 
       {/* Abas de Conteúdo */}
@@ -116,12 +88,7 @@ const TabelasFrete = () => {
         <TabsContent value="tabelas" className="space-y-4">
           {/* Filtros */}
           <div className="flex gap-4">
-            <Input
-              placeholder="Buscar por nome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+            <Input placeholder="Buscar por nome..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="max-w-sm" />
           </div>
 
           {/* Tabela de Fretes */}
@@ -138,21 +105,15 @@ const TabelasFrete = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
+                  {isLoading ? <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         Carregando tabelas...
                       </TableCell>
-                    </TableRow>
-                  ) : filteredTabelas.length === 0 ? (
-                    <TableRow>
+                    </TableRow> : filteredTabelas.length === 0 ? <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         Nenhuma tabela de frete encontrada.
                       </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredTabelas.map((tabela) => (
-                      <TableRow key={tabela.id}>
+                    </TableRow> : filteredTabelas.map(tabela => <TableRow key={tabela.id}>
                         <TableCell className="font-medium">{tabela.nome}</TableCell>
                         <TableCell>{tabela.frete_faixas?.length || 0} faixas</TableCell>
                         <TableCell>
@@ -165,33 +126,18 @@ const TabelasFrete = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/tabela-frete/${tabela.id}`)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => navigate(`/tabela-frete/${tabela.id}`)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => navigate(`/tabelas-frete/editar/${tabela.id}`)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => navigate(`/tabelas-frete/editar/${tabela.id}`)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => deleteTabelaMutation.mutate(tabela.id)}
-                              disabled={deleteTabelaMutation.isPending}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => deleteTabelaMutation.mutate(tabela.id)} disabled={deleteTabelaMutation.isPending}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                      </TableRow>)}
                 </TableBody>
               </Table>
             </CardContent>
@@ -209,44 +155,34 @@ const TabelasFrete = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="sim_origem">Origem</Label>
-                  <Input 
-                    id="sim_origem" 
-                    placeholder="Cidade de origem" 
-                    value={simulacao.origem}
-                    onChange={(e) => setSimulacao(prev => ({ ...prev, origem: e.target.value }))}
-                  />
+                  <Input id="sim_origem" placeholder="Cidade de origem" value={simulacao.origem} onChange={e => setSimulacao(prev => ({
+                  ...prev,
+                  origem: e.target.value
+                }))} />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="sim_destino">Destino</Label>
-                  <Input 
-                    id="sim_destino" 
-                    placeholder="Cidade de destino" 
-                    value={simulacao.destino}
-                    onChange={(e) => setSimulacao(prev => ({ ...prev, destino: e.target.value }))}
-                  />
+                  <Input id="sim_destino" placeholder="Cidade de destino" value={simulacao.destino} onChange={e => setSimulacao(prev => ({
+                  ...prev,
+                  destino: e.target.value
+                }))} />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="sim_distancia">Distância (km)</Label>
-                  <Input 
-                    id="sim_distancia" 
-                    type="number" 
-                    placeholder="450" 
-                    value={simulacao.distancia}
-                    onChange={(e) => setSimulacao(prev => ({ ...prev, distancia: e.target.value }))}
-                  />
+                  <Input id="sim_distancia" type="number" placeholder="450" value={simulacao.distancia} onChange={e => setSimulacao(prev => ({
+                  ...prev,
+                  distancia: e.target.value
+                }))} />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="sim_peso">Peso (kg)</Label>
-                  <Input 
-                    id="sim_peso" 
-                    type="number" 
-                    placeholder="1000" 
-                    value={simulacao.peso}
-                    onChange={(e) => setSimulacao(prev => ({ ...prev, peso: e.target.value }))}
-                  />
+                  <Input id="sim_peso" type="number" placeholder="1000" value={simulacao.peso} onChange={e => setSimulacao(prev => ({
+                  ...prev,
+                  peso: e.target.value
+                }))} />
                 </div>
                 
                 <Button onClick={handleCalcularFrete} className="w-full">
@@ -262,8 +198,7 @@ const TabelasFrete = () => {
                 <CardTitle>Resultado da Simulação</CardTitle>
               </CardHeader>
               <CardContent>
-                {simulacao.resultado ? (
-                  <div className="space-y-4">
+                {simulacao.resultado ? <div className="space-y-4">
                     <div className="p-4 bg-muted rounded">
                       <h4 className="font-semibold mb-2">Tabela Aplicada:</h4>
                       <p className="text-sm">{simulacao.resultado.tabela_nome}</p>
@@ -288,22 +223,17 @@ const TabelasFrete = () => {
                         Prazo de entrega: D+{simulacao.resultado.prazo_entrega} dias
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center space-y-4 py-8">
+                  </div> : <div className="text-center space-y-4 py-8">
                     <Calculator className="h-16 w-16 mx-auto text-muted-foreground" />
                     <p className="text-muted-foreground">
                       Preencha os dados acima e clique em "Calcular Frete" para ver o resultado.
                     </p>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default TabelasFrete;
