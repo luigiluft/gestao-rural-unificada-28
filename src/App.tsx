@@ -36,6 +36,7 @@ import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
 
 import Remessas from "./pages/Remessas";
+import CTes from "./pages/CTes";
 
 import Viagens from "./pages/Viagens";
 import Planejamento from "./pages/Planejamento";
@@ -158,6 +159,7 @@ const App = () => {
               <Route path="inventario" element={<RequirePageAccess pageKey="inventario"><Inventario /></RequirePageAccess>} />
               
               <Route path="remessas" element={<RequirePageAccess pageKey="remessas"><Remessas /></RequirePageAccess>} />
+              <Route path="ctes" element={<RequirePageAccess pageKey="ctes"><CTes /></RequirePageAccess>} />
               
               <Route path="planejamento" element={<RequirePageAccess pageKey="viagens"><Planejamento /></RequirePageAccess>} />
               <Route path="viagens" element={<RequirePageAccess pageKey="viagens"><Viagens /></RequirePageAccess>} />

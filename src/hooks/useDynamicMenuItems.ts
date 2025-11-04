@@ -65,6 +65,7 @@ const menuLabels = {
   'divergencias': 'Divergências',
   'rastreamento-wms': 'Rastreamento WMS',
   'remessas': 'Remessas',
+  'ctes': 'CT-e',
   'planejamento': 'Planejamento',
   'viagens': 'Viagens',
   'proof-of-delivery': 'Prova de Entrega',
@@ -111,6 +112,7 @@ const iconMap = {
   'divergencias': AlertCircle,
   'rastreamento-wms': MapPin,
   'remessas': Ship,
+  'ctes': FileText,
   'planejamento': MapPin,
   'viagens': Truck,
   'proof-of-delivery': FileCheck,
@@ -192,6 +194,7 @@ export const useDynamicMenuItems = () => {
     // Páginas do TMS
     const tmsPages = [
       'remessas',
+      'ctes',
       'planejamento',
       'viagens',
       'proof-of-delivery',
