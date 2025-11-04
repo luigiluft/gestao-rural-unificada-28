@@ -53,6 +53,16 @@ export default function Franqueados() {
         return;
       }
 
+      // Get subaccounts (child_user_id from user_hierarchy) to filter them out
+      const { data: hierarchyData } = await supabase
+        .from("user_hierarchy")
+        .select("child_user_id");
+      
+      const subaccountIds = new Set(hierarchyData?.map(h => h.child_user_id) || []);
+
+      // Filter out subaccounts - only keep master franqueados
+      const masterFranqueados = profiles.filter(p => !subaccountIds.has(p.user_id));
+
       // Check if there are pending invites that haven't been completed
       const { data: pendingInvites, error: pendingError } = await supabase
         .from('pending_invites')
@@ -64,7 +74,7 @@ export default function Franqueados() {
 
       const pendingEmails = new Set(pendingInvites?.map(invite => invite.email.toLowerCase()) || []);
 
-      const franqueadosData = profiles?.map(profile => ({
+      const franqueadosData = masterFranqueados?.map(profile => ({
         id: profile.user_id,
         nome: profile.nome || 'Nome não informado',
         email: profile.email || 'Email não informado',
@@ -72,7 +82,7 @@ export default function Franqueados() {
         ativo: !pendingEmails.has((profile.email || '').toLowerCase()) // Ativo apenas se não estiver em pending
       })) || [];
 
-      console.log('Final franqueados data:', franqueadosData);
+      console.log('Final franqueados data (master only):', franqueadosData);
       setFranqueados(franqueadosData);
     } catch (error: any) {
       console.error('Load franqueados error:', error);
@@ -271,90 +281,53 @@ export default function Franqueados() {
         </div>
       </header>
 
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Lista de Franqueados
-            </CardTitle>
-            <CardDescription>
-              {franqueados.length} franqueados cadastrados no sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Carregando franqueados...</p>
-              </div>
-            ) : franqueados.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center mx-auto">
-                  <Users className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Nenhum franqueado cadastrado</h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Comece convidando franqueados para gerenciar operações no sistema.
-                </p>
-                <Button onClick={() => setInviteOpen(true)}>
-                  <MailPlus className="mr-2 h-4 w-4" />
-                  Convidar primeiro franqueado
-                </Button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table className="min-w-[600px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data de Cadastro</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {franqueados.map((franqueado) => (
-                      <TableRow key={franqueado.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                              <Users className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{franqueado.nome}</p>
-                              <p className="text-sm text-muted-foreground">ID: {franqueado.id.slice(0, 8)}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{franqueado.email}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={franqueado.ativo ? "default" : "secondary"}>
-                            {franqueado.ativo ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(franqueado.created_at).toLocaleDateString('pt-BR')}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm">
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <section className="rounded-lg border border-border bg-card p-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-muted-foreground">Carregando franqueados...</div>
+          </div>
+        ) : franqueados.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+              <Users className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Nenhum franqueado cadastrado</h3>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Comece convidando franqueados para gerenciar operações no sistema.
+            </p>
+            <Button onClick={() => setInviteOpen(true)}>
+              <MailPlus className="mr-2 h-4 w-4" />
+              Convidar primeiro franqueado
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data de Cadastro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {franqueados.map((franqueado) => (
+                  <TableRow key={franqueado.id}>
+                    <TableCell className="font-medium">{franqueado.nome}</TableCell>
+                    <TableCell>{franqueado.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={franqueado.ativo ? "default" : "secondary"}>
+                        {franqueado.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{new Date(franqueado.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </section>
     </main>
   );

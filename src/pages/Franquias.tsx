@@ -89,7 +89,7 @@ const Franquias = () => {
     }
   }, []);
 
-  // Load franquias
+  // Load franquias (only those with master franqueados, not subaccounts)
   const { data: franquias = [], isLoading } = useQuery({
     queryKey: ["franquias"],
     queryFn: async () => {
@@ -100,9 +100,21 @@ const Franquias = () => {
       
       if (error) throw error;
       
+      // Get subaccounts to filter them out
+      const { data: hierarchyData } = await supabase
+        .from("user_hierarchy")
+        .select("child_user_id");
+      
+      const subaccountIds = new Set(hierarchyData?.map(h => h.child_user_id) || []);
+      
+      // Filter out franquias managed by subaccounts
+      const masterFranquias = (franquiasData || []).filter(
+        f => !subaccountIds.has(f.master_franqueado_id)
+      );
+      
       // Get master franqueado details separately
       const franquiasWithMaster = await Promise.all(
-        (franquiasData || []).map(async (franquia) => {
+        masterFranquias.map(async (franquia) => {
           const { data: masterData } = await supabase
             .from("profiles")
             .select("nome, email")
@@ -337,10 +349,10 @@ const Franquias = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Franquias</h1>
+          <h1 className="text-3xl font-bold text-foreground">Franquias</h1>
           <p className="text-muted-foreground">
             Gerencie as franquias e seus franqueados masters
           </p>
@@ -351,130 +363,98 @@ const Franquias = () => {
         </Button>
       </div>
 
-      <div className="grid gap-6">
-        {franquias.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhuma franquia cadastrada</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Comece criando sua primeira franquia para organizar seus franqueados.
-              </p>
-              <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
-                <Building2 className="mr-2 h-4 w-4" />
-                Criar primeira franquia
-              </Button>
-            </CardContent>
-          </Card>
+      <section className="rounded-lg border border-border bg-card p-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-muted-foreground">Carregando franquias...</div>
+          </div>
+        ) : franquias.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+              <Building2 className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Nenhuma franquia cadastrada</h3>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Comece criando sua primeira franquia para organizar seus franqueados.
+            </p>
+            <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
+              <Building2 className="mr-2 h-4 w-4" />
+              Criar primeira franquia
+            </Button>
+          </div>
         ) : (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Lista de Franquias</CardTitle>
-              <CardDescription>
-                {franquias.length} franquias cadastradas no sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table className="min-w-[800px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Franqueado Master</TableHead>
-                      <TableHead>Localização</TableHead>
-                      <TableHead>Contato</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data Criação</TableHead>
-                      <TableHead className="w-[100px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {franquias.map((franquia) => (
-                      <TableRow key={franquia.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                              <Building2 className="w-4 h-4 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{franquia.nome}</p>
-                              {franquia.descricao && (
-                                <p className="text-sm text-muted-foreground line-clamp-1">{franquia.descricao}</p>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {franquia.master_franqueado?.nome || franquia.master_franqueado?.email || 'N/A'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {(franquia.cidade || franquia.estado) ? (
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm">
-                                {[franquia.cidade, franquia.estado].filter(Boolean).join(", ")}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">Não informado</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {franquia.email && (
-                              <p className="text-sm">{franquia.email}</p>
-                            )}
-                            {franquia.telefone && (
-                              <p className="text-sm text-muted-foreground">{franquia.telefone}</p>
-                            )}
-                            {!franquia.email && !franquia.telefone && (
-                              <span className="text-muted-foreground text-sm">Não informado</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={franquia.ativo ? "default" : "secondary"}>
-                            {franquia.ativo ? "Ativa" : "Inativa"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(franquia.created_at).toLocaleDateString('pt-BR')}
+          <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Franqueado Master</TableHead>
+                  <TableHead>Localização</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data Criação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {franquias.map((franquia) => (
+                  <TableRow key={franquia.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{franquia.nome}</p>
+                        {franquia.descricao && (
+                          <p className="text-sm text-muted-foreground line-clamp-1">{franquia.descricao}</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {franquia.master_franqueado?.nome || franquia.master_franqueado?.email || '—'}
+                    </TableCell>
+                    <TableCell>
+                      {(franquia.cidade || franquia.estado) ? (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {[franquia.cidade, franquia.estado].filter(Boolean).join(", ")}
                           </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => { setEditingFranquia(franquia); setDialogOpen(true); }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteFranquia.mutate(franquia.id)}
-                              disabled={deleteFranquia.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                        </div>
+                      ) : (
+                        '—'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={franquia.ativo ? "default" : "secondary"}>
+                        {franquia.ativo ? "Ativa" : "Inativa"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(franquia.created_at).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setEditingFranquia(franquia); setDialogOpen(true); }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteFranquia.mutate(franquia.id)}
+                          disabled={deleteFranquia.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
-      </div>
+      </section>
       
       <FranquiaWizard
         open={dialogOpen}
