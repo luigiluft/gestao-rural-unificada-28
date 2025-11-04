@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DollarSign, Receipt, TrendingUp, Lock } from "lucide-react"
+import { DollarSign, Receipt, TrendingUp, Lock, Clock } from "lucide-react"
 import { useFaturas, useFaturaStats } from "@/hooks/useFaturas"
 import { useFaturaMutations } from "@/hooks/useFaturaMutations"
 import { useRoyalties } from "@/hooks/useRoyalties"
@@ -97,7 +97,7 @@ export default function Financeiro() {
       tableContent={
         <div className="p-6 space-y-6">
           {/* Cards de Resumo */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -109,6 +109,20 @@ export default function Financeiro() {
                 <div className="text-2xl font-bold">{formatCurrency(receitaTotal)}</div>
                 <p className="text-xs text-muted-foreground">
                   Faturas pagas pelos clientes
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  A Receber
+                </CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(receitaPendente)}</div>
+                <p className="text-xs text-muted-foreground">
+                  Faturas pendentes de pagamento
                 </p>
               </CardContent>
             </Card>
