@@ -59,9 +59,16 @@ export default function Financeiro() {
   const receitaTotal = stats?.receitaTotal || 0
   const receitaPendente = stats?.receitaPendente || 0
   
+  // Calcular total a receber (pendentes + rascunhos)
+  const totalAReceber = faturas
+    .filter(f => f.status === 'pendente' || f.status === 'rascunho')
+    .reduce((sum, f) => sum + Number(f.valor_total || 0), 0)
+  
   // Calcular total de royalties em aberto
   const totalRoyalties = royaltiesEmAberto.reduce((sum, r) => sum + Number(r.valor_total || 0), 0)
-  const saldoLiquido = receitaTotal - totalRoyalties
+  
+  // Saldo líquido = A Receber - Royalties a Pagar
+  const saldoLiquido = totalAReceber - totalRoyalties
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -120,7 +127,7 @@ export default function Financeiro() {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(receitaPendente)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalAReceber)}</div>
                 <p className="text-xs text-muted-foreground">
                   Faturas pendentes de pagamento
                 </p>
@@ -150,7 +157,7 @@ export default function Financeiro() {
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(saldoLiquido)}</div>
                 <p className="text-xs text-muted-foreground">
-                  Receita - Royalties
+                  A Receber - Royalties
                 </p>
               </CardContent>
             </Card>
