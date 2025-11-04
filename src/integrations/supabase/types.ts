@@ -513,6 +513,242 @@ export type Database = {
           },
         ]
       }
+      ctes: {
+        Row: {
+          cfop: string
+          chave_cte: string | null
+          chaves_nfe: Json | null
+          codigo_status: string | null
+          componentes_valor: Json | null
+          created_at: string
+          created_by: string
+          data_autorizacao: string | null
+          data_emissao: string
+          destinatario_cnpj: string
+          destinatario_endereco: Json | null
+          destinatario_fone: string | null
+          destinatario_ie: string | null
+          destinatario_nome: string
+          digest_value: string | null
+          emitente_cnpj: string
+          emitente_endereco: Json | null
+          emitente_fantasia: string | null
+          emitente_ie: string | null
+          emitente_nome: string
+          icms_aliquota: number | null
+          icms_base_calculo: number | null
+          icms_situacao_tributaria: string | null
+          icms_valor: number | null
+          id: string
+          modal: string
+          modelo: string
+          motivo_status: string | null
+          municipio_envio_codigo: string | null
+          municipio_envio_nome: string | null
+          municipio_envio_uf: string | null
+          municipio_fim_codigo: string | null
+          municipio_fim_nome: string | null
+          municipio_fim_uf: string | null
+          municipio_inicio_codigo: string | null
+          municipio_inicio_nome: string | null
+          municipio_inicio_uf: string | null
+          natureza_operacao: string
+          nome_seguradora: string | null
+          numero_apolice: string | null
+          numero_cte: string
+          numero_protocolo: string | null
+          ordem_coleta: Json | null
+          outras_caracteristicas: string | null
+          produto_predominante: string | null
+          quantidades: Json | null
+          remetente_cnpj: string
+          remetente_endereco: Json | null
+          remetente_fantasia: string | null
+          remetente_fone: string | null
+          remetente_ie: string | null
+          remetente_nome: string
+          responsavel_seguro: string | null
+          rntrc: string | null
+          saida_id: string
+          serie: string
+          status: string
+          tipo_ambiente: string
+          tipo_cte: string
+          tipo_servico: string
+          tomador_cnpj: string | null
+          tomador_endereco: Json | null
+          tomador_fantasia: string | null
+          tomador_fone: string | null
+          tomador_ie: string | null
+          tomador_nome: string | null
+          tomador_tipo: string
+          updated_at: string
+          valor_carga: number | null
+          valor_receber: number
+          valor_total_servico: number
+          valor_total_tributos: number | null
+          xml_content: string | null
+        }
+        Insert: {
+          cfop: string
+          chave_cte?: string | null
+          chaves_nfe?: Json | null
+          codigo_status?: string | null
+          componentes_valor?: Json | null
+          created_at?: string
+          created_by: string
+          data_autorizacao?: string | null
+          data_emissao?: string
+          destinatario_cnpj: string
+          destinatario_endereco?: Json | null
+          destinatario_fone?: string | null
+          destinatario_ie?: string | null
+          destinatario_nome: string
+          digest_value?: string | null
+          emitente_cnpj: string
+          emitente_endereco?: Json | null
+          emitente_fantasia?: string | null
+          emitente_ie?: string | null
+          emitente_nome: string
+          icms_aliquota?: number | null
+          icms_base_calculo?: number | null
+          icms_situacao_tributaria?: string | null
+          icms_valor?: number | null
+          id?: string
+          modal?: string
+          modelo?: string
+          motivo_status?: string | null
+          municipio_envio_codigo?: string | null
+          municipio_envio_nome?: string | null
+          municipio_envio_uf?: string | null
+          municipio_fim_codigo?: string | null
+          municipio_fim_nome?: string | null
+          municipio_fim_uf?: string | null
+          municipio_inicio_codigo?: string | null
+          municipio_inicio_nome?: string | null
+          municipio_inicio_uf?: string | null
+          natureza_operacao: string
+          nome_seguradora?: string | null
+          numero_apolice?: string | null
+          numero_cte: string
+          numero_protocolo?: string | null
+          ordem_coleta?: Json | null
+          outras_caracteristicas?: string | null
+          produto_predominante?: string | null
+          quantidades?: Json | null
+          remetente_cnpj: string
+          remetente_endereco?: Json | null
+          remetente_fantasia?: string | null
+          remetente_fone?: string | null
+          remetente_ie?: string | null
+          remetente_nome: string
+          responsavel_seguro?: string | null
+          rntrc?: string | null
+          saida_id: string
+          serie?: string
+          status?: string
+          tipo_ambiente?: string
+          tipo_cte?: string
+          tipo_servico?: string
+          tomador_cnpj?: string | null
+          tomador_endereco?: Json | null
+          tomador_fantasia?: string | null
+          tomador_fone?: string | null
+          tomador_ie?: string | null
+          tomador_nome?: string | null
+          tomador_tipo?: string
+          updated_at?: string
+          valor_carga?: number | null
+          valor_receber: number
+          valor_total_servico: number
+          valor_total_tributos?: number | null
+          xml_content?: string | null
+        }
+        Update: {
+          cfop?: string
+          chave_cte?: string | null
+          chaves_nfe?: Json | null
+          codigo_status?: string | null
+          componentes_valor?: Json | null
+          created_at?: string
+          created_by?: string
+          data_autorizacao?: string | null
+          data_emissao?: string
+          destinatario_cnpj?: string
+          destinatario_endereco?: Json | null
+          destinatario_fone?: string | null
+          destinatario_ie?: string | null
+          destinatario_nome?: string
+          digest_value?: string | null
+          emitente_cnpj?: string
+          emitente_endereco?: Json | null
+          emitente_fantasia?: string | null
+          emitente_ie?: string | null
+          emitente_nome?: string
+          icms_aliquota?: number | null
+          icms_base_calculo?: number | null
+          icms_situacao_tributaria?: string | null
+          icms_valor?: number | null
+          id?: string
+          modal?: string
+          modelo?: string
+          motivo_status?: string | null
+          municipio_envio_codigo?: string | null
+          municipio_envio_nome?: string | null
+          municipio_envio_uf?: string | null
+          municipio_fim_codigo?: string | null
+          municipio_fim_nome?: string | null
+          municipio_fim_uf?: string | null
+          municipio_inicio_codigo?: string | null
+          municipio_inicio_nome?: string | null
+          municipio_inicio_uf?: string | null
+          natureza_operacao?: string
+          nome_seguradora?: string | null
+          numero_apolice?: string | null
+          numero_cte?: string
+          numero_protocolo?: string | null
+          ordem_coleta?: Json | null
+          outras_caracteristicas?: string | null
+          produto_predominante?: string | null
+          quantidades?: Json | null
+          remetente_cnpj?: string
+          remetente_endereco?: Json | null
+          remetente_fantasia?: string | null
+          remetente_fone?: string | null
+          remetente_ie?: string | null
+          remetente_nome?: string
+          responsavel_seguro?: string | null
+          rntrc?: string | null
+          saida_id?: string
+          serie?: string
+          status?: string
+          tipo_ambiente?: string
+          tipo_cte?: string
+          tipo_servico?: string
+          tomador_cnpj?: string | null
+          tomador_endereco?: Json | null
+          tomador_fantasia?: string | null
+          tomador_fone?: string | null
+          tomador_ie?: string | null
+          tomador_nome?: string | null
+          tomador_tipo?: string
+          updated_at?: string
+          valor_carga?: number | null
+          valor_receber?: number
+          valor_total_servico?: number
+          valor_total_tributos?: number | null
+          xml_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ctes_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: true
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_assignments: {
         Row: {
           assigned_at: string

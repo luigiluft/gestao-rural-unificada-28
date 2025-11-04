@@ -206,13 +206,204 @@ async function createSaida(supabase: any, userId: string, data: any) {
       itensInseridos.push(saidaItem)
     }
 
-    return { ...saida, itens: itensInseridos }
+    // Generate CT-e if tipo_saida is 'entrega_fazenda'
+    let cte = null
+    if (data.tipo_saida === 'entrega_fazenda') {
+      console.log('🚚 Creating CT-e for entrega_fazenda saida:', saida.id)
+      try {
+        cte = await generateCTe(supabase, userId, saida, data)
+        console.log('✅ CT-e created successfully:', cte?.id)
+      } catch (cteError) {
+        console.error('❌ Error creating CT-e:', cteError)
+        // Don't fail the saida creation if CT-e fails, but log it
+      }
+    }
+
+    return { ...saida, itens: itensInseridos, cte }
   } catch (error) {
     // If any error occurs after saida creation, clean up
     console.error('Error creating saida, rolling back:', error)
     await supabase.from('saidas').delete().eq('id', saida.id)
     throw error
   }
+}
+
+async function generateCTe(supabase: any, userId: string, saida: any, saidaData: any) {
+  console.log('📋 Generating CT-e for saida:', saida.id)
+  
+  // Get franchise/deposito details (emitente e remetente)
+  const { data: franquia, error: franquiaError } = await supabase
+    .from('franquias')
+    .select('*')
+    .eq('id', saida.deposito_id)
+    .single()
+  
+  if (franquiaError || !franquia) {
+    throw new Error('Franquia não encontrada para gerar CT-e')
+  }
+  
+  // Get farm details (destinatario)
+  const { data: fazenda, error: fazendaError } = await supabase
+    .from('fazendas')
+    .select('*')
+    .eq('id', saida.fazenda_id)
+    .single()
+  
+  if (fazendaError || !fazenda) {
+    throw new Error('Fazenda não encontrada para gerar CT-e')
+  }
+  
+  // Get producer details (tomador)
+  const { data: produtor, error: produtorError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('user_id', saida.produtor_destinatario_id)
+    .single()
+  
+  if (produtorError || !produtor) {
+    throw new Error('Produtor não encontrado para gerar CT-e')
+  }
+  
+  // Generate sequential CT-e number
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '')
+  const { data: lastCte } = await supabase
+    .from('ctes')
+    .select('numero_cte')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+  
+  let nextNumber = 1
+  if (lastCte?.numero_cte) {
+    const lastNumber = parseInt(lastCte.numero_cte.split('-')[1] || '0')
+    nextNumber = lastNumber + 1
+  }
+  
+  const numeroCte = `CTE-${String(nextNumber).padStart(8, '0')}`
+  
+  // Prepare CT-e data
+  const cteData = {
+    saida_id: saida.id,
+    numero_cte: numeroCte,
+    serie: '1',
+    modelo: '57',
+    data_emissao: new Date().toISOString(),
+    tipo_ambiente: 'homologacao',
+    tipo_cte: 'normal',
+    cfop: '5353', // Prestação de serviço de transporte
+    natureza_operacao: 'Prestação de serviço de transporte',
+    modal: '01', // Rodoviário
+    tipo_servico: '0', // Normal
+    
+    // Localização
+    municipio_envio_codigo: franquia.codigo_municipio,
+    municipio_envio_nome: franquia.cidade,
+    municipio_envio_uf: franquia.estado,
+    municipio_inicio_codigo: franquia.codigo_municipio,
+    municipio_inicio_nome: franquia.cidade,
+    municipio_inicio_uf: franquia.estado,
+    municipio_fim_codigo: fazenda.codigo_municipio,
+    municipio_fim_nome: fazenda.cidade,
+    municipio_fim_uf: fazenda.estado,
+    
+    // Emitente (Franquia)
+    emitente_cnpj: franquia.cnpj,
+    emitente_ie: franquia.inscricao_estadual,
+    emitente_nome: franquia.razao_social || franquia.nome,
+    emitente_fantasia: franquia.nome,
+    emitente_endereco: {
+      logradouro: franquia.endereco,
+      numero: franquia.numero,
+      bairro: franquia.bairro,
+      municipio: franquia.cidade,
+      uf: franquia.estado,
+      cep: franquia.cep,
+      fone: franquia.telefone
+    },
+    
+    // Remetente (Depósito/Franquia)
+    remetente_cnpj: franquia.cnpj,
+    remetente_ie: franquia.inscricao_estadual,
+    remetente_nome: franquia.razao_social || franquia.nome,
+    remetente_fantasia: franquia.nome,
+    remetente_fone: franquia.telefone,
+    remetente_endereco: {
+      logradouro: franquia.endereco,
+      numero: franquia.numero,
+      bairro: franquia.bairro,
+      municipio: franquia.cidade,
+      uf: franquia.estado,
+      cep: franquia.cep
+    },
+    
+    // Destinatário (Fazenda)
+    destinatario_cnpj: fazenda.cpf_cnpj,
+    destinatario_ie: fazenda.inscricao_estadual,
+    destinatario_nome: fazenda.nome,
+    destinatario_fone: fazenda.telefone,
+    destinatario_endereco: {
+      logradouro: fazenda.endereco,
+      numero: fazenda.numero,
+      bairro: fazenda.bairro,
+      municipio: fazenda.cidade,
+      uf: fazenda.estado,
+      cep: fazenda.cep
+    },
+    
+    // Tomador (Produtor - quem paga o frete)
+    tomador_tipo: '3', // Destinatário
+    tomador_cnpj: produtor.cpf_cnpj,
+    tomador_nome: produtor.nome,
+    tomador_endereco: produtor.endereco ? JSON.parse(produtor.endereco) : null,
+    
+    // Valores
+    valor_total_servico: saidaData.valor_frete_calculado || 0,
+    valor_receber: saidaData.valor_frete_calculado || 0,
+    componentes_valor: [
+      {
+        nome: 'Frete',
+        valor: saidaData.valor_frete_calculado || 0
+      }
+    ],
+    
+    // Impostos (valores zerados em rascunho)
+    icms_situacao_tributaria: '00',
+    icms_base_calculo: saidaData.valor_frete_calculado || 0,
+    icms_aliquota: 0,
+    icms_valor: 0,
+    valor_total_tributos: 0,
+    
+    // Carga
+    valor_carga: 0, // Será calculado depois
+    produto_predominante: 'Produtos agrícolas',
+    outras_caracteristicas: 'Transporte de produtos agrícolas',
+    quantidades: [
+      {
+        unidade: 'KG',
+        tipo: 'Peso',
+        quantidade: saida.peso_total || 0
+      }
+    ],
+    
+    // Seguro
+    responsavel_seguro: '1', // Emitente
+    
+    // Status
+    status: 'rascunho',
+    created_by: userId
+  }
+  
+  // Insert CT-e
+  const { data: cte, error: cteError } = await supabase
+    .from('ctes')
+    .insert(cteData)
+    .select()
+    .single()
+  
+  if (cteError) throw cteError
+  
+  console.log('✅ CT-e created in draft status:', cte.id)
+  return cte
 }
 
 async function updateSaida(supabase: any, userId: string, data: any) {

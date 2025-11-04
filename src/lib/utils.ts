@@ -48,6 +48,18 @@ export const formatarCpfComMascara = (cpf: string): string => {
   )
 }
 
+// Função para formatar data
+export const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) return '-'
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(dateObj)
+}
+
 // Função para buscar produtor por CPF/CNPJ (ambos formatos)
 export const findProdutorByCpfCnpj = async (supabase: any, cpfCnpj: string) => {
   if (!cpfCnpj) return null
