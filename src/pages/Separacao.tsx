@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Clock, Zap, AlertTriangle, Info } from "lucide-react"
+import { Calendar, Clock, Package, FileText, Star, MapPin, User, Phone, Building, TrendingUp, Zap, AlertTriangle, Info } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"

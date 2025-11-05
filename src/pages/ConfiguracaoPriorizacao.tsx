@@ -28,24 +28,31 @@ export default function ConfiguracaoPriorizacao() {
   const [modo, setModo] = useState<'fifo' | 'customizado'>('fifo')
   const [fatores, setFatores] = useState<Fator[]>([
     {
+      id: "performance_sla_produtor",
+      nome: "Performance SLA do Produtor",
+      ativo: true,
+      peso: 25,
+      configuracao: { tipo: "historico_sla", periodo_dias: 90 }
+    },
+    {
       id: "sla_contrato",
       nome: "SLA do Contrato",
       ativo: true,
-      peso: 40,
+      peso: 25,
       configuracao: { tipo: "sla_contrato" }
     },
     {
       id: "proximidade_agendamento",
       nome: "Proximidade do Agendamento",
       ativo: true,
-      peso: 30,
+      peso: 25,
       configuracao: { tipo: "data" }
     },
     {
       id: "cliente_vip",
       nome: "Cliente VIP / Urgente",
       ativo: true,
-      peso: 20,
+      peso: 15,
       configuracao: { tipo: "flag" }
     },
     {
@@ -120,6 +127,7 @@ export default function ConfiguracaoPriorizacao() {
 
   const getDescricaoFator = (id: string) => {
     const descricoes = {
+      performance_sla_produtor: "Prioriza produtores que tiveram mais entregas atrasadas recentemente, considerando o SLA acordado no contrato. Produtores novos começam com 100% (excelente) e perdem pontos conforme acumulam atrasos.",
       sla_contrato: "Prioriza saídas com SLA de entrega mais apertado conforme definido no contrato de serviço.",
       proximidade_agendamento: "Saídas com data de entrega mais próxima recebem maior prioridade.",
       cliente_vip: "Clientes marcados como VIP, Premium ou saídas marcadas como Urgentes têm prioridade elevada.",

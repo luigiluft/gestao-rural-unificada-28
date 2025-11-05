@@ -4126,10 +4126,11 @@ export type Database = {
       }
       alocar_produtos_orfaos: { Args: never; Returns: number }
       auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
-      calcular_prioridade_saida: {
-        Args: { p_saida_id: string }
-        Returns: undefined
+      calcular_performance_sla_produtor: {
+        Args: { p_periodo_dias?: number; p_produtor_id: string }
+        Returns: number
       }
+      calcular_prioridade_saida: { Args: { p_saida_id: string }; Returns: Json }
       calcular_servicos_periodo: {
         Args: {
           p_contrato_id: string

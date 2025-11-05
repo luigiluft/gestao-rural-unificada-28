@@ -110,3 +110,9 @@ export const usePesoBrutoMaximoPallet = () => {
   const { valor } = useConfiguracao("peso_bruto_maximo_pallet")
   return parseInt(valor || "1000")
 }
+
+// Hook para buscar período de análise do SLA (em dias)
+export const usePeriodoAnaliseSLA = () => {
+  const { valor } = useConfiguracao("periodo_analise_sla_dias")
+  return parseInt(valor || "90") // Padrão 90 dias
+}

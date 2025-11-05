@@ -31,6 +31,7 @@ export default function Configuracoes() {
   const [pesoBrutoMaximo, setPesoBrutoMaximo] = useState("")
   const [metodoSelecaoEstoque, setMetodoSelecaoEstoque] = useState<'fefo' | 'fifo' | 'lifo'>('fefo')
   const [franquiaId, setFranquiaId] = useState<string>("")
+  const [periodoAnaliseSLA, setPeriodoAnaliseSLA] = useState<string>("90")
 
   // Buscar franquia do usuário
   useQuery({
@@ -90,6 +91,11 @@ export default function Configuracoes() {
       if (metodoSelecaoConfig) {
         setMetodoSelecaoEstoque(metodoSelecaoConfig.valor as 'fefo' | 'fifo' | 'lifo')
       }
+
+      const periodoAnaliseSLAConfig = configuracoes.find(c => c.chave === "periodo_analise_sla_dias")
+      if (periodoAnaliseSLAConfig) {
+        setPeriodoAnaliseSLA(periodoAnaliseSLAConfig.valor)
+      }
     }
   }, [configuracoes])
 
@@ -146,6 +152,22 @@ export default function Configuracoes() {
     updateConfiguracao.mutate({
       chave: "metodo_selecao_estoque",
       valor: metodoSelecaoEstoque
+    })
+  }
+
+  const handleSavePeriodoAnaliseSLA = () => {
+    const dias = parseInt(periodoAnaliseSLA)
+    if (isNaN(dias) || dias < 7 || dias > 365) {
+      toast({
+        title: "Período inválido",
+        description: "O período deve ser entre 7 e 365 dias",
+        variant: "destructive"
+      })
+      return
+    }
+    updateConfiguracao.mutate({
+      chave: "periodo_analise_sla_dias",
+      valor: periodoAnaliseSLA
     })
   }
 
@@ -499,6 +521,41 @@ export default function Configuracoes() {
                 </div>
                 <Button 
                   onClick={handleSavePesoBrutoMaximo}
+                  disabled={updateConfiguracao.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configuração de Período de Análise do SLA */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Período de Análise do SLA</CardTitle>
+              <CardDescription>
+                Define quantos dias para trás o sistema analisa o histórico de entregas para calcular a performance do produtor
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end space-x-4">
+                <div className="flex-1">
+                  <Label htmlFor="periodo-analise-sla">Período de Análise (dias)</Label>
+                  <Input
+                    id="periodo-analise-sla"
+                    type="number"
+                    min="7"
+                    max="365"
+                    value={periodoAnaliseSLA}
+                    onChange={(e) => setPeriodoAnaliseSLA(e.target.value)}
+                    placeholder="90"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Período de {periodoAnaliseSLA || "90"} dias. Recomendado: 90 dias (3 meses). Mínimo: 7 dias. Máximo: 365 dias.
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleSavePeriodoAnaliseSLA}
                   disabled={updateConfiguracao.isPending}
                 >
                   Salvar
