@@ -235,33 +235,36 @@
   }
 
   /* Indicadores de disponibilidade no calendário */
-  .rdp-day_high {
-    background-color: rgba(34, 197, 94, 0.15) !important;
+  .rdp-day_high .rdp-day_button {
+    background-color: rgba(34, 197, 94, 0.2) !important;
     color: rgb(22, 101, 52) !important;
-    font-weight: 500;
+    font-weight: 600;
+    border: 1px solid rgba(34, 197, 94, 0.3);
   }
 
-  .rdp-day_high:hover {
-    background-color: rgba(34, 197, 94, 0.25) !important;
+  .rdp-day_high .rdp-day_button:hover {
+    background-color: rgba(34, 197, 94, 0.3) !important;
   }
 
-  .rdp-day_medium {
-    background-color: rgba(234, 179, 8, 0.15) !important;
+  .rdp-day_medium .rdp-day_button {
+    background-color: rgba(234, 179, 8, 0.2) !important;
     color: rgb(113, 63, 18) !important;
-    font-weight: 500;
+    font-weight: 600;
+    border: 1px solid rgba(234, 179, 8, 0.3);
   }
 
-  .rdp-day_medium:hover {
-    background-color: rgba(234, 179, 8, 0.25) !important;
+  .rdp-day_medium .rdp-day_button:hover {
+    background-color: rgba(234, 179, 8, 0.3) !important;
   }
 
-  .rdp-day_low {
-    background-color: rgba(239, 68, 68, 0.15) !important;
+  .rdp-day_low .rdp-day_button {
+    background-color: rgba(239, 68, 68, 0.2) !important;
     color: rgb(127, 29, 29) !important;
-    font-weight: 500;
+    font-weight: 600;
+    border: 1px solid rgba(239, 68, 68, 0.3);
   }
 
-  .rdp-day_low:hover {
-    background-color: rgba(239, 68, 68, 0.25) !important;
+  .rdp-day_low .rdp-day_button:hover {
+    background-color: rgba(239, 68, 68, 0.3) !important;
   }
 }
