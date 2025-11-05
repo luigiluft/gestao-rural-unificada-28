@@ -155,7 +155,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <Badge variant={movement.tipo_movimentacao === 'entrada' ? 'default' : 'secondary'}>
-                          {movement.tipo_movimentacao === 'entrada' ? '+' : '-'}{movement.quantidade}
+                          {movement.tipo_movimentacao === 'entrada' ? '+' : '-'}{Math.abs(movement.quantidade)}
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1">
                           {formatDistanceToNow(new Date(movement.data_movimentacao), { 
