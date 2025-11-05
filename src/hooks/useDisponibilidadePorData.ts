@@ -20,6 +20,7 @@ export const useDisponibilidadePorData = (
   return useQuery({
     queryKey: ["disponibilidade-por-data", format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), depositoId],
     queryFn: async (): Promise<DisponibilidadePorData> => {
+      console.log('[useDisponibilidadePorData] Executando - depositoId:', depositoId, 'totalHorarios:', totalHorarios)
       if (!depositoId || totalHorarios === 0) return {}
 
       const startDateString = format(startDate, 'yyyy-MM-dd')
@@ -73,7 +74,8 @@ export const useDisponibilidadePorData = (
         // Avançar para o próximo dia
         currentDate = addDays(currentDate, 1)
       }
-
+      
+      console.log('[useDisponibilidadePorData] Resultado:', disponibilidade)
       return disponibilidade
     },
     enabled: !!depositoId && totalHorarios > 0,

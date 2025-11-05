@@ -50,32 +50,33 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
     dados.tipo_saida === 'retirada_deposito' ? dados.depositoId : undefined
   )
 
-  // Preparar modifiers para o calendário
-  const datesHigh: Date[] = []
-  const datesMedium: Date[] = []
-  const datesLow: Date[] = []
+  // Preparar modifiers para o calendário (só para retirada no depósito)
+  const modifiers = dados.tipo_saida === 'retirada_deposito' && Object.keys(disponibilidadePorData).length > 0 ? {
+    high: Object.entries(disponibilidadePorData)
+      .filter(([_, nivel]) => nivel === 'high')
+      .map(([dateString]) => {
+        const [year, month, day] = dateString.split('-').map(Number)
+        return new Date(year, month - 1, day)
+      }),
+    medium: Object.entries(disponibilidadePorData)
+      .filter(([_, nivel]) => nivel === 'medium')
+      .map(([dateString]) => {
+        const [year, month, day] = dateString.split('-').map(Number)
+        return new Date(year, month - 1, day)
+      }),
+    low: Object.entries(disponibilidadePorData)
+      .filter(([_, nivel]) => nivel === 'low')
+      .map(([dateString]) => {
+        const [year, month, day] = dateString.split('-').map(Number)
+        return new Date(year, month - 1, day)
+      }),
+  } : undefined
 
-  Object.entries(disponibilidadePorData).forEach(([dateString, nivel]) => {
-    // Parse correto da data (yyyy-MM-dd) para Date local
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = new Date(year, month - 1, day)
-    
-    if (nivel === 'high') datesHigh.push(date)
-    else if (nivel === 'medium') datesMedium.push(date)
-    else if (nivel === 'low') datesLow.push(date)
-  })
-
-  const modifiers = {
-    high: datesHigh,
-    medium: datesMedium,
-    low: datesLow,
-  }
-
-  const modifiersClassNames = {
+  const modifiersClassNames = dados.tipo_saida === 'retirada_deposito' ? {
     high: 'rdp-day_high',
     medium: 'rdp-day_medium',
     low: 'rdp-day_low',
-  }
+  } : undefined
 
 // Ajuste automático da data: define a mínima quando vazio ou anterior ao mínimo
 useEffect(() => {
