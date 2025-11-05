@@ -16,12 +16,14 @@ import {
   Plus,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Undo2
 } from 'lucide-react';
 import { useOcorrencias, useCreateOcorrencia, useUpdateOcorrencia } from '@/hooks/useOcorrencias';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useUpdateNotificationView } from '@/hooks/useNotificationViews';
+import { DevolucaoDialog } from '@/components/Ocorrencias/DevolucaoDialog';
 
 const Ocorrencias = () => {
   const updateNotificationView = useUpdateNotificationView();
@@ -29,6 +31,8 @@ const Ocorrencias = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [tipoFilter, setTipoFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [devolucaoDialogOpen, setDevolucaoDialogOpen] = useState(false);
+  const [selectedOcorrencia, setSelectedOcorrencia] = useState<any>(null);
   
   const createOcorrencia = useCreateOcorrencia();
   const updateOcorrencia = useUpdateOcorrencia();
@@ -54,6 +58,11 @@ const Ocorrencias = () => {
   const handleUpdateStatus = (id: string, newStatus: string) => {
     updateOcorrencia.mutate({ id, status: newStatus });
   };
+
+  const handleSolicitarDevolucao = (ocorrencia: any) => {
+    setSelectedOcorrencia(ocorrencia)
+    setDevolucaoDialogOpen(true)
+  }
 
   const displayOcorrencias = ocorrencias;
 
@@ -339,20 +348,57 @@ const Ocorrencias = () => {
                         </div>
                         <div className="flex gap-2">
                           {ocorrencia.status === 'aberta' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleUpdateStatus(ocorrencia.id, 'em_andamento')}
-                            >
-                              Iniciar Resolução
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm"
+                                onClick={() => handleUpdateStatus(ocorrencia.id, 'em_andamento')}
+                              >
+                                Iniciar Resolução
+                              </Button>
+                              {ocorrencia.viagem_id && !ocorrencia.requer_devolucao && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSolicitarDevolucao(ocorrencia)}
+                                >
+                                  <Undo2 className="mr-2 h-4 w-4" />
+                                  Solicitar Devolução
+                                </Button>
+                              )}
+                            </>
                           )}
                           {ocorrencia.status === 'em_andamento' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleUpdateStatus(ocorrencia.id, 'resolvida')}
-                            >
-                              Marcar como Resolvida
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm"
+                                onClick={() => handleUpdateStatus(ocorrencia.id, 'resolvida')}
+                              >
+                                Marcar como Resolvida
+                              </Button>
+                              {ocorrencia.viagem_id && !ocorrencia.requer_devolucao && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSolicitarDevolucao(ocorrencia)}
+                                >
+                                  <Undo2 className="mr-2 h-4 w-4" />
+                                  Solicitar Devolução
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          
+                          {/* Mostrar status de devolução se já foi solicitada */}
+                          {ocorrencia.requer_devolucao && ocorrencia.devolucao_id && (
+                            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+                                <Undo2 className="h-4 w-4" />
+                                <span className="font-medium">Devolução em andamento</span>
+                              </div>
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                Entrada: {ocorrencia.devolucao_id.substring(0, 8)}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -363,6 +409,17 @@ const Ocorrencias = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Devolução */}
+      {selectedOcorrencia && (
+        <DevolucaoDialog
+          open={devolucaoDialogOpen}
+          onOpenChange={setDevolucaoDialogOpen}
+          ocorrenciaId={selectedOcorrencia.id}
+          saidaId={selectedOcorrencia.saida_id}
+          viagemId={selectedOcorrencia.viagem_id}
+        />
+      )}
     </div>
   );
 };

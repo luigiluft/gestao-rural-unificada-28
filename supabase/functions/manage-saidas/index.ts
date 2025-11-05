@@ -55,6 +55,9 @@ serve(async (req) => {
       case 'deallocate_viagem':
         result = await deallocateFromViagem(supabaseClient, user.id, data.saidaId)
         break
+      case 'create_devolucao':
+        result = await createDevolucao(supabaseClient, user.id, data)
+        break
       default:
         throw new Error('Invalid action')
     }
@@ -512,4 +515,165 @@ async function deallocateFromViagem(supabase: any, userId: string, saidaId: stri
 
   if (error) throw error
   return saida
+}
+
+async function createDevolucao(supabase: any, userId: string, data: any) {
+  const { ocorrencia_id, saida_id, tipo_devolucao, itens_devolvidos, observacoes } = data
+  
+  console.log('🔄 Iniciando criação de devolução:', { ocorrencia_id, saida_id, tipo_devolucao })
+  
+  // Validar se a saída existe e pode ter devolução
+  const { data: saida, error: saidaError } = await supabase
+    .from('saidas')
+    .select(`
+      *,
+      deposito:franquias!deposito_id(id, nome, master_franqueado_id),
+      produtor_destinatario:profiles!produtor_destinatario_id(id, nome, cpf_cnpj),
+      saida_itens(
+        id,
+        produto_id,
+        quantidade,
+        valor_unitario,
+        lote,
+        produtos(id, nome, codigo, unidade_medida)
+      )
+    `)
+    .eq('id', saida_id)
+    .single()
+  
+  if (saidaError || !saida) {
+    throw new Error('Saída não encontrada')
+  }
+  
+  // Validar status da saída
+  if (!['expedido', 'entregue'].includes(saida.status)) {
+    throw new Error('Devolução só pode ser criada para saídas expedidas ou entregues')
+  }
+  
+  // Criar entrada de devolução
+  const entradaData = {
+    user_id: saida.user_id,
+    deposito_id: saida.deposito_id,
+    data_entrada: new Date().toISOString(),
+    tipo_entrada: 'devolucao',
+    numero_nfe: `DEV-${saida.id.substring(0, 8)}`,
+    emitente_cnpj: saida.produtor_destinatario?.cpf_cnpj || '',
+    emitente_nome: saida.produtor_destinatario?.nome || 'Produtor',
+    destinatario_cpf_cnpj: saida.deposito?.master_franqueado_id || '',
+    destinatario_nome: saida.deposito?.nome || 'Depósito',
+    observacoes: observacoes || `Devolução ${tipo_devolucao === 'total' ? 'total' : 'parcial'} - Saída: ${saida.id}`,
+    status_aprovacao: 'aguardando_conferencia',
+    saida_origem_id: saida_id
+  }
+  
+  const { data: entrada, error: entradaError } = await supabase
+    .from('entradas')
+    .insert(entradaData)
+    .select()
+    .single()
+  
+  if (entradaError) {
+    console.error('❌ Erro ao criar entrada de devolução:', entradaError)
+    throw entradaError
+  }
+  
+  console.log('✅ Entrada de devolução criada:', entrada.id)
+  
+  // Criar itens da entrada de devolução
+  let itensEntrada = []
+  
+  if (tipo_devolucao === 'total') {
+    // Devolução total: copiar todos os itens
+    itensEntrada = saida.saida_itens.map((item: any) => ({
+      entrada_id: entrada.id,
+      user_id: saida.user_id,
+      produto_id: item.produto_id,
+      nome_produto: item.produtos.nome,
+      codigo_produto: item.produtos.codigo,
+      unidade_comercial: item.produtos.unidade_medida,
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario,
+      lote: item.lote,
+      valor_total: item.quantidade * item.valor_unitario
+    }))
+  } else {
+    // Devolução parcial: usar itens especificados
+    itensEntrada = itens_devolvidos.map((itemDev: any) => {
+      const itemOriginal = saida.saida_itens.find((si: any) => si.id === itemDev.saida_item_id)
+      if (!itemOriginal) {
+        throw new Error(`Item ${itemDev.saida_item_id} não encontrado na saída original`)
+      }
+      
+      return {
+        entrada_id: entrada.id,
+        user_id: saida.user_id,
+        produto_id: itemOriginal.produto_id,
+        nome_produto: itemOriginal.produtos.nome,
+        codigo_produto: itemOriginal.produtos.codigo,
+        unidade_comercial: itemOriginal.produtos.unidade_medida,
+        quantidade: itemDev.quantidade,
+        valor_unitario: itemOriginal.valor_unitario,
+        lote: itemOriginal.lote,
+        valor_total: itemDev.quantidade * itemOriginal.valor_unitario
+      }
+    })
+  }
+  
+  const { error: itensError } = await supabase
+    .from('entrada_itens')
+    .insert(itensEntrada)
+  
+  if (itensError) {
+    // Rollback: deletar entrada
+    await supabase.from('entradas').delete().eq('id', entrada.id)
+    throw itensError
+  }
+  
+  // Atualizar status da saída original
+  const novoStatusSaida = tipo_devolucao === 'total' ? 'em_devolucao' : saida.status
+  
+  const { error: updateSaidaError } = await supabase
+    .from('saidas')
+    .update({
+      status: novoStatusSaida,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', saida_id)
+  
+  if (updateSaidaError) {
+    console.error('⚠️ Erro ao atualizar status da saída:', updateSaidaError)
+  }
+  
+  // Atualizar ocorrência com devolução criada
+  const quantidadeDevolvida = tipo_devolucao === 'total' 
+    ? { tipo: 'total', itens: itensEntrada.length }
+    : { tipo: 'parcial', itens: itens_devolvidos }
+  
+  const { error: updateOcorrenciaError } = await supabase
+    .from('ocorrencias')
+    .update({
+      requer_devolucao: true,
+      devolucao_id: entrada.id,
+      quantidade_devolvida: quantidadeDevolvida,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', ocorrencia_id)
+  
+  if (updateOcorrenciaError) {
+    console.error('⚠️ Erro ao atualizar ocorrência:', updateOcorrenciaError)
+  }
+  
+  console.log('🎉 Devolução criada com sucesso:', {
+    entrada_id: entrada.id,
+    tipo: tipo_devolucao,
+    itens: itensEntrada.length
+  })
+  
+  return {
+    entrada_id: entrada.id,
+    saida_id: saida_id,
+    tipo_devolucao,
+    itens_count: itensEntrada.length,
+    status_saida_atualizado: novoStatusSaida
+  }
 }

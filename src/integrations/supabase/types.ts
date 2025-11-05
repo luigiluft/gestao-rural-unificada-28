@@ -2322,12 +2322,15 @@ export type Database = {
           data_resolucao: string | null
           deposito_id: string | null
           descricao: string
+          devolucao_id: string | null
           id: string
           localizacao: string | null
           motorista_id: string | null
           numero: string
           observacoes: string | null
           prioridade: Database["public"]["Enums"]["prioridade_ocorrencia"]
+          quantidade_devolvida: Json | null
+          requer_devolucao: boolean | null
           resolucao_aplicada: string | null
           resolvido_por: string | null
           status: Database["public"]["Enums"]["status_ocorrencia"]
@@ -2343,12 +2346,15 @@ export type Database = {
           data_resolucao?: string | null
           deposito_id?: string | null
           descricao: string
+          devolucao_id?: string | null
           id?: string
           localizacao?: string | null
           motorista_id?: string | null
           numero: string
           observacoes?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_ocorrencia"]
+          quantidade_devolvida?: Json | null
+          requer_devolucao?: boolean | null
           resolucao_aplicada?: string | null
           resolvido_por?: string | null
           status?: Database["public"]["Enums"]["status_ocorrencia"]
@@ -2364,12 +2370,15 @@ export type Database = {
           data_resolucao?: string | null
           deposito_id?: string | null
           descricao?: string
+          devolucao_id?: string | null
           id?: string
           localizacao?: string | null
           motorista_id?: string | null
           numero?: string
           observacoes?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_ocorrencia"]
+          quantidade_devolvida?: Json | null
+          requer_devolucao?: boolean | null
           resolucao_aplicada?: string | null
           resolvido_por?: string | null
           status?: Database["public"]["Enums"]["status_ocorrencia"]
@@ -2385,6 +2394,13 @@ export type Database = {
             columns: ["deposito_id"]
             isOneToOne: false
             referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_devolucao_id_fkey"
+            columns: ["devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
             referencedColumns: ["id"]
           },
           {
@@ -3266,9 +3282,13 @@ export type Database = {
           peso_total: number | null
           placa_veiculo: string | null
           produtor_destinatario_id: string | null
+          saida_origem_id: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor: string | null
           telefone_motorista: string | null
+          tipo_movimentacao:
+            | Database["public"]["Enums"]["tipo_movimentacao_saida"]
+            | null
           tipo_saida: string
           updated_at: string
           user_id: string
@@ -3299,9 +3319,13 @@ export type Database = {
           peso_total?: number | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
+          saida_origem_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
+          tipo_movimentacao?:
+            | Database["public"]["Enums"]["tipo_movimentacao_saida"]
+            | null
           tipo_saida: string
           updated_at?: string
           user_id: string
@@ -3332,9 +3356,13 @@ export type Database = {
           peso_total?: number | null
           placa_veiculo?: string | null
           produtor_destinatario_id?: string | null
+          saida_origem_id?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           telefone_motorista?: string | null
+          tipo_movimentacao?:
+            | Database["public"]["Enums"]["tipo_movimentacao_saida"]
+            | null
           tipo_saida?: string
           updated_at?: string
           user_id?: string
@@ -3355,6 +3383,13 @@ export type Database = {
             columns: ["fazenda_id"]
             isOneToOne: false
             referencedRelation: "fazendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_saida_origem_id_fkey"
+            columns: ["saida_origem_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
             referencedColumns: ["id"]
           },
           {
@@ -4273,7 +4308,13 @@ export type Database = {
         | "contratos.view"
         | "contratos.manage"
       prioridade_ocorrencia: "alta" | "media" | "baixa"
-      saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
+      saida_status:
+        | "separacao_pendente"
+        | "separado"
+        | "expedido"
+        | "entregue"
+        | "em_devolucao"
+        | "devolvido"
       status_contrato: "ativo" | "suspenso" | "cancelado" | "expirado"
       status_fatura:
         | "rascunho"
@@ -4284,6 +4325,10 @@ export type Database = {
         | "contestado"
       status_ocorrencia: "aberta" | "em_andamento" | "resolvida" | "cancelada"
       tipo_cobranca: "mensal" | "quinzenal" | "por_demanda"
+      tipo_movimentacao_saida:
+        | "saida_normal"
+        | "devolucao_total"
+        | "devolucao_parcial"
       tipo_ocorrencia: "acidente" | "avaria" | "atraso" | "roubo" | "outros"
       tipo_servico_contrato:
         | "armazenagem_pallet_dia"
@@ -4491,7 +4536,14 @@ export const Constants = {
         "contratos.manage",
       ],
       prioridade_ocorrencia: ["alta", "media", "baixa"],
-      saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
+      saida_status: [
+        "separacao_pendente",
+        "separado",
+        "expedido",
+        "entregue",
+        "em_devolucao",
+        "devolvido",
+      ],
       status_contrato: ["ativo", "suspenso", "cancelado", "expirado"],
       status_fatura: [
         "rascunho",
@@ -4503,6 +4555,11 @@ export const Constants = {
       ],
       status_ocorrencia: ["aberta", "em_andamento", "resolvida", "cancelada"],
       tipo_cobranca: ["mensal", "quinzenal", "por_demanda"],
+      tipo_movimentacao_saida: [
+        "saida_normal",
+        "devolucao_total",
+        "devolucao_parcial",
+      ],
       tipo_ocorrencia: ["acidente", "avaria", "atraso", "roubo", "outros"],
       tipo_servico_contrato: [
         "armazenagem_pallet_dia",
