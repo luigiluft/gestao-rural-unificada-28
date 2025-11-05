@@ -75,14 +75,34 @@ export function useWarehouseMap(depositoId?: string, includeInactive: boolean = 
           )
         `)
         .eq("deposito_id", depositoId)
+        .order('codigo', { ascending: true })
       
       if (!includeInactive) {
         query = query.eq("ativo", true)
       }
 
-      const { data: positions, error } = await query
+      // CRÍTICO: Buscar TODAS as posições sem limite
+      // Por padrão Supabase limita em 1000, mas precisamos de todas
+      const allPositions: any[] = []
+      let from = 0
+      const pageSize = 1000
+      let hasMore = true
 
-      if (error) throw error
+      while (hasMore) {
+        const { data: positions, error } = await query.range(from, from + pageSize - 1)
+        
+        if (error) throw error
+        
+        if (positions && positions.length > 0) {
+          allPositions.push(...positions)
+          from += pageSize
+          hasMore = positions.length === pageSize
+        } else {
+          hasMore = false
+        }
+      }
+
+      console.log(`📦 useWarehouseMap: Carregadas ${allPositions.length} posições do banco`)
 
       // Parse códigos e processar dados
       const parsedPositions: PositionData[] = []
@@ -90,10 +110,15 @@ export function useWarehouseMap(depositoId?: string, includeInactive: boolean = 
       let maxModulo = 0
       let maxAndar = 0
       let ocupadas = 0
+      let parseErrors = 0
 
-      positions?.forEach((pos: any) => {
+      allPositions.forEach((pos: any) => {
         const coords = parsePositionCode(pos.codigo)
-        if (!coords) return
+        if (!coords) {
+          parseErrors++
+          console.warn(`⚠️ useWarehouseMap: Código inválido ignorado: ${pos.codigo}`)
+          return
+        }
 
         maxRua = Math.max(maxRua, coords.rua)
         maxModulo = Math.max(maxModulo, coords.modulo)
@@ -121,9 +146,16 @@ export function useWarehouseMap(depositoId?: string, includeInactive: boolean = 
         })
       })
 
+      if (parseErrors > 0) {
+        console.warn(`⚠️ useWarehouseMap: ${parseErrors} posições com código inválido foram ignoradas`)
+      }
+
       const total = parsedPositions.length
       const livres = total - ocupadas
       const ocupacaoPercentual = total > 0 ? Math.round((ocupadas / total) * 100) : 0
+
+      console.log(`✅ useWarehouseMap: ${total} posições processadas (${ocupadas} ocupadas, ${livres} livres)`)
+      console.log(`📐 useWarehouseMap: Dimensões - Ruas: ${maxRua}, Módulos: ${maxModulo}, Andares: ${maxAndar}`)
 
       return {
         positions: parsedPositions,
