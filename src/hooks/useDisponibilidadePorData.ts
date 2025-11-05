@@ -12,13 +12,14 @@ interface DisponibilidadePorData {
 export const useDisponibilidadePorData = (
   startDate: Date,
   endDate: Date,
-  depositoId?: string
+  depositoId?: string,
+  minDate?: Date
 ) => {
   const horariosRetirada = useHorariosRetirada()
   const totalHorarios = horariosRetirada.length
 
   return useQuery({
-    queryKey: ["disponibilidade-por-data", format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), depositoId],
+    queryKey: ["disponibilidade-por-data", format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'), depositoId, minDate ? format(minDate, 'yyyy-MM-dd') : null],
     queryFn: async (): Promise<DisponibilidadePorData> => {
       if (!depositoId || totalHorarios === 0) return {}
 
@@ -44,7 +45,7 @@ export const useDisponibilidadePorData = (
         return acc
       }, {} as Record<string, Set<string>>)
 
-      // Calcular disponibilidade para cada data no range
+      // Calcular disponibilidade para cada data no range (somente datas >= minDate)
       const disponibilidade: DisponibilidadePorData = {}
       
       // Iterar por todas as datas no range
@@ -52,21 +53,24 @@ export const useDisponibilidadePorData = (
       while (currentDate <= endDate) {
         const dateString = format(currentDate, 'yyyy-MM-dd')
         
-        // Se não há reservas para esta data, disponibilidade é alta (100%)
-        if (!reservasPorData[dateString]) {
-          disponibilidade[dateString] = 'high'
-        } else {
-          // Calcular disponibilidade baseado nas reservas
-          const horariosOcupados = reservasPorData[dateString].size
-          const horariosDisponiveis = totalHorarios - horariosOcupados
-          const percentualDisponivel = (horariosDisponiveis / totalHorarios) * 100
-
-          if (percentualDisponivel >= 60) {
+        // SOMENTE adicionar disponibilidade se a data for >= minDate
+        if (!minDate || currentDate >= minDate) {
+          // Se não há reservas para esta data, disponibilidade é alta (100%)
+          if (!reservasPorData[dateString]) {
             disponibilidade[dateString] = 'high'
-          } else if (percentualDisponivel >= 30) {
-            disponibilidade[dateString] = 'medium'
           } else {
-            disponibilidade[dateString] = 'low'
+            // Calcular disponibilidade baseado nas reservas
+            const horariosOcupados = reservasPorData[dateString].size
+            const horariosDisponiveis = totalHorarios - horariosOcupados
+            const percentualDisponivel = (horariosDisponiveis / totalHorarios) * 100
+
+            if (percentualDisponivel >= 60) {
+              disponibilidade[dateString] = 'high'
+            } else if (percentualDisponivel >= 30) {
+              disponibilidade[dateString] = 'medium'
+            } else {
+              disponibilidade[dateString] = 'low'
+            }
           }
         }
         

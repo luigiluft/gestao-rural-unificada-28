@@ -47,7 +47,8 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
   const { data: disponibilidadePorData = {} } = useDisponibilidadePorData(
     calendarStart,
     calendarEnd,
-    dados.tipo_saida === 'retirada_deposito' ? dados.depositoId : undefined
+    dados.tipo_saida === 'retirada_deposito' ? dados.depositoId : undefined,
+    minDate
   )
 
   // Preparar modifiers para o calendário (só para retirada no depósito)
@@ -70,13 +71,15 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
         const [year, month, day] = dateString.split('-').map(Number)
         return new Date(year, month - 1, day)
       }),
-  } : undefined
+    today: new Date()
+  } : { today: new Date() }
 
   const modifiersClassNames = dados.tipo_saida === 'retirada_deposito' ? {
     high: 'rdp-day_high',
     medium: 'rdp-day_medium',
     low: 'rdp-day_low',
-  } : undefined
+    today: 'rdp-day_today',
+  } : { today: 'rdp-day_today' }
 
 // Ajuste automático da data: define a mínima quando vazio ou anterior ao mínimo
 useEffect(() => {
