@@ -54,6 +54,9 @@ export const useHorariosDisponiveis = (dataSaida?: string, depositoId?: string) 
 
       const horariosReservados = reservas?.map(r => r.horario) || []
       
+      console.log('📅 Horários reservados para', dataSaida, ':', horariosReservados)
+      console.log('⏰ Total de horários disponíveis:', horariosRetirada.length - horariosReservados.length)
+      
       // Filtrar horários disponíveis (remover os reservados)
       const horariosDisponiveis = horariosRetirada.filter(
         horario => !horariosReservados.includes(horario)
