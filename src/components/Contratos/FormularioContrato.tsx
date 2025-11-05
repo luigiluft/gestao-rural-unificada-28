@@ -86,6 +86,8 @@ export function FormularioContrato({ contratoId, onSuccess }: FormularioContrato
       tipo_cobranca: "mensal",
       observacoes: "",
       status: "ativo",
+      tags: [],
+      prioridade_padrao: 50,
       servicos: [],
       slas: [],
       janelas_entrega: [],
@@ -107,6 +109,8 @@ export function FormularioContrato({ contratoId, onSuccess }: FormularioContrato
         tipo_cobranca: contrato.tipo_cobranca,
         observacoes: contrato.observacoes || "",
         status: contrato.status,
+        tags: (contrato.tags as string[]) || [],
+        prioridade_padrao: contrato.prioridade_padrao || 50,
         servicos: servicos.map(s => ({
           tipo_servico: s.tipo_servico,
           descricao: s.descricao || "",
@@ -166,6 +170,8 @@ export function FormularioContrato({ contratoId, onSuccess }: FormularioContrato
             tipo_cobranca: data.tipo_cobranca,
             observacoes: data.observacoes || null,
             status: data.status,
+            tags: data.tags || [],
+            prioridade_padrao: data.prioridade_padrao || 50,
           })
           .eq('id', contratoId)
 
@@ -189,6 +195,8 @@ export function FormularioContrato({ contratoId, onSuccess }: FormularioContrato
             tipo_cobranca: data.tipo_cobranca,
             observacoes: data.observacoes || null,
             status: data.status,
+            tags: data.tags || [],
+            prioridade_padrao: data.prioridade_padrao || 50,
           }])
           .select()
           .single()
@@ -459,6 +467,36 @@ export function FormularioContrato({ contratoId, onSuccess }: FormularioContrato
             </FormItem>
           )}
         />
+
+        {/* Tags do Cliente (Priorização) */}
+        <div className="space-y-3">
+          <div>
+            <FormLabel className="text-base font-semibold">Tags do Cliente (Priorização)</FormLabel>
+            <p className="text-sm text-muted-foreground mt-1">
+              Selecione tags para priorização automática na separação
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(['vip', 'premium', 'preferencial', 'padrao'] as const).map((tag) => (
+              <Button
+                key={tag}
+                type="button"
+                variant={form.watch('tags')?.includes(tag) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  const currentTags = form.getValues('tags') || []
+                  if (currentTags.includes(tag)) {
+                    form.setValue('tags', currentTags.filter(t => t !== tag))
+                  } else {
+                    form.setValue('tags', [...currentTags, tag])
+                  }
+                }}
+              >
+                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+              </Button>
+            ))}
+          </div>
+        </div>
 
         {/* Serviços Section */}
         <div className="space-y-4">

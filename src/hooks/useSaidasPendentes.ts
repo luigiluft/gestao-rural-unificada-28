@@ -15,6 +15,9 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
         .from("saidas")
         .select(`
           *,
+          prioridade_calculada,
+          scores_fatores,
+          tags,
           saida_itens (
             *,
             produtos (
@@ -36,7 +39,7 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
         query = query.lte("data_saida", dateRange.to.toISOString().split('T')[0])
       }
       
-      const { data, error } = await query.order("created_at", { ascending: false })
+      const { data, error } = await query
 
       if (error) {
         console.error("Erro ao buscar saídas pendentes:", error)
@@ -52,11 +55,21 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
           .select("user_id, nome")
           .in("user_id", userIds)
 
-        // Mapear os profiles para as saídas
-        return data.map(saida => ({
+        // Mapear os profiles para as saídas e ordenar por prioridade
+        const saidasComProdutor = data.map(saida => ({
           ...saida,
           produtor: profiles?.find(p => p.user_id === saida.user_id) || null
         }))
+
+        // Ordenar: primeiro por prioridade (se existir), depois por created_at
+        return saidasComProdutor.sort((a, b) => {
+          if (a.prioridade_calculada !== null && b.prioridade_calculada !== null) {
+            return b.prioridade_calculada - a.prioridade_calculada
+          }
+          if (a.prioridade_calculada !== null) return -1
+          if (b.prioridade_calculada !== null) return 1
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        })
       }
 
       return data || []

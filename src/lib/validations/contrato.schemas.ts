@@ -35,6 +35,8 @@ export const contratoSchema = z.object({
   tipo_cobranca: z.enum(['mensal', 'quinzenal', 'por_demanda']),
   observacoes: z.string().optional().nullable(),
   status: z.enum(['ativo', 'suspenso', 'expirado', 'cancelado']).default('ativo'),
+  tags: z.array(z.string()).optional().default([]),
+  prioridade_padrao: z.number().min(0).max(100).optional(),
   servicos: z.array(servicoContratoSchema).optional(),
   slas: z.array(slaSchema).optional(),
   janelas_entrega: z.array(janelaEntregaSchema).optional(),

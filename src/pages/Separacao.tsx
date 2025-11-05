@@ -9,12 +9,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Clock } from "lucide-react"
+import { Clock, Zap, AlertTriangle, Info } from "lucide-react"
 import { useSaidasPendentes, useAtualizarStatusSaida } from "@/hooks/useSaidasPendentes"
 import { SeparacaoIndividual } from "@/components/Saidas/SeparacaoIndividual"
 import { format } from "date-fns"
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter"
 import { ItemSeparacaoCard } from "@/components/Separacao/ItemSeparacaoCard"
+import { Progress } from "@/components/ui/progress"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function Separacao() {
   const { data: saidas, isLoading } = useSaidasPendentes()
@@ -32,6 +34,29 @@ export default function Separacao() {
       metaDescription.setAttribute('content', 'Gerencie a separação de produtos no AgroHub')
     }
   }, [])
+
+  const getPrioridadeBadge = (prioridade: number | null) => {
+    if (prioridade === null || prioridade === undefined) return null
+    
+    if (prioridade >= 80) {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <Zap className="h-3 w-3" />
+          Urgente
+        </Badge>
+      )
+    } else if (prioridade >= 60) {
+      return (
+        <Badge className="flex items-center gap-1 bg-warning text-warning-foreground">
+          <AlertTriangle className="h-3 w-3" />
+          Alta
+        </Badge>
+      )
+    } else if (prioridade >= 40) {
+      return <Badge variant="default">Média</Badge>
+    }
+    return <Badge variant="secondary">Normal</Badge>
+  }
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -160,12 +185,50 @@ export default function Separacao() {
                       <div className="font-semibold text-lg">
                         SAI{saida.id.slice(-6).toUpperCase()}
                       </div>
+                      {saida.prioridade_calculada !== null && getPrioridadeBadge(saida.prioridade_calculada)}
                       {getStatusBadge(saida.status)}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {format(new Date(saida.created_at), 'dd/MM/yyyy HH:mm')}
                     </div>
                   </div>
+                  
+                  {/* Barra de prioridade e scores */}
+                  {saida.prioridade_calculada !== null && (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Score de Prioridade</Label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-3 w-3 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-1 text-xs">
+                                <p><strong>Prioridade:</strong> {saida.prioridade_calculada.toFixed(1)}/100</p>
+                                {saida.scores_fatores && typeof saida.scores_fatores === 'object' && (
+                                  <>
+                                    <p>SLA: {(saida.scores_fatores as any).sla || 0}pts</p>
+                                    <p>Agendamento: {(saida.scores_fatores as any).agendamento || 0}pts</p>
+                                    <p>Cliente VIP: {(saida.scores_fatores as any).vip || 0}pts</p>
+                                    <p>Tempo fila: {(saida.scores_fatores as any).tempo_fila || 0}pts</p>
+                                  </>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <Progress 
+                        value={saida.prioridade_calculada} 
+                        className={`h-2 ${
+                          saida.prioridade_calculada >= 80 ? 'bg-destructive/20' :
+                          saida.prioridade_calculada >= 60 ? 'bg-warning/20' :
+                          'bg-primary/20'
+                        }`}
+                      />
+                    </div>
+                  )}
                 </CardHeader>
 
                 <CardContent className="space-y-4">
