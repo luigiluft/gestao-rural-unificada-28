@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, CheckCircle, MapPin } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle, MapPin, Info } from "lucide-react";
 import { useEstoquePorProdutoFEFO } from "@/hooks/useEstoquePorProdutoFEFO";
+import { useConfiguracoesSistema } from "@/hooks/useConfiguracoesSistema";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PosicoesProdutoProps {
   produtoId: string;
@@ -13,6 +15,31 @@ interface PosicoesProdutoProps {
 
 export const PosicoesProduto = ({ produtoId, depositoId, produtoNome }: PosicoesProdutoProps) => {
   const { data: estoqueFEFO, isLoading } = useEstoquePorProdutoFEFO(produtoId, depositoId);
+  const { data: configuracoes = [] } = useConfiguracoesSistema();
+  const metodoSelecaoConfig = configuracoes.find(c => c.chave === "metodo_selecao_estoque");
+  const metodoSelecao = (metodoSelecaoConfig?.valor as 'fefo' | 'fifo' | 'lifo') || 'fefo';
+
+  const getMetodoLabel = () => {
+    switch (metodoSelecao) {
+      case 'fefo':
+        return 'FEFO (Primeiro que vence)';
+      case 'fifo':
+        return 'FIFO (Primeiro que entrou)';
+      case 'lifo':
+        return 'LIFO (Último que entrou)';
+    }
+  };
+
+  const getMetodoDescricao = () => {
+    switch (metodoSelecao) {
+      case 'fefo':
+        return 'Priorizando produtos mais próximos do vencimento';
+      case 'fifo':
+        return 'Priorizando produtos que entraram primeiro';
+      case 'lifo':
+        return 'Priorizando produtos que entraram por último';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -90,12 +117,20 @@ export const PosicoesProduto = ({ produtoId, depositoId, produtoNome }: Posicoes
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Posição Sugerida (FEFO) */}
+        {/* Alerta de método de seleção */}
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Método de seleção:</strong> {getMetodoLabel()} - {getMetodoDescricao()}
+          </AlertDescription>
+        </Alert>
+
+        {/* Posição Sugerida */}
         <div className="border-l-4 border-l-primary bg-primary/5 rounded-r-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Badge variant="default" className="bg-primary text-primary-foreground">
-                SUGERIDO - FEFO
+                SUGERIDO - {metodoSelecao.toUpperCase()}
               </Badge>
               {getStatusIcon(sugestaoFEFO.status_validade)}
             </div>

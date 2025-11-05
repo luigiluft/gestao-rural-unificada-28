@@ -65,6 +65,7 @@ import Contratos from "./pages/Contratos";
 import ContratoDetalhes from "./pages/ContratoDetalhes";
 import ContratosFranquias from "./pages/ContratosFranquias";
 import ContratoFranquiaForm from "./pages/ContratoFranquiaForm";
+import ConfiguracaoPriorizacao from "./pages/ConfiguracaoPriorizacao";
 import DemoDashboard from "./pages/Demo/DemoDashboard";
 import DemoEntradas from "./pages/Demo/DemoEntradas";
 import DemoEstoque from "./pages/Demo/DemoEstoque";
@@ -139,6 +140,7 @@ const App = () => {
               <Route path="suporte" element={<RequirePageAccess pageKey="suporte"><Suporte /></RequirePageAccess>} />
               <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
+              <Route path="configuracao-priorizacao" element={<RequirePageAccess pageKey="configuracoes"><ConfiguracaoPriorizacao /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
               <Route path="perfis-funcionarios" element={<RequirePageAccess pageKey="perfis-funcionarios"><PerfisFuncionarios /></RequirePageAccess>} />
               <Route path="contratos" element={<RequirePageAccess pageKey="contratos"><Contratos /></RequirePageAccess>} />

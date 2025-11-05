@@ -4,15 +4,24 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Plus, RefreshCw } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 import { useConfiguracoesSistema, useUpdateConfiguracao } from "@/hooks/useConfiguracoesSistema"
 import { useToast } from "@/hooks/use-toast"
+import { usePriorizacaoConfig } from "@/hooks/usePriorizacaoSeparacao"
+import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
+import { useQuery } from "@tanstack/react-query"
 
 export default function Configuracoes() {
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
   const updateConfiguracao = useUpdateConfiguracao()
   const { toast } = useToast()
+  const { user } = useAuth()
+  const navigate = useNavigate()
 
   const [pesoMinimo, setPesoMinimo] = useState("")
   const [novoHorario, setNovoHorario] = useState("")
@@ -20,6 +29,30 @@ export default function Configuracoes() {
   const [diasUteis, setDiasUteis] = useState("")
   const [janelaEntregaDias, setJanelaEntregaDias] = useState("")
   const [pesoBrutoMaximo, setPesoBrutoMaximo] = useState("")
+  const [metodoSelecaoEstoque, setMetodoSelecaoEstoque] = useState<'fefo' | 'fifo' | 'lifo'>('fefo')
+  const [franquiaId, setFranquiaId] = useState<string>("")
+
+  // Buscar franquia do usuário
+  useQuery({
+    queryKey: ['user-franquia', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null
+      
+      const { data, error } = await supabase
+        .from('franquias')
+        .select('id')
+        .eq('master_franqueado_id', user.id)
+        .eq('ativo', true)
+        .maybeSingle()
+      
+      if (error) throw error
+      if (data) setFranquiaId(data.id)
+      return data
+    },
+    enabled: !!user?.id
+  })
+
+  const { data: priorizacaoConfig } = usePriorizacaoConfig(franquiaId)
 
   React.useEffect(() => {
     if (configuracoes.length > 0) {
@@ -51,6 +84,11 @@ export default function Configuracoes() {
       const pesoBrutoConfig = configuracoes.find(c => c.chave === "peso_bruto_maximo_pallet")
       if (pesoBrutoConfig) {
         setPesoBrutoMaximo(pesoBrutoConfig.valor)
+      }
+
+      const metodoSelecaoConfig = configuracoes.find(c => c.chave === "metodo_selecao_estoque")
+      if (metodoSelecaoConfig) {
+        setMetodoSelecaoEstoque(metodoSelecaoConfig.valor as 'fefo' | 'fifo' | 'lifo')
       }
     }
   }, [configuracoes])
@@ -101,6 +139,13 @@ export default function Configuracoes() {
     updateConfiguracao.mutate({
       chave: "peso_bruto_maximo_pallet",
       valor: pesoBrutoMaximo
+    })
+  }
+
+  const handleSaveMetodoSelecao = () => {
+    updateConfiguracao.mutate({
+      chave: "metodo_selecao_estoque",
+      valor: metodoSelecaoEstoque
     })
   }
 
@@ -163,6 +208,108 @@ export default function Configuracoes() {
         </div>
 
         <div className="space-y-6">
+          {/* Configurações de Separação */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Configurações de Separação
+              </CardTitle>
+              <CardDescription>
+                Defina como as saídas devem ser priorizadas e como o estoque deve ser selecionado
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Priorização de Saídas */}
+              <div className="space-y-4">
+                <div className="flex items-start justify-between pb-4 border-b">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ListOrdered className="h-4 w-4 text-muted-foreground" />
+                      <Label className="text-base font-semibold">Priorização de Saídas</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Define <strong>qual saída</strong> deve ser separada primeiro na fila de separação.
+                    </p>
+                    <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm">
+                        <strong>Modo atual:</strong>{" "}
+                        {priorizacaoConfig?.modo_priorizacao === 'customizado' ? (
+                          <Badge variant="secondary">Priorização Customizada</Badge>
+                        ) : (
+                          <Badge variant="outline">FIFO (Primeira a entrar, primeira a sair)</Badge>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => navigate('/configuracao-priorizacao')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Settings2 className="h-4 w-4 mr-2" />
+                  Configurar Priorização de Saídas
+                </Button>
+              </div>
+
+              {/* Método de Seleção de Estoque */}
+              <div className="space-y-4 pt-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-semibold">Método de Seleção de Estoque</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Define <strong>de qual posição/lote</strong> o produto deve ser retirado ao separar uma saída.
+                  </p>
+                  
+                  <div className="flex items-end space-x-4">
+                    <div className="flex-1">
+                      <Label htmlFor="metodo-selecao">Método</Label>
+                      <Select value={metodoSelecaoEstoque} onValueChange={(value: 'fefo' | 'fifo' | 'lifo') => setMetodoSelecaoEstoque(value)}>
+                        <SelectTrigger id="metodo-selecao">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fefo">
+                            <div className="flex flex-col items-start">
+                              <span className="font-semibold">FEFO - First Expired, First Out</span>
+                              <span className="text-xs text-muted-foreground">Primeiro que vence, primeiro que sai</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="fifo">
+                            <div className="flex flex-col items-start">
+                              <span className="font-semibold">FIFO - First In, First Out</span>
+                              <span className="text-xs text-muted-foreground">Primeiro que entrou, primeiro que sai</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="lifo">
+                            <div className="flex flex-col items-start">
+                              <span className="font-semibold">LIFO - Last In, First Out</span>
+                              <span className="text-xs text-muted-foreground">Último que entrou, primeiro que sai</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {metodoSelecaoEstoque === 'fefo' && "Recomendado para produtos perecíveis - prioriza lotes mais próximos do vencimento"}
+                        {metodoSelecaoEstoque === 'fifo' && "Recomendado para produtos não perecíveis - prioriza lotes mais antigos"}
+                        {metodoSelecaoEstoque === 'lifo' && "Casos específicos - prioriza lotes mais recentes"}
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={handleSaveMetodoSelecao}
+                      disabled={updateConfiguracao.isPending}
+                    >
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Configuração de Peso Mínimo MOPP */}
           <Card>
             <CardHeader>

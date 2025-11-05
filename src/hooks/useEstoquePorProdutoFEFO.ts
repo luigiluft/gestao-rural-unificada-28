@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useConfiguracoesSistema } from "./useConfiguracoesSistema";
 
 export interface EstoqueFEFO {
   id: string;
@@ -23,8 +24,12 @@ export interface EstoqueFEFO {
 }
 
 export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string, produtorDestinatarioId?: string) => {
+  const { data: configuracoes = [] } = useConfiguracoesSistema();
+  const metodoSelecaoConfig = configuracoes.find(c => c.chave === "metodo_selecao_estoque");
+  const metodoSelecao = (metodoSelecaoConfig?.valor as 'fefo' | 'fifo' | 'lifo') || 'fefo';
+
   return useQuery({
-    queryKey: ["estoque-fefo", produtoId, depositoId, produtorDestinatarioId],
+    queryKey: ["estoque-fefo", produtoId, depositoId, produtorDestinatarioId, metodoSelecao],
     queryFn: async () => {
       if (!produtoId || !depositoId) return [];
 
@@ -154,11 +159,29 @@ export const useEstoquePorProdutoFEFO = (produtoId?: string, depositoId?: string
       // 2. Sem RPC de fallback para evitar erros 400; retornar vazio se não houver pallets
       // Mantemos estoqueFEFO como está quando não há pallets alocados
 
-      // Ordenar por prioridade FEFO
-      const estoqueFEFOOrdenado = estoqueFEFO.sort((a, b) => a.prioridade_fefo - b.prioridade_fefo);
+      // Ordenar baseado no método configurado
+      let estoqueOrdenado: EstoqueFEFO[];
       
-      console.log('✅ Estoque FEFO processado:', estoqueFEFOOrdenado);
-      return estoqueFEFOOrdenado;
+      if (metodoSelecao === 'fefo') {
+        // FEFO: Prioriza data de validade (primeiro que vence)
+        estoqueOrdenado = estoqueFEFO.sort((a, b) => a.prioridade_fefo - b.prioridade_fefo);
+        console.log('✅ Estoque ordenado por FEFO (primeiro que vence)');
+      } else if (metodoSelecao === 'fifo') {
+        // FIFO: Prioriza data de entrada (primeiro que entrou)
+        estoqueOrdenado = estoqueFEFO.sort((a, b) => 
+          new Date(a.data_entrada).getTime() - new Date(b.data_entrada).getTime()
+        );
+        console.log('✅ Estoque ordenado por FIFO (primeiro que entrou)');
+      } else {
+        // LIFO: Prioriza entrada mais recente (último que entrou)
+        estoqueOrdenado = estoqueFEFO.sort((a, b) => 
+          new Date(b.data_entrada).getTime() - new Date(a.data_entrada).getTime()
+        );
+        console.log('✅ Estoque ordenado por LIFO (último que entrou)');
+      }
+      
+      console.log('✅ Estoque processado:', estoqueOrdenado);
+      return estoqueOrdenado;
     },
     enabled: !!(produtoId && depositoId),
     refetchOnWindowFocus: false,
