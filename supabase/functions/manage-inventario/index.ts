@@ -100,6 +100,7 @@ async function createInventario(supabase: any, userId: string, data: any) {
       status: 'iniciado',
       total_posicoes: posicoes_ids?.length || 0,
       posicoes_conferidas: 0,
+      created_by: userId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
