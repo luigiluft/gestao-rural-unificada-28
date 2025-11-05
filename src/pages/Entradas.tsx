@@ -743,6 +743,9 @@ export default function Entradas() {
                     });
 
                     queryClient.invalidateQueries({ queryKey: ["entradas"] });
+                    queryClient.invalidateQueries({ queryKey: ["warehouse-map"] });
+                    queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
+                    queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
                   } catch (error) {
                     console.error('Erro ao excluir entrada:', error);
                     toast({
@@ -797,7 +800,10 @@ export default function Entradas() {
                     // Invalida todas as queries relacionadas
                     await Promise.all([
                       queryClient.invalidateQueries({ queryKey: ["entradas"] }),
-                      queryClient.invalidateQueries({ queryKey: ["producer-entradas"] })
+                      queryClient.invalidateQueries({ queryKey: ["producer-entradas"] }),
+                      queryClient.invalidateQueries({ queryKey: ["warehouse-map"] }),
+                      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] }),
+                      queryClient.invalidateQueries({ queryKey: ["storage-positions"] })
                     ]);
                   } catch (error) {
                     console.error('Erro ao excluir entrada:', error);

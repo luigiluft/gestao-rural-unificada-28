@@ -280,6 +280,7 @@ export const useAllocatePallet = () => {
       queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
       queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["warehouse-map"] });
       toast({
         title: "Sucesso",
         description: "Pallet alocado com sucesso!",
@@ -431,6 +432,7 @@ export const useRemovePalletAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
       queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["warehouse-map"] });
       toast({
         title: "Sucesso",
         description: "Alocação removida com sucesso!",
@@ -519,6 +521,7 @@ export const useReallocatePallet = () => {
       queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
       queryClient.invalidateQueries({ queryKey: ["available-positions"] });
       queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["warehouse-map"] });
       toast({
         title: "Pallet realocado",
         description: "O pallet foi realocado para a nova posição com sucesso",
