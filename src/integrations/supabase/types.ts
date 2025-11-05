@@ -163,6 +163,47 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_priorizacao_separacao: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          criado_por: string | null
+          fatores: Json
+          franquia_id: string
+          id: string
+          modo_priorizacao: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          fatores?: Json
+          franquia_id: string
+          id?: string
+          modo_priorizacao?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          criado_por?: string | null
+          fatores?: Json
+          franquia_id?: string
+          id?: string
+          modo_priorizacao?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_priorizacao_separacao_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes_sistema: {
         Row: {
           chave: string
