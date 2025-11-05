@@ -17,7 +17,9 @@ export const useOcorrencias = (filters?: { status?: string; tipo?: string }) => 
           *,
           viagens (
             id,
-            data_saida
+            numero,
+            data_inicio,
+            status
           ),
           veiculos (
             id,
