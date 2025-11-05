@@ -495,8 +495,10 @@ export type Database = {
           id: string
           numero_contrato: string
           observacoes: string | null
+          prioridade_padrao: number | null
           produtor_id: string
           status: Database["public"]["Enums"]["status_contrato"]
+          tags: Json | null
           tipo_cobranca: Database["public"]["Enums"]["tipo_cobranca"]
           updated_at: string
         }
@@ -510,8 +512,10 @@ export type Database = {
           id?: string
           numero_contrato: string
           observacoes?: string | null
+          prioridade_padrao?: number | null
           produtor_id: string
           status?: Database["public"]["Enums"]["status_contrato"]
+          tags?: Json | null
           tipo_cobranca?: Database["public"]["Enums"]["tipo_cobranca"]
           updated_at?: string
         }
@@ -525,8 +529,10 @@ export type Database = {
           id?: string
           numero_contrato?: string
           observacoes?: string | null
+          prioridade_padrao?: number | null
           produtor_id?: string
           status?: Database["public"]["Enums"]["status_contrato"]
+          tags?: Json | null
           tipo_cobranca?: Database["public"]["Enums"]["tipo_cobranca"]
           updated_at?: string
         }
@@ -3311,6 +3317,7 @@ export type Database = {
       }
       saidas: {
         Row: {
+          contrato_servico_id: string | null
           cpf_motorista: string | null
           created_at: string
           criado_por_franqueado: boolean | null
@@ -3332,10 +3339,14 @@ export type Database = {
           observacoes_aprovacao: string | null
           peso_total: number | null
           placa_veiculo: string | null
+          prioridade_calculada: number | null
+          prioridade_ultima_atualizacao: string | null
           produtor_destinatario_id: string | null
           saida_origem_id: string | null
+          scores_fatores: Json | null
           status: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor: string | null
+          tags: Json | null
           telefone_motorista: string | null
           tipo_movimentacao:
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
@@ -3348,6 +3359,7 @@ export type Database = {
           viagem_id: string | null
         }
         Insert: {
+          contrato_servico_id?: string | null
           cpf_motorista?: string | null
           created_at?: string
           criado_por_franqueado?: boolean | null
@@ -3369,10 +3381,14 @@ export type Database = {
           observacoes_aprovacao?: string | null
           peso_total?: number | null
           placa_veiculo?: string | null
+          prioridade_calculada?: number | null
+          prioridade_ultima_atualizacao?: string | null
           produtor_destinatario_id?: string | null
           saida_origem_id?: string | null
+          scores_fatores?: Json | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
+          tags?: Json | null
           telefone_motorista?: string | null
           tipo_movimentacao?:
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
@@ -3385,6 +3401,7 @@ export type Database = {
           viagem_id?: string | null
         }
         Update: {
+          contrato_servico_id?: string | null
           cpf_motorista?: string | null
           created_at?: string
           criado_por_franqueado?: boolean | null
@@ -3406,10 +3423,14 @@ export type Database = {
           observacoes_aprovacao?: string | null
           peso_total?: number | null
           placa_veiculo?: string | null
+          prioridade_calculada?: number | null
+          prioridade_ultima_atualizacao?: string | null
           produtor_destinatario_id?: string | null
           saida_origem_id?: string | null
+          scores_fatores?: Json | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
+          tags?: Json | null
           telefone_motorista?: string | null
           tipo_movimentacao?:
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
@@ -3422,6 +3443,13 @@ export type Database = {
           viagem_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "saidas_contrato_servico_id_fkey"
+            columns: ["contrato_servico_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_servico"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "saidas_deposito_id_fkey"
             columns: ["deposito_id"]
