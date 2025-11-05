@@ -18,7 +18,7 @@ import {
   XCircle,
   AlertCircle
 } from 'lucide-react';
-import { useOcorrencias } from '@/hooks/useOcorrencias';
+import { useOcorrencias, useCreateOcorrencia, useUpdateOcorrencia } from '@/hooks/useOcorrencias';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useUpdateNotificationView } from '@/hooks/useNotificationViews';
@@ -28,6 +28,10 @@ const Ocorrencias = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tipoFilter, setTipoFilter] = useState('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const createOcorrencia = useCreateOcorrencia();
+  const updateOcorrencia = useUpdateOcorrencia();
 
   // Mark as viewed when component mounts
   useEffect(() => {
@@ -38,6 +42,18 @@ const Ocorrencias = () => {
     status: statusFilter !== 'all' ? statusFilter : undefined,
     tipo: tipoFilter !== 'all' ? tipoFilter : undefined
   });
+  
+  const handleCreateOcorrencia = (formData: any) => {
+    createOcorrencia.mutate(formData, {
+      onSuccess: () => {
+        setDialogOpen(false);
+      }
+    });
+  };
+  
+  const handleUpdateStatus = (id: string, newStatus: string) => {
+    updateOcorrencia.mutate({ id, status: newStatus });
+  };
 
   const displayOcorrencias = ocorrencias;
 
@@ -87,7 +103,7 @@ const Ocorrencias = () => {
           </p>
         </div>
         
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -322,16 +338,19 @@ const Ocorrencias = () => {
                           Criado por: {ocorrencia.criado_por || 'Sistema'}
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            Editar
-                          </Button>
                           {ocorrencia.status === 'aberta' && (
-                            <Button size="sm">
+                            <Button 
+                              size="sm"
+                              onClick={() => handleUpdateStatus(ocorrencia.id, 'em_andamento')}
+                            >
                               Iniciar Resolução
                             </Button>
                           )}
                           {ocorrencia.status === 'em_andamento' && (
-                            <Button size="sm">
+                            <Button 
+                              size="sm"
+                              onClick={() => handleUpdateStatus(ocorrencia.id, 'resolvida')}
+                            >
                               Marcar como Resolvida
                             </Button>
                           )}

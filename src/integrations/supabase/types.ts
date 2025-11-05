@@ -2315,6 +2315,101 @@ export type Database = {
           },
         ]
       }
+      ocorrencias: {
+        Row: {
+          created_at: string
+          criado_por: string
+          data_resolucao: string | null
+          deposito_id: string | null
+          descricao: string
+          id: string
+          localizacao: string | null
+          motorista_id: string | null
+          numero: string
+          observacoes: string | null
+          prioridade: Database["public"]["Enums"]["prioridade_ocorrencia"]
+          resolucao_aplicada: string | null
+          resolvido_por: string | null
+          status: Database["public"]["Enums"]["status_ocorrencia"]
+          tipo: Database["public"]["Enums"]["tipo_ocorrencia"]
+          titulo: string
+          updated_at: string
+          veiculo_id: string | null
+          viagem_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          criado_por: string
+          data_resolucao?: string | null
+          deposito_id?: string | null
+          descricao: string
+          id?: string
+          localizacao?: string | null
+          motorista_id?: string | null
+          numero: string
+          observacoes?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_ocorrencia"]
+          resolucao_aplicada?: string | null
+          resolvido_por?: string | null
+          status?: Database["public"]["Enums"]["status_ocorrencia"]
+          tipo?: Database["public"]["Enums"]["tipo_ocorrencia"]
+          titulo: string
+          updated_at?: string
+          veiculo_id?: string | null
+          viagem_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string
+          data_resolucao?: string | null
+          deposito_id?: string | null
+          descricao?: string
+          id?: string
+          localizacao?: string | null
+          motorista_id?: string | null
+          numero?: string
+          observacoes?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_ocorrencia"]
+          resolucao_aplicada?: string | null
+          resolvido_por?: string | null
+          status?: Database["public"]["Enums"]["status_ocorrencia"]
+          tipo?: Database["public"]["Enums"]["tipo_ocorrencia"]
+          titulo?: string
+          updated_at?: string
+          veiculo_id?: string | null
+          viagem_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocorrencias_transporte: {
         Row: {
           acao_corretiva: string | null
@@ -4177,6 +4272,7 @@ export type Database = {
         | "royalties.manage"
         | "contratos.view"
         | "contratos.manage"
+      prioridade_ocorrencia: "alta" | "media" | "baixa"
       saida_status: "separacao_pendente" | "separado" | "expedido" | "entregue"
       status_contrato: "ativo" | "suspenso" | "cancelado" | "expirado"
       status_fatura:
@@ -4186,7 +4282,9 @@ export type Database = {
         | "vencido"
         | "cancelado"
         | "contestado"
+      status_ocorrencia: "aberta" | "em_andamento" | "resolvida" | "cancelada"
       tipo_cobranca: "mensal" | "quinzenal" | "por_demanda"
+      tipo_ocorrencia: "acidente" | "avaria" | "atraso" | "roubo" | "outros"
       tipo_servico_contrato:
         | "armazenagem_pallet_dia"
         | "entrada_item"
@@ -4392,6 +4490,7 @@ export const Constants = {
         "contratos.view",
         "contratos.manage",
       ],
+      prioridade_ocorrencia: ["alta", "media", "baixa"],
       saida_status: ["separacao_pendente", "separado", "expedido", "entregue"],
       status_contrato: ["ativo", "suspenso", "cancelado", "expirado"],
       status_fatura: [
@@ -4402,7 +4501,9 @@ export const Constants = {
         "cancelado",
         "contestado",
       ],
+      status_ocorrencia: ["aberta", "em_andamento", "resolvida", "cancelada"],
       tipo_cobranca: ["mensal", "quinzenal", "por_demanda"],
+      tipo_ocorrencia: ["acidente", "avaria", "atraso", "roubo", "outros"],
       tipo_servico_contrato: [
         "armazenagem_pallet_dia",
         "entrada_item",

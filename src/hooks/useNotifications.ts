@@ -334,15 +334,28 @@ export const useNotifications = () => {
         }
 
         // OCORRÊNCIAS: For franqueados and admins - ocorrencias not in final status (resolvida/cancelada)
-        // Note: Table ocorrencias doesn't exist yet, so we skip this for now
-        // if (isFranqueado || isAdmin) {
-        //   const { count: ocorrenciasCount } = await supabase
-        //     .from("ocorrencias")
-        //     .select("id", { count: "exact" })
-        //     .not("status", "in", '("resolvida","cancelada")')
-        //   ocorrencias = ocorrenciasCount || 0
-        // }
-        ocorrencias = 0
+        if (isFranqueado || isAdmin) {
+          let ocorrenciasQuery = supabase
+            .from("ocorrencias")
+            .select("id", { count: "exact" })
+            .not("status", "in", '("resolvida","cancelada")')
+
+          if (!isAdmin) {
+            // Filter by franquias owned by this franqueado
+            const { data: franquias } = await supabase
+              .from("franquias")
+              .select("id")
+              .eq("master_franqueado_id", user.id)
+            
+            const franquiaIds = franquias?.map(f => f.id) || []
+            if (franquiaIds.length > 0) {
+              ocorrenciasQuery = ocorrenciasQuery.in("deposito_id", franquiaIds)
+            }
+          }
+
+          const { count: ocorrenciasCount } = await ocorrenciasQuery
+          ocorrencias = ocorrenciasCount || 0
+        }
 
       } catch (error) {
         console.error("Error fetching notifications:", error)
