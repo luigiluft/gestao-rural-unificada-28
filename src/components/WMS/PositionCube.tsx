@@ -32,18 +32,12 @@ export function PositionCube({ position, occupied, codigo, onClick, onHover, rua
     onClick()
   }
 
-  // Cores por rua (gradiente de verde para azul) quando livre
-  // Vermelho quando ocupado, amarelo quando selecionado
-  const getColorByRua = (ruaNum: number) => {
-    const hue = 120 + (ruaNum * 15) // De verde (120) para azul (270)
-    return `hsl(${hue}, 70%, 50%)`
-  }
-  
+  // Cores: Verde para livre, Vermelho para ocupado, Amarelo para selecionado
   const baseColor = isSelected 
     ? "#fbbf24" // Amarelo para selecionado
     : occupied 
     ? "#ef4444" // Vermelho para ocupado
-    : getColorByRua(rua) // Gradiente para livre
+    : "#22c55e" // Verde único para livre
     
   const emissiveColor = hovered || isSelected ? "#ffffff" : "#000000"
   const emissiveIntensity = hovered || isSelected ? 0.3 : 0

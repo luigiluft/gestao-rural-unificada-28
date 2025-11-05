@@ -387,8 +387,8 @@ export function WarehouseMapViewer({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gradient-to-r from-green-500 to-blue-500 rounded" />
-                  <span className="text-sm">Livre (por rua)</span>
+                  <div className="w-4 h-4 bg-green-500 rounded" />
+                  <span className="text-sm">Livre</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-destructive rounded" />
@@ -400,19 +400,16 @@ export function WarehouseMapViewer({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
                   <Filter className="h-4 w-4 mr-2" />
                   {showFilters ? "Ocultar" : "Mostrar"} Filtros
                 </Button>
                 
-                
                 <Button variant="outline" size="sm" onClick={handleForceReload} title="Recarregar dados do banco">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Recarregar
                 </Button>
-                
-                
               </div>
             </div>
 
