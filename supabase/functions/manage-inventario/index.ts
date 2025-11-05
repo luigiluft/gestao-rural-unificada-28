@@ -34,21 +34,26 @@ serve(async (req) => {
 
     let result
     switch (action) {
+      case 'createInventario':
       case 'create_inventario':
         result = await createInventario(supabaseClient, user.id, data)
         break
+      case 'updateInventario':
       case 'update_inventario':
         result = await updateInventario(supabaseClient, user.id, data)
         break
+      case 'createInventarioItem':
       case 'create_item':
         result = await createInventarioItem(supabaseClient, user.id, data)
         break
+      case 'updateInventarioItem':
       case 'update_item':
         result = await updateInventarioItem(supabaseClient, user.id, data)
         break
       case 'delete_item':
         result = await deleteInventarioItem(supabaseClient, user.id, data.id)
         break
+      case 'finalizeInventario':
       case 'finalize_inventario':
         result = await finalizeInventario(supabaseClient, user.id, data.id)
         break
