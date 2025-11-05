@@ -44,22 +44,35 @@ export const useDisponibilidadePorData = (
         return acc
       }, {} as Record<string, Set<string>>)
 
-      // Calcular disponibilidade para cada data
+      // Calcular disponibilidade para cada data no range
       const disponibilidade: DisponibilidadePorData = {}
       
-      Object.keys(reservasPorData).forEach(data => {
-        const horariosOcupados = reservasPorData[data].size
-        const horariosDisponiveis = totalHorarios - horariosOcupados
-        const percentualDisponivel = (horariosDisponiveis / totalHorarios) * 100
-
-        if (percentualDisponivel >= 60) {
-          disponibilidade[data] = 'high'
-        } else if (percentualDisponivel >= 30) {
-          disponibilidade[data] = 'medium'
+      // Iterar por todas as datas no range
+      let currentDate = new Date(startDate)
+      while (currentDate <= endDate) {
+        const dateString = format(currentDate, 'yyyy-MM-dd')
+        
+        // Se não há reservas para esta data, disponibilidade é alta (100%)
+        if (!reservasPorData[dateString]) {
+          disponibilidade[dateString] = 'high'
         } else {
-          disponibilidade[data] = 'low'
+          // Calcular disponibilidade baseado nas reservas
+          const horariosOcupados = reservasPorData[dateString].size
+          const horariosDisponiveis = totalHorarios - horariosOcupados
+          const percentualDisponivel = (horariosDisponiveis / totalHorarios) * 100
+
+          if (percentualDisponivel >= 60) {
+            disponibilidade[dateString] = 'high'
+          } else if (percentualDisponivel >= 30) {
+            disponibilidade[dateString] = 'medium'
+          } else {
+            disponibilidade[dateString] = 'low'
+          }
         }
-      })
+        
+        // Avançar para o próximo dia
+        currentDate = addDays(currentDate, 1)
+      }
 
       return disponibilidade
     },

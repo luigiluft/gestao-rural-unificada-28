@@ -56,7 +56,10 @@ export function AgendamentoSection({ dados, onDadosChange, pesoTotal, pesoMinimo
   const datesLow: Date[] = []
 
   Object.entries(disponibilidadePorData).forEach(([dateString, nivel]) => {
-    const date = new Date(dateString + 'T00:00:00')
+    // Parse correto da data (yyyy-MM-dd) para Date local
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    
     if (nivel === 'high') datesHigh.push(date)
     else if (nivel === 'medium') datesMedium.push(date)
     else if (nivel === 'low') datesLow.push(date)
