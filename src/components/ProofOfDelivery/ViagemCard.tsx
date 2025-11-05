@@ -21,11 +21,13 @@ import {
   Play,
   CheckSquare,
   Gauge,
-  Fuel
+  Fuel,
+  AlertTriangle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useIniciarViagem, useFinalizarViagem, ViagemMotorista } from '@/hooks/useMotoristaViagens';
+import { RegistrarOcorrenciaDialog } from './RegistrarOcorrenciaDialog';
 
 interface ViagemCardProps {
   viagem: ViagemMotorista;
@@ -35,6 +37,7 @@ interface ViagemCardProps {
 export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) => {
   const [showIniciarDialog, setShowIniciarDialog] = useState(false)
   const [showFinalizarDialog, setShowFinalizarDialog] = useState(false)
+  const [showOcorrenciaDialog, setShowOcorrenciaDialog] = useState(false)
   const [hodometroInicio, setHodometroInicio] = useState<string>('')
   const [combustivelInicio, setCombustivelInicio] = useState<string>('')
   const [hodometroFim, setHodometroFim] = useState<string>('')
@@ -238,16 +241,34 @@ export const ViagemCard: React.FC<ViagemCardProps> = ({ viagem, onVerFotos }) =>
         )}
 
         {canViewPhotos && (
-          <Button
-            onClick={() => onVerFotos(viagem.id)}
-            className="flex-1"
-          >
-            <CheckSquare className="h-4 w-4 mr-2" />
-            Finalizar Viagem
-          </Button>
+          <>
+            <Button
+              onClick={() => onVerFotos(viagem.id)}
+              className="flex-1"
+            >
+              <CheckSquare className="h-4 w-4 mr-2" />
+              Finalizar Viagem
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowOcorrenciaDialog(true)}
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Reportar Problema
+            </Button>
+          </>
         )}
         </div>
       </CardContent>
+
+      {/* Dialog de Ocorrência */}
+      <RegistrarOcorrenciaDialog
+        open={showOcorrenciaDialog}
+        onOpenChange={setShowOcorrenciaDialog}
+        viagemId={viagem.id}
+        veiculoId={viagem.veiculo_id}
+        motoristaId={viagem.motorista_id}
+      />
     </Card>
   )
 }

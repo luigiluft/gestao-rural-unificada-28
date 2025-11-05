@@ -16,6 +16,8 @@ export interface ViagemMotorista {
   observacoes: string | null
   created_at: string
   updated_at: string
+  veiculo_id?: string | null
+  motorista_id?: string | null
   veiculos?: {
     id: string
     placa: string

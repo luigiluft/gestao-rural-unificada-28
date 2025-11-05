@@ -2333,6 +2333,7 @@ export type Database = {
           requer_devolucao: boolean | null
           resolucao_aplicada: string | null
           resolvido_por: string | null
+          saida_id: string | null
           status: Database["public"]["Enums"]["status_ocorrencia"]
           tipo: Database["public"]["Enums"]["tipo_ocorrencia"]
           titulo: string
@@ -2357,6 +2358,7 @@ export type Database = {
           requer_devolucao?: boolean | null
           resolucao_aplicada?: string | null
           resolvido_por?: string | null
+          saida_id?: string | null
           status?: Database["public"]["Enums"]["status_ocorrencia"]
           tipo?: Database["public"]["Enums"]["tipo_ocorrencia"]
           titulo: string
@@ -2381,6 +2383,7 @@ export type Database = {
           requer_devolucao?: boolean | null
           resolucao_aplicada?: string | null
           resolvido_por?: string | null
+          saida_id?: string | null
           status?: Database["public"]["Enums"]["status_ocorrencia"]
           tipo?: Database["public"]["Enums"]["tipo_ocorrencia"]
           titulo?: string
@@ -2408,6 +2411,13 @@ export type Database = {
             columns: ["motorista_id"]
             isOneToOne: false
             referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
             referencedColumns: ["id"]
           },
           {

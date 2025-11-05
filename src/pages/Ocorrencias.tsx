@@ -24,6 +24,8 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useUpdateNotificationView } from '@/hooks/useNotificationViews';
 import { DevolucaoDialog } from '@/components/Ocorrencias/DevolucaoDialog';
+import { useViagens } from '@/hooks/useViagens';
+import { useSaidas } from '@/hooks/useSaidas';
 
 const Ocorrencias = () => {
   const updateNotificationView = useUpdateNotificationView();
@@ -34,8 +36,20 @@ const Ocorrencias = () => {
   const [devolucaoDialogOpen, setDevolucaoDialogOpen] = useState(false);
   const [selectedOcorrencia, setSelectedOcorrencia] = useState<any>(null);
   
+  // Form states
+  const [formTipo, setFormTipo] = useState('');
+  const [formPrioridade, setFormPrioridade] = useState('');
+  const [formTitulo, setFormTitulo] = useState('');
+  const [formDescricao, setFormDescricao] = useState('');
+  const [formViagemId, setFormViagemId] = useState('');
+  const [formSaidaId, setFormSaidaId] = useState('');
+  const [formLocalizacao, setFormLocalizacao] = useState('');
+  const [formObservacoes, setFormObservacoes] = useState('');
+  
   const createOcorrencia = useCreateOcorrencia();
   const updateOcorrencia = useUpdateOcorrencia();
+  const { data: viagens = [] } = useViagens();
+  const { data: saidas = [] } = useSaidas();
 
   // Mark as viewed when component mounts
   useEffect(() => {
@@ -47,9 +61,31 @@ const Ocorrencias = () => {
     tipo: tipoFilter !== 'all' ? tipoFilter : undefined
   });
   
-  const handleCreateOcorrencia = (formData: any) => {
-    createOcorrencia.mutate(formData, {
+  const handleCreateOcorrencia = () => {
+    if (!formTipo || !formPrioridade || !formTitulo || !formDescricao) {
+      return;
+    }
+
+    createOcorrencia.mutate({
+      tipo: formTipo,
+      prioridade: formPrioridade,
+      titulo: formTitulo,
+      descricao: formDescricao,
+      viagem_id: formViagemId || undefined,
+      saida_id: formSaidaId || undefined,
+      localizacao: formLocalizacao || undefined,
+      observacoes: formObservacoes || undefined
+    }, {
       onSuccess: () => {
+        // Reset form
+        setFormTipo('');
+        setFormPrioridade('');
+        setFormTitulo('');
+        setFormDescricao('');
+        setFormViagemId('');
+        setFormSaidaId('');
+        setFormLocalizacao('');
+        setFormObservacoes('');
         setDialogOpen(false);
       }
     });
@@ -123,11 +159,11 @@ const Ocorrencias = () => {
             <DialogHeader>
               <DialogTitle>Registrar Nova Ocorrência</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Ocorrência</Label>
-                  <Select>
+                  <Label htmlFor="tipo">Tipo de Ocorrência *</Label>
+                  <Select value={formTipo} onValueChange={setFormTipo}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
@@ -141,8 +177,8 @@ const Ocorrencias = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="prioridade">Prioridade</Label>
-                  <Select>
+                  <Label htmlFor="prioridade">Prioridade *</Label>
+                  <Select value={formPrioridade} onValueChange={setFormPrioridade}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a prioridade" />
                     </SelectTrigger>
@@ -156,39 +192,88 @@ const Ocorrencias = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="titulo">Título</Label>
-                <Input id="titulo" placeholder="Título da ocorrência" />
+                <Label htmlFor="titulo">Título *</Label>
+                <Input 
+                  id="titulo" 
+                  placeholder="Título da ocorrência" 
+                  value={formTitulo}
+                  onChange={(e) => setFormTitulo(e.target.value)}
+                />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="descricao">Descrição</Label>
-                <Textarea id="descricao" placeholder="Descreva detalhadamente a ocorrência" />
+                <Label htmlFor="descricao">Descrição *</Label>
+                <Textarea 
+                  id="descricao" 
+                  placeholder="Descreva detalhadamente a ocorrência" 
+                  value={formDescricao}
+                  onChange={(e) => setFormDescricao(e.target.value)}
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="veiculo">Veículo</Label>
-                  <Input id="veiculo" placeholder="Placa do veículo" />
+                  <Label htmlFor="viagem">Viagem (opcional)</Label>
+                  <Select value={formViagemId} onValueChange={setFormViagemId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a viagem" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Nenhuma</SelectItem>
+                      {viagens.map((viagem) => (
+                        <SelectItem key={viagem.id} value={viagem.id}>
+                          Viagem #{viagem.numero}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="motorista">Motorista</Label>
-                  <Input id="motorista" placeholder="Nome do motorista" />
+                  <Label htmlFor="saida">Saída (opcional)</Label>
+                  <Select value={formSaidaId} onValueChange={setFormSaidaId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a saída" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Nenhuma</SelectItem>
+                      {saidas.map((saida) => (
+                        <SelectItem key={saida.id} value={saida.id}>
+                          Saída #{saida.numero_saida}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="localizacao">Localização</Label>
-                <Input id="localizacao" placeholder="Local onde ocorreu o problema" />
+                <Label htmlFor="localizacao">Localização (opcional)</Label>
+                <Input 
+                  id="localizacao" 
+                  placeholder="Local onde ocorreu o problema" 
+                  value={formLocalizacao}
+                  onChange={(e) => setFormLocalizacao(e.target.value)}
+                />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea id="observacoes" placeholder="Observações adicionais" />
+                <Label htmlFor="observacoes">Observações (opcional)</Label>
+                <Textarea 
+                  id="observacoes" 
+                  placeholder="Observações adicionais" 
+                  value={formObservacoes}
+                  onChange={(e) => setFormObservacoes(e.target.value)}
+                />
               </div>
               
               <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancelar</Button>
-                <Button>Registrar Ocorrência</Button>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                <Button 
+                  onClick={handleCreateOcorrencia}
+                  disabled={!formTipo || !formPrioridade || !formTitulo || !formDescricao || createOcorrencia.isPending}
+                >
+                  {createOcorrencia.isPending ? 'Registrando...' : 'Registrar Ocorrência'}
+                </Button>
               </div>
             </div>
           </DialogContent>

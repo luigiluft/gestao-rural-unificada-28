@@ -64,6 +64,7 @@ export const useCreateOcorrencia = () => {
       descricao: string
       localizacao?: string
       viagem_id?: string
+      saida_id?: string
       veiculo_id?: string
       motorista_id?: string
       observacoes?: string
@@ -80,6 +81,7 @@ export const useCreateOcorrencia = () => {
           descricao: data.descricao,
           localizacao: data.localizacao,
           viagem_id: data.viagem_id,
+          saida_id: data.saida_id,
           veiculo_id: data.veiculo_id,
           motorista_id: data.motorista_id,
           observacoes: data.observacoes,
