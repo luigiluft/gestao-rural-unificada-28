@@ -31,28 +31,21 @@ export default function ConfiguracaoPriorizacao() {
       id: "performance_sla_produtor",
       nome: "Performance SLA do Produtor",
       ativo: true,
-      peso: 25,
+      peso: 40,
       configuracao: { tipo: "historico_sla", periodo_dias: 90 }
-    },
-    {
-      id: "sla_contrato",
-      nome: "SLA do Contrato",
-      ativo: true,
-      peso: 25,
-      configuracao: { tipo: "sla_contrato" }
     },
     {
       id: "proximidade_agendamento",
       nome: "Proximidade do Agendamento",
       ativo: true,
-      peso: 25,
+      peso: 30,
       configuracao: { tipo: "data" }
     },
     {
       id: "cliente_vip",
       nome: "Cliente VIP / Urgente",
       ativo: true,
-      peso: 15,
+      peso: 20,
       configuracao: { tipo: "flag" }
     },
     {
@@ -127,8 +120,7 @@ export default function ConfiguracaoPriorizacao() {
 
   const getDescricaoFator = (id: string) => {
     const descricoes = {
-      performance_sla_produtor: "Prioriza produtores que tiveram mais entregas atrasadas recentemente, considerando o SLA acordado no contrato. Produtores novos começam com 100% (excelente) e perdem pontos conforme acumulam atrasos.",
-      sla_contrato: "Prioriza saídas com SLA de entrega mais apertado conforme definido no contrato de serviço.",
+      performance_sla_produtor: "Prioriza produtores baseado na diferença entre o SLA real medido na plataforma e o SLA acordado em contrato. Produtores com SLA abaixo do acordado recebem maior prioridade, enquanto aqueles acima do esperado recebem menor prioridade. Produtores novos começam com 100% (sem penalização).",
       proximidade_agendamento: "Saídas com data de entrega mais próxima recebem maior prioridade.",
       cliente_vip: "Clientes marcados como VIP, Premium ou saídas marcadas como Urgentes têm prioridade elevada.",
       tempo_fila: "Saídas que estão há mais tempo aguardando separação ganham prioridade progressivamente."

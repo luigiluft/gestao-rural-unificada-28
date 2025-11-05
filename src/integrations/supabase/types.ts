@@ -4128,9 +4128,26 @@ export type Database = {
       auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
       calcular_performance_sla_produtor: {
         Args: { p_periodo_dias?: number; p_produtor_id: string }
-        Returns: number
+        Returns: {
+          diferenca_sla: number
+          percentual_sla_historico: number
+          sla_contrato_percentual: number
+        }[]
       }
-      calcular_prioridade_saida: { Args: { p_saida_id: string }; Returns: Json }
+      calcular_prioridade_saida: {
+        Args: { p_saida_id: string }
+        Returns: {
+          cliente_vip: number
+          diferenca_sla: number
+          percentual_sla_historico: number
+          performance_sla_produtor: number
+          proximidade_agendamento: number
+          saida_id: string
+          score_final: number
+          sla_contrato_percentual: number
+          tempo_fila: number
+        }[]
+      }
       calcular_servicos_periodo: {
         Args: {
           p_contrato_id: string
