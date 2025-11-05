@@ -72,7 +72,8 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error in manage-inventario:', error)
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error)
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
@@ -80,19 +81,25 @@ serve(async (req) => {
 })
 
 async function createInventario(supabase: any, userId: string, data: any) {
+  const { deposito_id, observacoes, posicoes_ids } = data
+  
   // Generate inventory number
   const { data: numeroResult, error: numeroError } = await supabase
     .rpc('generate_inventory_number')
 
   if (numeroError) throw numeroError
 
+  // Create inventario
   const { data: inventario, error } = await supabase
     .from('inventarios')
     .insert({
       user_id: userId,
       numero_inventario: numeroResult,
-      ...data,
-      status: 'planejamento',
+      deposito_id,
+      observacoes,
+      status: 'iniciado',
+      total_posicoes: posicoes_ids?.length || 0,
+      posicoes_conferidas: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -100,6 +107,23 @@ async function createInventario(supabase: any, userId: string, data: any) {
     .single()
 
   if (error) throw error
+
+  // Create inventario_posicoes for each selected position
+  if (posicoes_ids && posicoes_ids.length > 0) {
+    const posicoesData = posicoes_ids.map((posicaoId: string) => ({
+      inventario_id: inventario.id,
+      posicao_id: posicaoId,
+      status: 'pendente',
+      created_at: new Date().toISOString()
+    }))
+
+    const { error: posicoesError } = await supabase
+      .from('inventario_posicoes')
+      .insert(posicoesData)
+
+    if (posicoesError) throw posicoesError
+  }
+
   return inventario
 }
 
