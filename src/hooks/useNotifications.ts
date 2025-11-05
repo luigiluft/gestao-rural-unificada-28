@@ -20,6 +20,9 @@ export const useNotifications = () => {
         suporte: 0,
         subcontas: 0,
         viagens: 0,
+        posicoes: 0,
+        divergencias: 0,
+        ocorrencias: 0,
       }
 
       // Get user profile to determine role
@@ -42,6 +45,9 @@ export const useNotifications = () => {
       let suporte = 0
       let subcontas = 0
       let viagens = 0
+      let posicoes = 0
+      let divergencias = 0
+      let ocorrencias = 0
 
       try {
         // RECEBIMENTO: For franqueados - entradas nos 4 status da página recebimento
@@ -87,6 +93,49 @@ export const useNotifications = () => {
           .gte("alocado_em", lastViewTime)
 
         estoque = estoqueCount || 0
+
+        // POSIÇÕES: For franqueados and admins - pallets alocados since last view
+        if (isFranqueado || isAdmin) {
+          const { data: lastViewPosicoes } = await supabase
+            .from("user_notification_views")
+            .select("last_viewed_at")
+            .eq("user_id", user.id)
+            .eq("notification_type", "posicoes")
+            .single()
+
+          const lastViewTimePosicoes = lastViewPosicoes?.last_viewed_at || '1970-01-01T00:00:00Z'
+
+          let posicoesQuery = supabase
+            .from("pallet_positions")
+            .select("id", { count: "exact" })
+            .eq("status", "alocado")
+            .gte("alocado_em", lastViewTimePosicoes)
+
+          if (!isAdmin) {
+            // Filter by franquias owned by this franqueado
+            const { data: franquias } = await supabase
+              .from("franquias")
+              .select("id")
+              .eq("master_franqueado_id", user.id)
+            
+            const franquiaIds = franquias?.map(f => f.id) || []
+            if (franquiaIds.length > 0) {
+              // Need to join with storage_positions to filter by deposito
+              const { data: positions } = await supabase
+                .from("storage_positions")
+                .select("id")
+                .in("deposito_id", franquiaIds)
+              
+              const positionIds = positions?.map(p => p.id) || []
+              if (positionIds.length > 0) {
+                posicoesQuery = posicoesQuery.in("posicao_id", positionIds)
+              }
+            }
+          }
+
+          const { count: posicoesCount } = await posicoesQuery
+          posicoes = posicoesCount || 0
+        }
 
         // ALOCAÇÕES: For franqueados - pending pallets for allocation
         if (isFranqueado || isAdmin) {
@@ -251,6 +300,50 @@ export const useNotifications = () => {
           subcontas = subcountasCount || 0
         }
 
+        // DIVERGÊNCIAS: For franqueados and admins - divergencias not in final status (resolvida/cancelada)
+        if (isFranqueado || isAdmin) {
+          let divergenciasQuery = supabase
+            .from("divergencias")
+            .select("id", { count: "exact" })
+            .not("status", "in", '("resolvida","cancelada")')
+
+          if (!isAdmin) {
+            // Filter by franquias owned by this franqueado
+            const { data: franquias } = await supabase
+              .from("franquias")
+              .select("id")
+              .eq("master_franqueado_id", user.id)
+            
+            const franquiaIds = franquias?.map(f => f.id) || []
+            if (franquiaIds.length > 0) {
+              // Need to join with entradas to filter by deposito
+              const { data: entradas } = await supabase
+                .from("entradas")
+                .select("id")
+                .in("deposito_id", franquiaIds)
+              
+              const entradaIds = entradas?.map(e => e.id) || []
+              if (entradaIds.length > 0) {
+                divergenciasQuery = divergenciasQuery.in("entrada_id", entradaIds)
+              }
+            }
+          }
+
+          const { count: divergenciasCount } = await divergenciasQuery
+          divergencias = divergenciasCount || 0
+        }
+
+        // OCORRÊNCIAS: For franqueados and admins - ocorrencias not in final status (resolvida/cancelada)
+        // Note: Table ocorrencias doesn't exist yet, so we skip this for now
+        // if (isFranqueado || isAdmin) {
+        //   const { count: ocorrenciasCount } = await supabase
+        //     .from("ocorrencias")
+        //     .select("id", { count: "exact" })
+        //     .not("status", "in", '("resolvida","cancelada")')
+        //   ocorrencias = ocorrenciasCount || 0
+        // }
+        ocorrencias = 0
+
       } catch (error) {
         console.error("Error fetching notifications:", error)
       }
@@ -265,6 +358,9 @@ export const useNotifications = () => {
         suporte,
         subcontas,
         viagens: viagens + motoristaNotifications, // Combine franqueado trips + motorista trips
+        posicoes,
+        divergencias,
+        ocorrencias,
       }
     },
     enabled: !!user?.id,

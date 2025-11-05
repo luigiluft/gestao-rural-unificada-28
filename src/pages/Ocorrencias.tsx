@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +21,18 @@ import {
 import { useOcorrencias } from '@/hooks/useOcorrencias';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useUpdateNotificationView } from '@/hooks/useNotificationViews';
 
 const Ocorrencias = () => {
+  const updateNotificationView = useUpdateNotificationView();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [tipoFilter, setTipoFilter] = useState('all');
+
+  // Mark as viewed when component mounts
+  useEffect(() => {
+    updateNotificationView.mutate("ocorrencias");
+  }, []);
 
   const { data: ocorrencias = [], isLoading, error } = useOcorrencias({ 
     status: statusFilter !== 'all' ? statusFilter : undefined,

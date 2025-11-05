@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,10 +16,18 @@ import { usePalletPositions, usePalletPositionsAvariados, useRemovePalletAllocat
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
 import { usePalletDetails } from "@/hooks/usePalletDetails";
 import { useTodasFranquias } from "@/hooks/useDepositosDisponiveis";
+import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function GerenciarPosicoes() {
+  const updateNotificationView = useUpdateNotificationView();
+
+  // Mark as viewed when component mounts
+  useEffect(() => {
+    updateNotificationView.mutate("posicoes");
+  }, []);
+
   // Estado para seleção de depósito (fallback para depósito padrão)
   const [selectedDepositoForMap, setSelectedDepositoForMap] = useState<string>(
     '75edbf21-1efa-4397-8d0c-dddca9d572aa'

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TablePageLayout } from "@/components/ui/table-page-layout";
@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
 
 interface Divergencia {
   id: string;
@@ -54,10 +55,16 @@ const prioridadeColors = {
 } as const;
 
 const Divergencias = () => {
+  const updateNotificationView = useUpdateNotificationView();
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroPrioridade, setFiltroPrioridade] = useState<string>("todos");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Mark as viewed when component mounts
+  useEffect(() => {
+    updateNotificationView.mutate("divergencias");
+  }, []);
 
   const { data: divergencias = [], isLoading } = useQuery({
     queryKey: ["divergencias", filtroStatus, filtroPrioridade, filtroTipo, searchTerm],

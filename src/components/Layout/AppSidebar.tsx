@@ -127,6 +127,12 @@ export function AppSidebar() {
         return notifications.viagens || 0
       case "Proof of Delivery":
         return notifications.viagens || 0
+      case "Gerenciar Posições":
+        return notifications.posicoes || 0
+      case "Divergências":
+        return notifications.divergencias || 0
+      case "Ocorrências":
+        return notifications.ocorrencias || 0
       default:
         return 0
     }
