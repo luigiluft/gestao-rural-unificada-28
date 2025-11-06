@@ -14,6 +14,7 @@ import { WarehouseLayout } from "./WarehouseLayoutDesigner";
 
 export interface FranquiaFormData {
   nome: string;
+  tipo_deposito: 'franquia' | 'filial';
   codigo_interno: string;
   descricao: string;
   endereco: string;
@@ -69,6 +70,7 @@ export function FranquiaWizard({
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FranquiaFormData>({
     nome: "",
+    tipo_deposito: "franquia",
     codigo_interno: "",
     descricao: "",
     endereco: "",
@@ -101,6 +103,7 @@ export function FranquiaWizard({
     if (editingFranquia && open) {
       setFormData({
         nome: editingFranquia.nome,
+        tipo_deposito: editingFranquia.tipo_deposito || "franquia",
         codigo_interno: editingFranquia.codigo_interno || "",
         descricao: editingFranquia.descricao || "",
         endereco: editingFranquia.endereco || "",
@@ -116,7 +119,7 @@ export function FranquiaWizard({
         email: editingFranquia.email || "",
         capacidade_total: editingFranquia.capacidade_total?.toString() || "",
         layout_armazem: editingFranquia.layout_armazem || "",
-        master_franqueado_id: editingFranquia.master_franqueado_id,
+        master_franqueado_id: editingFranquia.master_franqueado_id || "",
       });
       
       const layoutData = editingFranquia.layout_armazem ? JSON.parse(editingFranquia.layout_armazem) : null;
@@ -124,6 +127,7 @@ export function FranquiaWizard({
     } else if (!editingFranquia && open) {
       setFormData({
         nome: "",
+        tipo_deposito: "franquia",
         codigo_interno: "",
         descricao: "",
         endereco: "",
@@ -149,7 +153,11 @@ export function FranquiaWizard({
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.nome && formData.master_franqueado_id);
+        if (formData.tipo_deposito === 'franquia') {
+          return !!(formData.nome && formData.master_franqueado_id);
+        } else {
+          return !!formData.nome; // Filiais só precisam de nome
+        }
       case 2:
         return !!(formData.cidade && formData.estado);
       case 3:

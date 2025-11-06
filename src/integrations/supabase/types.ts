@@ -1990,10 +1990,11 @@ export type Database = {
           latitude: number | null
           layout_armazem: string | null
           longitude: number | null
-          master_franqueado_id: string
+          master_franqueado_id: string | null
           nome: string
           numero: string | null
           telefone: string | null
+          tipo_deposito: string
           updated_at: string | null
         }
         Insert: {
@@ -2016,10 +2017,11 @@ export type Database = {
           latitude?: number | null
           layout_armazem?: string | null
           longitude?: number | null
-          master_franqueado_id: string
+          master_franqueado_id?: string | null
           nome: string
           numero?: string | null
           telefone?: string | null
+          tipo_deposito?: string
           updated_at?: string | null
         }
         Update: {
@@ -2042,10 +2044,11 @@ export type Database = {
           latitude?: number | null
           layout_armazem?: string | null
           longitude?: number | null
-          master_franqueado_id?: string
+          master_franqueado_id?: string | null
           nome?: string
           numero?: string | null
           telefone?: string | null
+          tipo_deposito?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -4287,6 +4290,7 @@ export type Database = {
           deposito_nome: string
           franqueado_id: string
           franqueado_nome: string
+          tipo_deposito: string
         }[]
       }
       get_user_franquia: { Args: { _user_id: string }; Returns: string }

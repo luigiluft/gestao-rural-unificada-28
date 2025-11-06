@@ -20,6 +20,7 @@ import { useCreateStoragePosition, useBulkCreateStoragePositions } from "@/hooks
 interface Franquia {
   id: string;
   nome: string;
+  tipo_deposito: 'franquia' | 'filial';
   codigo_interno: string;
   descricao: string;
   endereco: string;
@@ -35,7 +36,7 @@ interface Franquia {
   email: string;
   capacidade_total: number;
   layout_armazem: string;
-  master_franqueado_id: string;
+  master_franqueado_id: string | null;
   ativo: boolean;
   created_at: string;
   master_franqueado?: {
@@ -60,6 +61,7 @@ const Franquias = () => {
   
   const [formData, setFormData] = useState({
     nome: "",
+    tipo_deposito: "franquia" as 'franquia' | 'filial',
     codigo_interno: "",
     descricao: "",
     endereco: "",
@@ -286,6 +288,7 @@ const Franquias = () => {
   const resetForm = () => {
     setFormData({
       nome: "",
+      tipo_deposito: "franquia",
       codigo_interno: "",
       descricao: "",
       endereco: "",
@@ -311,6 +314,7 @@ const Franquias = () => {
       setEditingFranquia(franquia);
       setFormData({
         nome: franquia.nome,
+        tipo_deposito: franquia.tipo_deposito || "franquia",
         codigo_interno: franquia.codigo_interno || "",
         descricao: franquia.descricao || "",
         endereco: franquia.endereco || "",
@@ -326,7 +330,7 @@ const Franquias = () => {
         email: franquia.email || "",
         capacidade_total: franquia.capacidade_total?.toString() || "",
         layout_armazem: franquia.layout_armazem || "",
-        master_franqueado_id: franquia.master_franqueado_id,
+        master_franqueado_id: franquia.master_franqueado_id || "",
       });
       
       // Parse warehouse layout if exists
@@ -388,6 +392,7 @@ const Franquias = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Franqueado Master</TableHead>
                   <TableHead>Localização</TableHead>
                   <TableHead>Status</TableHead>
@@ -407,7 +412,15 @@ const Franquias = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {franquia.master_franqueado?.nome || franquia.master_franqueado?.email || '—'}
+                      <Badge variant={franquia.tipo_deposito === 'filial' ? 'secondary' : 'default'}>
+                        {franquia.tipo_deposito === 'filial' ? 'Filial' : 'Franquia'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {franquia.tipo_deposito === 'filial' 
+                        ? 'Matriz' 
+                        : (franquia.master_franqueado?.nome || franquia.master_franqueado?.email || '—')
+                      }
                     </TableCell>
                     <TableCell>
                       {(franquia.cidade || franquia.estado) ? (

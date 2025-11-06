@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -32,10 +33,18 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
         <SelectContent>
           {depositos?.map((item) => (
             <SelectItem key={item.deposito_id} value={item.deposito_id}>
-              <div className="flex flex-col">
-                <span>{item.deposito_nome}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{item.deposito_nome}</span>
+                  {item.tipo_deposito === 'filial' && (
+                    <Badge variant="secondary" className="text-xs">Filial</Badge>
+                  )}
+                </div>
                 <span className="text-sm text-muted-foreground">
-                  Franqueado: {item.franqueado_nome}
+                  {item.tipo_deposito === 'franquia' 
+                    ? `Franqueado: ${item.franqueado_nome}`
+                    : 'Operado pela Matriz'
+                  }
                 </span>
               </div>
             </SelectItem>
