@@ -43,7 +43,7 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
                 <div>
                   <div className="font-medium">Franquia</div>
                   <div className="text-xs text-muted-foreground">
-                    Gerenciada por franqueado parceiro
+                    Gerenciada por franqueado parceiro - paga royalties
                   </div>
                 </div>
               </div>
@@ -54,7 +54,7 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
                 <div>
                   <div className="font-medium">Filial</div>
                   <div className="text-xs text-muted-foreground">
-                    Operada diretamente pela matriz
+                    Operada pela matriz - não paga royalties
                   </div>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
         <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <AlertDescription className="text-blue-900 dark:text-blue-100">
-            Esta filial será operada diretamente pela matriz. Não há franqueado associado.
+            Esta filial será operada pela matriz e não pagará royalties. Todo faturamento vai para a conta da franquia principal. O gestor da filial terá as mesmas permissões de um franqueado.
           </AlertDescription>
         </Alert>
       )}

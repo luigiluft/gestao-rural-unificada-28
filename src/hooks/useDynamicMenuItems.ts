@@ -79,7 +79,7 @@ const menuLabels = {
   'franqueados': 'Franqueados',
   'produtores': 'Produtores',
   'fazendas': 'Fazendas',
-  'franquias': 'Franquias',
+  'franquias': 'Depósitos',
   'usuarios': 'Usuários',
   'controle-acesso': 'Controle de Acesso',
   'configuracoes': 'Configurações',

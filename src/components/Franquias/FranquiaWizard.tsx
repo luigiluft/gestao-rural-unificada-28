@@ -242,7 +242,7 @@ export function FranquiaWizard({
       <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {editingFranquia ? "Editar Franquia" : "Nova Franquia"}
+            {editingFranquia ? "Editar Depósito" : "Novo Depósito"}
           </DialogTitle>
         </DialogHeader>
 
@@ -318,7 +318,7 @@ export function FranquiaWizard({
                   onClick={handleFinish}
                   disabled={!validateStep(currentStep) || isLoading}
                 >
-                  {isLoading ? "Criando..." : editingFranquia ? "Atualizar" : "Criar Franquia"}
+                  {isLoading ? "Criando..." : editingFranquia ? "Atualizar" : "Criar Depósito"}
                 </Button>
               ) : (
                 <Button

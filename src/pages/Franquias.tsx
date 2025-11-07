@@ -356,14 +356,14 @@ const Franquias = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Franquias</h1>
+          <h1 className="text-3xl font-bold text-foreground">Depósitos</h1>
           <p className="text-muted-foreground">
-            Gerencie as franquias e seus franqueados masters
+            Gerencie as franquias e filiais
           </p>
         </div>
         <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
           <Building2 className="mr-2 h-4 w-4" />
-          Nova Franquia
+          Novo Depósito
         </Button>
       </div>
 
@@ -377,13 +377,13 @@ const Franquias = () => {
             <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
               <Building2 className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhuma franquia cadastrada</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhum depósito cadastrado</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Comece criando sua primeira franquia para organizar seus franqueados.
+              Comece criando seu primeiro depósito para organizar suas operações.
             </p>
             <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
               <Building2 className="mr-2 h-4 w-4" />
-              Criar primeira franquia
+              Criar primeiro depósito
             </Button>
           </div>
         ) : (
@@ -393,7 +393,7 @@ const Franquias = () => {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Franqueado Master</TableHead>
+                  <TableHead>Gestor</TableHead>
                   <TableHead>Localização</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data Criação</TableHead>
@@ -418,7 +418,7 @@ const Franquias = () => {
                     </TableCell>
                     <TableCell>
                       {franquia.tipo_deposito === 'filial' 
-                        ? 'Matriz' 
+                        ? 'Gestão Matriz' 
                         : (franquia.master_franqueado?.nome || franquia.master_franqueado?.email || '—')
                       }
                     </TableCell>
