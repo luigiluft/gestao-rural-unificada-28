@@ -15,12 +15,13 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
+import { getRoleLabel } from "@/utils/roleTranslations"
 
 export function AppHeader() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [displayName, setDisplayName] = useState<string>("")
-  const [roleLabel, setRoleLabel] = useState<string>("Produtor")
+  const [roleLabel, setRoleLabel] = useState<string>(getRoleLabel('produtor', false, true))
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -40,7 +41,10 @@ export function AppHeader() {
 
   useEffect(() => {
     const loadRole = async () => {
-      if (!user) { setRoleLabel("Produtor"); return }
+      if (!user) { 
+        setRoleLabel(getRoleLabel('produtor', false, true))
+        return 
+      }
       try {
         const [adminRes, franqRes, motoristaRes] = await Promise.all([
           supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
@@ -50,12 +54,13 @@ export function AppHeader() {
         const isAdmin = adminRes.data === true
         const isFranqueado = franqRes.data === true
         const isMotorista = motoristaRes.data === true
-        if (isAdmin) setRoleLabel('Admin')
-        else if (isFranqueado) setRoleLabel('Franqueado')
-        else if (isMotorista) setRoleLabel('Motorista')
-        else setRoleLabel('Produtor')
+        
+        if (isAdmin) setRoleLabel(getRoleLabel('admin', false, true))
+        else if (isFranqueado) setRoleLabel(getRoleLabel('franqueado', false, true))
+        else if (isMotorista) setRoleLabel(getRoleLabel('motorista', false, true))
+        else setRoleLabel(getRoleLabel('produtor', false, true))
       } catch {
-        setRoleLabel('Produtor')
+        setRoleLabel(getRoleLabel('produtor', false, true))
       }
     }
     loadRole()

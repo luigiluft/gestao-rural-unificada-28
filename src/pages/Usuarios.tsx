@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { MailPlus, Settings2, Link as LinkIcon, Unlink } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { getRoleLabel } from "@/utils/roleTranslations";
 
 interface ProfileRow {
   user_id: string;
@@ -103,7 +104,9 @@ export default function Usuarios() {
           ])
           const isAdmin = adminRes.data === true
           const isFranqueado = franqRes.data === true
-          const label = isAdmin ? 'Admin' : isFranqueado ? 'Franqueado' : 'Produtor'
+          
+          const role = isAdmin ? 'admin' : isFranqueado ? 'franqueado' : 'produtor'
+          const label = getRoleLabel(role, false, true)
           return [p.user_id, label] as const
         })
       )

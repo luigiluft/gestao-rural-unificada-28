@@ -9,6 +9,7 @@ import { useAllPagePermissions, useUpdatePagePermissions, PagePermission } from 
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Check, X, Eye, EyeOff, Save, Shield } from "lucide-react"
+import { getRoleLabel } from "@/utils/roleTranslations"
 
 const pageInfo = {
   dashboard: { name: "Dashboard", description: "Painel principal com métricas e resumos" },
@@ -154,7 +155,7 @@ export default function ControleAcesso() {
                       {roles.map(role => (
                         <TableHead key={role} className="text-center min-w-[120px]">
                           <Badge variant={role === "admin" ? "default" : role === "franqueado" ? "secondary" : "outline"}>
-                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                            {getRoleLabel(role)}
                           </Badge>
                         </TableHead>
                       ))}
@@ -223,12 +224,12 @@ export default function ControleAcesso() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Badge variant={role === "admin" ? "default" : role === "franqueado" ? "secondary" : "outline"}>
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                    {getRoleLabel(role)}
                   </Badge>
                   - Páginas Acessíveis
                 </CardTitle>
                 <CardDescription>
-                  Páginas que usuários do tipo {role} podem acessar
+                  Páginas que usuários do tipo {getRoleLabel(role)} podem acessar
                 </CardDescription>
               </CardHeader>
               <CardContent>
