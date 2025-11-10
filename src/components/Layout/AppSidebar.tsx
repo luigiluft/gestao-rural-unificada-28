@@ -192,9 +192,7 @@ export function AppSidebar() {
         </div>
 
         {/* Tutorial Button */}
-        <div className="px-4 pb-2">
-          <TutorialButton />
-        </div>
+        {/* Moved to Ajuda submenu */}
 
         <SidebarGroup>
           <SidebarGroupLabel>
