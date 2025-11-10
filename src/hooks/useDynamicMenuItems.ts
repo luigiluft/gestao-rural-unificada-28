@@ -95,7 +95,8 @@ const menuLabels = {
   'suporte': 'Suporte'
 }
 
-const iconMap = {
+  const iconMap = {
+  'erp': BarChart3,
   'cadastro': FolderOpen,
   'dashboard': Home,
   'catalogo': Package,
@@ -152,16 +153,20 @@ export const useDynamicMenuItems = () => {
 
     // Ordem específica definida pelo usuário
     const orderedPages = [
+      'rastreio',
+      'instrucoes',
+      'suporte'
+    ]
+
+    // Páginas do ERP
+    const erpPages = [
       'dashboard',
       'entradas',
       'estoque',
       'saidas',
-      'rastreio',
-      'faturas',
-      'financeiro',
       'royalties',
-      'instrucoes',
-      'suporte'
+      'financeiro',
+      'faturas'
     ]
 
     // Páginas de Cadastro
@@ -224,6 +229,41 @@ export const useDynamicMenuItems = () => {
       }
     })
 
+    // Verificar se tem permissão para pelo menos uma página do ERP
+    const hasErpPermission = erpPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasErpPermission) {
+      const erpSubItems: MenuItem[] = []
+      
+      erpPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          erpSubItems.push({
+            path: page === 'dashboard' ? '/' : `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (erpSubItems.length > 0) {
+        items.push({
+          path: '/erp',
+          label: 'ERP',
+          icon: BarChart3,
+          subItems: erpSubItems
+        })
+      }
+    }
+
     // Verificar se tem permissão para pelo menos uma página do WMS
     const hasWmsPermission = wmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
@@ -250,11 +290,11 @@ export const useDynamicMenuItems = () => {
       })
 
       if (wmsSubItems.length > 0) {
-        // Inserir WMS após saídas
-        const saidasIndex = items.findIndex(item => item.path === '/saidas')
-        const insertIndex = saidasIndex !== -1 ? saidasIndex + 1 : items.length
+        // Inserir WMS após ERP
+        const erpIndex = items.findIndex(item => item.path === '/erp')
+        const insertIndex = erpIndex !== -1 ? erpIndex + 1 : items.length
         
-        items.splice(insertIndex, 0, {
+        items.push({
           path: '/wms',
           label: 'WMS',
           icon: Package,
