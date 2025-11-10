@@ -71,6 +71,7 @@ import DemoEntradas from "./pages/Demo/DemoEntradas";
 import DemoEstoque from "./pages/Demo/DemoEstoque";
 import DemoSaidas from "./pages/Demo/DemoSaidas";
 import DemoRecebimento from "./pages/Demo/DemoRecebimento";
+import Tutorial from "./pages/Tutorial";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -184,6 +185,9 @@ const App = () => {
               <Route path="instrucoes/admin" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesAdmin /></RequirePageAccess>} />
               <Route path="instrucoes/franqueado" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesFranqueado /></RequirePageAccess>} />
               <Route path="instrucoes/produtor" element={<RequirePageAccess pageKey="instrucoes"><InstrucoesProdutor /></RequirePageAccess>} />
+              
+              {/* Rota de Tutorial */}
+              <Route path="tutorial" element={<RequirePageAccess pageKey="tutorial"><Tutorial /></RequirePageAccess>} />
               
               {/* Demo Routes for Tutorial */}
               <Route path="demo/dashboard" element={<RequirePageAccess pageKey="dashboard"><DemoDashboard /></RequirePageAccess>} />

@@ -92,11 +92,13 @@ const menuLabels = {
   'financeiro': 'Financeiro',
   'royalties': 'Royalties',
   'instrucoes': 'Instruções',
-  'suporte': 'Suporte'
+  'suporte': 'Suporte',
+  'tutorial': 'Tutorial'
 }
 
-  const iconMap = {
+const iconMap = {
   'erp': BarChart3,
+  'ajuda': HelpCircle,
   'cadastro': FolderOpen,
   'dashboard': Home,
   'catalogo': Package,
@@ -140,7 +142,8 @@ const menuLabels = {
   'financeiro': DollarSign,
   'royalties': TrendingUp,
   'instrucoes': BookOpen,
-  'suporte': HelpCircle
+  'suporte': HelpCircle,
+  'tutorial': BookOpen
 }
 
 export const useDynamicMenuItems = () => {
@@ -151,13 +154,6 @@ export const useDynamicMenuItems = () => {
 
     const items: MenuItem[] = []
 
-    // Ordem específica definida pelo usuário
-    const orderedPages = [
-      'rastreio',
-      'instrucoes',
-      'suporte'
-    ]
-
     // Páginas do ERP
     const erpPages = [
       'dashboard',
@@ -167,6 +163,13 @@ export const useDynamicMenuItems = () => {
       'royalties',
       'financeiro',
       'faturas'
+    ]
+
+    // Páginas de Ajuda
+    const ajudaPages = [
+      'instrucoes',
+      'suporte',
+      'tutorial'
     ]
 
     // Páginas de Cadastro
@@ -209,25 +212,6 @@ export const useDynamicMenuItems = () => {
       'motoristas',
       'tracking'
     ]
-
-    // Adicionar itens na ordem especificada
-    orderedPages.forEach(page => {
-      const pageViewPermission = `${page}.view`
-      
-      // Verificar se tem permissão para ver a página
-      if (!permissions.includes(pageViewPermission as any)) return
-
-      const label = menuLabels[page as keyof typeof menuLabels]
-      const icon = iconMap[page as keyof typeof iconMap]
-      
-      if (label && icon) {
-        items.push({
-          path: page === 'dashboard' ? '/' : `/${page}`,
-          label,
-          icon
-        })
-      }
-    })
 
     // Verificar se tem permissão para pelo menos uma página do ERP
     const hasErpPermission = erpPages.some(page => 
@@ -378,6 +362,59 @@ export const useDynamicMenuItems = () => {
           label: 'Cadastro',
           icon: FolderOpen,
           subItems: cadastroSubItems
+        })
+      }
+    }
+
+    // Adicionar Rastreamento Produtor após Cadastro
+    if (permissions.includes('rastreio.view' as any)) {
+      const label = menuLabels['rastreio']
+      const icon = iconMap['rastreio']
+      
+      if (label && icon) {
+        const cadastroIndex = items.findIndex(item => item.path === '/cadastro')
+        const insertIndex = cadastroIndex !== -1 ? cadastroIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/rastreio',
+          label,
+          icon
+        })
+      }
+    }
+
+    // Verificar se tem permissão para pelo menos uma página de Ajuda
+    const hasAjudaPermission = ajudaPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasAjudaPermission) {
+      const ajudaSubItems: MenuItem[] = []
+      
+      ajudaPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          ajudaSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (ajudaSubItems.length > 0) {
+        // Inserir Ajuda no final
+        items.push({
+          path: '/ajuda',
+          label: 'Ajuda',
+          icon: HelpCircle,
+          subItems: ajudaSubItems
         })
       }
     }
