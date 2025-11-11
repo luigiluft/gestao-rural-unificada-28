@@ -383,40 +383,30 @@ export const useDynamicMenuItems = () => {
       }
     }
 
-    // Verificar se tem permissão para pelo menos uma página de Ajuda
-    const hasAjudaPermission = ajudaPages.some(page => 
-      permissions.includes(`${page}.view` as any)
-    )
-
-    if (hasAjudaPermission) {
-      const ajudaSubItems: MenuItem[] = []
+    // Adicionar páginas de Ajuda (sempre disponíveis para todos)
+    const ajudaSubItems: MenuItem[] = []
+    
+    ajudaPages.forEach(page => {
+      const label = menuLabels[page as keyof typeof menuLabels]
+      const icon = iconMap[page as keyof typeof iconMap]
       
-      ajudaPages.forEach(page => {
-        const pageViewPermission = `${page}.view`
-        
-        if (!permissions.includes(pageViewPermission as any)) return
-
-        const label = menuLabels[page as keyof typeof menuLabels]
-        const icon = iconMap[page as keyof typeof iconMap]
-        
-        if (label && icon) {
-          ajudaSubItems.push({
-            path: `/${page}`,
-            label,
-            icon
-          })
-        }
-      })
-
-      if (ajudaSubItems.length > 0) {
-        // Inserir Ajuda no final
-        items.push({
-          path: '/ajuda',
-          label: 'Ajuda',
-          icon: HelpCircle,
-          subItems: ajudaSubItems
+      if (label && icon) {
+        ajudaSubItems.push({
+          path: `/${page}`,
+          label,
+          icon
         })
       }
+    })
+
+    if (ajudaSubItems.length > 0) {
+      // Inserir Ajuda no final
+      items.push({
+        path: '/ajuda',
+        label: 'Ajuda',
+        icon: HelpCircle,
+        subItems: ajudaSubItems
+      })
     }
 
     return items
