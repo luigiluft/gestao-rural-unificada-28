@@ -58,6 +58,13 @@ export default function Perfil() {
     cidade: "",
     estado: "",
     cep: "",
+    razao_social: "",
+    cnpj_empresa: "",
+    inscricao_estadual: "",
+    telefone_comercial: "",
+    atividade_principal: "",
+    observacoes_empresa: "",
+    is_produtor_rural: false,
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -75,7 +82,7 @@ export default function Perfil() {
       setLoading(true)
       const { data, error } = await supabase
         .from("profiles")
-        .select("nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep")
+        .select("nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep, razao_social, cnpj_empresa, inscricao_estadual, telefone_comercial, atividade_principal, observacoes_empresa, is_produtor_rural")
         .eq("user_id", user.id)
         .maybeSingle()
       if (error) {
@@ -91,6 +98,13 @@ export default function Perfil() {
         cidade: data?.cidade ?? "",
         estado: data?.estado ?? "",
         cep: data?.cep ?? "",
+        razao_social: data?.razao_social ?? "",
+        cnpj_empresa: data?.cnpj_empresa ?? "",
+        inscricao_estadual: data?.inscricao_estadual ?? "",
+        telefone_comercial: data?.telefone_comercial ?? "",
+        atividade_principal: data?.atividade_principal ?? "",
+        observacoes_empresa: data?.observacoes_empresa ?? "",
+        is_produtor_rural: data?.is_produtor_rural ?? false,
       })
       setLoading(false)
     }
@@ -116,6 +130,13 @@ export default function Perfil() {
         cidade: profile.cidade,
         estado: profile.estado,
         cep: profile.cep,
+        razao_social: profile.razao_social,
+        cnpj_empresa: profile.cnpj_empresa,
+        inscricao_estadual: profile.inscricao_estadual,
+        telefone_comercial: profile.telefone_comercial,
+        atividade_principal: profile.atividade_principal,
+        observacoes_empresa: profile.observacoes_empresa,
+        is_produtor_rural: profile.is_produtor_rural,
       })
       .eq("user_id", user.id)
     if (error) {
@@ -415,23 +436,54 @@ export default function Perfil() {
                       Informações da Empresa
                     </CardTitle>
                     <CardDescription>
-                      Dados da fazenda e informações fiscais
+                      Dados da sua organização e informações fiscais
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between space-x-2 p-4 bg-muted/50 rounded-lg">
+                      <div className="flex-1">
+                        <Label htmlFor="is-produtor-rural" className="text-base font-medium">
+                          Produtor Rural com Isenção de CNPJ
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Ative esta opção se você é produtor rural e utiliza CPF ao invés de CNPJ
+                        </p>
+                      </div>
+                      <Switch
+                        id="is-produtor-rural"
+                        checked={profile.is_produtor_rural}
+                        onCheckedChange={(checked) => {
+                          setProfile(prev => ({
+                            ...prev,
+                            is_produtor_rural: checked,
+                            cnpj_empresa: checked ? prev.cpf_cnpj : prev.cnpj_empresa
+                          }))
+                        }}
+                        disabled={!isEditing || loading}
+                      />
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="nomeEmpresa">Nome da Fazenda</Label>
+                        <Label htmlFor="razaoSocial">Razão Social</Label>
                         <Input 
-                          id="nomeEmpresa" 
-                          disabled={!isEditing}
+                          id="razaoSocial" 
+                          value={profile.razao_social}
+                          onChange={handleChange('razao_social')}
+                          disabled={!isEditing || loading}
+                          placeholder="Nome da empresa ou do produtor"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="cnpj">CNPJ</Label>
+                        <Label htmlFor="cnpjEmpresa">
+                          {profile.is_produtor_rural ? "CPF" : "CNPJ"}
+                        </Label>
                         <Input 
-                          id="cnpj" 
-                          disabled={!isEditing}
+                          id="cnpjEmpresa" 
+                          value={profile.cnpj_empresa}
+                          onChange={handleChange('cnpj_empresa')}
+                          disabled={!isEditing || loading}
+                          placeholder={profile.is_produtor_rural ? "CPF do produtor" : "CNPJ da empresa"}
                         />
                       </div>
                     </div>
@@ -441,38 +493,53 @@ export default function Perfil() {
                         <Label htmlFor="inscricaoEstadual">Inscrição Estadual</Label>
                         <Input 
                           id="inscricaoEstadual" 
-                          disabled={!isEditing}
+                          value={profile.inscricao_estadual}
+                          onChange={handleChange('inscricao_estadual')}
+                          disabled={!isEditing || loading}
+                          placeholder="Inscrição estadual"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="telefoneEmpresa">Telefone Comercial</Label>
                         <Input 
                           id="telefoneEmpresa" 
-                          disabled={!isEditing}
+                          value={profile.telefone_comercial}
+                          onChange={handleChange('telefone_comercial')}
+                          disabled={!isEditing || loading}
+                          placeholder="Telefone comercial"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="atividade">Atividade Principal</Label>
-                        <Select disabled={!isEditing}>
-                          <SelectTrigger id="atividade">
-                            <SelectValue placeholder="Selecione" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="agricultura">Agricultura</SelectItem>
-                            <SelectItem value="pecuaria">Pecuária</SelectItem>
-                            <SelectItem value="mista">Atividade Mista</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <Select 
+                        disabled={!isEditing || loading} 
+                        value={profile.atividade_principal || undefined}
+                        onValueChange={(v) => setProfile((p) => ({ ...p, atividade_principal: v }))}
+                      >
+                        <SelectTrigger id="atividade">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="agricultura">Agricultura</SelectItem>
+                          <SelectItem value="pecuaria">Pecuária</SelectItem>
+                          <SelectItem value="mista">Atividade Mista</SelectItem>
+                          <SelectItem value="armazenagem">Armazenagem</SelectItem>
+                          <SelectItem value="logistica">Logística</SelectItem>
+                          <SelectItem value="outros">Outros</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="observacoes">Observações</Label>
+                      <Label htmlFor="observacoesEmpresa">Observações</Label>
                       <Textarea 
-                        id="observacoes" 
+                        id="observacoesEmpresa" 
+                        value={profile.observacoes_empresa}
+                        onChange={(e) => setProfile(prev => ({ ...prev, observacoes_empresa: e.target.value }))}
                         placeholder="Informações adicionais sobre a empresa..."
-                        disabled={!isEditing}
+                        disabled={!isEditing || loading}
                         rows={3}
                       />
                     </div>
