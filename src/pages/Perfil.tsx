@@ -341,15 +341,17 @@ export default function Perfil() {
                         disabled={!isEditing || loading}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF/CNPJ</Label>
-                      <Input 
-                        id="cpf" 
-                        value={profile.cpf_cnpj}
-                        onChange={handleChange('cpf_cnpj')}
-                        disabled={!isEditing || loading}
-                      />
-                    </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cpf">CPF</Label>
+                        <Input 
+                          id="cpf" 
+                          value={profile.cpf_cnpj}
+                          onChange={handleChange('cpf_cnpj')}
+                          disabled={!isEditing || loading}
+                          placeholder="000.000.000-00"
+                          maxLength={14}
+                        />
+                      </div>
                   </div>
 
                   {userProfile?.role === 'produtor' && (
