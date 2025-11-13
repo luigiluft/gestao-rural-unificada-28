@@ -82,7 +82,7 @@ export default function Perfil() {
       setLoading(true)
       const { data, error } = await supabase
         .from("profiles")
-        .select("nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep")
+        .select("nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep, razao_social, cnpj_empresa, inscricao_estadual, telefone_comercial, atividade_principal, observacoes_empresa, is_produtor_rural")
         .eq("user_id", user.id)
         .maybeSingle()
       if (error) {
@@ -98,13 +98,13 @@ export default function Perfil() {
         cidade: data?.cidade ?? "",
         estado: data?.estado ?? "",
         cep: data?.cep ?? "",
-        razao_social: "",
-        cnpj_empresa: "",
-        inscricao_estadual: "",
-        telefone_comercial: "",
-        atividade_principal: "",
-        observacoes_empresa: "",
-        is_produtor_rural: false,
+        razao_social: data?.razao_social ?? "",
+        cnpj_empresa: data?.cnpj_empresa ?? "",
+        inscricao_estadual: data?.inscricao_estadual ?? "",
+        telefone_comercial: data?.telefone_comercial ?? "",
+        atividade_principal: data?.atividade_principal ?? "",
+        observacoes_empresa: data?.observacoes_empresa ?? "",
+        is_produtor_rural: data?.is_produtor_rural ?? false,
       })
       setLoading(false)
     }
@@ -130,6 +130,13 @@ export default function Perfil() {
         cidade: profile.cidade,
         estado: profile.estado,
         cep: profile.cep,
+        razao_social: profile.razao_social,
+        cnpj_empresa: profile.cnpj_empresa,
+        inscricao_estadual: profile.inscricao_estadual,
+        telefone_comercial: profile.telefone_comercial,
+        atividade_principal: profile.atividade_principal,
+        observacoes_empresa: profile.observacoes_empresa,
+        is_produtor_rural: profile.is_produtor_rural,
       })
       .eq("user_id", user.id)
     if (error) {
