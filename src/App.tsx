@@ -16,6 +16,7 @@ import RastreamentoWMS from "./pages/RastreamentoWMS";
 
 import Suporte from "./pages/Suporte";
 import Perfil from "./pages/Perfil";
+import Clientes from "./pages/Clientes";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import CompletarCadastro from "./pages/CompletarCadastro";
@@ -140,6 +141,7 @@ const App = () => {
               <Route path="subcontas" element={<RequirePageAccess pageKey="subcontas"><Subcontas /></RequirePageAccess>} />
               <Route path="suporte" element={<RequirePageAccess pageKey="suporte"><Suporte /></RequirePageAccess>} />
               <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />
+              <Route path="clientes" element={<RequirePageAccess pageKey="clientes"><Clientes /></RequirePageAccess>} />
               <Route path="configuracoes" element={<RequirePageAccess pageKey="configuracoes"><Configuracoes /></RequirePageAccess>} />
               <Route path="configuracao-priorizacao" element={<RequirePageAccess pageKey="configuracoes"><ConfiguracaoPriorizacao /></RequirePageAccess>} />
               <Route path="controle-acesso" element={<RequirePageAccess pageKey="controle-acesso"><ControleAcesso /></RequirePageAccess>} />
