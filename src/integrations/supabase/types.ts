@@ -2861,47 +2861,68 @@ export type Database = {
       }
       profiles: {
         Row: {
+          atividade_principal: string | null
           cep: string | null
           cidade: string | null
+          cnpj_empresa: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
           endereco: string | null
           estado: string | null
           id: string
+          inscricao_estadual: string | null
+          is_produtor_rural: boolean | null
           nome: string
+          observacoes_empresa: string | null
+          razao_social: string | null
           role: Database["public"]["Enums"]["app_role"]
           telefone: string | null
+          telefone_comercial: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          atividade_principal?: string | null
           cep?: string | null
           cidade?: string | null
+          cnpj_empresa?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           endereco?: string | null
           estado?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          is_produtor_rural?: boolean | null
           nome: string
+          observacoes_empresa?: string | null
+          razao_social?: string | null
           role: Database["public"]["Enums"]["app_role"]
           telefone?: string | null
+          telefone_comercial?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          atividade_principal?: string | null
           cep?: string | null
           cidade?: string | null
+          cnpj_empresa?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
           endereco?: string | null
           estado?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          is_produtor_rural?: boolean | null
           nome?: string
+          observacoes_empresa?: string | null
+          razao_social?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           telefone?: string | null
+          telefone_comercial?: string | null
           updated_at?: string
           user_id?: string
         }
