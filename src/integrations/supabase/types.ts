@@ -56,6 +56,144 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_usuarios: {
+        Row: {
+          ativo: boolean
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          papel: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          papel?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          papel?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_usuarios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_usuarios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "cliente_usuarios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          atividade_principal: string | null
+          ativo: boolean
+          bairro_fiscal: string | null
+          cep_fiscal: string | null
+          cidade_fiscal: string | null
+          complemento_fiscal: string | null
+          cpf_cnpj: string
+          created_at: string
+          created_by: string | null
+          email_comercial: string | null
+          endereco_fiscal: string | null
+          estado_fiscal: string | null
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          nome_fantasia: string | null
+          numero_fiscal: string | null
+          observacoes: string | null
+          razao_social: string
+          regime_tributario: string | null
+          telefone_comercial: string | null
+          tipo_cliente: string
+          updated_at: string
+        }
+        Insert: {
+          atividade_principal?: string | null
+          ativo?: boolean
+          bairro_fiscal?: string | null
+          cep_fiscal?: string | null
+          cidade_fiscal?: string | null
+          complemento_fiscal?: string | null
+          cpf_cnpj: string
+          created_at?: string
+          created_by?: string | null
+          email_comercial?: string | null
+          endereco_fiscal?: string | null
+          estado_fiscal?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          nome_fantasia?: string | null
+          numero_fiscal?: string | null
+          observacoes?: string | null
+          razao_social: string
+          regime_tributario?: string | null
+          telefone_comercial?: string | null
+          tipo_cliente: string
+          updated_at?: string
+        }
+        Update: {
+          atividade_principal?: string | null
+          ativo?: boolean
+          bairro_fiscal?: string | null
+          cep_fiscal?: string | null
+          cidade_fiscal?: string | null
+          complemento_fiscal?: string | null
+          cpf_cnpj?: string
+          created_at?: string
+          created_by?: string | null
+          email_comercial?: string | null
+          endereco_fiscal?: string | null
+          estado_fiscal?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          nome_fantasia?: string | null
+          numero_fiscal?: string | null
+          observacoes?: string | null
+          razao_social?: string
+          regime_tributario?: string | null
+          telefone_comercial?: string | null
+          tipo_cliente?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       comprovante_fotos: {
         Row: {
           comprovante_id: string
