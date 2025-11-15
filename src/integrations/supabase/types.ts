@@ -56,6 +56,63 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_filiais: {
+        Row: {
+          ativo: boolean | null
+          cliente_id: string
+          codigo_interno: string | null
+          contato_local: string | null
+          created_at: string | null
+          created_by: string | null
+          endereco_complementar: string | null
+          franquia_id: string
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cliente_id: string
+          codigo_interno?: string | null
+          contato_local?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          endereco_complementar?: string | null
+          franquia_id: string
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cliente_id?: string
+          codigo_interno?: string | null
+          contato_local?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          endereco_complementar?: string | null
+          franquia_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_filiais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cliente_filiais_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cliente_usuarios: {
         Row: {
           ativo: boolean
@@ -1328,6 +1385,8 @@ export type Database = {
         Row: {
           aprovado_por: string | null
           chave_nfe: string | null
+          cliente_filial_id: string | null
+          cliente_id: string | null
           cmun_fg: string | null
           cnf: string | null
           codigo_status: string | null
@@ -1459,6 +1518,8 @@ export type Database = {
         Insert: {
           aprovado_por?: string | null
           chave_nfe?: string | null
+          cliente_filial_id?: string | null
+          cliente_id?: string | null
           cmun_fg?: string | null
           cnf?: string | null
           codigo_status?: string | null
@@ -1592,6 +1653,8 @@ export type Database = {
         Update: {
           aprovado_por?: string | null
           chave_nfe?: string | null
+          cliente_filial_id?: string | null
+          cliente_id?: string | null
           cmun_fg?: string | null
           cnf?: string | null
           codigo_status?: string | null
@@ -1722,7 +1785,22 @@ export type Database = {
           versao_processo?: string | null
           xml_content?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "entradas_cliente_filial_id_fkey"
+            columns: ["cliente_filial_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       estoque_reservas: {
         Row: {
@@ -1951,6 +2029,7 @@ export type Database = {
           capacidade_armazenagem_ton: number | null
           cep: string | null
           cidade: string | null
+          cliente_id: string | null
           codigo_ibge_municipio: string | null
           codigo_imovel_rural: string | null
           complemento: string | null
@@ -1987,6 +2066,7 @@ export type Database = {
           capacidade_armazenagem_ton?: number | null
           cep?: string | null
           cidade?: string | null
+          cliente_id?: string | null
           codigo_ibge_municipio?: string | null
           codigo_imovel_rural?: string | null
           complemento?: string | null
@@ -2023,6 +2103,7 @@ export type Database = {
           capacidade_armazenagem_ton?: number | null
           cep?: string | null
           cidade?: string | null
+          cliente_id?: string | null
           codigo_ibge_municipio?: string | null
           codigo_imovel_rural?: string | null
           complemento?: string | null
@@ -2051,7 +2132,15 @@ export type Database = {
           uf_ie?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fazendas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fornecedores: {
         Row: {
@@ -2417,6 +2506,8 @@ export type Database = {
       }
       movimentacoes: {
         Row: {
+          cliente_filial_id: string | null
+          cliente_id: string | null
           created_at: string
           data_movimentacao: string
           deposito_id: string
@@ -2432,6 +2523,8 @@ export type Database = {
           valor_unitario: number | null
         }
         Insert: {
+          cliente_filial_id?: string | null
+          cliente_id?: string | null
           created_at?: string
           data_movimentacao?: string
           deposito_id: string
@@ -2447,6 +2540,8 @@ export type Database = {
           valor_unitario?: number | null
         }
         Update: {
+          cliente_filial_id?: string | null
+          cliente_id?: string | null
           created_at?: string
           data_movimentacao?: string
           deposito_id?: string
@@ -2462,6 +2557,20 @@ export type Database = {
           valor_unitario?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "movimentacoes_cliente_filial_id_fkey"
+            columns: ["cliente_filial_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimentacoes_produto_id_fkey"
             columns: ["produto_id"]
@@ -3479,6 +3588,9 @@ export type Database = {
       }
       saidas: {
         Row: {
+          cliente_filial_destino_id: string | null
+          cliente_filial_origem_id: string | null
+          cliente_origem_id: string | null
           contrato_servico_id: string | null
           cpf_motorista: string | null
           created_at: string
@@ -3510,6 +3622,7 @@ export type Database = {
           status_aprovacao_produtor: string | null
           tags: Json | null
           telefone_motorista: string | null
+          tipo_destino: string | null
           tipo_movimentacao:
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
             | null
@@ -3521,6 +3634,9 @@ export type Database = {
           viagem_id: string | null
         }
         Insert: {
+          cliente_filial_destino_id?: string | null
+          cliente_filial_origem_id?: string | null
+          cliente_origem_id?: string | null
           contrato_servico_id?: string | null
           cpf_motorista?: string | null
           created_at?: string
@@ -3552,6 +3668,7 @@ export type Database = {
           status_aprovacao_produtor?: string | null
           tags?: Json | null
           telefone_motorista?: string | null
+          tipo_destino?: string | null
           tipo_movimentacao?:
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
             | null
@@ -3563,6 +3680,9 @@ export type Database = {
           viagem_id?: string | null
         }
         Update: {
+          cliente_filial_destino_id?: string | null
+          cliente_filial_origem_id?: string | null
+          cliente_origem_id?: string | null
           contrato_servico_id?: string | null
           cpf_motorista?: string | null
           created_at?: string
@@ -3594,6 +3714,7 @@ export type Database = {
           status_aprovacao_produtor?: string | null
           tags?: Json | null
           telefone_motorista?: string | null
+          tipo_destino?: string | null
           tipo_movimentacao?:
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
             | null
@@ -3605,6 +3726,27 @@ export type Database = {
           viagem_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "saidas_cliente_filial_destino_id_fkey"
+            columns: ["cliente_filial_destino_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_cliente_filial_origem_id_fkey"
+            columns: ["cliente_filial_origem_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_cliente_origem_id_fkey"
+            columns: ["cliente_origem_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "saidas_contrato_servico_id_fkey"
             columns: ["contrato_servico_id"]
@@ -4430,6 +4572,8 @@ export type Database = {
       get_estoque_from_movimentacoes: {
         Args: never
         Returns: {
+          cliente_filial_id: string
+          cliente_id: string
           deposito_id: string
           franquia_nome: string
           lote: string
