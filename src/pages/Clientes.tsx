@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Building2, Users, Edit, Trash2 } from "lucide-react"
+import { Plus, Building2, Users, Edit, Trash2, Building, Tractor } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -24,15 +24,21 @@ import {
 import { useClientes, useCreateCliente, useUpdateCliente, Cliente } from "@/hooks/useClientes"
 import { useClienteUsuarios } from "@/hooks/useClienteUsuarios"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { GerenciarFiliais } from "@/components/Clientes/GerenciarFiliais"
+import { GerenciarFazendas } from "@/components/Clientes/GerenciarFazendas"
+import { useAuth } from "@/contexts/AuthContext"
+import { toast } from "sonner"
 
 export default function Clientes() {
   const { data: clientes, isLoading } = useClientes()
   const createCliente = useCreateCliente()
   const updateCliente = useUpdateCliente()
+  const { user } = useAuth()
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null)
+  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   
   const [formData, setFormData] = useState({
     tipo_cliente: 'empresa' as 'empresa' | 'produtor_rural',
@@ -478,6 +484,23 @@ export default function Clientes() {
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedCliente(cliente)}
+                >
+                  {cliente.tipo_cliente === 'empresa' ? (
+                    <>
+                      <Building className="h-4 w-4 mr-1" />
+                      Filiais
+                    </>
+                  ) : (
+                    <>
+                      <Tractor className="h-4 w-4 mr-1" />
+                      Fazendas
+                    </>
+                  )}
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -504,6 +527,27 @@ export default function Clientes() {
           </Button>
         </Card>
       )}
+
+      {/* Dialog para gerenciar Filiais ou Fazendas */}
+      <Dialog open={!!selectedCliente} onOpenChange={(open) => !open && setSelectedCliente(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedCliente?.tipo_cliente === 'empresa' ? 'Filiais de' : 'Fazendas de'} {selectedCliente?.razao_social}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedCliente && (
+            selectedCliente.tipo_cliente === 'empresa' ? (
+              <GerenciarFiliais clienteId={selectedCliente.id} />
+            ) : (
+              <GerenciarFazendas 
+                clienteId={selectedCliente.id} 
+                produtorId={user?.id || ''} 
+              />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
