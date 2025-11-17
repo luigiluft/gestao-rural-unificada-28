@@ -5,12 +5,11 @@ import { toast } from "sonner"
 
 export interface Cliente {
   id: string
-  tipo_cliente: 'empresa' | 'produtor_rural'
+  tipo_cliente: 'cpf' | 'cnpj'
   razao_social: string
   nome_fantasia: string | null
   cpf_cnpj: string
   inscricao_estadual: string | null
-  inscricao_municipal: string | null
   endereco_fiscal: string | null
   numero_fiscal: string | null
   complemento_fiscal: string | null

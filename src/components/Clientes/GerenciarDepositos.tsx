@@ -42,9 +42,8 @@ export const GerenciarDepositos = ({ clienteId }: GerenciarDepositosProps) => {
 
   // Encontrar o cliente atual para verificar o tipo
   const cliente = clientes?.find(c => c.id === clienteId)
-  // Cliente CPF (11 dígitos) ou produtor rural só pode ter armazém geral
-  const isCPF = cliente?.tipo_cliente === 'produtor_rural' ||
-                (cliente?.cpf_cnpj && cliente.cpf_cnpj.replace(/\D/g, '').length === 11)
+  // Cliente CPF só pode ter armazém geral
+  const isCPF = cliente?.tipo_cliente === 'cpf'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
