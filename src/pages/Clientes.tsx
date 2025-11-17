@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useClientes, useCreateCliente, useUpdateCliente, Cliente } from "@/hooks/useClientes"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
@@ -57,6 +58,9 @@ export default function Clientes() {
     regime_tributario: '',
     observacoes: '',
   })
+
+  const [semNumero, setSemNumero] = useState(false)
+  const [semComplemento, setSemComplemento] = useState(false)
 
   // Atualizar lista de clientes disponíveis no contexto
   useEffect(() => {
@@ -109,6 +113,8 @@ export default function Clientes() {
       regime_tributario: '',
       observacoes: '',
     })
+    setSemNumero(false)
+    setSemComplemento(false)
   }
 
   const handleEdit = (cliente: Cliente) => {
@@ -132,6 +138,8 @@ export default function Clientes() {
       regime_tributario: cliente.regime_tributario || '',
       observacoes: cliente.observacoes || '',
     })
+    setSemNumero(cliente.numero_fiscal === 'S/N')
+    setSemComplemento(cliente.complemento_fiscal === 'S/C')
     setIsDialogOpen(true)
   }
 
@@ -273,23 +281,63 @@ export default function Clientes() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="numero_fiscal">Número</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="numero_fiscal">Número</Label>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="sem-numero"
+                            checked={semNumero}
+                            onCheckedChange={(checked) => {
+                              setSemNumero(checked)
+                              if (checked) {
+                                setFormData({ ...formData, numero_fiscal: 'S/N' })
+                              } else {
+                                setFormData({ ...formData, numero_fiscal: '' })
+                              }
+                            }}
+                          />
+                          <Label htmlFor="sem-numero" className="text-sm text-muted-foreground cursor-pointer">
+                            Sem número
+                          </Label>
+                        </div>
+                      </div>
                       <Input
                         id="numero_fiscal"
-                        value={formData.numero_fiscal}
+                        value={semNumero ? 'S/N' : formData.numero_fiscal}
                         onChange={(e) =>
                           setFormData({ ...formData, numero_fiscal: e.target.value })
                         }
+                        disabled={semNumero}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="complemento_fiscal">Complemento</Label>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label htmlFor="complemento_fiscal">Complemento</Label>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="sem-complemento"
+                            checked={semComplemento}
+                            onCheckedChange={(checked) => {
+                              setSemComplemento(checked)
+                              if (checked) {
+                                setFormData({ ...formData, complemento_fiscal: 'S/C' })
+                              } else {
+                                setFormData({ ...formData, complemento_fiscal: '' })
+                              }
+                            }}
+                          />
+                          <Label htmlFor="sem-complemento" className="text-sm text-muted-foreground cursor-pointer">
+                            Sem complemento
+                          </Label>
+                        </div>
+                      </div>
                       <Input
                         id="complemento_fiscal"
-                        value={formData.complemento_fiscal}
+                        value={semComplemento ? 'S/C' : formData.complemento_fiscal}
                         onChange={(e) =>
                           setFormData({ ...formData, complemento_fiscal: e.target.value })
                         }
+                        disabled={semComplemento}
                       />
                     </div>
                   </div>

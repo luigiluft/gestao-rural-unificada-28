@@ -4610,6 +4610,14 @@ export type Database = {
       }
       refresh_estoque_simple: { Args: never; Returns: undefined }
       reset_wave_positions: { Args: { p_wave_id: string }; Returns: boolean }
+      user_has_cliente_association: {
+        Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_is_cliente_owner: {
+        Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
       validar_e_alocar_estoque_fefo: {
         Args: {
           p_deposito_id: string
