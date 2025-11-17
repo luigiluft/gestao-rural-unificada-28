@@ -191,7 +191,6 @@ export type Database = {
           estado_fiscal: string | null
           id: string
           inscricao_estadual: string | null
-          inscricao_municipal: string | null
           nome_fantasia: string | null
           numero_fiscal: string | null
           observacoes: string | null
@@ -216,7 +215,6 @@ export type Database = {
           estado_fiscal?: string | null
           id?: string
           inscricao_estadual?: string | null
-          inscricao_municipal?: string | null
           nome_fantasia?: string | null
           numero_fiscal?: string | null
           observacoes?: string | null
@@ -241,7 +239,6 @@ export type Database = {
           estado_fiscal?: string | null
           id?: string
           inscricao_estadual?: string | null
-          inscricao_municipal?: string | null
           nome_fantasia?: string | null
           numero_fiscal?: string | null
           observacoes?: string | null

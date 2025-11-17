@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "./AppSidebar"
 import { AppHeader } from "./AppHeader"
 import { TutorialProvider } from "@/contexts/TutorialContext"
+import { ClienteProvider } from "@/contexts/ClienteContext"
 import { TutorialOverlay } from "@/components/Tutorial/TutorialOverlay"
 import { useTutorial } from "@/contexts/TutorialContext"
 
@@ -60,13 +61,15 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   return (
-    <TutorialProvider>
-      <SidebarProvider defaultOpen={false}>
-        <AppLayoutContent>
-          {children}
-        </AppLayoutContent>
-        <TutorialOverlay />
-      </SidebarProvider>
-    </TutorialProvider>
+    <ClienteProvider>
+      <TutorialProvider>
+        <SidebarProvider defaultOpen={false}>
+          <AppLayoutContent>
+            {children}
+          </AppLayoutContent>
+          <TutorialOverlay />
+        </SidebarProvider>
+      </TutorialProvider>
+    </ClienteProvider>
   )
 }

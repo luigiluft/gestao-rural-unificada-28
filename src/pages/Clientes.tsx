@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Plus, Building2, Users, Edit, Trash2, Building, Tractor } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Plus, Building2, Users, Edit, Building, Tractor } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,18 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useClientes, useCreateCliente, useUpdateCliente, Cliente } from "@/hooks/useClientes"
-import { useClienteUsuarios } from "@/hooks/useClienteUsuarios"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
 import { GerenciarFazendas } from "@/components/Clientes/GerenciarFazendas"
-import { useAuth } from "@/contexts/AuthContext"
-import { toast } from "sonner"
+import { useCliente } from "@/contexts/ClienteContext"
 
 export default function Clientes() {
   const { data: clientes, isLoading } = useClientes()
   const createCliente = useCreateCliente()
   const updateCliente = useUpdateCliente()
-  const { user } = useAuth()
+  const { setAvailableClientes } = useCliente()
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
@@ -41,12 +39,11 @@ export default function Clientes() {
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   
   const [formData, setFormData] = useState({
-    tipo_cliente: 'empresa' as 'empresa' | 'produtor_rural',
+    tipo_cliente: 'cnpj' as 'cpf' | 'cnpj',
     razao_social: '',
     nome_fantasia: '',
     cpf_cnpj: '',
     inscricao_estadual: '',
-    inscricao_municipal: '',
     endereco_fiscal: '',
     numero_fiscal: '',
     complemento_fiscal: '',
@@ -60,6 +57,13 @@ export default function Clientes() {
     regime_tributario: '',
     observacoes: '',
   })
+
+  // Atualizar lista de clientes disponíveis no contexto
+  useEffect(() => {
+    if (clientes) {
+      setAvailableClientes(clientes)
+    }
+  }, [clientes, setAvailableClientes])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,12 +91,11 @@ export default function Clientes() {
 
   const resetForm = () => {
     setFormData({
-      tipo_cliente: 'empresa',
+      tipo_cliente: 'cnpj',
       razao_social: '',
       nome_fantasia: '',
       cpf_cnpj: '',
       inscricao_estadual: '',
-      inscricao_municipal: '',
       endereco_fiscal: '',
       numero_fiscal: '',
       complemento_fiscal: '',
@@ -116,7 +119,6 @@ export default function Clientes() {
       nome_fantasia: cliente.nome_fantasia || '',
       cpf_cnpj: cliente.cpf_cnpj,
       inscricao_estadual: cliente.inscricao_estadual || '',
-      inscricao_municipal: cliente.inscricao_municipal || '',
       endereco_fiscal: cliente.endereco_fiscal || '',
       numero_fiscal: cliente.numero_fiscal || '',
       complemento_fiscal: cliente.complemento_fiscal || '',
@@ -143,7 +145,7 @@ export default function Clientes() {
         <div>
           <h1 className="text-3xl font-bold">Gerenciar Clientes</h1>
           <p className="text-muted-foreground">
-            Entidades fiscais (empresas e produtores rurais)
+            Entidades fiscais (pessoas físicas e jurídicas)
           </p>
         </div>
         
@@ -160,7 +162,7 @@ export default function Clientes() {
                 {editingCliente ? 'Editar Cliente' : 'Novo Cliente'}
               </DialogTitle>
               <DialogDescription>
-                Cadastre uma nova entidade fiscal (empresa ou produtor rural)
+                Cadastre uma nova entidade fiscal (pessoa física ou jurídica)
               </DialogDescription>
             </DialogHeader>
             
@@ -177,7 +179,7 @@ export default function Clientes() {
                     <Label htmlFor="tipo_cliente">Tipo de Cliente *</Label>
                     <Select
                       value={formData.tipo_cliente}
-                      onValueChange={(value: 'empresa' | 'produtor_rural') =>
+                      onValueChange={(value: 'cpf' | 'cnpj') =>
                         setFormData({ ...formData, tipo_cliente: value })
                       }
                     >
@@ -185,14 +187,16 @@ export default function Clientes() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="empresa">Empresa</SelectItem>
-                        <SelectItem value="produtor_rural">Produtor Rural</SelectItem>
+                        <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
+                        <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <Label htmlFor="razao_social">Razão Social *</Label>
+                    <Label htmlFor="razao_social">
+                      {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
+                    </Label>
                     <Input
                       id="razao_social"
                       value={formData.razao_social}
@@ -203,20 +207,22 @@ export default function Clientes() {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                    <Input
-                      id="nome_fantasia"
-                      value={formData.nome_fantasia}
-                      onChange={(e) =>
-                        setFormData({ ...formData, nome_fantasia: e.target.value })
-                      }
-                    />
-                  </div>
+                  {formData.tipo_cliente === 'cnpj' && (
+                    <div>
+                      <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                      <Input
+                        id="nome_fantasia"
+                        value={formData.nome_fantasia}
+                        onChange={(e) =>
+                          setFormData({ ...formData, nome_fantasia: e.target.value })
+                        }
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <Label htmlFor="cpf_cnpj">
-                      {formData.tipo_cliente === 'empresa' ? 'CNPJ' : 'CPF/CNPJ'} *
+                      {formData.tipo_cliente === 'cpf' ? 'CPF *' : 'CNPJ *'}
                     </Label>
                     <Input
                       id="cpf_cnpj"
@@ -228,27 +234,18 @@ export default function Clientes() {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                    <Input
-                      id="inscricao_estadual"
-                      value={formData.inscricao_estadual}
-                      onChange={(e) =>
-                        setFormData({ ...formData, inscricao_estadual: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="inscricao_municipal">Inscrição Municipal</Label>
-                    <Input
-                      id="inscricao_municipal"
-                      value={formData.inscricao_municipal}
-                      onChange={(e) =>
-                        setFormData({ ...formData, inscricao_municipal: e.target.value })
-                      }
-                    />
-                  </div>
+                  {formData.tipo_cliente === 'cnpj' && (
+                    <div>
+                      <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                      <Input
+                        id="inscricao_estadual"
+                        value={formData.inscricao_estadual}
+                        onChange={(e) =>
+                          setFormData({ ...formData, inscricao_estadual: e.target.value })
+                        }
+                      />
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="endereco" className="space-y-4">
@@ -357,36 +354,39 @@ export default function Clientes() {
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="atividade_principal">Atividade Principal</Label>
-                    <Input
-                      id="atividade_principal"
-                      value={formData.atividade_principal}
-                      onChange={(e) =>
-                        setFormData({ ...formData, atividade_principal: e.target.value })
-                      }
-                    />
-                  </div>
+                  {formData.tipo_cliente === 'cnpj' && (
+                    <>
+                      <div>
+                        <Label htmlFor="atividade_principal">Atividade Principal</Label>
+                        <Input
+                          id="atividade_principal"
+                          value={formData.atividade_principal}
+                          onChange={(e) =>
+                            setFormData({ ...formData, atividade_principal: e.target.value })
+                          }
+                        />
+                      </div>
 
-                  <div>
-                    <Label htmlFor="regime_tributario">Regime Tributário</Label>
-                    <Select
-                      value={formData.regime_tributario}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, regime_tributario: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
-                        <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
-                        <SelectItem value="lucro_real">Lucro Real</SelectItem>
-                        <SelectItem value="mei">MEI</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <div>
+                        <Label htmlFor="regime_tributario">Regime Tributário</Label>
+                        <Select
+                          value={formData.regime_tributario}
+                          onValueChange={(value) =>
+                            setFormData({ ...formData, regime_tributario: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
+                            <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
+                            <SelectItem value="lucro_real">Lucro Real</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <Label htmlFor="observacoes">Observações</Label>
@@ -439,15 +439,15 @@ export default function Clientes() {
                     )}
                   </div>
                 </div>
-                <Badge variant={cliente.tipo_cliente === 'empresa' ? 'default' : 'secondary'}>
-                  {cliente.tipo_cliente === 'empresa' ? 'Empresa' : 'Produtor Rural'}
+                <Badge variant={cliente.tipo_cliente === 'cnpj' ? 'default' : 'secondary'}>
+                  {cliente.tipo_cliente === 'cnpj' ? 'CNPJ' : 'CPF'}
                 </Badge>
               </div>
 
               <div className="space-y-1 text-sm">
                 <p>
                   <span className="font-medium">
-                    {cliente.tipo_cliente === 'empresa' ? 'CNPJ:' : 'CPF/CNPJ:'}
+                    {cliente.tipo_cliente === 'cnpj' ? 'CNPJ:' : 'CPF:'}
                   </span>{' '}
                   {cliente.cpf_cnpj}
                 </p>
@@ -489,10 +489,10 @@ export default function Clientes() {
                   variant="outline"
                   onClick={() => setSelectedCliente(cliente)}
                 >
-                  {cliente.tipo_cliente === 'empresa' ? (
+                  {cliente.tipo_cliente === 'cnpj' ? (
                     <>
                       <Building className="h-4 w-4 mr-1" />
-                      Filiais
+                      Depósitos
                     </>
                   ) : (
                     <>
@@ -501,7 +501,7 @@ export default function Clientes() {
                     </>
                   )}
                 </Button>
-                <Button
+                <Button 
                   size="sm"
                   variant="outline"
                   onClick={() => setSelectedClienteId(cliente.id)}
@@ -514,12 +514,12 @@ export default function Clientes() {
         ))}
       </div>
 
-      {(!clientes || clientes.length === 0) && (
+      {clientes?.length === 0 && (
         <Card className="p-12 text-center">
-          <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Nenhum cliente cadastrado</h3>
           <p className="text-muted-foreground mb-4">
-            Comece criando seu primeiro cliente para gerenciar suas operações
+            Comece criando seu primeiro cliente (pessoa física ou jurídica)
           </p>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
@@ -528,23 +528,49 @@ export default function Clientes() {
         </Card>
       )}
 
-      {/* Dialog para gerenciar Filiais ou Fazendas */}
-      <Dialog open={!!selectedCliente} onOpenChange={(open) => !open && setSelectedCliente(null)}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <Dialog 
+        open={!!selectedCliente} 
+        onOpenChange={(open) => !open && setSelectedCliente(null)}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedCliente?.tipo_cliente === 'empresa' ? 'Filiais de' : 'Fazendas de'} {selectedCliente?.razao_social}
+              {selectedCliente?.tipo_cliente === 'cnpj' ? 'Gerenciar Depósitos' : 'Gerenciar Fazendas'}
             </DialogTitle>
+            <DialogDescription>
+              {selectedCliente?.tipo_cliente === 'cnpj' 
+                ? 'Gerencie os depósitos desta empresa' 
+                : 'Gerencie as fazendas e depósitos deste produtor rural'
+              }
+            </DialogDescription>
           </DialogHeader>
           {selectedCliente && (
-            selectedCliente.tipo_cliente === 'empresa' ? (
+            selectedCliente.tipo_cliente === 'cnpj' ? (
               <GerenciarDepositos clienteId={selectedCliente.id} />
             ) : (
-              <GerenciarFazendas 
-                clienteId={selectedCliente.id} 
-                produtorId={user?.id || ''} 
-              />
+              <GerenciarFazendas clienteId={selectedCliente.id} produtorId={selectedCliente.created_by || ''} />
             )
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog 
+        open={!!selectedClienteId} 
+        onOpenChange={(open) => !open && setSelectedClienteId(null)}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Usuários do Cliente</DialogTitle>
+            <DialogDescription>
+              Adicione ou remova usuários deste cliente
+            </DialogDescription>
+          </DialogHeader>
+          {selectedClienteId && (
+            <div className="p-4">
+              <p className="text-muted-foreground">
+                Funcionalidade de gerenciar usuários em desenvolvimento
+              </p>
+            </div>
           )}
         </DialogContent>
       </Dialog>
