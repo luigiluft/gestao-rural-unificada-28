@@ -56,7 +56,7 @@ export type Database = {
         }
         Relationships: []
       }
-      cliente_filiais: {
+      cliente_depositos: {
         Row: {
           ativo: boolean | null
           cliente_id: string
@@ -68,6 +68,7 @@ export type Database = {
           franquia_id: string
           id: string
           nome: string
+          tipo_regime: string
           updated_at: string | null
         }
         Insert: {
@@ -81,6 +82,7 @@ export type Database = {
           franquia_id: string
           id?: string
           nome: string
+          tipo_regime: string
           updated_at?: string | null
         }
         Update: {
@@ -94,18 +96,26 @@ export type Database = {
           franquia_id?: string
           id?: string
           nome?: string
+          tipo_regime?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "cliente_filiais_cliente_id_fkey"
+            foreignKeyName: "cliente_depositos_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "cliente_filiais_franquia_id_fkey"
+            foreignKeyName: "cliente_depositos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "cliente_depositos_franquia_id_fkey"
             columns: ["franquia_id"]
             isOneToOne: false
             referencedRelation: "franquias"
@@ -1787,13 +1797,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "entradas_cliente_filial_id_fkey"
-            columns: ["cliente_filial_id"]
-            isOneToOne: false
-            referencedRelation: "cliente_filiais"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "entradas_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
@@ -2557,13 +2560,6 @@ export type Database = {
           valor_unitario?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "movimentacoes_cliente_filial_id_fkey"
-            columns: ["cliente_filial_id"]
-            isOneToOne: false
-            referencedRelation: "cliente_filiais"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "movimentacoes_cliente_id_fkey"
             columns: ["cliente_id"]
@@ -3714,20 +3710,6 @@ export type Database = {
           viagem_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "saidas_cliente_filial_destino_id_fkey"
-            columns: ["cliente_filial_destino_id"]
-            isOneToOne: false
-            referencedRelation: "cliente_filiais"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "saidas_cliente_filial_origem_id_fkey"
-            columns: ["cliente_filial_origem_id"]
-            isOneToOne: false
-            referencedRelation: "cliente_filiais"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "saidas_cliente_origem_id_fkey"
             columns: ["cliente_origem_id"]
