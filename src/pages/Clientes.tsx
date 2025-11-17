@@ -24,7 +24,7 @@ import {
 import { useClientes, useCreateCliente, useUpdateCliente, Cliente } from "@/hooks/useClientes"
 import { useClienteUsuarios } from "@/hooks/useClienteUsuarios"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { GerenciarFiliais } from "@/components/Clientes/GerenciarFiliais"
+import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
 import { GerenciarFazendas } from "@/components/Clientes/GerenciarFazendas"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
@@ -538,7 +538,7 @@ export default function Clientes() {
           </DialogHeader>
           {selectedCliente && (
             selectedCliente.tipo_cliente === 'empresa' ? (
-              <GerenciarFiliais clienteId={selectedCliente.id} />
+              <GerenciarDepositos clienteId={selectedCliente.id} />
             ) : (
               <GerenciarFazendas 
                 clienteId={selectedCliente.id} 
