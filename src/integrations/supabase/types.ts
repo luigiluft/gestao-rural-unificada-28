@@ -4614,6 +4614,10 @@ export type Database = {
         Args: { _cliente_id: string; _user_id: string }
         Returns: boolean
       }
+      user_is_cliente_admin: {
+        Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_is_cliente_owner: {
         Args: { _cliente_id: string; _user_id: string }
         Returns: boolean
