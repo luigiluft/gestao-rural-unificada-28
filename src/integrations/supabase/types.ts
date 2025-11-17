@@ -3109,14 +3109,10 @@ export type Database = {
       profiles: {
         Row: {
           atividade_principal: string | null
-          cep: string | null
-          cidade: string | null
           cnpj_empresa: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
-          endereco: string | null
-          estado: string | null
           id: string
           inscricao_estadual: string | null
           is_produtor_rural: boolean | null
@@ -3131,14 +3127,10 @@ export type Database = {
         }
         Insert: {
           atividade_principal?: string | null
-          cep?: string | null
-          cidade?: string | null
           cnpj_empresa?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          endereco?: string | null
-          estado?: string | null
           id?: string
           inscricao_estadual?: string | null
           is_produtor_rural?: boolean | null
@@ -3153,14 +3145,10 @@ export type Database = {
         }
         Update: {
           atividade_principal?: string | null
-          cep?: string | null
-          cidade?: string | null
           cnpj_empresa?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          endereco?: string | null
-          estado?: string | null
           id?: string
           inscricao_estadual?: string | null
           is_produtor_rural?: boolean | null

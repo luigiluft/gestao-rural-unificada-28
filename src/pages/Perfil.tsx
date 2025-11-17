@@ -17,10 +17,6 @@ export default function Perfil() {
     email: "",
     telefone: "",
     cpf_cnpj: "",
-    endereco: "",
-    cidade: "",
-    estado: "",
-    cep: "",
   })
 
   useEffect(() => {
@@ -29,7 +25,7 @@ export default function Perfil() {
     const loadProfile = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep")
+        .select("nome, email, telefone, cpf_cnpj")
         .eq("user_id", user.id)
         .single()
 
@@ -44,10 +40,6 @@ export default function Perfil() {
         email: data.email || "",
         telefone: data.telefone || "",
         cpf_cnpj: data.cpf_cnpj || "",
-        endereco: data.endereco || "",
-        cidade: data.cidade || "",
-        estado: data.estado || "",
-        cep: data.cep || "",
       })
     }
 
@@ -137,44 +129,6 @@ export default function Perfil() {
               value={profile.telefone}
               onChange={(e) => setProfile({ ...profile, telefone: e.target.value })}
             />
-          </div>
-
-          <div>
-            <Label htmlFor="cep">CEP</Label>
-            <Input
-              id="cep"
-              value={profile.cep}
-              onChange={(e) => setProfile({ ...profile, cep: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="endereco">Endereço</Label>
-            <Input
-              id="endereco"
-              value={profile.endereco}
-              onChange={(e) => setProfile({ ...profile, endereco: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cidade">Cidade</Label>
-              <Input
-                id="cidade"
-                value={profile.cidade}
-                onChange={(e) => setProfile({ ...profile, cidade: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="estado">Estado</Label>
-              <Input
-                id="estado"
-                value={profile.estado}
-                onChange={(e) => setProfile({ ...profile, estado: e.target.value })}
-                maxLength={2}
-              />
-            </div>
           </div>
 
           <Button type="submit" className="w-full" disabled={isSaving}>
