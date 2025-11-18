@@ -7,7 +7,18 @@ export const useFranquias = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("franquias")
-        .select("*")
+        .select(`
+          *,
+          franquia_usuarios!inner (
+            user_id,
+            papel,
+            ativo,
+            profiles (
+              nome,
+              email
+            )
+          )
+        `)
         .eq("ativo", true)
         .order("nome")
 
