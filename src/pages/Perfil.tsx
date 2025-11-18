@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Building2 } from "lucide-react"
-import { Link } from "react-router-dom"
 
 export default function Perfil() {
   const { user } = useAuth()
@@ -70,24 +68,6 @@ export default function Perfil() {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
-      <Card className="p-6 bg-primary/5 border-primary/20">
-        <div className="flex items-center gap-3 mb-4">
-          <Building2 className="h-6 w-6 text-primary" />
-          <div>
-            <h2 className="text-xl font-semibold">Gerenciar Clientes</h2>
-            <p className="text-sm text-muted-foreground">
-              Os dados de empresa foram movidos para Clientes (entidades fiscais)
-            </p>
-          </div>
-        </div>
-        <Link to="/clientes">
-          <Button className="w-full">
-            <Building2 className="mr-2 h-4 w-4" />
-            Ir para Gerenciar Clientes
-          </Button>
-        </Link>
-      </Card>
-
       <Card className="p-6">
         <h1 className="text-2xl font-bold mb-6">Meus Dados Pessoais</h1>
         

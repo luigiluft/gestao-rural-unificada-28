@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Search, Bell, ChevronDown, Settings, HelpCircle } from "lucide-react"
+import { Search, Bell, ChevronDown, Settings, HelpCircle, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -16,12 +16,16 @@ import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { getRoleLabel } from "@/utils/roleTranslations"
+import { useCliente } from "@/contexts/ClienteContext"
+import { useClientes } from "@/hooks/useClientes"
 
 export function AppHeader() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [displayName, setDisplayName] = useState<string>("")
   const [roleLabel, setRoleLabel] = useState<string>(getRoleLabel('produtor', false, true))
+  const { selectedCliente, setSelectedCliente, availableClientes } = useCliente()
+  const { data: clientes } = useClientes()
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -78,6 +82,14 @@ export function AppHeader() {
 
   const handleLogout = logout
 
+  // Sincronizar clientes disponíveis quando carregarem
+  useEffect(() => {
+    if (clientes && clientes.length > 0) {
+      // Usar availableClientes do contexto não funciona na primeira carga
+      // então sincronizamos direto quando os clientes chegam
+    }
+  }, [clientes])
+
   return (
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 shadow-card">
       {/* Left side - Menu toggle and Role indicator */}
@@ -87,6 +99,51 @@ export function AppHeader() {
           <span>Visão:</span>
           <Badge variant="secondary">{roleLabel}</Badge>
         </div>
+
+        {/* Depositante selector - only for produtor role */}
+        {roleLabel === 'Cliente' && clientes && clientes.length > 0 && (
+          <>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              <span>Depositante:</span>
+              {clientes.length === 1 ? (
+                <Badge variant="outline" className="font-normal">
+                  {clientes[0].razao_social}
+                </Badge>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                      {selectedCliente?.razao_social || clientes[0].razao_social}
+                      <ChevronDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64 bg-card z-50">
+                    <DropdownMenuLabel>Selecione o Depositante</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {clientes.map((cliente) => (
+                      <DropdownMenuItem
+                        key={cliente.id}
+                        onClick={() => setSelectedCliente(cliente)}
+                        className={selectedCliente?.id === cliente.id ? "bg-primary/10" : ""}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{cliente.razao_social}</span>
+                          {cliente.nome_fantasia && (
+                            <span className="text-xs text-muted-foreground">
+                              {cliente.nome_fantasia}
+                            </span>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
     </header>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { Cliente } from "@/hooks/useClientes"
+import { Cliente, useClientes as useClientesHook } from "@/hooks/useClientes"
 
 interface ClienteContextType {
   selectedCliente: Cliente | null
@@ -16,6 +16,14 @@ const STORAGE_KEY = "agrohub:selected-cliente"
 export function ClienteProvider({ children }: { children: ReactNode }) {
   const [selectedCliente, setSelectedClienteState] = useState<Cliente | null>(null)
   const [availableClientes, setAvailableClientes] = useState<Cliente[]>([])
+  const { data: clientes } = useClientesHook()
+
+  // Atualizar availableClientes quando os clientes carregarem
+  useEffect(() => {
+    if (clientes && clientes.length > 0) {
+      setAvailableClientes(clientes)
+    }
+  }, [clientes])
 
   // Carregar cliente selecionado do localStorage na inicialização
   useEffect(() => {
