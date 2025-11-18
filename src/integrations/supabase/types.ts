@@ -4627,6 +4627,10 @@ export type Database = {
           papel: string
         }[]
       }
+      get_user_role: {
+        Args: { p_user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_permission: {
         Args: {
           _perm: Database["public"]["Enums"]["permission_code"]
@@ -4686,6 +4690,14 @@ export type Database = {
       }
       user_is_cliente_owner: {
         Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_is_franquia_master: {
+        Args: { p_franquia_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_is_franquia_member: {
+        Args: { p_franquia_id: string; p_user_id: string }
         Returns: boolean
       }
       validar_e_alocar_estoque_fefo: {
