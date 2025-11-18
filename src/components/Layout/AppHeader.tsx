@@ -100,13 +100,13 @@ export function AppHeader() {
           <Badge variant="secondary">{roleLabel}</Badge>
         </div>
 
-        {/* Depositante selector - only for produtor role */}
+        {/* Empresa selector - only for cliente role */}
         {roleLabel === 'Cliente' && clientes && clientes.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
-              <span>Depositante:</span>
+              <span>Empresa:</span>
               {clientes.length === 1 ? (
                 <Badge variant="outline" className="font-normal">
                   {clientes[0].razao_social}
@@ -120,7 +120,7 @@ export function AppHeader() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64 bg-card z-50">
-                    <DropdownMenuLabel>Selecione o Depositante</DropdownMenuLabel>
+                    <DropdownMenuLabel>Selecione a Empresa</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {clientes.map((cliente) => (
                       <DropdownMenuItem
@@ -130,11 +130,9 @@ export function AppHeader() {
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">{cliente.razao_social}</span>
-                          {cliente.nome_fantasia && (
-                            <span className="text-xs text-muted-foreground">
-                              {cliente.nome_fantasia}
-                            </span>
-                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {cliente.tipo_cliente === 'cpf' ? 'CPF' : 'CNPJ'}: {cliente.cpf_cnpj}
+                          </span>
                         </div>
                       </DropdownMenuItem>
                     ))}
