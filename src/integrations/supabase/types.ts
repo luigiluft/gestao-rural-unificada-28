@@ -2196,6 +2196,61 @@ export type Database = {
         }
         Relationships: []
       }
+      franquia_usuarios: {
+        Row: {
+          ativo: boolean
+          created_at: string | null
+          created_by: string | null
+          franquia_id: string
+          id: string
+          papel: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string | null
+          created_by?: string | null
+          franquia_id: string
+          id?: string
+          papel?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string | null
+          created_by?: string | null
+          franquia_id?: string
+          id?: string
+          papel?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franquia_usuarios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "franquia_usuarios_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franquia_usuarios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       franquias: {
         Row: {
           ativo: boolean | null
@@ -4565,6 +4620,13 @@ export type Database = {
       }
       get_user_franquia: { Args: { _user_id: string }; Returns: string }
       get_user_franquia_id: { Args: { _user_id: string }; Returns: string }
+      get_user_franquias: {
+        Args: { p_user_id: string }
+        Returns: {
+          franquia_id: string
+          papel: string
+        }[]
+      }
       has_permission: {
         Args: {
           _perm: Database["public"]["Enums"]["permission_code"]
@@ -4610,6 +4672,10 @@ export type Database = {
       }
       refresh_estoque_simple: { Args: never; Returns: undefined }
       reset_wave_positions: { Args: { p_wave_id: string }; Returns: boolean }
+      user_belongs_to_franquia: {
+        Args: { p_franquia_id: string; p_user_id: string }
+        Returns: boolean
+      }
       user_has_cliente_association: {
         Args: { _cliente_id: string; _user_id: string }
         Returns: boolean
