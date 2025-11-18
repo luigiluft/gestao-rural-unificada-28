@@ -84,6 +84,7 @@ const menuLabels = {
   'controle-acesso': 'Controle de Acesso',
   'configuracoes': 'Configurações',
   'perfil': 'Perfil',
+  'clientes': 'Clientes',
   'subcontas': 'Subcontas',
   'perfis-funcionarios': 'Perfis de Funcionários',
   'contratos': 'Contratos de Serviço',
@@ -134,6 +135,7 @@ const iconMap = {
   'controle-acesso': Shield,
   'configuracoes': Settings,
   'perfil': UserCircle,
+  'clientes': Building2,
   'subcontas': UserPlus,
   'perfis-funcionarios': Badge,
   'contratos': FileCheck,
@@ -175,6 +177,7 @@ export const useDynamicMenuItems = () => {
     // Páginas de Cadastro
     const cadastroPages = [
       'perfil',
+      'clientes',
       'subcontas',
       'perfis-funcionarios',
       'catalogo',
