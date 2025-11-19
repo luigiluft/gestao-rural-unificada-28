@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { MapPin } from "lucide-react";
 import { FranquiaFormData } from "../FranquiaWizard";
 
@@ -10,6 +11,9 @@ interface AddressStepProps {
 }
 
 export function AddressStep({ formData, setFormData }: AddressStepProps) {
+  const [semNumero, setSemNumero] = useState(false);
+  const [semComplemento, setSemComplemento] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 border-b pb-2">
@@ -28,24 +32,64 @@ export function AddressStep({ formData, setFormData }: AddressStepProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="numero">Número</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="numero">Número</Label>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="sem-numero"
+                checked={semNumero}
+                onCheckedChange={(checked) => {
+                  setSemNumero(checked);
+                  if (checked) {
+                    setFormData(prev => ({ ...prev, numero: 'S/N' }));
+                  } else {
+                    setFormData(prev => ({ ...prev, numero: '' }));
+                  }
+                }}
+              />
+              <Label htmlFor="sem-numero" className="text-sm text-muted-foreground cursor-pointer">
+                Sem número
+              </Label>
+            </div>
+          </div>
           <Input
             id="numero"
             value={formData.numero}
             onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
             placeholder="123"
+            disabled={semNumero}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="complemento">Complemento</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="complemento">Complemento</Label>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="sem-complemento"
+                checked={semComplemento}
+                onCheckedChange={(checked) => {
+                  setSemComplemento(checked);
+                  if (checked) {
+                    setFormData(prev => ({ ...prev, complemento: '-' }));
+                  } else {
+                    setFormData(prev => ({ ...prev, complemento: '' }));
+                  }
+                }}
+              />
+              <Label htmlFor="sem-complemento" className="text-sm text-muted-foreground cursor-pointer">
+                Sem complemento
+              </Label>
+            </div>
+          </div>
           <Input
             id="complemento"
             value={formData.complemento}
             onChange={(e) => setFormData(prev => ({ ...prev, complemento: e.target.value }))}
             placeholder="Ex: Sala 101, Galpão A"
+            disabled={semComplemento}
           />
         </div>
         <div className="space-y-2">
