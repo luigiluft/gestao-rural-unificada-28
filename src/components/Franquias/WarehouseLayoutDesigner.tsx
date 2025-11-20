@@ -464,7 +464,7 @@ export function WarehouseLayoutDesigner({
                   <Slider
                     value={[currentLayout.ruas]}
                     onValueChange={([value]) => updateDimensions('ruas', value)}
-                    max={20}
+                    max={100}
                     min={1}
                     step={1}
                     className="w-full"
@@ -472,7 +472,7 @@ export function WarehouseLayoutDesigner({
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>1</span>
                     <span className="font-medium">{currentLayout.ruas}</span>
-                    <span>20</span>
+                    <span>100</span>
                   </div>
                 </div>
               </div>
@@ -483,7 +483,7 @@ export function WarehouseLayoutDesigner({
                   <Slider
                     value={[currentLayout.modulos]}
                     onValueChange={([value]) => updateDimensions('modulos', value)}
-                    max={50}
+                    max={250}
                     min={1}
                     step={1}
                     className="w-full"
@@ -491,7 +491,7 @@ export function WarehouseLayoutDesigner({
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>1</span>
                     <span className="font-medium">{currentLayout.modulos}</span>
-                    <span>50</span>
+                    <span>250</span>
                   </div>
                 </div>
               </div>
@@ -502,7 +502,7 @@ export function WarehouseLayoutDesigner({
                   <Slider
                     value={[currentLayout.andares]}
                     onValueChange={([value]) => updateDimensions('andares', value)}
-                    max={8}
+                    max={10}
                     min={1}
                     step={1}
                     className="w-full"
@@ -510,7 +510,7 @@ export function WarehouseLayoutDesigner({
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>1</span>
                     <span className="font-medium">{currentLayout.andares}</span>
-                    <span>8</span>
+                    <span>10</span>
                   </div>
                 </div>
               </div>

@@ -31,7 +31,7 @@ interface Franquia {
   estado: string;
   cep: string;
   cnpj: string;
-  inscricao_estadual: string;
+  inscricao_municipal: string;
   telefone: string;
   email: string;
   capacidade_total: number;
@@ -72,7 +72,7 @@ const Franquias = () => {
     estado: "",
     cep: "",
     cnpj: "",
-    inscricao_estadual: "",
+    inscricao_municipal: "",
     telefone: "",
     email: "",
     capacidade_total: "",
@@ -299,7 +299,7 @@ const Franquias = () => {
       estado: "",
       cep: "",
       cnpj: "",
-      inscricao_estadual: "",
+      inscricao_municipal: "",
       telefone: "",
       email: "",
       capacidade_total: "",
@@ -325,7 +325,7 @@ const Franquias = () => {
         estado: franquia.estado || "",
         cep: franquia.cep || "",
         cnpj: franquia.cnpj || "",
-        inscricao_estadual: franquia.inscricao_estadual || "",
+        inscricao_municipal: franquia.inscricao_municipal || "",
         telefone: franquia.telefone || "",
         email: franquia.email || "",
         capacidade_total: franquia.capacidade_total?.toString() || "",

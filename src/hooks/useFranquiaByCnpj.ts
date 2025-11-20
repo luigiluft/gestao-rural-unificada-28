@@ -25,7 +25,7 @@ export const useFranquiaByCnpj = (cnpj?: string, ie?: string) => {
         
         const { data: franquia, error } = await supabase
           .from("franquias")
-          .select("id, nome, cnpj, inscricao_estadual")
+          .select("id, nome, cnpj, inscricao_municipal")
           .eq("ativo", true)
           .or(`cnpj.eq.${cnpjLimpo},cnpj.eq.${cnpjComMascara}`)
           .maybeSingle()
@@ -43,9 +43,9 @@ export const useFranquiaByCnpj = (cnpj?: string, ie?: string) => {
         
         const { data: franquia, error } = await supabase
           .from("franquias")
-          .select("id, nome, cnpj, inscricao_estadual")
+          .select("id, nome, cnpj, inscricao_municipal")
           .eq("ativo", true)
-          .eq("inscricao_estadual", ieLimpo)
+          .eq("inscricao_municipal", ieLimpo)
           .maybeSingle()
 
         if (error && error.code !== 'PGRST116') {
