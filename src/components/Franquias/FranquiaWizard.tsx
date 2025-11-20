@@ -163,7 +163,8 @@ export function FranquiaWizard({
       case 3:
         return true; // Legal info is optional
       case 4:
-        return positions.length > 0; // Require at least one position
+        // Validar que as posições foram geradas
+        return positions.length > 0 && !!warehouseLayout;
       default:
         return false;
     }
@@ -183,42 +184,9 @@ export function FranquiaWizard({
 
   const handleFinish = () => {
     if (validateStep(currentStep)) {
-      console.log('FranquiaWizard handleFinish:', {
-        formData: formData.nome,
-        positions: positions.length,
-        layout: warehouseLayout
-      });
-      
-      // Gerar posições a partir do layout no momento do submit
-      let finalPositions = positions;
-      if (warehouseLayout && positions.length === 0) {
-        const generatedPositions: StoragePosition[] = [];
-        
-        for (let rua = 1; rua <= warehouseLayout.ruas; rua++) {
-          for (let modulo = 1; modulo <= warehouseLayout.modulos; modulo++) {
-            for (let andar = 1; andar <= warehouseLayout.andares; andar++) {
-              const isInactive = warehouseLayout.posicoes_inativas.some(
-                pos => pos.rua === rua && pos.modulo === modulo && pos.andar === andar
-              );
-              
-              if (!isInactive) {
-                const codigo = `R${String(rua).padStart(2, '0')}-M${String(modulo).padStart(2, '0')}-A${String(andar).padStart(2, '0')}`;
-                generatedPositions.push({
-                  codigo,
-                  descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`
-                });
-              }
-            }
-          }
-        }
-        
-        finalPositions = generatedPositions;
-        console.log(`Generated ${finalPositions.length} positions from layout at submit time`);
-      }
-      
       onSubmit({
         formData,
-        positions: finalPositions,
+        positions: positions,
         layout: warehouseLayout
       });
     }
