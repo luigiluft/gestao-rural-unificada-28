@@ -134,6 +134,32 @@ export function WarehouseLayoutDesigner({
 
   // Renderizar vista 2D (planta baixa)
   const render2DView = () => {
+    // Limite de posições para renderização (evitar travamento)
+    const totalPositions = currentLayout.ruas * currentLayout.modulos;
+    const MAX_POSITIONS = 5000;
+    
+    if (totalPositions > MAX_POSITIONS) {
+      return (
+        <div className="bg-muted/20 rounded-lg p-8 text-center space-y-4">
+          <div className="text-destructive font-medium text-lg">
+            ⚠️ Layout muito grande para visualização
+          </div>
+          <p className="text-sm text-muted-foreground">
+            O layout configurado ({currentLayout.ruas} ruas × {currentLayout.modulos} módulos = {totalPositions.toLocaleString()} posições) 
+            é muito grande para renderizar a visualização 2D. 
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Por favor, use as estatísticas na aba "Dimensões" ou configure dimensões menores para usar a interface de seleção visual.
+          </p>
+          <div className="pt-4">
+            <Badge variant="secondary" className="text-base px-4 py-2">
+              Limite máximo: {MAX_POSITIONS.toLocaleString()} posições
+            </Badge>
+          </div>
+        </div>
+      );
+    }
+    
     const cellSize = Math.min(400 / Math.max(currentLayout.ruas, currentLayout.modulos), 40);
     
     return (
