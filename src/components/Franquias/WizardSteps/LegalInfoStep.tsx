@@ -37,11 +37,11 @@ export function LegalInfoStep({ formData, setFormData }: LegalInfoStepProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+          <Label htmlFor="inscricao_municipal">Inscrição Municipal</Label>
           <Input
-            id="inscricao_estadual"
-            value={formData.inscricao_estadual}
-            onChange={(e) => setFormData(prev => ({ ...prev, inscricao_estadual: e.target.value }))}
+            id="inscricao_municipal"
+            value={formData.inscricao_municipal}
+            onChange={(e) => setFormData(prev => ({ ...prev, inscricao_municipal: e.target.value }))}
             placeholder="000.000.000.000"
           />
         </div>

@@ -2268,7 +2268,7 @@ export type Database = {
           endereco: string | null
           estado: string | null
           id: string
-          inscricao_estadual: string | null
+          inscricao_municipal: string | null
           latitude: number | null
           layout_armazem: string | null
           longitude: number | null
@@ -2295,7 +2295,7 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           id?: string
-          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           latitude?: number | null
           layout_armazem?: string | null
           longitude?: number | null
@@ -2322,7 +2322,7 @@ export type Database = {
           endereco?: string | null
           estado?: string | null
           id?: string
-          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           latitude?: number | null
           layout_armazem?: string | null
           longitude?: number | null

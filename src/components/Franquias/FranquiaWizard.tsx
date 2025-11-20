@@ -25,7 +25,7 @@ export interface FranquiaFormData {
   estado: string;
   cep: string;
   cnpj: string;
-  inscricao_estadual: string;
+  inscricao_municipal: string;
   telefone: string;
   email: string;
   capacidade_total: string;
@@ -81,7 +81,7 @@ export function FranquiaWizard({
     estado: "",
     cep: "",
     cnpj: "",
-    inscricao_estadual: "",
+    inscricao_municipal: "",
     telefone: "",
     email: "",
     capacidade_total: "",
@@ -114,7 +114,7 @@ export function FranquiaWizard({
         estado: editingFranquia.estado || "",
         cep: editingFranquia.cep || "",
         cnpj: editingFranquia.cnpj || "",
-        inscricao_estadual: editingFranquia.inscricao_estadual || "",
+        inscricao_municipal: editingFranquia.inscricao_municipal || "",
         telefone: editingFranquia.telefone || "",
         email: editingFranquia.email || "",
         capacidade_total: editingFranquia.capacidade_total?.toString() || "",
@@ -138,7 +138,7 @@ export function FranquiaWizard({
         estado: "",
         cep: "",
         cnpj: "",
-        inscricao_estadual: "",
+        inscricao_municipal: "",
         telefone: "",
         email: "",
         capacidade_total: "",
