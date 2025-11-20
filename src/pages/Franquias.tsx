@@ -228,6 +228,23 @@ const Franquias = () => {
         if (error) throw error;
         franquiaId = result.id;
 
+        // Inserir registro em franquia_usuarios se for franquia com master
+        if (data.formData.tipo_deposito === 'franquia' && data.formData.master_franqueado_id) {
+          const { error: franquiaUsuarioError } = await supabase
+            .from("franquia_usuarios")
+            .insert({
+              franquia_id: franquiaId,
+              user_id: data.formData.master_franqueado_id,
+              papel: 'master',
+              ativo: true,
+            });
+
+          if (franquiaUsuarioError) {
+            console.error("Error creating franquia_usuarios record:", franquiaUsuarioError);
+            throw franquiaUsuarioError;
+          }
+        }
+
         // Create storage positions for new franquias
         if (data.positions.length > 0) {
           console.log(`Creating ${data.positions.length} positions for new franchise`);
