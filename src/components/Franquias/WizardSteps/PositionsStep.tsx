@@ -38,66 +38,24 @@ export function PositionsStep({
     capacidade_maxima: ""
   });
 
-  const [isGeneratingPositions, setIsGeneratingPositions] = useState(false);
-
-  // Gerar posições automaticamente baseado no layout do armazém
-  const generatePositionsFromLayout = (layout: WarehouseLayout) => {
-    const newPositions: StoragePosition[] = [];
-    
-    for (let rua = 1; rua <= layout.ruas; rua++) {
-      for (let modulo = 1; modulo <= layout.modulos; modulo++) {
-        for (let andar = 1; andar <= layout.andares; andar++) {
-          // Verificar se a posição não está inativa
-          const isInactive = layout.posicoes_inativas.some(
-            pos => pos.rua === rua && pos.modulo === modulo && pos.andar === andar
-          );
-          
-          if (!isInactive) {
-            const codigo = `R${String(rua).padStart(2, '0')}-M${String(modulo).padStart(2, '0')}-A${String(andar).padStart(2, '0')}`;
-            newPositions.push({
-              codigo,
-              descricao: `Rua ${rua}, Módulo ${modulo}, Andar ${andar}`
-            });
-          }
-        }
-      }
-    }
-    
-    return newPositions;
-  };
-
-  const calculateTotalCapacity = (currentPositions: StoragePosition[]) => {
-    const totalPositions = currentPositions.length;
-    
-    setFormData(prev => ({ 
-      ...prev, 
-      capacidade_total: totalPositions.toString() 
-    }));
-  };
-
-  // Atualizar posições quando o layout do armazém mudar
+  // Calcular quantas posições serão geradas quando o layout mudar
   useEffect(() => {
     if (warehouseLayout) {
-      setIsGeneratingPositions(true);
+      const totalPositions = warehouseLayout.ruas * warehouseLayout.modulos * warehouseLayout.andares - warehouseLayout.posicoes_inativas.length;
       
-      // Simular pequeno delay para mostrar o loading
-      setTimeout(() => {
-        const generatedPositions = generatePositionsFromLayout(warehouseLayout);
-        setPositions(generatedPositions);
-        calculateTotalCapacity(generatedPositions);
-        setIsGeneratingPositions(false);
-        
-        toast({
-          title: "Posições geradas",
-          description: `${generatedPositions.length} posições foram geradas automaticamente baseadas no layout`,
-        });
-      }, 100);
+      // Apenas atualizar a capacidade total, sem gerar as posições
+      setFormData(prev => ({ 
+        ...prev, 
+        capacidade_total: totalPositions.toString() 
+      }));
+      
+      toast({
+        title: "Layout configurado",
+        description: `${totalPositions.toLocaleString()} posições serão criadas quando você finalizar o cadastro`,
+      });
     }
-  }, [warehouseLayout]);
+  }, [warehouseLayout, setFormData]);
 
-  useEffect(() => {
-    calculateTotalCapacity(positions);
-  }, [positions, setFormData]);
 
   const resetForm = () => {
     setPositionFormData({
@@ -175,169 +133,84 @@ export function PositionsStep({
           <h4 className="font-medium">Capacidade Total Calculada</h4>
         </div>
         <p className="text-2xl font-bold text-primary mt-1">
-          {isGeneratingPositions ? (
-            <span className="text-muted-foreground">Gerando...</span>
-          ) : (
-            `${formData.capacidade_total || '0'} posições`
-          )}
+          {formData.capacidade_total || '0'} posições
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          {isGeneratingPositions ? (
-            "Gerando posições baseadas no layout..."
-          ) : (
-            `Baseado em ${positions.length} posição(ões) configurada(s)`
-          )}
+          Serão criadas quando você finalizar o cadastro
         </p>
       </div>
 
       {/* Layout Designer */}
+      <WarehouseLayoutDesigner
+        layout={warehouseLayout}
+        onLayoutChange={setWarehouseLayout}
+        onCapacityChange={(capacity) => {
+          setFormData(prev => ({ 
+            ...prev, 
+            capacidade_total: capacity.toString() 
+          }));
+        }}
+      />
+
+      {/* Resumo do Layout */}
       <div className="space-y-4">
-        <h4 className="font-medium">Designer de Layout</h4>
-        <p className="text-sm text-muted-foreground">
-          Configure o layout do armazém. As posições serão geradas automaticamente baseadas nas dimensões definidas.
-        </p>
-        <div className="border rounded-lg p-4">
-          <WarehouseLayoutDesigner
-            layout={warehouseLayout}
-            onLayoutChange={setWarehouseLayout}
-            onCapacityChange={(capacity) => 
-              setFormData(prev => ({ ...prev, capacidade_total: capacity.toString() }))
-            }
-          />
-        </div>
-      </div>
-
-      {/* Manual Position Management */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="font-medium">Posições Geradas Automaticamente</h4>
-          <p className="text-sm text-muted-foreground">
-            {isGeneratingPositions ? (
-              "Gerando posições..."
-            ) : (
-              `${positions.length} posição(ões) gerada(s) baseado no layout do armazém`
-            )}
-          </p>
-        </div>
-        
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-1" />
-              Adicionar Posição Manual
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingIndex !== null ? "Editar Posição" : "Adicionar Posição Manual"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingIndex !== null ? "Edite os dados da posição gerada automaticamente" : "Adicione uma posição personalizada além das geradas pelo layout"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="codigo">Código da Posição *</Label>
-                <Input
-                  id="codigo"
-                  value={positionFormData.codigo}
-                  onChange={(e) => setPositionFormData({ ...positionFormData, codigo: e.target.value })}
-                  placeholder="Ex: A01-01-01, P001"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="descricao">Descrição</Label>
-                <Input
-                  id="descricao"
-                  value={positionFormData.descricao}
-                  onChange={(e) => setPositionFormData({ ...positionFormData, descricao: e.target.value })}
-                  placeholder="Descrição da posição..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="capacidade_maxima">Capacidade Máxima (pallets)</Label>
-                <Input
-                  id="capacidade_maxima"
-                  type="number"
-                  min="1"
-                  value={positionFormData.capacidade_maxima}
-                  onChange={(e) => setPositionFormData(prev => ({ ...prev, capacidade_maxima: e.target.value }))}
-                  placeholder="Ex: 1"
-                />
-              </div>
-              
-              
-              <div className="flex justify-end gap-2 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  {editingIndex !== null ? "Atualizar" : "Criar"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Positions Table */}
-      {positions.length > 0 && (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {positions.map((position, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">
-                    {position.codigo}
-                  </TableCell>
-                  <TableCell>{position.descricao || '-'}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEdit(index)}
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDelete(index)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Resumo do Layout
+            </CardTitle>
+            <CardDescription>
+              As posições serão criadas automaticamente quando você finalizar o cadastro
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {warehouseLayout ? (
+              <>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold">{warehouseLayout.ruas}</div>
+                    <div className="text-xs text-muted-foreground">Ruas</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold">{warehouseLayout.modulos}</div>
+                    <div className="text-xs text-muted-foreground">Módulos</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold">{warehouseLayout.andares}</div>
+                    <div className="text-xs text-muted-foreground">Andares</div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total de posições</span>
+                    <span className="text-2xl font-bold text-primary">
+                      {(warehouseLayout.ruas * warehouseLayout.modulos * warehouseLayout.andares - warehouseLayout.posicoes_inativas.length).toLocaleString()}
+                    </span>
+                  </div>
+                  {warehouseLayout.posicoes_inativas.length > 0 && (
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-sm text-muted-foreground">Posições inativas</span>
+                      <Badge variant="secondary">
+                        {warehouseLayout.posicoes_inativas.length}
+                      </Badge>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                  )}
+                </div>
 
-      {positions.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>Nenhuma posição configurada</p>
-          <p className="text-sm">Configure o layout do armazém acima para gerar posições automaticamente</p>
-        </div>
-      )}
+                <div className="bg-muted/50 rounded-lg p-4 text-sm text-center">
+                  ℹ️ As posições serão geradas no formato <code className="bg-background px-2 py-1 rounded">R00-M00-A00</code> quando você criar o depósito
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Configure o layout do armazém para visualizar as posições que serão criadas
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

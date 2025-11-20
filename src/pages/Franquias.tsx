@@ -180,6 +180,7 @@ const Franquias = () => {
         ...data.formData,
         capacidade_total: data.formData.capacidade_total ? parseFloat(data.formData.capacidade_total) : null,
         layout_armazem: data.layout ? JSON.stringify(data.layout) : null,
+        master_franqueado_id: data.formData.master_franqueado_id || null,
       };
 
       let franquiaId: string;
