@@ -154,7 +154,8 @@ export function FranquiaWizard({
     switch (step) {
       case 1:
         if (formData.tipo_deposito === 'franquia') {
-          return !!(formData.nome && formData.master_franqueado_id);
+          // Para franquias, exigir nome E master_franqueado_id (não vazio)
+          return !!(formData.nome && formData.master_franqueado_id && formData.master_franqueado_id.trim() !== '');
         } else {
           return !!formData.nome; // Filiais só precisam de nome
         }
