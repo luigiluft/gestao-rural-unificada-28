@@ -87,24 +87,40 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
       </div>
 
       {formData.tipo_deposito === 'franquia' && (
-        <div className="space-y-2">
-          <Label htmlFor="master">Franqueado Master *</Label>
-          <Select 
-            value={formData.master_franqueado_id} 
-            onValueChange={(value) => setFormData(prev => ({ ...prev, master_franqueado_id: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o franqueado master" />
-            </SelectTrigger>
-            <SelectContent>
-              {franqueadosMasters.map((master) => (
-                <SelectItem key={master.user_id} value={master.user_id}>
-                  {master.nome || master.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <>
+          {franqueadosMasters.length === 0 ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Não há franqueados disponíveis. É necessário cadastrar um usuário com perfil "Franqueado" antes de criar uma franquia.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="master">Franqueado Master *</Label>
+              <Select 
+                value={formData.master_franqueado_id} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, master_franqueado_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o franqueado master" />
+                </SelectTrigger>
+                <SelectContent>
+                  {franqueadosMasters.map((master) => (
+                    <SelectItem key={master.user_id} value={master.user_id}>
+                      {master.nome || master.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!formData.master_franqueado_id && (
+                <p className="text-sm text-destructive">
+                  Selecione um franqueado master para continuar
+                </p>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {formData.tipo_deposito === 'filial' && (
