@@ -8,10 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MailPlus, Settings2, Link as LinkIcon, Unlink } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { getRoleLabel } from "@/utils/roleTranslations";
+import { getRoleLabel, ROLE_LABELS } from "@/utils/roleTranslations";
+import { TablePageLayout } from "@/components/ui/table-page-layout";
 
 interface ProfileRow {
   user_id: string;
@@ -25,7 +27,9 @@ export default function Usuarios() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<'admin' | 'franqueado' | 'produtor'>('produtor');
   const [sendingInvite, setSendingInvite] = useState(false);
+  
   const sendInvite = async () => {
     if (!inviteEmail) {
       toast({ title: "Informe um email", description: "Digite um email válido para enviar o convite.", variant: "destructive" });
@@ -41,8 +45,9 @@ export default function Usuarios() {
         body: { 
           email: inviteEmail,
           inviter_user_id: user.id,
-          parent_user_id: user.id, // hierarchy: admin becomes parent
-          permissions: ['estoque.view'], // default permission for subconta
+          parent_user_id: user.id,
+          role: inviteRole,
+          permissions: inviteRole === 'produtor' ? ['estoque.view'] : [],
           redirect_url: `${window.location.origin}/`
         }
       });
@@ -52,9 +57,16 @@ export default function Usuarios() {
       if (!response?.success) {
         throw new Error(response?.error || 'Erro ao enviar convite')
       }
-      toast({ title: "Convite enviado", description: "Enviamos um link de acesso para o email informado. A subconta será automaticamente vinculada." });
+      
+      toast({ 
+        title: "Convite enviado", 
+        description: `Enviamos um link de acesso para o email informado. O usuário será criado como ${getRoleLabel(inviteRole)}.` 
+      });
+      
       setInviteOpen(false);
       setInviteEmail("");
+      setInviteRole('produtor');
+      await qc.invalidateQueries({ queryKey: ["profiles-all"] });
     } catch (err: any) {
       toast({ title: "Erro ao enviar convite", description: err.message ?? "Tente novamente.", variant: "destructive" });
     } finally {
@@ -301,56 +313,67 @@ export default function Usuarios() {
   const isLoading = loadingProfiles || loadingRoles || loadingChildren;
 
   return (
-    <div>
-      <header className="mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Usuários</h1>
-            <p className="text-muted-foreground">Visualize todos os usuários e conceda acesso de administrador.</p>
-          </div>
-          <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <MailPlus className="mr-2" />
-                Convidar usuário
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="w-[95vw] sm:w-full">
-              <DialogHeader>
-                <DialogTitle>Convidar novo usuário</DialogTitle>
-                <DialogDescription>Envie um link de acesso por email. O usuário poderá entrar imediatamente.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="invite-email">Email</Label>
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    placeholder="email@exemplo.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
-                </div>
+    <>
+      <TablePageLayout
+        title="Usuários"
+        description="Gerencie todos os usuários da plataforma e suas funções"
+        actionButton={
+        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <MailPlus className="mr-2 h-4 w-4" />
+              Criar Usuário
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] sm:w-full">
+            <DialogHeader>
+              <DialogTitle>Criar novo usuário</DialogTitle>
+              <DialogDescription>
+                Envie um convite por email para criar um novo usuário na plataforma.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="invite-email">Email</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                />
               </div>
-              <DialogFooter>
-                <Button variant="secondary" onClick={() => setInviteOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                  {sendingInvite ? "Enviando..." : "Enviar convite"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </header>
-
-      <section className="rounded-lg border border-border bg-card p-4">
-        {isLoading ? (
-          <div className="text-muted-foreground">Carregando usuários...</div>
+              <div className="grid gap-2">
+                <Label htmlFor="invite-role">Função</Label>
+                <Select value={inviteRole} onValueChange={(value: any) => setInviteRole(value)}>
+                  <SelectTrigger id="invite-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="produtor">{ROLE_LABELS.produtor}</SelectItem>
+                    <SelectItem value="franqueado">{ROLE_LABELS.franqueado}</SelectItem>
+                    <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="secondary" onClick={() => setInviteOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
+                {sendingInvite ? "Enviando..." : "Enviar convite"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      }
+      tableContent={
+        isLoading ? (
+          <div className="p-8 text-center text-muted-foreground">Carregando usuários...</div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="min-w-[800px]">
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
@@ -403,8 +426,9 @@ export default function Usuarios() {
               </TableBody>
             </Table>
           </div>
-        )}
-      </section>
+        )
+      }
+      />
 
       <Dialog open={permOpen} onOpenChange={setPermOpen}>
         <DialogContent>
@@ -436,7 +460,7 @@ export default function Usuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
