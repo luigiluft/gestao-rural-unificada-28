@@ -547,14 +547,12 @@ const Franquias = () => {
 
       {/* Dialog para visualizar layout */}
       <Dialog open={layoutDialogOpen} onOpenChange={setLayoutDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh]">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Layout do Armazém</DialogTitle>
           </DialogHeader>
           {selectedFranquiaId && (
-            <div className="overflow-auto">
-              <WarehouseMapViewer depositoId={selectedFranquiaId} />
-            </div>
+            <WarehouseMapViewer depositoId={selectedFranquiaId} />
           )}
         </DialogContent>
       </Dialog>
