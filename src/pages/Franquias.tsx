@@ -10,12 +10,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Building2, User, MapPin } from "lucide-react";
+import { Trash2, Edit, Building2, User, MapPin, Users, Map } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { WarehouseLayoutDesigner, type WarehouseLayout } from "@/components/Franquias/WarehouseLayoutDesigner";
 import { FranquiaWizard } from "@/components/Franquias/FranquiaWizard";
 import { useCreateStoragePosition, useBulkCreateStoragePositions } from "@/hooks/useStoragePositions";
+import { GerenciarUsuariosFranquia } from "@/components/Franquias/GerenciarUsuariosFranquia";
+import { WarehouseMapViewer } from "@/components/WMS/WarehouseMapViewer";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Franquia {
   id: string;
@@ -56,6 +59,11 @@ const Franquias = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFranquia, setEditingFranquia] = useState<Franquia | null>(null);
+  const [layoutDialogOpen, setLayoutDialogOpen] = useState(false);
+  const [selectedLayout, setSelectedLayout] = useState<any>(null);
+  const [usuariosDialogOpen, setUsuariosDialogOpen] = useState(false);
+  const [selectedFranquiaId, setSelectedFranquiaId] = useState<string>("");
+  const [massModeOpen, setMassModeOpen] = useState(false);
   const createPosition = useCreateStoragePosition();
   const bulkCreatePositions = useBulkCreateStoragePositions();
   
@@ -382,10 +390,16 @@ const Franquias = () => {
             Gerencie as franquias e filiais
           </p>
         </div>
-        <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
-          <Building2 className="mr-2 h-4 w-4" />
-          Novo Depósito
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setMassModeOpen(true)}>
+            <Users className="mr-2 h-4 w-4" />
+            Gestão em Massa
+          </Button>
+          <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
+            <Building2 className="mr-2 h-4 w-4" />
+            Novo Depósito
+          </Button>
+        </div>
       </div>
 
       <section className="rounded-lg border border-border bg-card p-4">
@@ -418,6 +432,7 @@ const Franquias = () => {
                   <TableHead>Localização</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data Criação</TableHead>
+                  <TableHead className="text-center">Usuários</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -463,8 +478,32 @@ const Franquias = () => {
                     <TableCell>
                       {new Date(franquia.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedFranquiaId(franquia.id)
+                          setUsuariosDialogOpen(true)
+                        }}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Gerenciar
+                      </Button>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFranquiaId(franquia.id)
+                            setLayoutDialogOpen(true)
+                          }}
+                          disabled={!franquia.layout_armazem}
+                        >
+                          <Map className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -504,6 +543,35 @@ const Franquias = () => {
         editingFranquia={editingFranquia}
         franqueadosMasters={franqueadosMasters}
         isLoading={saveFranquia.isPending}
+      />
+
+      {/* Dialog para visualizar layout */}
+      <Dialog open={layoutDialogOpen} onOpenChange={setLayoutDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Layout do Armazém</DialogTitle>
+          </DialogHeader>
+          {selectedFranquiaId && (
+            <div className="overflow-auto">
+              <WarehouseMapViewer depositoId={selectedFranquiaId} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para gerenciar usuários por franquia */}
+      <GerenciarUsuariosFranquia
+        franquiaId={selectedFranquiaId}
+        massModeEnabled={false}
+        open={usuariosDialogOpen}
+        onOpenChange={setUsuariosDialogOpen}
+      />
+
+      {/* Dialog para gestão em massa de usuários */}
+      <GerenciarUsuariosFranquia
+        massModeEnabled={true}
+        open={massModeOpen}
+        onOpenChange={setMassModeOpen}
       />
     </div>
   );
