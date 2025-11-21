@@ -3809,6 +3809,7 @@ export type Database = {
       storage_positions: {
         Row: {
           ativo: boolean | null
+          capacidade_maxima: number | null
           codigo: string
           created_at: string
           deposito_id: string
@@ -3822,6 +3823,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          capacidade_maxima?: number | null
           codigo: string
           created_at?: string
           deposito_id: string
@@ -3835,6 +3837,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          capacidade_maxima?: number | null
           codigo?: string
           created_at?: string
           deposito_id?: string
