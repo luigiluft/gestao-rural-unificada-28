@@ -34,6 +34,9 @@ serve(async (req) => {
 
     let result
     switch (action) {
+      case 'list_profiles':
+        result = await listProfiles(supabaseClient, user.id)
+        break
       case 'create_profile':
         result = await createProfile(supabaseClient, user.id, data)
         break
@@ -85,6 +88,28 @@ serve(async (req) => {
     })
   }
 })
+
+async function listProfiles(supabase: any, userId: string) {
+  // Verificar se o usuário é admin
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', userId)
+    .single()
+
+  if (profileError || profile?.role !== 'admin') {
+    throw new Error('Unauthorized: Only admins can list all profiles')
+  }
+
+  // Buscar todos os perfis
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('user_id, nome, email, role')
+    .order('nome')
+
+  if (error) throw error
+  return profiles
+}
 
 async function createProfile(supabase: any, userId: string, data: any) {
   const { data: profile, error } = await supabase
