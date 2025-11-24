@@ -179,6 +179,7 @@ export const useDynamicMenuItems = () => {
       'perfil',
       'empresas',
       'subcontas',
+      'usuarios',
       'perfis-funcionarios',
       'catalogo',
       'fazendas',
