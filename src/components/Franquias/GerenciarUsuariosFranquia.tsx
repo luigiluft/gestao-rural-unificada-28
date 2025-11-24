@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { useFranquiaUsuarios, useAddFranquiaUsuario, useRemoveFranquiaUsuario } from "@/hooks/useFranquiaUsuarios"
 import { useBulkAddFranquiaUsuario } from "@/hooks/useBulkFranquiaUsuarios"
-import { useEmployeeProfiles } from "@/hooks/useEmployeeProfiles"
+import { useAvailableUsers } from "@/hooks/useAvailableUsers"
 import { useProfile } from "@/hooks/useProfile"
 import { useFranquias } from "@/hooks/useFranquias"
 import { getRoleLabel } from "@/utils/roleTranslations"
@@ -39,7 +39,7 @@ export const GerenciarUsuariosFranquia = ({
   const { data: profile } = useProfile()
   const { data: franquiaUsuarios, isLoading } = useFranquiaUsuarios(franquiaId)
   const { data: allFranquias } = useFranquias()
-  const { profiles: availableUsers } = useEmployeeProfiles(profile?.role as any)
+  const { data: availableUsers, isLoading: isLoadingUsers } = useAvailableUsers()
   
   const addUsuario = useAddFranquiaUsuario()
   const removeUsuario = useRemoveFranquiaUsuario()
@@ -50,15 +50,13 @@ export const GerenciarUsuariosFranquia = ({
     if (!availableUsers) return []
     
     if (massModeEnabled) {
-      // No modo massa, mostrar todos os usuários com role 'franqueado'
-      return availableUsers.filter(u => u.target_role === 'franqueado')
+      // No modo massa, mostrar todos os usuários franqueado
+      return availableUsers
     }
     
     // No modo individual, filtrar usuários já associados
     const associatedUserIds = franquiaUsuarios?.map(fu => fu.user_id) || []
-    return availableUsers.filter(u => 
-      u.target_role === 'franqueado' && !associatedUserIds.includes(u.id)
-    )
+    return availableUsers.filter(u => !associatedUserIds.includes(u.user_id))
   }, [availableUsers, franquiaUsuarios, massModeEnabled])
 
   // Filtrar franquias disponíveis (excluindo aquelas onde o usuário já está)
@@ -207,8 +205,8 @@ export const GerenciarUsuariosFranquia = ({
                         </SelectTrigger>
                         <SelectContent>
                           {availableUsersForAdd.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.nome}
+                            <SelectItem key={user.user_id} value={user.user_id}>
+                              {user.nome} ({user.email})
                             </SelectItem>
                           ))}
                         </SelectContent>
