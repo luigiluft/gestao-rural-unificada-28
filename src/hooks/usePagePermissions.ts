@@ -28,6 +28,9 @@ export const usePagePermissions = () => {
       return data || []
     },
     enabled: !!profile?.role,
+    staleTime: 10 * 60 * 1000, // 10 minutos de cache
+    gcTime: 15 * 60 * 1000, // 15 minutos no cache
+    refetchOnWindowFocus: false,
   })
 }
 

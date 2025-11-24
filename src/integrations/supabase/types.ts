@@ -4634,6 +4634,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_role_direct: {
+        Args: { p_user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_permission: {
         Args: {
           _perm: Database["public"]["Enums"]["permission_code"]

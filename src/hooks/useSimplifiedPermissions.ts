@@ -95,6 +95,10 @@ export const useSimplifiedPermissions = (): UserPermissions => {
       }
     },
     enabled: !!user?.id && !!profile?.role,
+    staleTime: 5 * 60 * 1000, // Cache de 5 minutos
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false, // Não recarregar ao montar componente
   })
 
   return {

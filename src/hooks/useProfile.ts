@@ -20,6 +20,9 @@ export const useProfile = () => {
       return data
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutos de cache
+    gcTime: 10 * 60 * 1000, // 10 minutos no cache
+    refetchOnWindowFocus: false, // Não recarregar ao focar janela
   })
 }
 
