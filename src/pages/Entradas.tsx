@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { DepositoFilter } from "@/components/ui/deposito-filter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -222,7 +223,7 @@ export default function Entradas() {
   }, {
     key: "deposito_nome",
     label: "Depósito",
-    visible: false,
+    visible: true,
     category: "Básico"
   }, {
     key: "status_aprovacao",
@@ -896,9 +897,9 @@ export default function Entradas() {
       {/* Filter Section */}
       <div className="flex-shrink-0 bg-background">
         <div className="p-6 border-b">
-          <div className="flex flex-col gap-4">
-            
+          <div className="flex flex-col sm:flex-row gap-4">
             <DateRangeFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
+            {isProdutor && <DepositoFilter />}
           </div>
         </div>
       </div>
