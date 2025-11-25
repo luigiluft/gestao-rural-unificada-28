@@ -61,7 +61,7 @@ const AVAILABLE_PERMISSIONS = {
     { code: 'rastreio.view', label: 'Rastreamento' },
     { code: 'relatorios.view', label: 'Relatórios' },
     
-    // Gestão de Usuários e Produtores
+    // Gestão de Usuários e Clientes
     { code: 'produtores.view', label: 'Produtores' },
     { code: 'fazendas.view', label: 'Fazendas' },
     { code: 'subcontas.view', label: 'Subcontas' },
@@ -74,7 +74,7 @@ const AVAILABLE_PERMISSIONS = {
     { code: 'configuracoes.view', label: 'Configurações' },
     { code: 'controle-acesso.view', label: 'Controle de Acesso' },
   ],
-  produtor: [
+  cliente: [
     { code: 'dashboard.view', label: 'Dashboard' },
     { code: 'catalogo.view', label: 'Catálogo' },
     { code: 'entradas.view', label: 'Visualizar Entradas' },
@@ -93,7 +93,7 @@ const AVAILABLE_PERMISSIONS = {
 
 export default function PerfisFuncionarios() {
   const { data: profile } = useProfile()
-  const userRole = profile?.role as 'franqueado' | 'produtor'
+  const userRole = profile?.role as 'franqueado' | 'cliente'
   const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole, true)
   
   const [editingProfile, setEditingProfile] = useState<PermissionTemplate | null>(null)
@@ -154,7 +154,7 @@ export default function PerfisFuncionarios() {
   }
 
   const availablePermissions = AVAILABLE_PERMISSIONS[userRole] || []
-  const roleLabel = userRole === 'franqueado' ? 'Franqueado' : 'Produtor'
+  const roleLabel = userRole === 'franqueado' ? 'Franqueado' : 'Cliente'
 
   if (isLoading) {
     return (
@@ -174,7 +174,7 @@ export default function PerfisFuncionarios() {
 
   // Separate profiles by role for better organization
   const myProfiles = profiles.filter(p => p.target_role === userRole)
-  const producerProfiles = userRole === 'franqueado' ? profiles.filter(p => p.target_role === 'produtor') : []
+  const clientProfiles = userRole === 'franqueado' ? profiles.filter(p => p.target_role === 'cliente') : []
 
   return (
     <div className="space-y-6">

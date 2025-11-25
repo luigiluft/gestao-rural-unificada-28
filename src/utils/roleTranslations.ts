@@ -3,27 +3,26 @@ import { UserRole } from "@/types/permissions"
 /**
  * Mapeamento de roles do backend para labels na UI
  * 
- * Backend: 'franqueado', 'produtor'
- * Frontend: 'Operador', 'Cliente'
+ * Backend e Frontend agora usam o mesmo nome: 'cliente'
  */
 export const ROLE_LABELS = {
   admin: 'Administrador',
   franqueado: 'Operador',
-  produtor: 'Cliente',
+  cliente: 'Cliente',
   motorista: 'Motorista'
 } as const
 
 export const ROLE_LABELS_PLURAL = {
   admin: 'Administradores',
   franqueado: 'Operadores',
-  produtor: 'Clientes',
+  cliente: 'Clientes',
   motorista: 'Motoristas'
 } as const
 
 export const ROLE_LABELS_SHORT = {
   admin: 'Admin',
   franqueado: 'Operador',
-  produtor: 'Cliente',
+  cliente: 'Cliente',
   motorista: 'Motorista'
 } as const
 

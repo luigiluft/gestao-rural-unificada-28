@@ -23,23 +23,23 @@ const FranquiaContext = createContext<FranquiaContextType | undefined>(undefined
 
 export const FranquiaProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth()
-  const { isProdutor } = useUserRole()
+  const { isCliente } = useUserRole()
   const { franquias: franqueadoFranquias, isLoading: franqueadoLoading } = useCurrentUserFranquias()
-  const { data: produtorDepositos, isLoading: produtorLoading } = useDepositosDisponiveis(user?.id)
+  const { data: clienteDepositos, isLoading: clienteLoading } = useDepositosDisponiveis(user?.id)
   const [selectedFranquia, setSelectedFranquiaState] = useState<Franquia | null>(null)
 
   // Determinar franquias disponíveis baseado no role
-  const availableFranquias = isProdutor 
-    ? (produtorDepositos?.map(d => ({
+  const availableFranquias = isCliente 
+    ? (clienteDepositos?.map(d => ({
         id: d.deposito_id,
         nome: d.deposito_nome,
         cnpj: undefined
       })) || [])
     : franqueadoFranquias
 
-  const isLoading = isProdutor ? produtorLoading : franqueadoLoading
+  const isLoading = isCliente ? clienteLoading : franqueadoLoading
 
-  // Adicionar opção "Todos os Depósitos" para produtores e operadores com múltiplos depósitos
+  // Adicionar opção "Todos os Depósitos" para clientes e operadores com múltiplos depósitos
   const franquiasWithAll: Franquia[] = availableFranquias.length > 1
     ? [{ id: "ALL", nome: "Todos os Depósitos" }, ...availableFranquias]
     : availableFranquias
@@ -52,14 +52,14 @@ export const FranquiaProvider = ({ children }: { children: ReactNode }) => {
       if (franquia) {
         setSelectedFranquiaState(franquia)
       } else {
-        // Se a franquia salva não existe mais, seleciona "Todos" para produtores ou primeira para outros
+        // Se a franquia salva não existe mais, seleciona "Todos" para clientes ou primeira para outros
         setSelectedFranquiaState(franquiasWithAll[0])
       }
     } else if (franquiasWithAll.length > 0 && !selectedFranquia) {
-      // Se não tem franquia salva, seleciona "Todos" para produtores ou primeira para outros
+      // Se não tem franquia salva, seleciona "Todos" para clientes ou primeira para outros
       setSelectedFranquiaState(franquiasWithAll[0])
     }
-  }, [franquiasWithAll, isProdutor])
+  }, [franquiasWithAll, isCliente])
 
   const setSelectedFranquia = (franquia: Franquia) => {
     setSelectedFranquiaState(franquia)

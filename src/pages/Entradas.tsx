@@ -137,30 +137,30 @@ export default function Entradas() {
   const {
     isAdmin,
     isFranqueado,
-    isProdutor
+    isCliente
   } = useUserRole();
   
   // Use different hooks based on user role
   const adminFranqueadoQuery = useEntradas(dateRange);
-  const produtorQuery = useProducerEntradas(dateRange);
+  const clienteQuery = useProducerEntradas(dateRange);
   
   const {
     data: entradas,
     isLoading,
     refetch
-  } = isProdutor ? produtorQuery : adminFranqueadoQuery;
+  } = isCliente ? clienteQuery : adminFranqueadoQuery;
   const { user } = useAuth();
   const { data: profile } = useProfile();
   
-  // Helper function to check if producer can delete entrada
-  const canProducerDeleteEntrada = (entrada: any) => {
-    if (!isProdutor || !profile?.cpf_cnpj) return false;
+  // Helper function to check if cliente can delete entrada
+  const canClienteDeleteEntrada = (entrada: any) => {
+    if (!isCliente || !profile?.cpf_cnpj) return false;
     
     const userCpfCnpjLimpo = profile.cpf_cnpj.replace(/\D/g, '');
     const emitenteCnpjLimpo = entrada.emitente_cnpj?.replace(/\D/g, '') || '';
     const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
     
-    // Producer can delete if their CPF/CNPJ matches emitente or destinatario
+    // Cliente can delete if their CPF/CNPJ matches emitente or destinatario
     return emitenteCnpjLimpo === userCpfCnpjLimpo || destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
   };
 
@@ -762,8 +762,8 @@ export default function Entradas() {
                 </DropdownMenuContent>
               </DropdownMenu>}
             
-            {/* Botão de excluir para produtores (quando são destinatários) */}
-            {canProducerDeleteEntrada(entrada) && <Button
+            {/* Botão de excluir para clientes (quando são destinatários) */}
+            {canClienteDeleteEntrada(entrada) && <Button
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 text-destructive hover:text-destructive"
