@@ -25,7 +25,7 @@ import { Switch } from "@/components/ui/switch"
 import { useClientes, useCreateCliente, useUpdateCliente, Cliente } from "@/hooks/useClientes"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
-import { GerenciarFazendas } from "@/components/Clientes/GerenciarFazendas"
+import { GerenciarLocaisEntrega } from "@/components/Clientes/GerenciarLocaisEntrega"
 import { useCliente } from "@/contexts/ClienteContext"
 
 export default function Empresas() {
@@ -588,7 +588,7 @@ export default function Empresas() {
             <DialogDescription>
               {selectedCliente?.tipo_cliente === 'cnpj' 
                 ? 'Gerencie os depósitos desta empresa' 
-                : 'Gerencie as fazendas e depósitos deste produtor rural'
+                : 'Gerencie os locais de entrega deste produtor rural (fazendas, filiais, etc)'
               }
             </DialogDescription>
           </DialogHeader>
@@ -596,7 +596,7 @@ export default function Empresas() {
             selectedCliente.tipo_cliente === 'cnpj' ? (
               <GerenciarDepositos clienteId={selectedCliente.id} />
             ) : (
-              <GerenciarFazendas clienteId={selectedCliente.id} produtorId={selectedCliente.created_by || ''} />
+              <GerenciarLocaisEntrega clienteId={selectedCliente.id} produtorId={selectedCliente.created_by || ''} />
             )
           )}
         </DialogContent>
