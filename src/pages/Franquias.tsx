@@ -153,20 +153,12 @@ const Franquias = () => {
       
       if (error) throw error;
       
-      // Filter out franqueados that are already masters of existing franquias
-      const existingMasters = franquias.map(f => f.master_franqueado_id);
-      
       return (data ?? [])
         .map((item: any) => ({
           user_id: item.user_id,
           nome: item.nome,
           email: item.email,
-        }))
-        .filter((fm: FranqueadoMaster) => 
-          editingFranquia 
-            ? fm.user_id === editingFranquia.master_franqueado_id || !existingMasters.includes(fm.user_id)
-            : !existingMasters.includes(fm.user_id)
-        ) as FranqueadoMaster[];
+        })) as FranqueadoMaster[];
     },
     enabled: dialogOpen,
   });
