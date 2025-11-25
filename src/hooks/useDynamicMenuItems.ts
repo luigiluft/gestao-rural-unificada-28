@@ -160,9 +160,8 @@ export const useDynamicMenuItems = () => {
 
     const items: MenuItem[] = []
 
-    // Páginas do ERP
-    const erpPages = [
-      'dashboard',
+    // Páginas do OMS (excluindo dashboard que será item separado)
+    const omsPages = [
       'entradas',
       'estoque',
       'saidas',
@@ -221,15 +220,24 @@ export const useDynamicMenuItems = () => {
       'tracking'
     ]
 
-    // Verificar se tem permissão para pelo menos uma página do ERP
-    const hasErpPermission = erpPages.some(page => 
+    // Adicionar Dashboard como item separado (se tiver permissão)
+    if (permissions.includes('dashboard.view' as any)) {
+      items.push({
+        path: '/',
+        label: menuLabels['dashboard'],
+        icon: iconMap['dashboard']
+      })
+    }
+
+    // Verificar se tem permissão para pelo menos uma página do OMS
+    const hasOmsPermission = omsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
 
-    if (hasErpPermission) {
-      const erpSubItems: MenuItem[] = []
+    if (hasOmsPermission) {
+      const omsSubItems: MenuItem[] = []
       
-      erpPages.forEach(page => {
+      omsPages.forEach(page => {
         const pageViewPermission = `${page}.view`
         
         if (!permissions.includes(pageViewPermission as any)) return
@@ -238,20 +246,20 @@ export const useDynamicMenuItems = () => {
         const icon = iconMap[page as keyof typeof iconMap]
         
         if (label && icon) {
-          erpSubItems.push({
-            path: page === 'dashboard' ? '/' : `/${page}`,
+          omsSubItems.push({
+            path: `/${page}`,
             label,
             icon
           })
         }
       })
 
-      if (erpSubItems.length > 0) {
+      if (omsSubItems.length > 0) {
         items.push({
-          path: '/erp',
-          label: 'ERP',
+          path: '/oms',
+          label: 'OMS',
           icon: BarChart3,
-          subItems: erpSubItems
+          subItems: omsSubItems
         })
       }
     }
@@ -284,9 +292,9 @@ export const useDynamicMenuItems = () => {
       })
 
       if (wmsSubItems.length > 0) {
-        // Inserir WMS após ERP
-        const erpIndex = items.findIndex(item => item.path === '/erp')
-        const insertIndex = erpIndex !== -1 ? erpIndex + 1 : items.length
+        // Inserir WMS após OMS
+        const omsIndex = items.findIndex(item => item.path === '/oms')
+        const insertIndex = omsIndex !== -1 ? omsIndex + 1 : items.length
         
         items.push({
           path: '/wms',
