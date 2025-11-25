@@ -24,7 +24,7 @@ export function AppHeader() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [displayName, setDisplayName] = useState<string>("")
-  const [roleLabel, setRoleLabel] = useState<string>(getRoleLabel('produtor', false, true))
+  const [roleLabel, setRoleLabel] = useState<string>(getRoleLabel('cliente', false, true))
   const { selectedCliente, setSelectedCliente, availableClientes } = useCliente()
   const { data: clientes } = useClientes()
   const { selectedFranquia, setSelectedFranquia, availableFranquias } = useFranquia()
@@ -48,25 +48,25 @@ export function AppHeader() {
   useEffect(() => {
     const loadRole = async () => {
       if (!user) { 
-        setRoleLabel(getRoleLabel('produtor', false, true))
+        setRoleLabel(getRoleLabel('cliente', false, true))
         return 
       }
       try {
-        const [adminRes, franqRes, motoristaRes] = await Promise.all([
+        const [adminRes, operadorRes, motoristaRes] = await Promise.all([
           supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
-          supabase.rpc('has_role', { _user_id: user.id, _role: 'franqueado' }),
+          supabase.rpc('has_role', { _user_id: user.id, _role: 'operador' }),
           supabase.rpc('has_role', { _user_id: user.id, _role: 'motorista' }),
         ])
         const isAdmin = adminRes.data === true
-        const isFranqueado = franqRes.data === true
+        const isOperador = operadorRes.data === true
         const isMotorista = motoristaRes.data === true
         
         if (isAdmin) setRoleLabel(getRoleLabel('admin', false, true))
-        else if (isFranqueado) setRoleLabel(getRoleLabel('franqueado', false, true))
+        else if (isOperador) setRoleLabel(getRoleLabel('operador', false, true))
         else if (isMotorista) setRoleLabel(getRoleLabel('motorista', false, true))
-        else setRoleLabel(getRoleLabel('produtor', false, true))
+        else setRoleLabel(getRoleLabel('cliente', false, true))
       } catch {
-        setRoleLabel(getRoleLabel('produtor', false, true))
+        setRoleLabel(getRoleLabel('cliente', false, true))
       }
     }
     loadRole()
@@ -145,8 +145,8 @@ export function AppHeader() {
           </>
         )}
 
-        {/* Depósito selector - for franqueado/operador/produtor roles */}
-        {(roleLabel === 'Franqueado' || roleLabel === 'Operador' || roleLabel === 'Cliente') && availableFranquias.length > 0 && (
+        {/* Depósito selector - for operador/cliente roles */}
+        {(roleLabel === 'Operador' || roleLabel === 'Cliente') && availableFranquias.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -189,7 +189,7 @@ export function AppHeader() {
             </div>
             
             {/* Info badge quando "Todos" está selecionado para operadores */}
-            {(roleLabel === 'Franqueado' || roleLabel === 'Operador') && selectedFranquia?.id === 'ALL' && (
+            {roleLabel === 'Operador' && selectedFranquia?.id === 'ALL' && (
               <Badge variant="secondary" className="text-xs">
                 WMS/TMS ocultos (visão consolidada)
               </Badge>
