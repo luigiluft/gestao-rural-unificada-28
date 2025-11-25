@@ -1,6 +1,8 @@
 import { useMemo } from "react"
 import { useSimplifiedPermissions } from "./useSimplifiedPermissions"
-import { 
+import { useFranquia } from "@/contexts/FranquiaContext"
+import { useUserRole } from "./useUserRole"
+import {
   AlertTriangle,
   AlertCircle,
   Archive,
@@ -150,6 +152,8 @@ const iconMap = {
 
 export const useDynamicMenuItems = () => {
   const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
+  const { selectedFranquia } = useFranquia()
+  const { isFranqueado } = useUserRole()
 
   const menuItems = useMemo(() => {
     if (isLoading || !permissions?.length) return []
@@ -253,11 +257,13 @@ export const useDynamicMenuItems = () => {
     }
 
     // Verificar se tem permissão para pelo menos uma página do WMS
+    // Ocultar WMS se operador tiver "Todos os Depósitos" selecionado
+    const shouldShowWms = !(isFranqueado && selectedFranquia?.id === "ALL")
     const hasWmsPermission = wmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
 
-    if (hasWmsPermission) {
+    if (hasWmsPermission && shouldShowWms) {
       const wmsSubItems: MenuItem[] = []
       
       wmsPages.forEach(page => {
@@ -414,7 +420,7 @@ export const useDynamicMenuItems = () => {
     }
 
     return items
-  }, [permissions, isLoading])
+  }, [permissions, isLoading, selectedFranquia, isFranqueado])
 
   return { menuItems, isLoading }
 }

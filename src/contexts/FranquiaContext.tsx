@@ -39,8 +39,8 @@ export const FranquiaProvider = ({ children }: { children: ReactNode }) => {
 
   const isLoading = isProdutor ? produtorLoading : franqueadoLoading
 
-  // Adicionar opção "Todos os Depósitos" apenas para produtores com múltiplos depósitos
-  const franquiasWithAll: Franquia[] = isProdutor && availableFranquias.length > 1
+  // Adicionar opção "Todos os Depósitos" para produtores e operadores com múltiplos depósitos
+  const franquiasWithAll: Franquia[] = availableFranquias.length > 1
     ? [{ id: "ALL", nome: "Todos os Depósitos" }, ...availableFranquias]
     : availableFranquias
 

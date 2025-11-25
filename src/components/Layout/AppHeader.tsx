@@ -175,9 +175,11 @@ export function AppHeader() {
                       >
                         <div className="flex flex-col">
                           <span className="font-medium">{franquia.nome}</span>
-                          <span className="text-xs text-muted-foreground">
-                            CNPJ: {franquia.cnpj}
-                          </span>
+                          {franquia.cnpj && (
+                            <span className="text-xs text-muted-foreground">
+                              CNPJ: {franquia.cnpj}
+                            </span>
+                          )}
                         </div>
                       </DropdownMenuItem>
                     ))}
@@ -185,6 +187,13 @@ export function AppHeader() {
                 </DropdownMenu>
               )}
             </div>
+            
+            {/* Info badge quando "Todos" está selecionado para operadores */}
+            {(roleLabel === 'Franqueado' || roleLabel === 'Operador') && selectedFranquia?.id === 'ALL' && (
+              <Badge variant="secondary" className="text-xs">
+                Menu WMS oculto (visão consolidada)
+              </Badge>
+            )}
           </>
         )}
       </div>
