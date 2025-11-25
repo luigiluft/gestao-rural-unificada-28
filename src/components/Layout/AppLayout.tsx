@@ -5,6 +5,7 @@ import { AppSidebar } from "./AppSidebar"
 import { AppHeader } from "./AppHeader"
 import { TutorialProvider } from "@/contexts/TutorialContext"
 import { ClienteProvider } from "@/contexts/ClienteContext"
+import { FranquiaProvider } from "@/contexts/FranquiaContext"
 import { TutorialOverlay } from "@/components/Tutorial/TutorialOverlay"
 import { useTutorial } from "@/contexts/TutorialContext"
 
@@ -62,14 +63,16 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <ClienteProvider>
-      <TutorialProvider>
-        <SidebarProvider defaultOpen={false}>
-          <AppLayoutContent>
-            {children}
-          </AppLayoutContent>
-          <TutorialOverlay />
-        </SidebarProvider>
-      </TutorialProvider>
+      <FranquiaProvider>
+        <TutorialProvider>
+          <SidebarProvider defaultOpen={false}>
+            <AppLayoutContent>
+              {children}
+            </AppLayoutContent>
+            <TutorialOverlay />
+          </SidebarProvider>
+        </TutorialProvider>
+      </FranquiaProvider>
     </ClienteProvider>
   )
 }
