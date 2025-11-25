@@ -103,7 +103,7 @@ export default function Inventario() {
   
   // Use different hooks based on user role
   const { data: depositosProdutor, isLoading: loadingDepositosProdutor } = useDepositosDisponiveis(
-    profile?.role === 'produtor' ? user?.id : undefined
+    profile?.role === 'cliente' ? user?.id : undefined
   )
   const { data: depositosFranqueado, isLoading: loadingDepositosFranqueado } = useDepositosFranqueado()
   const { data: todasFranquias, isLoading: loadingTodasFranquias } = useTodasFranquias()
@@ -116,18 +116,18 @@ export default function Inventario() {
         franqueado_id: f.master_franqueado_id,
         franqueado_nome: 'Admin - Todas as Franquias'
       }))
-    : profile?.role === 'franqueado' 
+    : profile?.role === 'operador'
     ? depositosFranqueado?.map(f => ({
         deposito_id: f.id,
         deposito_nome: f.nome,
         franqueado_id: f.master_franqueado_id,
-        franqueado_nome: 'Franqueado'
+        operador_nome: 'Operador'
       }))
     : depositosProdutor
     
   const loadingDepositos = profile?.role === 'admin' 
     ? loadingTodasFranquias
-    : profile?.role === 'franqueado' 
+    : profile?.role === 'operador' 
     ? loadingDepositosFranqueado 
     : loadingDepositosProdutor
   

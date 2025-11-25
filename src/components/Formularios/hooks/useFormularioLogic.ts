@@ -81,7 +81,7 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
   const { data: estoqueFEFO } = useEstoquePorProdutoFEFO(
     tipo === 'saida' && novoItem.produto_id ? novoItem.produto_id : undefined,
     tipo === 'saida' ? dados.depositoId : undefined,
-    tipo === 'saida' && profile?.role === 'produtor' ? user?.id : (dados as DadosSaida).produtor_destinatario
+    tipo === 'saida' && profile?.role === 'cliente' ? user?.id : (dados as DadosSaida).produtor_destinatario
   )
 
   // Carregar dados de tutorial se estiver ativo

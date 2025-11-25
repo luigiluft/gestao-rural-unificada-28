@@ -67,10 +67,10 @@ const statusMappings: Record<string, {
   "em_andamento": { variant: "processing", icon: ArrowRight, label: "Em Andamento" },
   "finalizado": { variant: "success", icon: CheckCircle, label: "Finalizado" },
   
-  // User roles (using UI labels - backend uses 'franqueado'/'produtor')
+  // User roles (using UI labels)
   "admin": { variant: "info", label: "Administrador" },
-  "franqueado": { variant: "success", label: "Operador" },
-  "produtor": { variant: "warning", label: "Cliente" },
+  "operador": { variant: "success", label: "Operador" },
+  "cliente": { variant: "warning", label: "Cliente" },
   "funcionario": { variant: "pending", label: "Funcionário" },
 }
 

@@ -120,15 +120,15 @@ export function GerenciarDepositosProdutor() {
             <DialogHeader>
               <DialogTitle>Adicionar Relacionamento</DialogTitle>
               <DialogDescription>
-                Vincule um produtor a um franqueado para dar acesso às suas franquias
+                Vincule um cliente a um operador para dar acesso às suas franquias
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="produtor">Produtor</Label>
+                <Label htmlFor="produtor">Cliente</Label>
                 <Select value={selectedProdutor} onValueChange={setSelectedProdutor}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um produtor" />
+                    <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
                   <SelectContent>
                     {produtores?.map((produtor) => (
@@ -140,10 +140,10 @@ export function GerenciarDepositosProdutor() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="franqueado">Franqueado</Label>
+                <Label htmlFor="franqueado">Operador</Label>
                 <Select value={selectedDeposito} onValueChange={setSelectedDeposito}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um franqueado" />
+                    <SelectValue placeholder="Selecione um operador" />
                   </SelectTrigger>
                   <SelectContent>
                     {depositosDisponiveis?.map((item) => (

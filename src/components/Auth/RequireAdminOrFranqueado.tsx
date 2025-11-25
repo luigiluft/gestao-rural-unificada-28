@@ -5,7 +5,7 @@ export function RequireAdminOrFranqueado({ children }: { children: ReactNode }) 
   return (
     <ProtectedRoute 
       requireAuth={true}
-      allowedRoles={["admin", "franqueado"]}
+      allowedRoles={["admin", "operador"]}
     >
       {children}
     </ProtectedRoute>

@@ -39,7 +39,7 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
         // For producers, we need to handle two cases:
         // 1. Their own saídas (with date filter)
         // 2. Pending approval saídas from franchisees (always shown, regardless of date)
-        if (userProfile?.role === 'produtor') {
+        if (userProfile?.role === 'cliente') {
           // First, get their own saídas with date filters
           let ownSaidasQuery = supabase
             .from("saidas")

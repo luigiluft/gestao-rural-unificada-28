@@ -6,7 +6,7 @@ export interface PageTutorial {
   title: string
   description: string
   pageKey: string
-  requiredRole?: 'admin' | 'franqueado' | 'produtor'
+  requiredRole?: 'admin' | 'operador' | 'cliente'
   steps: TutorialStep[]
 }
 
@@ -474,7 +474,7 @@ export const tutorialsByPage: PageTutorial[] = [
 ]
 
 // Helper function to get tutorials available for a specific role
-export const getTutorialsForRole = (role: 'admin' | 'franqueado' | 'produtor') => {
+export const getTutorialsForRole = (role: 'admin' | 'operador' | 'cliente') => {
   return tutorialsByPage.filter(tutorial => 
     !tutorial.requiredRole || tutorial.requiredRole === role
   )

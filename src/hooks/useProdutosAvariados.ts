@@ -89,7 +89,7 @@ export const useProdutosAvariados = () => {
       // If not admin, filter by deposito_id based on user role
       if (!isAdmin) {
         // Check if user is franqueado
-        if (profile?.role === 'franqueado') {
+        if (profile?.role === 'operador') {
           // Get franquias where user is master_franqueado_id
           const { data: franquias } = await supabase
             .from("franquias")
