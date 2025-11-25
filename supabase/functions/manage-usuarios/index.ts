@@ -73,6 +73,24 @@ serve(async (req) => {
       case 'delete_fazenda':
         result = await deleteFazenda(supabaseClient, user.id, data.id)
         break
+      case 'update_role':
+        result = await updateRole(supabaseClient, user.id, data)
+        break
+      case 'get_children':
+        result = await getChildren(supabaseClient, data.parent_user_id)
+        break
+      case 'link_child':
+        result = await linkChild(supabaseClient, data)
+        break
+      case 'unlink_child':
+        result = await unlinkChild(supabaseClient, data)
+        break
+      case 'get_permissions':
+        result = await getPermissions(supabaseClient, data.user_id)
+        break
+      case 'update_permissions':
+        result = await updatePermissions(supabaseClient, data)
+        break
       default:
         throw new Error('Invalid action')
     }
@@ -314,4 +332,120 @@ async function deleteFazenda(supabase: any, userId: string, fazendaId: string) {
 
   if (error) throw error
   return { id: fazendaId }
+}
+
+async function updateRole(supabase: any, adminUserId: string, data: any) {
+  // Verificar se o usuário que está fazendo a mudança é admin
+  const { data: adminProfile, error: adminError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('user_id', adminUserId)
+    .single()
+
+  if (adminError || adminProfile?.role !== 'admin') {
+    throw new Error('Unauthorized: Only admins can update roles')
+  }
+
+  const { user_id, role } = data
+
+  // Primeiro, remover todas as roles existentes do usuário
+  const { error: deleteError } = await supabase
+    .from('user_roles')
+    .delete()
+    .eq('user_id', user_id)
+
+  if (deleteError) throw deleteError
+
+  // Inserir a nova role
+  const { error: insertError } = await supabase
+    .from('user_roles')
+    .insert({
+      user_id,
+      role,
+    })
+
+  if (insertError) throw insertError
+
+  return { user_id, role }
+}
+
+async function getChildren(supabase: any, parentUserId: string) {
+  const { data, error } = await supabase
+    .from('user_hierarchy')
+    .select('child_user_id')
+    .eq('parent_user_id', parentUserId)
+    .eq('ativo', true)
+
+  if (error) throw error
+  return data
+}
+
+async function linkChild(supabase: any, data: any) {
+  const { parent_user_id, child_user_id } = data
+
+  const { data: hierarchy, error } = await supabase
+    .from('user_hierarchy')
+    .insert({
+      parent_user_id,
+      child_user_id,
+      ativo: true,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return hierarchy
+}
+
+async function unlinkChild(supabase: any, data: any) {
+  const { parent_user_id, child_user_id } = data
+
+  const { error } = await supabase
+    .from('user_hierarchy')
+    .update({ ativo: false })
+    .eq('parent_user_id', parent_user_id)
+    .eq('child_user_id', child_user_id)
+
+  if (error) throw error
+  return { parent_user_id, child_user_id }
+}
+
+async function getPermissions(supabase: any, userId: string) {
+  const { data, error } = await supabase
+    .from('user_permission_templates')
+    .select('permission')
+    .eq('user_id', userId)
+    .eq('ativo', true)
+
+  if (error) throw error
+  return data
+}
+
+async function updatePermissions(supabase: any, data: any) {
+  const { user_id, permissions } = data
+
+  // Desativar todas as permissões existentes
+  const { error: deactivateError } = await supabase
+    .from('user_permission_templates')
+    .update({ ativo: false })
+    .eq('user_id', user_id)
+
+  if (deactivateError) throw deactivateError
+
+  // Inserir as novas permissões
+  if (permissions.length > 0) {
+    const newPermissions = permissions.map((permission: string) => ({
+      user_id,
+      permission,
+      ativo: true,
+    }))
+
+    const { error: insertError } = await supabase
+      .from('user_permission_templates')
+      .insert(newPermissions)
+
+    if (insertError) throw insertError
+  }
+
+  return { user_id, permissions }
 }
