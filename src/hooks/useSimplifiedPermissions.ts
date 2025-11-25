@@ -109,8 +109,8 @@ export const useSimplifiedPermissions = (): UserPermissions => {
         console.log('🔄 Using role-based fallback permissions')
         const fallbackPermissions: Record<string, PermissionCode[]> = {
           'admin': ['dashboard.view', 'entradas.view', 'estoque.view', 'saidas.view', 'empresas.view'] as PermissionCode[],
-          'franqueado': ['dashboard.view', 'entradas.view', 'estoque.view', 'saidas.view'] as PermissionCode[],
-          'produtor': ['dashboard.view', 'rastreio.view'] as PermissionCode[],
+          'operador': ['dashboard.view', 'entradas.view', 'estoque.view', 'saidas.view'] as PermissionCode[],
+          'cliente': ['dashboard.view', 'rastreio.view'] as PermissionCode[],
           'motorista': ['proof-of-delivery.view', 'comprovantes.view'] as PermissionCode[]
         }
         

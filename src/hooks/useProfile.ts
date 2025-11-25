@@ -33,7 +33,7 @@ export const useProdutores = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, nome, email")
-        .eq("role", "produtor")
+        .eq("role", "cliente")
         .order("nome")
 
       if (error) throw error
@@ -117,7 +117,7 @@ export const useProdutoresComEstoqueNaFranquia = () => {
           nome, 
           email
         `)
-        .eq("role", "produtor")
+        .eq("role", "cliente")
         .in("user_id", produtoresComEstoque)
         .order("nome")
 

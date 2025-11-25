@@ -15,10 +15,10 @@ const Instrucoes = () => {
         case 'admin':
           navigate('/instrucoes/admin', { replace: true })
           break
-        case 'franqueado':
+        case 'operador':
           navigate('/instrucoes/franqueado', { replace: true })
           break
-        case 'produtor':
+        case 'cliente':
           navigate('/instrucoes/produtor', { replace: true })
           break
         default:

@@ -107,10 +107,10 @@ serve(async (req) => {
     // Determinar o parent_user_id correto baseado na hierarquia
     let finalParentUserId = parent_user_id || inviter_user_id
 
-    // Para produtores, verificar/definir franquia_id
+    // Para clientes, verificar/definir franquia_id
     let finalFranquiaId = franquia_id
-    if (role === 'produtor') {
-      // Se não foi especificada franquia e o criador é franqueado, usar a franquia dele
+    if (role === 'cliente') {
+      // Se não foi especificada franquia e o criador é operador, usar a franquia dele
       if (!finalFranquiaId) {
         const { data: userFranquia, error: franquiaError } = await supabaseAdmin
           .rpc('get_user_franquia_id', { _user_id: inviter_user_id })
@@ -181,7 +181,7 @@ serve(async (req) => {
           redirectTo: inviteUrl,
           data: {
             invite_token: inviteData.invite_token,
-            role: role || 'franqueado'
+            role: role || 'operador'
           }
         }
       )

@@ -11,7 +11,7 @@ export const useProdutorByCpfCnpj = (cpfCnpj?: string) => {
         .from("profiles")
         .select("user_id, nome, email, cpf_cnpj, role")
         .eq("cpf_cnpj", cpfCnpj)
-        .eq("role", "produtor")
+        .eq("role", "cliente")
         .maybeSingle()
 
       if (error) throw error
@@ -28,7 +28,7 @@ export const findProdutorByCpfCnpj = async (cpfCnpj: string) => {
     .from("profiles")
     .select("user_id, nome, email, cpf_cnpj, role")
     .eq("cpf_cnpj", cpfCnpj)
-    .eq("role", "produtor")
+    .eq("role", "cliente")
     .maybeSingle()
 
   if (error) throw error

@@ -33,7 +33,7 @@ export const useNotifications = () => {
         .single()
 
       const isAdmin = profile?.role === 'admin'
-      const isFranqueado = profile?.role === 'franqueado'
+      const isOperador = profile?.role === 'operador'
       const isCliente = profile?.role === 'cliente'
 
       let recebimento = 0
@@ -50,8 +50,8 @@ export const useNotifications = () => {
       let ocorrencias = 0
 
       try {
-        // RECEBIMENTO: For franqueados - entradas nos 4 status da página recebimento
-        if (isFranqueado || isAdmin) {
+        // RECEBIMENTO: For operadores - entradas nos 4 status da página recebimento
+        if (isOperador || isAdmin) {
           let entradasQuery = supabase
             .from("entradas")
             .select("id", { count: "exact" })
@@ -94,8 +94,8 @@ export const useNotifications = () => {
 
         estoque = estoqueCount || 0
 
-        // POSIÇÕES: For franqueados and admins - pallets alocados since last view
-        if (isFranqueado || isAdmin) {
+        // POSIÇÕES: For operadores and admins - pallets alocados since last view
+        if (isOperador || isAdmin) {
           const { data: lastViewPosicoes } = await supabase
             .from("user_notification_views")
             .select("last_viewed_at")
@@ -137,8 +137,8 @@ export const useNotifications = () => {
           posicoes = posicoesCount || 0
         }
 
-        // ALOCAÇÕES: For franqueados - pending pallets for allocation
-        if (isFranqueado || isAdmin) {
+        // ALOCAÇÕES: For operadores - pending pallets for allocation
+        if (isOperador || isAdmin) {
           // Count pallets pending allocation
           let pendingPalletsQuery = supabase
             .from("entrada_pallets")
@@ -176,8 +176,8 @@ export const useNotifications = () => {
           alocacoes = pendingPallets.length
         }
 
-        // SEPARAÇÃO: For franqueados - saídas pending separation only
-        if (isFranqueado || isAdmin) {
+        // SEPARAÇÃO: For operadores - saídas pending separation only
+        if (isOperador || isAdmin) {
           let separacaoQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
@@ -200,8 +200,8 @@ export const useNotifications = () => {
           separacao = separacaoCount || 0
         }
 
-        // EXPEDIÇÃO: For franqueados - saídas pending expedition (only separated items)
-        if (isFranqueado || isAdmin) {
+        // EXPEDIÇÃO: For operadores - saídas pending expedition (only separated items)
+        if (isOperador || isAdmin) {
           let saidasQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
@@ -224,8 +224,8 @@ export const useNotifications = () => {
           expedicao = saidasCount || 0
         }
 
-        // REMESSAS: For franqueados - saidas expedidas pending trip planning
-        if (isFranqueado || isAdmin) {
+        // REMESSAS: For operadores - saidas expedidas pending trip planning
+        if (isOperador || isAdmin) {
           let remessasQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
@@ -249,8 +249,8 @@ export const useNotifications = () => {
           remessas = remessasCount || 0
         }
 
-        // VIAGENS: For franqueados - planned/pending trips in their deposits
-        if (isFranqueado || isAdmin) {
+        // VIAGENS: For operadores - planned/pending trips in their deposits
+        if (isOperador || isAdmin) {
           let viagensQuery = supabase
             .from("viagens")
             .select("id", { count: "exact" })
@@ -282,8 +282,8 @@ export const useNotifications = () => {
 
         suporte = suporteCount || 0
 
-        // SUBCONTAS: For admins and franqueados - recent pending invites (last 30 days)
-        if (isAdmin || isFranqueado) {
+        // SUBCONTAS: For admins and operadores - recent pending invites (last 30 days)
+        if (isAdmin || isOperador) {
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
           
           let subcountQuery = supabase
@@ -300,8 +300,8 @@ export const useNotifications = () => {
           subcontas = subcountasCount || 0
         }
 
-        // DIVERGÊNCIAS: For franqueados and admins - divergencias not in final status (resolvida/cancelada)
-        if (isFranqueado || isAdmin) {
+        // DIVERGÊNCIAS: For operadores and admins - divergencias not in final status (resolvida/cancelada)
+        if (isOperador || isAdmin) {
           let divergenciasQuery = supabase
             .from("divergencias")
             .select("id", { count: "exact" })
@@ -333,8 +333,8 @@ export const useNotifications = () => {
           divergencias = divergenciasCount || 0
         }
 
-        // OCORRÊNCIAS: For franqueados and admins - ocorrencias not in final status (resolvida/cancelada)
-        if (isFranqueado || isAdmin) {
+        // OCORRÊNCIAS: For operadores and admins - ocorrencias not in final status (resolvida/cancelada)
+        if (isOperador || isAdmin) {
           let ocorrenciasQuery = supabase
             .from("ocorrencias")
             .select("id", { count: "exact" })

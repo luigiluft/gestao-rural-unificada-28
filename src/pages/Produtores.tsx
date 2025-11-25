@@ -71,7 +71,7 @@ export default function Produtores() {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, nome")
-        .eq("role", "franqueado");
+        .eq("role", "operador");
       
       if (error) throw error;
       return (data ?? []) as FranqueadoOption[];
@@ -158,7 +158,7 @@ export default function Produtores() {
           email: inviteEmail,
           inviterUserId: user.id,
           parentUserId: selectedFranqueado,
-          role: "produtor",
+          role: "cliente",
           permissions: selectedPermissions
         }
       });

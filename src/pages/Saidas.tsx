@@ -311,7 +311,7 @@ const Saidas = () => {
               <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"} className="truncate">
                 {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' : saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' : saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
               </Badge>
-               {userProfile?.role === 'produtor' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && <div className="flex gap-1 ml-2">
+               {userProfile?.role === 'cliente' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && <div className="flex gap-1 ml-2">
                    <Button size="sm" variant="outline" className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100" onClick={() => handleApproval(saida.id, true)} disabled={aprovarSaida.isPending} title="Aprovar saída">
                      <Check className="w-3 h-3" />
                    </Button>
@@ -541,7 +541,7 @@ const Saidas = () => {
       // Custom formatters for specific columns
       const customFormatters = {
         origem: (saida: any) => {
-          return saida.criado_por_franqueado ? 'Franqueado' : 'Própria';
+          return saida.criado_por_franqueado ? 'Operador' : 'Própria';
         },
         criadoPor: (saida: any) => {
           return saida.criado_por_franqueado ? 

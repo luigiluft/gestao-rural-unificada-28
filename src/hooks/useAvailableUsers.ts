@@ -8,7 +8,7 @@ export const useAvailableUsers = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, nome, email, role")
-        .eq("role", "franqueado")
+        .eq("role", "operador")
         .order("nome")
 
       if (error) throw error

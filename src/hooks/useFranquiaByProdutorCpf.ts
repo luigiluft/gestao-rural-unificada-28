@@ -12,7 +12,7 @@ export const useFranquiaByProdutorCpf = (cpfCnpj?: string) => {
         .from("profiles")
         .select("user_id, nome")
         .eq("cpf_cnpj", cpfCnpj)
-        .eq("role", "produtor")
+        .eq("role", "cliente")
         .maybeSingle()
 
       if (produtorError) {

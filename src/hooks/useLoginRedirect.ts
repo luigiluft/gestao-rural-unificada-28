@@ -47,8 +47,8 @@ export const useLoginRedirect = () => {
         
         const roleFallbacks: Record<string, string> = {
           'admin': '/dashboard',
-          'franqueado': '/dashboard',
-          'produtor': '/rastreio',
+          'operador': '/dashboard',
+          'cliente': '/rastreio',
           'motorista': '/proof-of-delivery'
         }
         
@@ -97,8 +97,8 @@ export const useLoginRedirect = () => {
     if (!firstAccessibleRoute) {
       const roleDefaults: Record<string, { path: string; permission: string }> = {
         'admin': { path: '/dashboard', permission: 'dashboard.view' },
-        'franqueado': { path: '/dashboard', permission: 'dashboard.view' },
-        'produtor': { path: '/rastreio', permission: 'rastreio.view' },
+        'operador': { path: '/dashboard', permission: 'dashboard.view' },
+        'cliente': { path: '/rastreio', permission: 'rastreio.view' },
         'motorista': { path: '/proof-of-delivery', permission: 'proof-of-delivery.view' }
       }
       

@@ -149,7 +149,7 @@ const Franquias = () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, nome, email")
-        .eq("role", "franqueado");
+        .eq("role", "operador");
       
       if (error) throw error;
       

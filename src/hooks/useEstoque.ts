@@ -64,7 +64,7 @@ export const useEstoque = () => {
 
         const parentRole = parentProfile?.role
         
-        if (parentRole === 'franqueado') {
+        if (parentRole === 'operador') {
           // Para subcontas de franqueados: buscar franquias onde o pai é master
           const { data: franquias } = await supabase
             .from("franquias")
@@ -72,7 +72,7 @@ export const useEstoque = () => {
             .eq("master_franqueado_id", hierarchy.parent_user_id)
           
           allowedDepositos = (franquias || []).map((f) => f.id)
-        } else if (parentRole === 'produtor') {
+        } else if (parentRole === 'cliente') {
           // Para subcontas de produtores: buscar franquia do produtor pai
           const { data: produtor } = await supabase
             .from("produtores")
@@ -92,14 +92,14 @@ export const useEstoque = () => {
           .eq("user_id", uid)
           .single()
 
-        if (userProfile?.role === 'franqueado') {
+        if (userProfile?.role === 'operador') {
           const { data: franquias } = await supabase
             .from("franquias")
             .select("id")
             .eq("master_franqueado_id", uid)
           
           allowedDepositos = (franquias || []).map((f) => f.id)
-        } else if (userProfile?.role === 'produtor') {
+        } else if (userProfile?.role === 'cliente') {
           const { data: produtor } = await supabase
             .from("produtores")
             .select("franquia_id")

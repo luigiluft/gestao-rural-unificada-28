@@ -47,7 +47,7 @@ export const useAuthVerification = ({
           // Primeiro tenta usar a função RPC
           const { data, error } = await supabase.rpc("has_role", {
             _user_id: user.id,
-            _role: allowedRoles[0] as "admin" | "franqueado" | "produtor",
+            _role: allowedRoles[0] as "admin" | "operador" | "cliente",
           });
 
           if (!error && data === true) {

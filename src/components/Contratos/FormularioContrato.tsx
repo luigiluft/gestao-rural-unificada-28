@@ -66,7 +66,7 @@ export function FormularioContrato({ contratoId, onSuccess }: FormularioContrato
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, nome')
-        .eq('role', 'produtor')
+        .eq('role', 'cliente')
         .order('nome')
       
       if (error) throw error

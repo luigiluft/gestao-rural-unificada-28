@@ -75,7 +75,7 @@ export function SimuladorFrete({
       return
     }
 
-    if (!profile?.user_id || profile.role !== 'franqueado') {
+    if (!profile?.user_id || profile.role !== 'operador') {
       toast.error("Apenas franqueados podem calcular frete")
       return
     }

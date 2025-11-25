@@ -38,7 +38,7 @@ export default function Franqueados() {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, email, created_at')
-        .eq('role', 'franqueado');
+        .eq('role', 'operador');
 
       console.log('Profiles result:', { profiles, profilesError });
 
@@ -67,7 +67,7 @@ export default function Franqueados() {
       const { data: pendingInvites, error: pendingError } = await supabase
         .from('pending_invites')
         .select('email, used_at')
-        .eq('role', 'franqueado')
+        .eq('role', 'operador')
         .is('used_at', null);
 
       console.log('Pending invites result:', { pendingInvites, pendingError });
@@ -116,7 +116,7 @@ export default function Franqueados() {
           email: inviteEmail,
           inviterUserId: user.id,
           parentUserId: user.id,
-          role: "franqueado",
+          role: "operador",
           permissions: ['estoque.view', 'estoque.manage', 'entradas.manage', 'saidas.manage']
         }
       });

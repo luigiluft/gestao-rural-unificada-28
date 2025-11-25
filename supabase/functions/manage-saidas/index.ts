@@ -558,7 +558,7 @@ async function createDevolucao(supabase: any, userId: string, data: any) {
     tipo_entrada: 'devolucao',
     numero_nfe: `DEV-${saida.id.substring(0, 8)}`,
     emitente_cnpj: saida.produtor_destinatario?.cpf_cnpj || '',
-    emitente_nome: saida.produtor_destinatario?.nome || 'Produtor',
+    emitente_nome: saida.produtor_destinatario?.nome || 'Cliente',
     destinatario_cpf_cnpj: saida.deposito?.master_franqueado_id || '',
     destinatario_nome: saida.deposito?.nome || 'Depósito',
     observacoes: observacoes || `Devolução ${tipo_devolucao === 'total' ? 'total' : 'parcial'} - Saída: ${saida.id}`,

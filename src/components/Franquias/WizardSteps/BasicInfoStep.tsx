@@ -92,7 +92,7 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Não há franqueados disponíveis. É necessário cadastrar um usuário com perfil "Franqueado" antes de criar uma franquia.
+                Não há operadores disponíveis. É necessário cadastrar um usuário com perfil "Operador" antes de criar uma franquia.
               </AlertDescription>
             </Alert>
           ) : (
