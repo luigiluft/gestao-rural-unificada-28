@@ -37,7 +37,7 @@ const pageInfo = {
   "perfis-funcionarios": { name: "Perfis de Funcionários", description: "Gerenciamento de perfis de acesso para funcionários" }
 }
 
-const roles = ["admin", "franqueado", "produtor"] as const
+const roles = ["admin", "franqueado", "cliente"] as const
 
 export default function ControleAcesso() {
   const { data: permissions = [], isLoading } = useAllPagePermissions()
@@ -49,7 +49,7 @@ export default function ControleAcesso() {
 
   const getPermissionKey = (pageKey: string, role: string) => `${pageKey}-${role}`
   
-  const getPermission = (pageKey: string, role: "admin" | "franqueado" | "produtor") => {
+  const getPermission = (pageKey: string, role: "admin" | "franqueado" | "cliente") => {
     const key = getPermissionKey(pageKey, role)
     if (changes[key]) return changes[key]
     
@@ -61,7 +61,7 @@ export default function ControleAcesso() {
     }
   }
 
-  const updatePermission = (pageKey: string, role: "admin" | "franqueado" | "produtor", field: "can_access" | "visible_in_menu", value: boolean) => {
+  const updatePermission = (pageKey: string, role: "admin" | "franqueado" | "cliente", field: "can_access" | "visible_in_menu", value: boolean) => {
     const key = getPermissionKey(pageKey, role)
     const current = getPermission(pageKey, role)
     

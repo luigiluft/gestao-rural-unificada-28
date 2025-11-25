@@ -155,7 +155,7 @@ export default function Subcontas() {
       let parentUserId = user?.id
       let franquiaId = null
 
-      if (profile?.role === 'admin' && selectedProfile.target_role === 'produtor') {
+      if (profile?.role === 'admin' && selectedProfile.target_role === 'cliente') {
         if (!createFranquia) {
           throw new Error("Selecione uma franquia para o produtor")
         }
@@ -356,7 +356,7 @@ export default function Subcontas() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.target_role === 'produtor' && (
+                    {profile.role === 'admin' && selectedProfileId && profiles?.find(p => p.id === selectedProfileId)?.target_role === 'cliente' && (
                       <div className="grid gap-2">
                         <Label htmlFor="franquia">Franquia</Label>
                         <Select value={createFranquia} onValueChange={setCreateFranquia}>

@@ -1,17 +1,15 @@
 /**
- * IMPORTANTE: Roles no Backend vs Frontend
+ * IMPORTANTE: Roles no Backend e Frontend
  * 
- * Backend (banco, RLS, enums, lógica):
- * - 'franqueado' 
- * - 'produtor'
- * 
- * Frontend (UI - Labels de exibição):
- * - 'Operador' (para franqueado)
- * - 'Cliente' (para produtor)
+ * Backend e Frontend agora usam os mesmos nomes:
+ * - 'admin' - Administrador
+ * - 'franqueado' - Operador  
+ * - 'cliente' - Cliente
+ * - 'motorista' - Motorista
  * 
  * Use getRoleLabel() de @/utils/roleTranslations para exibição na UI
  */
-export type UserRole = 'admin' | 'franqueado' | 'produtor';
+export type UserRole = 'admin' | 'franqueado' | 'cliente' | 'motorista';
 // All possible permissions for pages and actions
 export type PermissionCode = 
   | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 

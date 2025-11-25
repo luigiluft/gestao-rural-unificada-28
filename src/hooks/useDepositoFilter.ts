@@ -7,12 +7,12 @@ import { useUserRole } from "./useUserRole"
  */
 export const useDepositoFilter = () => {
   const { selectedFranquia } = useFranquia()
-  const { isProdutor } = useUserRole()
+  const { isCliente } = useUserRole()
   
   return {
     depositoId: selectedFranquia?.id === "ALL" ? null : selectedFranquia?.id,
     isAllDeposits: selectedFranquia?.id === "ALL",
-    shouldFilter: isProdutor && selectedFranquia?.id !== "ALL",
+    shouldFilter: isCliente && selectedFranquia?.id !== "ALL",
     hasFilter: !!selectedFranquia && selectedFranquia.id !== "ALL"
   }
 }

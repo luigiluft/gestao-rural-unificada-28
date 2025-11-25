@@ -5,7 +5,7 @@ import { useProfile } from "./useProfile"
 
 export interface PagePermission {
   page_key: string
-  role: "admin" | "franqueado" | "produtor" | "motorista"
+  role: "admin" | "franqueado" | "cliente" | "motorista"
   can_access: boolean
   visible_in_menu: boolean
 }
@@ -62,7 +62,7 @@ export const useAllPagePermissions = () => {
 }
 
 export const useUpdatePagePermissions = () => {
-  return async (updates: { page_key: string; role: "admin" | "franqueado" | "produtor" | "motorista"; can_access: boolean; visible_in_menu: boolean }[]) => {
+  return async (updates: { page_key: string; role: "admin" | "franqueado" | "cliente" | "motorista"; can_access: boolean; visible_in_menu: boolean }[]) => {
     const { error } = await supabase
       .from("page_permissions")
       .upsert(updates, { 

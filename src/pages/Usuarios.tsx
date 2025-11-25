@@ -27,7 +27,7 @@ export default function Usuarios() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<'admin' | 'franqueado' | 'produtor'>('produtor');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'franqueado' | 'cliente'>('cliente');
   const [sendingInvite, setSendingInvite] = useState(false);
   
   const sendInvite = async () => {
@@ -47,7 +47,7 @@ export default function Usuarios() {
           inviter_user_id: user.id,
           parent_user_id: user.id,
           role: inviteRole,
-          permissions: inviteRole === 'produtor' ? ['estoque.view'] : [],
+          permissions: inviteRole === 'cliente' ? ['estoque.view'] : [],
           redirect_url: `${window.location.origin}/`
         }
       });
@@ -65,7 +65,7 @@ export default function Usuarios() {
       
       setInviteOpen(false);
       setInviteEmail("");
-      setInviteRole('produtor');
+      setInviteRole('cliente');
       await qc.invalidateQueries({ queryKey: ["profiles-all"] });
     } catch (err: any) {
       toast({ title: "Erro ao enviar convite", description: err.message ?? "Tente novamente.", variant: "destructive" });
@@ -117,7 +117,7 @@ export default function Usuarios() {
           const isAdmin = adminRes.data === true
           const isFranqueado = franqRes.data === true
           
-          const role = isAdmin ? 'admin' : isFranqueado ? 'franqueado' : 'produtor'
+          const role = isAdmin ? 'admin' : isFranqueado ? 'franqueado' : 'cliente'
           const label = getRoleLabel(role, false, true)
           return [p.user_id, label] as const
         })
@@ -350,7 +350,7 @@ export default function Usuarios() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="produtor">{ROLE_LABELS.produtor}</SelectItem>
+                    <SelectItem value="cliente">{ROLE_LABELS.cliente}</SelectItem>
                     <SelectItem value="franqueado">{ROLE_LABELS.franqueado}</SelectItem>
                     <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                   </SelectContent>
