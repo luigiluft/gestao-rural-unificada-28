@@ -153,7 +153,7 @@ const iconMap = {
 export const useDynamicMenuItems = () => {
   const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
   const { selectedFranquia } = useFranquia()
-  const { isFranqueado } = useUserRole()
+  const { isOperador } = useUserRole()
 
   const menuItems = useMemo(() => {
     if (isLoading || !permissions?.length) return []
@@ -258,7 +258,7 @@ export const useDynamicMenuItems = () => {
 
     // Verificar se tem permissão para pelo menos uma página do WMS
     // Ocultar WMS se operador tiver "Todos os Depósitos" selecionado
-    const shouldShowWms = !(isFranqueado && selectedFranquia?.id === "ALL")
+    const shouldShowWms = !(isOperador && selectedFranquia?.id === "ALL")
     const hasWmsPermission = wmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
@@ -299,7 +299,7 @@ export const useDynamicMenuItems = () => {
 
     // Verificar se tem permissão para pelo menos uma página do TMS
     // Ocultar TMS se operador tiver "Todos os Depósitos" selecionado
-    const shouldShowTms = !(isFranqueado && selectedFranquia?.id === "ALL")
+    const shouldShowTms = !(isOperador && selectedFranquia?.id === "ALL")
     const hasTmsPermission = tmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
@@ -422,7 +422,7 @@ export const useDynamicMenuItems = () => {
     }
 
     return items
-  }, [permissions, isLoading, selectedFranquia, isFranqueado])
+  }, [permissions, isLoading, selectedFranquia, isOperador])
 
   return { menuItems, isLoading }
 }

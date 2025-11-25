@@ -21,14 +21,14 @@ export default function Contratos() {
   const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'suspenso' | 'expirado' | 'cancelado' | undefined>()
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const { userRole, isAdmin, isFranqueado } = useUserRole()
+  const { userRole, isAdmin, isOperador } = useUserRole()
   const { user } = useAuth()
   const [franquiaId, setFranquiaId] = useState<string | undefined>()
 
   // Para franqueados, buscar a franquia deles
   useEffect(() => {
     const fetchFranquia = async () => {
-      if (!isFranqueado || !user?.id) return
+      if (!isOperador || !user?.id) return
       
       const { data } = await supabase
         .from('franquias')
@@ -41,10 +41,10 @@ export default function Contratos() {
       }
     }
 
-    if (isFranqueado) {
+    if (isOperador) {
       fetchFranquia()
     }
-  }, [isFranqueado, user?.id])
+  }, [isOperador, user?.id])
   
   const { data: contratos, isLoading } = useContratos({ 
     status: statusFilter,

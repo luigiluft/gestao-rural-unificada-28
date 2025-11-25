@@ -27,7 +27,7 @@ export default function Usuarios() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<'admin' | 'franqueado' | 'cliente'>('cliente');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'operador' | 'cliente'>('cliente');
   const [sendingInvite, setSendingInvite] = useState(false);
   
   const sendInvite = async () => {
@@ -110,14 +110,14 @@ export default function Usuarios() {
       // Check roles via security-definer RPC to avoid RLS recursion
       const results = await Promise.all(
         profiles.map(async (p) => {
-          const [adminRes, franqRes] = await Promise.all([
+          const [adminRes, opRes] = await Promise.all([
             supabase.rpc('has_role', { _user_id: p.user_id, _role: 'admin' }),
-            supabase.rpc('has_role', { _user_id: p.user_id, _role: 'franqueado' }),
+            supabase.rpc('has_role', { _user_id: p.user_id, _role: 'operador' }),
           ])
           const isAdmin = adminRes.data === true
-          const isFranqueado = franqRes.data === true
+          const isOperador = opRes.data === true
           
-          const role = isAdmin ? 'admin' : isFranqueado ? 'franqueado' : 'cliente'
+          const role = isAdmin ? 'admin' : isOperador ? 'operador' : 'cliente'
           const label = getRoleLabel(role, false, true)
           return [p.user_id, label] as const
         })
@@ -351,7 +351,7 @@ export default function Usuarios() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cliente">{ROLE_LABELS.cliente}</SelectItem>
-                    <SelectItem value="franqueado">{ROLE_LABELS.franqueado}</SelectItem>
+                    <SelectItem value="operador">{ROLE_LABELS.operador}</SelectItem>
                     <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                   </SelectContent>
                 </Select>

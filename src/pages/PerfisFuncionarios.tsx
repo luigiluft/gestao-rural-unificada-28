@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { type PermissionTemplate, type PermissionCode, type UserRole } from "@/types/permissions"
 
 const AVAILABLE_PERMISSIONS = {
-  franqueado: [
+  operador: [
     { code: 'dashboard.view', label: 'Dashboard' },
     { code: 'catalogo.view', label: 'Catálogo' },
     
@@ -93,7 +93,7 @@ const AVAILABLE_PERMISSIONS = {
 
 export default function PerfisFuncionarios() {
   const { data: profile } = useProfile()
-  const userRole = profile?.role as 'franqueado' | 'cliente'
+  const userRole = profile?.role as 'operador' | 'cliente'
   const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole, true)
   
   const [editingProfile, setEditingProfile] = useState<PermissionTemplate | null>(null)
@@ -154,7 +154,7 @@ export default function PerfisFuncionarios() {
   }
 
   const availablePermissions = AVAILABLE_PERMISSIONS[userRole] || []
-  const roleLabel = userRole === 'franqueado' ? 'Franqueado' : 'Cliente'
+  const roleLabel = userRole === 'operador' ? 'Operador' : 'Cliente'
 
   if (isLoading) {
     return (
@@ -174,7 +174,7 @@ export default function PerfisFuncionarios() {
 
   // Separate profiles by role for better organization
   const myProfiles = profiles.filter(p => p.target_role === userRole)
-  const clientProfiles = userRole === 'franqueado' ? profiles.filter(p => p.target_role === 'cliente') : []
+  const clientProfiles = userRole === 'operador' ? profiles.filter(p => p.target_role === 'cliente') : []
 
   return (
     <div className="space-y-6">
@@ -182,7 +182,7 @@ export default function PerfisFuncionarios() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Perfis de Funcionários</h1>
           <p className="text-muted-foreground">
-            Gerencie os perfis de acesso para funcionários {userRole === 'franqueado' ? 'da franquia' : 'do produtor'}
+            Gerencie os perfis de acesso para funcionários {userRole === 'operador' ? 'da franquia' : 'do cliente'}
           </p>
         </div>
         
