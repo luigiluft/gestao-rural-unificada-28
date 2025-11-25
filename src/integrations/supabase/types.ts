@@ -2511,6 +2511,134 @@ export type Database = {
         }
         Relationships: []
       }
+      locais_entrega: {
+        Row: {
+          area_total_ha: number | null
+          ativo: boolean
+          bairro: string | null
+          cadastro_ambiental_rural: string | null
+          capacidade_armazenagem_ton: number | null
+          cep: string
+          cidade: string
+          cliente_id: string
+          codigo_ibge_municipio: string | null
+          codigo_imovel_rural: string | null
+          complemento: string | null
+          cpf_cnpj_proprietario: string | null
+          created_at: string
+          email_contato: string | null
+          endereco: string
+          estado: string
+          id: string
+          infraestrutura: string | null
+          inscricao_estadual: string | null
+          is_rural: boolean
+          latitude: number | null
+          longitude: number | null
+          municipio: string | null
+          nome: string
+          nome_logradouro: string | null
+          nome_responsavel: string | null
+          numero: string | null
+          produtor_id: string | null
+          referencia: string | null
+          situacao_cadastral: string | null
+          telefone_contato: string | null
+          tipo_local: Database["public"]["Enums"]["tipo_local"]
+          tipo_logradouro: string | null
+          tipo_producao: string | null
+          uf: string | null
+          uf_ie: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_total_ha?: number | null
+          ativo?: boolean
+          bairro?: string | null
+          cadastro_ambiental_rural?: string | null
+          capacidade_armazenagem_ton?: number | null
+          cep: string
+          cidade: string
+          cliente_id: string
+          codigo_ibge_municipio?: string | null
+          codigo_imovel_rural?: string | null
+          complemento?: string | null
+          cpf_cnpj_proprietario?: string | null
+          created_at?: string
+          email_contato?: string | null
+          endereco: string
+          estado: string
+          id?: string
+          infraestrutura?: string | null
+          inscricao_estadual?: string | null
+          is_rural?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          municipio?: string | null
+          nome: string
+          nome_logradouro?: string | null
+          nome_responsavel?: string | null
+          numero?: string | null
+          produtor_id?: string | null
+          referencia?: string | null
+          situacao_cadastral?: string | null
+          telefone_contato?: string | null
+          tipo_local?: Database["public"]["Enums"]["tipo_local"]
+          tipo_logradouro?: string | null
+          tipo_producao?: string | null
+          uf?: string | null
+          uf_ie?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_total_ha?: number | null
+          ativo?: boolean
+          bairro?: string | null
+          cadastro_ambiental_rural?: string | null
+          capacidade_armazenagem_ton?: number | null
+          cep?: string
+          cidade?: string
+          cliente_id?: string
+          codigo_ibge_municipio?: string | null
+          codigo_imovel_rural?: string | null
+          complemento?: string | null
+          cpf_cnpj_proprietario?: string | null
+          created_at?: string
+          email_contato?: string | null
+          endereco?: string
+          estado?: string
+          id?: string
+          infraestrutura?: string | null
+          inscricao_estadual?: string | null
+          is_rural?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          municipio?: string | null
+          nome?: string
+          nome_logradouro?: string | null
+          nome_responsavel?: string | null
+          numero?: string | null
+          produtor_id?: string | null
+          referencia?: string | null
+          situacao_cadastral?: string | null
+          telefone_contato?: string | null
+          tipo_local?: Database["public"]["Enums"]["tipo_local"]
+          tipo_logradouro?: string | null
+          tipo_producao?: string | null
+          uf?: string | null
+          uf_ie?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locais_entrega_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       motoristas: {
         Row: {
           ativo: boolean
@@ -3643,6 +3771,7 @@ export type Database = {
           id: string
           janela_entrega_dias: number | null
           janela_horario: string | null
+          local_entrega_id: string | null
           mopp_motorista: string | null
           nome_motorista: string | null
           observacoes: string | null
@@ -3689,6 +3818,7 @@ export type Database = {
           id?: string
           janela_entrega_dias?: number | null
           janela_horario?: string | null
+          local_entrega_id?: string | null
           mopp_motorista?: string | null
           nome_motorista?: string | null
           observacoes?: string | null
@@ -3735,6 +3865,7 @@ export type Database = {
           id?: string
           janela_entrega_dias?: number | null
           janela_horario?: string | null
+          local_entrega_id?: string | null
           mopp_motorista?: string | null
           nome_motorista?: string | null
           observacoes?: string | null
@@ -3788,6 +3919,13 @@ export type Database = {
             columns: ["fazenda_id"]
             isOneToOne: false
             referencedRelation: "fazendas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_local_entrega_id_fkey"
+            columns: ["local_entrega_id"]
+            isOneToOne: false
+            referencedRelation: "locais_entrega"
             referencedColumns: ["id"]
           },
           {
@@ -4850,6 +4988,13 @@ export type Database = {
         | "contestado"
       status_ocorrencia: "aberta" | "em_andamento" | "resolvida" | "cancelada"
       tipo_cobranca: "mensal" | "quinzenal" | "por_demanda"
+      tipo_local:
+        | "fazenda"
+        | "filial"
+        | "centro_distribuicao"
+        | "loja"
+        | "armazem"
+        | "outro"
       tipo_movimentacao_saida:
         | "saida_normal"
         | "devolucao_total"
@@ -5087,6 +5232,14 @@ export const Constants = {
       ],
       status_ocorrencia: ["aberta", "em_andamento", "resolvida", "cancelada"],
       tipo_cobranca: ["mensal", "quinzenal", "por_demanda"],
+      tipo_local: [
+        "fazenda",
+        "filial",
+        "centro_distribuicao",
+        "loja",
+        "armazem",
+        "outro",
+      ],
       tipo_movimentacao_saida: [
         "saida_normal",
         "devolucao_total",
