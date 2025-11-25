@@ -4201,6 +4201,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_computed_permissions: {
+        Row: {
+          computed_at: string | null
+          expires_at: string | null
+          is_subaccount: boolean
+          permissions: Json
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string | null
+          expires_at?: string | null
+          is_subaccount?: boolean
+          permissions?: Json
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id: string
+        }
+        Update: {
+          computed_at?: string | null
+          expires_at?: string | null
+          is_subaccount?: boolean
+          permissions?: Json
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_hierarchy: {
         Row: {
           child_user_id: string
@@ -4442,7 +4469,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_franquias_summary: {
+        Row: {
+          franquia_ids: string[] | null
+          franquia_names: string[] | null
+          last_updated: string | null
+          total_franquias: number | null
+          total_master: number | null
+          total_operador: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franquia_usuarios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Functions: {
       allocate_pallet_to_position: {
@@ -4682,6 +4728,7 @@ export type Database = {
         Returns: boolean
       }
       refresh_estoque_simple: { Args: never; Returns: undefined }
+      refresh_user_franquias_summary: { Args: never; Returns: undefined }
       reset_wave_positions: { Args: { p_wave_id: string }; Returns: boolean }
       user_belongs_to_franquia: {
         Args: { p_franquia_id: string; p_user_id: string }
