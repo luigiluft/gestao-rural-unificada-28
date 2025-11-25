@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { Search, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History } from "lucide-react";
-import { DepositoFilter } from "@/components/ui/deposito-filter";
-import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +18,6 @@ import { ptBR } from "date-fns/locale";
 import AvariasTab from "@/components/Estoque/AvariasTab";
 export default function Estoque() {
   const navigate = useNavigate();
-  const { isProdutor } = useUserRole();
   const {
     data: estoque,
     isLoading
@@ -171,18 +168,15 @@ export default function Estoque() {
                 </Card>
               </div>
               
-              {/* Search bar and deposit filter */}
-              <div className="flex gap-4 flex-wrap">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input 
-                    placeholder="Buscar por produto, lote, código ou depósito..." 
-                    className="pl-9" 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                {isProdutor && <DepositoFilter />}
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar por produto, lote, código ou depósito..." 
+                  className="pl-9" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
               
               {isLoading ? <div className="space-y-4">
