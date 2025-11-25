@@ -151,7 +151,7 @@ export function AppHeader() {
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
-              <span>Franquia:</span>
+              <span>Depósito:</span>
               {availableFranquias.length === 1 ? (
                 <Badge variant="outline" className="font-normal">
                   {availableFranquias[0].nome}
@@ -165,7 +165,7 @@ export function AppHeader() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64 bg-card z-50">
-                    <DropdownMenuLabel>Selecione a Franquia</DropdownMenuLabel>
+                    <DropdownMenuLabel>Selecione o Depósito</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {availableFranquias.map((franquia) => (
                       <DropdownMenuItem
