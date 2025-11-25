@@ -39,9 +39,9 @@ export function SimuladorFrete({
   const { data: profile } = useProfile()
   
   // Buscar fazendas do produtor
-  const isProdutor = profile?.role === 'produtor'
-  const targetProdutorId = isProdutor ? user?.id : produtorDestinatarioId
-  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetProdutorId)
+  const isCliente = profile?.role === 'cliente'
+  const targetClienteId = isCliente ? user?.id : produtorDestinatarioId
+  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetClienteId)
 
   const { calcularFreteTodasTabelas, calculando } = useCalcularFreteMultiplasTabelas()
   
@@ -143,7 +143,7 @@ export function SimuladorFrete({
                 placeholder={
                   loadingFazendas 
                     ? "Carregando fazendas..." 
-                    : fazendas.length === 0 && targetProdutorId
+                    : fazendas.length === 0 && targetClienteId
                       ? "Nenhuma fazenda cadastrada"
                       : "Selecione a fazenda"
                 } 

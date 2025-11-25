@@ -68,8 +68,10 @@ export default function ControleAcesso() {
     setChanges(prev => ({
       ...prev,
       [key]: {
-        ...current,
-        [field]: value
+        page_key: pageKey,
+        role,
+        can_access: field === "can_access" ? value : current.can_access,
+        visible_in_menu: field === "visible_in_menu" ? value : current.visible_in_menu
       }
     }))
     setHasChanges(true)

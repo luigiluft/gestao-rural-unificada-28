@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
 
 import { useProfile, useFazendas } from "@/hooks/useProfile"
-import { useProdutoresParaSaida } from "@/hooks/useProdutoresParaSaida"
+import { useClientesParaSaida } from "@/hooks/useClientesParaSaida"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useState, useEffect } from "react"
@@ -32,7 +32,7 @@ interface DadosSaidaProps {
 export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoMopp }: DadosSaidaProps) {
   const { user } = useAuth()
   const { data: profile } = useProfile()
-  const { data: produtoresParaSaida = [] } = useProdutoresParaSaida()
+  const { data: clientesParaSaida = [] } = useClientesParaSaida()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
   const janelaEntregaDias = useJanelaEntregaDias()
@@ -42,7 +42,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
 
   // Hooks condicionais baseados no papel do usuário
   const { data: depositosProdutor = [] } = useDepositosDisponiveis(
-    profile?.role === 'produtor' ? user?.id : undefined
+    profile?.role === 'cliente' ? user?.id : undefined
   )
   const { data: franquiasFranqueado = [] } = useDepositosFranqueado()
   const { data: todasFranquias = [] } = useTodasFranquias()
@@ -61,19 +61,19 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         deposito_nome: franquia.nome,
         franqueado_nome: franquia.nome
       }))
-    } else if (profile?.role === 'produtor') {
+    } else if (profile?.role === 'cliente') {
       return depositosProdutor || []
     }
     return []
   }, [profile?.role, todasFranquias, franquiasFranqueado, depositosProdutor])
 
-  const isProdutor = profile?.role === 'produtor'
+  const isCliente = profile?.role === 'cliente'
   const isFranqueado = profile?.role === 'franqueado'
   const requiredMopp = dados.tipo_saida === 'retirada_deposito' && pesoTotal >= pesoMinimoMopp
 
   // Get the target producer ID for farms
-  const targetProdutorId = isProdutor ? user?.id : dados.produtor_destinatario
-  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetProdutorId)
+  const targetClienteId = isCliente ? user?.id : dados.produtor_destinatario
+  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetClienteId)
 
   // Hook para horários disponíveis
   const { data: horariosDisponiveis = [] } = useHorariosDisponiveis(
@@ -199,9 +199,9 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
                   <SelectValue placeholder="Selecione o produtor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {produtoresParaSaida?.map((produtor) => (
-                    <SelectItem key={produtor.user_id} value={produtor.user_id}>
-                      {produtor.nome}
+                  {clientesParaSaida?.map((cliente) => (
+                    <SelectItem key={cliente.user_id} value={cliente.user_id}>
+                      {cliente.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
