@@ -5,17 +5,20 @@ import { useMemo } from "react"
 /**
  * Hook para obter as franquias do usuário autenticado
  */
-export const useCurrentUserFranquias = () => {
+export const useCurrentUserFranquias = (limit = 50) => {
   const { user } = useAuth()
   const { data: franquiaUsuarios, isLoading } = useUserFranquias(user?.id)
 
   const franquias = useMemo(() => {
-    return franquiaUsuarios?.map(fu => ({
+    if (!franquiaUsuarios) return []
+    
+    // Processar apenas o limite especificado
+    return franquiaUsuarios.slice(0, limit).map(fu => ({
       ...fu.franquias,
       papel: fu.papel,
       franquia_usuario_id: fu.id
-    })) || []
-  }, [franquiaUsuarios])
+    }))
+  }, [franquiaUsuarios, limit])
 
   const isMaster = useMemo(() => {
     return franquiaUsuarios?.some(fu => fu.papel === 'master') || false
@@ -32,6 +35,7 @@ export const useCurrentUserFranquias = () => {
     isMaster,
     masterFranquias,
     isLoading,
-    hasMultipleFranquias: franquias.length > 1
+    hasMultipleFranquias: franquias.length > 1,
+    totalFranquias: franquiaUsuarios?.length || 0
   }
 }

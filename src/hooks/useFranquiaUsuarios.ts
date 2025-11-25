@@ -51,9 +51,9 @@ export const useFranquiaUsuarios = (franquiaId?: string) => {
 }
 
 // Hook para buscar franquias de um usuário
-export const useUserFranquias = (userId?: string) => {
+export const useUserFranquias = (userId?: string, limit = 50) => {
   return useQuery({
-    queryKey: ["user-franquias", userId],
+    queryKey: ["user-franquias", userId, limit],
     queryFn: async () => {
       if (!userId) return []
 
@@ -70,12 +70,17 @@ export const useUserFranquias = (userId?: string) => {
         `)
         .eq("user_id", userId)
         .eq("ativo", true)
+        .limit(limit)
         .order("created_at", { ascending: false })
 
       if (error) throw error
       return data as FranquiaUsuario[]
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   })
 }
 
@@ -107,9 +112,10 @@ export const useAddFranquiaUsuario = () => {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["franquia-usuarios"] })
-      queryClient.invalidateQueries({ queryKey: ["user-franquias"] })
+    onSuccess: (_, variables) => {
+      // Invalidação granular
+      queryClient.invalidateQueries({ queryKey: ["franquia-usuarios", variables.franquiaId] })
+      queryClient.invalidateQueries({ queryKey: ["user-franquias", variables.userId] })
       toast.success("Usuário adicionado à franquia com sucesso!")
     },
     onError: (error: any) => {
@@ -124,16 +130,27 @@ export const useRemoveFranquiaUsuario = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Buscar dados do relacionamento antes de deletar para invalidar caches corretos
+      const { data: franquiaUsuario } = await supabase
+        .from("franquia_usuarios")
+        .select("franquia_id, user_id")
+        .eq("id", id)
+        .single()
+
       const { error } = await supabase
         .from("franquia_usuarios")
         .update({ ativo: false })
         .eq("id", id)
 
       if (error) throw error
+      return franquiaUsuario
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["franquia-usuarios"] })
-      queryClient.invalidateQueries({ queryKey: ["user-franquias"] })
+    onSuccess: (franquiaUsuario) => {
+      // Invalidação granular
+      if (franquiaUsuario) {
+        queryClient.invalidateQueries({ queryKey: ["franquia-usuarios", franquiaUsuario.franquia_id] })
+        queryClient.invalidateQueries({ queryKey: ["user-franquias", franquiaUsuario.user_id] })
+      }
       toast.success("Usuário removido da franquia com sucesso!")
     },
     onError: (error: any) => {
@@ -158,15 +175,16 @@ export const useUpdateFranquiaUsuarioPapel = () => {
         .from("franquia_usuarios")
         .update({ papel })
         .eq("id", id)
-        .select()
+        .select("franquia_id, user_id")
         .single()
 
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["franquia-usuarios"] })
-      queryClient.invalidateQueries({ queryKey: ["user-franquias"] })
+    onSuccess: (data) => {
+      // Invalidação granular
+      queryClient.invalidateQueries({ queryKey: ["franquia-usuarios", data.franquia_id] })
+      queryClient.invalidateQueries({ queryKey: ["user-franquias", data.user_id] })
       toast.success("Papel do usuário atualizado com sucesso!")
     },
     onError: (error: any) => {

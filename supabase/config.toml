@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.send-invite]
 verify_jwt = false
 
+[functions.compute-permissions]
+verify_jwt = true
+
 [functions.manage-entradas]
 verify_jwt = true
 
