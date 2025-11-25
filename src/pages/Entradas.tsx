@@ -136,7 +136,7 @@ export default function Entradas() {
   const queryClient = useQueryClient();
   const {
     isAdmin,
-    isFranqueado,
+    isOperador,
     isCliente
   } = useUserRole();
   
@@ -703,7 +703,7 @@ export default function Entradas() {
               <Eye className="h-3 w-3" />
             </Button>
             {/* Ações disponíveis baseadas no papel do usuário */}
-            {(isAdmin || isFranqueado) && <DropdownMenu>
+            {(isAdmin || isOperador) && <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                     <MoreHorizontal className="h-3 w-3" />
