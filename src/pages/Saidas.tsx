@@ -4,8 +4,6 @@ import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter,
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { DepositoFilter } from "@/components/ui/deposito-filter";
-import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -182,7 +180,6 @@ const Saidas = () => {
   const {
     data: userProfile
   } = useProfile();
-  const { isProdutor } = useUserRole();
   const [isNewSaidaOpen, setIsNewSaidaOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [saidaToDelete, setSaidaToDelete] = useState<string | null>(null);
@@ -647,10 +644,7 @@ const Saidas = () => {
       {/* Filter Section */}
       <div className="flex-shrink-0 bg-background">
         <div className="p-6 border-b">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <DateRangeFilter dateRange={tableState.dateRange} onDateRangeChange={tableState.setDateRange} />
-            {isProdutor && <DepositoFilter />}
-          </div>
+          <DateRangeFilter dateRange={tableState.dateRange} onDateRangeChange={tableState.setDateRange} />
         </div>
       </div>
 
