@@ -123,10 +123,10 @@ export default function AuthPage() {
     navigate(from, { replace: true });
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (retryCount = 0) => {
     try {
       setLoading(true);
-      console.log('🔐 Starting login process for email:', email);
+      console.log('🔐 Starting login process for email:', email, 'retry:', retryCount);
       
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -147,7 +147,22 @@ export default function AuthPage() {
       }
     } catch (err: any) {
       console.error('❌ Login error:', err);
-      toast.error(err.message || "Não foi possível fazer login");
+      
+      // Retry logic for timeouts or connection issues
+      if (retryCount < 2 && (
+        err.message?.includes('timeout') || 
+        err.message?.includes('connection') ||
+        err.message?.includes('network')
+      )) {
+        console.log('🔄 Retrying login... attempt', retryCount + 1);
+        toast.info('Tentando novamente...');
+        
+        // Wait 2s before retry
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return handleLogin(retryCount + 1);
+      }
+      
+      toast.error(err.message || "Não foi possível fazer login. Tente novamente.");
     } finally {
       setLoading(false);
     }

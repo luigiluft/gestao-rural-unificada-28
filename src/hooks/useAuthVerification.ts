@@ -27,7 +27,7 @@ export const useAuthVerification = ({
   
   const { canAccess: canAccessPage, isLoading: pageLoading } = useCanAccessPage(pageKey || "");
 
-  // Verificação de roles
+  // Verificação de roles com timeout
   useEffect(() => {
     const checkRoleAccess = async () => {
       if (!allowedRoles || !user || !session) {
@@ -36,28 +36,39 @@ export const useAuthVerification = ({
       }
 
       setRoleLoading(true);
+      
+      // Timeout de 5s para role check
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Role check timeout')), 5000)
+      );
+
       try {
-        // Primeiro tenta usar a função RPC
-        const { data, error } = await supabase.rpc("has_role", {
-          _user_id: user.id,
-          _role: allowedRoles[0] as "admin" | "franqueado" | "produtor", // Para compatibilidade com função existente
-        });
+        const roleCheckPromise = (async () => {
+          // Primeiro tenta usar a função RPC
+          const { data, error } = await supabase.rpc("has_role", {
+            _user_id: user.id,
+            _role: allowedRoles[0] as "admin" | "franqueado" | "produtor",
+          });
 
-        if (!error && data === true) {
-          setHasRoleAccess(true);
-          setRoleLoading(false);
-          return;
-        }
+          if (!error && data === true) {
+            return true;
+          }
 
-        // Fallback: verificação direta na tabela profiles
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
+          // Fallback: verificação direta na tabela profiles
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("user_id", user.id)
+            .single();
 
-        setHasRoleAccess(allowedRoles.includes(profile?.role as string || ""));
-      } catch {
+          return allowedRoles.includes(profile?.role as string || "");
+        })();
+
+        const result = await Promise.race([roleCheckPromise, timeoutPromise]) as boolean;
+        setHasRoleAccess(result);
+      } catch (error) {
+        console.error('❌ Role check error or timeout:', error);
+        // Em caso de timeout, assumir sem acesso por segurança
         setHasRoleAccess(false);
       } finally {
         setRoleLoading(false);
