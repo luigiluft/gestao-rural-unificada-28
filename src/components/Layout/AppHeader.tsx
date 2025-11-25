@@ -191,7 +191,7 @@ export function AppHeader() {
             {/* Info badge quando "Todos" está selecionado para operadores */}
             {(roleLabel === 'Franqueado' || roleLabel === 'Operador') && selectedFranquia?.id === 'ALL' && (
               <Badge variant="secondary" className="text-xs">
-                Menu WMS oculto (visão consolidada)
+                WMS/TMS ocultos (visão consolidada)
               </Badge>
             )}
           </>
