@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+  
   return useQuery({
-    queryKey: ["producer-entradas", dateRange],
+    queryKey: ["producer-entradas", dateRange, depositoId],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
@@ -42,6 +45,11 @@ export const useProducerEntradas = (dateRange?: { from?: Date; to?: Date }) => {
         const endDate = new Date(dateRange.to)
         endDate.setHours(23, 59, 59, 999)
         query = query.lte("created_at", endDate.toISOString())
+      }
+
+      // Apply deposit filter if needed
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId)
       }
 
       const { data: allEntradas, error } = await query.order("created_at", { ascending: false })

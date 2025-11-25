@@ -145,8 +145,8 @@ export function AppHeader() {
           </>
         )}
 
-        {/* Franquia selector - for franqueado/operador roles */}
-        {(roleLabel === 'Franqueado' || roleLabel === 'Operador') && availableFranquias.length > 0 && (
+        {/* Depósito selector - for franqueado/operador/produtor roles */}
+        {(roleLabel === 'Franqueado' || roleLabel === 'Operador' || roleLabel === 'Cliente') && availableFranquias.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -1,14 +1,17 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export const useProducerSaidas = () => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+
   return useQuery({
-    queryKey: ["producer-saidas"],
+    queryKey: ["producer-saidas", depositoId],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
 
-      const { data: saidas, error } = await supabase
+      let query = supabase
         .from("saidas")
         .select(`
           *,
@@ -25,7 +28,13 @@ export const useProducerSaidas = () => {
         `)
         .eq("user_id", user.user.id)
         .in("status", ["separacao_pendente", "separado", "expedido"])
-        .order("created_at", { ascending: false })
+
+      // Apply deposit filter if needed
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId)
+      }
+
+      const { data: saidas, error } = await query.order("created_at", { ascending: false })
 
       if (error) throw error
 

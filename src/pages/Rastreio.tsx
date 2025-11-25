@@ -8,9 +8,12 @@ import { SaidasEmAndamento } from '@/components/Rastreio/SaidasEmAndamento';
 import { FluxoChart } from '@/components/Rastreio/FluxoChart';
 import { useFluxoData } from '@/hooks/useFluxoData';
 import { useAuth } from '@/contexts/AuthContext';
+import { DepositoFilter } from '@/components/ui/deposito-filter';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export const Rastreio = () => {
   const { user, session, loading } = useAuth();
+  const { isProdutor } = useUserRole();
   
   // Log authentication status for debugging
   console.log("Rastreio page - Auth status:", { 
@@ -53,9 +56,14 @@ export const Rastreio = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Rastreamento</h1>
-        <meta name="description" content="Acompanhe em tempo real entradas, estoque e saídas com nossa plataforma de rastreamento integrada." />
-        <p className="text-muted-foreground">Acompanhe todo o fluxo dos produtos: desde a entrada até a expedição</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Rastreamento</h1>
+            <meta name="description" content="Acompanhe em tempo real entradas, estoque e saídas com nossa plataforma de rastreamento integrada." />
+            <p className="text-muted-foreground">Acompanhe todo o fluxo dos produtos: desde a entrada até a expedição</p>
+          </div>
+          {isProdutor && <DepositoFilter />}
+        </div>
       </header>
 
       {/* Dashboard Stats */}
