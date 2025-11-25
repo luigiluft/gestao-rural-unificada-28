@@ -298,11 +298,13 @@ export const useDynamicMenuItems = () => {
     }
 
     // Verificar se tem permissão para pelo menos uma página do TMS
+    // Ocultar TMS se operador tiver "Todos os Depósitos" selecionado
+    const shouldShowTms = !(isFranqueado && selectedFranquia?.id === "ALL")
     const hasTmsPermission = tmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
 
-    if (hasTmsPermission) {
+    if (hasTmsPermission && shouldShowTms) {
       const tmsSubItems: MenuItem[] = []
       
       tmsPages.forEach(page => {
