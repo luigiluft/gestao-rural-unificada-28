@@ -165,6 +165,7 @@ export const useDynamicMenuItems = () => {
       'entradas',
       'estoque',
       'saidas',
+      'rastreio',
       'royalties',
       'financeiro',
       'faturas'
@@ -386,22 +387,6 @@ export const useDynamicMenuItems = () => {
       }
     }
 
-    // Adicionar Rastreamento Produtor após Cadastro
-    if (permissions.includes('rastreio.view' as any)) {
-      const label = menuLabels['rastreio']
-      const icon = iconMap['rastreio']
-      
-      if (label && icon) {
-        const cadastroIndex = items.findIndex(item => item.path === '/cadastro')
-        const insertIndex = cadastroIndex !== -1 ? cadastroIndex + 1 : items.length
-        
-        items.splice(insertIndex, 0, {
-          path: '/rastreio',
-          label,
-          icon
-        })
-      }
-    }
 
     // Adicionar páginas de Ajuda (sempre disponíveis para todos)
     const ajudaSubItems: MenuItem[] = []
