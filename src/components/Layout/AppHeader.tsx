@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom"
 import { getRoleLabel } from "@/utils/roleTranslations"
 import { useCliente } from "@/contexts/ClienteContext"
 import { useClientes } from "@/hooks/useClientes"
+import { useFranquia } from "@/contexts/FranquiaContext"
 
 export function AppHeader() {
   const { user } = useAuth()
@@ -26,6 +27,7 @@ export function AppHeader() {
   const [roleLabel, setRoleLabel] = useState<string>(getRoleLabel('produtor', false, true))
   const { selectedCliente, setSelectedCliente, availableClientes } = useCliente()
   const { data: clientes } = useClientes()
+  const { selectedFranquia, setSelectedFranquia, availableFranquias } = useFranquia()
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -132,6 +134,49 @@ export function AppHeader() {
                           <span className="font-medium">{cliente.razao_social}</span>
                           <span className="text-xs text-muted-foreground">
                             {cliente.tipo_cliente === 'cpf' ? 'CPF' : 'CNPJ'}: {cliente.cpf_cnpj}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Franquia selector - for franqueado/operador roles */}
+        {(roleLabel === 'Franqueado' || roleLabel === 'Operador') && availableFranquias.length > 0 && (
+          <>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5" />
+              <span>Franquia:</span>
+              {availableFranquias.length === 1 ? (
+                <Badge variant="outline" className="font-normal">
+                  {availableFranquias[0].nome}
+                </Badge>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                      {selectedFranquia?.nome || availableFranquias[0].nome}
+                      <ChevronDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64 bg-card z-50">
+                    <DropdownMenuLabel>Selecione a Franquia</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {availableFranquias.map((franquia) => (
+                      <DropdownMenuItem
+                        key={franquia.id}
+                        onClick={() => setSelectedFranquia(franquia)}
+                        className={selectedFranquia?.id === franquia.id ? "bg-primary/10" : ""}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{franquia.nome}</span>
+                          <span className="text-xs text-muted-foreground">
+                            CNPJ: {franquia.cnpj}
                           </span>
                         </div>
                       </DropdownMenuItem>
