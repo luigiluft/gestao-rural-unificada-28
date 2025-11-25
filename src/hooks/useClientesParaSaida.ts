@@ -3,14 +3,14 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 
 /**
- * Hook para buscar produtores que têm contratos ativos com a franquia do usuário logado
- * Usado no formulário de saída para selecionar o produtor destinatário
+ * Hook para buscar clientes que têm contratos ativos com a franquia do usuário logado
+ * Usado no formulário de saída para selecionar o cliente destinatário
  */
-export const useProdutoresParaSaida = () => {
+export const useClientesParaSaida = () => {
   const { user } = useAuth()
   
   return useQuery({
-    queryKey: ["produtores-para-saida", user?.id],
+    queryKey: ["clientes-para-saida", user?.id],
     queryFn: async () => {
       if (!user?.id) return []
       
@@ -26,7 +26,7 @@ export const useProdutoresParaSaida = () => {
       
       const franquiaIds = franquias.map(f => f.id)
       
-      // Buscar produtores com contratos ativos nessas franquias
+      // Buscar clientes com contratos ativos nessas franquias
       const { data: contratos, error: contratosError } = await supabase
         .from("contratos_servico")
         .select("produtor_id")
@@ -36,14 +36,14 @@ export const useProdutoresParaSaida = () => {
       if (contratosError) throw contratosError
       if (!contratos || contratos.length === 0) return []
       
-      const produtorIds = [...new Set(contratos.map(c => c.produtor_id))]
+      const clienteIds = [...new Set(contratos.map(c => c.produtor_id))]
       
-      // Buscar perfis dos produtores
+      // Buscar perfis dos clientes
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, nome, email, cpf_cnpj")
-        .eq("role", "produtor")
-        .in("user_id", produtorIds)
+        .eq("role", "cliente")
+        .in("user_id", clienteIds)
         .order("nome")
 
       if (profilesError) throw profilesError
