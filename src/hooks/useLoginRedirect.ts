@@ -28,7 +28,7 @@ export const useLoginRedirect = () => {
   const hasRedirectedRef = useRef(false)
 
   useEffect(() => {
-    if (!user || !profile || permissionsLoading) return
+    if (!user || !profile) return
 
     // Não redirecionar se já estamos em uma página específica (exceto auth)
     if (location.pathname !== '/' && location.pathname !== '/auth') {
@@ -39,6 +39,24 @@ export const useLoginRedirect = () => {
     if (hasRedirectedRef.current) {
       return
     }
+
+    // Timeout de 10s para o redirect - se demorar muito, usar fallback
+    const redirectTimeout = setTimeout(() => {
+      if (!hasRedirectedRef.current && (location.pathname === '/' || location.pathname === '/auth')) {
+        console.warn('⚠️ Redirect timeout - usando fallback baseado em role')
+        
+        const roleFallbacks: Record<string, string> = {
+          'admin': '/dashboard',
+          'franqueado': '/dashboard',
+          'produtor': '/rastreio',
+          'motorista': '/proof-of-delivery'
+        }
+        
+        const fallbackRoute = roleFallbacks[profile.role as string] || '/dashboard'
+        hasRedirectedRef.current = true
+        navigate(fallbackRoute, { replace: true })
+      }
+    }, 10000) // 10 seconds
 
     // Verificar se o usuário tem um template com rota padrão
     if (userTemplate?.permission_templates?.default_route) {
@@ -53,10 +71,16 @@ export const useLoginRedirect = () => {
       
       // Só redirecionar se a rota de destino for diferente da atual
       if (targetRoute !== location.pathname) {
+        clearTimeout(redirectTimeout)
         hasRedirectedRef.current = true
         navigate(targetRoute, { replace: true })
       }
-      return
+      return () => clearTimeout(redirectTimeout)
+    }
+
+    // Aguardar permissões carregarem, mas com timeout
+    if (permissionsLoading) {
+      return () => clearTimeout(redirectTimeout)
     }
 
     // Calcular primeira rota acessível baseada nas permissões
@@ -71,20 +95,18 @@ export const useLoginRedirect = () => {
 
     // Fallback baseado no role se não encontrou rota nas permissões
     if (!firstAccessibleRoute) {
-      // Tentar rota padrão do role, mas só se a permissão existir
       const roleDefaults: Record<string, { path: string; permission: string }> = {
         'admin': { path: '/dashboard', permission: 'dashboard.view' },
         'franqueado': { path: '/dashboard', permission: 'dashboard.view' },
-        'produtor': { path: '/dashboard', permission: 'dashboard.view' },
+        'produtor': { path: '/rastreio', permission: 'rastreio.view' },
         'motorista': { path: '/proof-of-delivery', permission: 'proof-of-delivery.view' }
       }
       
       const roleDefault = roleDefaults[profile.role as string]
-      if (roleDefault && permissions.includes(roleDefault.permission as any)) {
+      if (roleDefault) {
         firstAccessibleRoute = roleDefault.path
       } else {
-        // Se nem o padrão do role tem permissão, usar a primeira rota acessível de PRIORITY_ROUTES
-        firstAccessibleRoute = PRIORITY_ROUTES[0].path // fallback final para /dashboard
+        firstAccessibleRoute = '/dashboard' // fallback final
       }
     }
 
@@ -93,15 +115,16 @@ export const useLoginRedirect = () => {
       from: location.pathname, 
       to: firstAccessibleRoute,
       role: profile.role,
-      permissions: permissions.slice(0, 3) // Primeiras 3 permissões
+      permissions: permissions.slice(0, 3)
     })
 
-    // Só redirecionar se:
-    // 1. Estamos no "/"
-    // 2. A rota de destino é diferente da atual
-    if (location.pathname === '/' && firstAccessibleRoute !== location.pathname) {
+    // Só redirecionar se estamos no "/" ou "/auth"
+    if ((location.pathname === '/' || location.pathname === '/auth') && firstAccessibleRoute !== location.pathname) {
+      clearTimeout(redirectTimeout)
       hasRedirectedRef.current = true
       navigate(firstAccessibleRoute, { replace: true })
     }
+
+    return () => clearTimeout(redirectTimeout)
   }, [user, userTemplate, profile, permissions, permissionsLoading, location.pathname, navigate])
 }
