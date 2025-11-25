@@ -423,7 +423,7 @@ const Franquias = () => {
                   <TableHead>Gestor</TableHead>
                   <TableHead>Localização</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Data Criação</TableHead>
+                  <TableHead>CNPJ</TableHead>
                   <TableHead className="text-center">Usuários</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -468,7 +468,7 @@ const Franquias = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {new Date(franquia.created_at).toLocaleDateString('pt-BR')}
+                      {franquia.cnpj || '—'}
                     </TableCell>
                     <TableCell className="text-center">
                       <Button
