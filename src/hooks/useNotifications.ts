@@ -34,7 +34,7 @@ export const useNotifications = () => {
 
       const isAdmin = profile?.role === 'admin'
       const isFranqueado = profile?.role === 'franqueado'
-      const isProdutor = profile?.role === 'produtor'
+      const isCliente = profile?.role === 'cliente'
 
       let recebimento = 0
       let estoque = 0

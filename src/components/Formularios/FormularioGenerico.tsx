@@ -42,9 +42,9 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
   
   // Para saídas, buscar fazendas do produtor
   const dadosSaida = dados as DadosSaida
-  const isProdutor = profile?.role === 'produtor'
-  const targetProdutorId = isProdutor ? user?.id : dadosSaida.produtor_destinatario
-  const { data: fazendas = [] } = useFazendas(targetProdutorId)
+  const isCliente = profile?.role === 'cliente'
+  const targetClienteId = isCliente ? user?.id : dadosSaida.produtor_destinatario
+  const { data: fazendas = [] } = useFazendas(targetClienteId)
 
   const { validarFormulario, pesoMinimoMopp } = useFormularioValidation({ 
     tipo, 
@@ -206,7 +206,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         }
 
         // 2. Criar a saída usando edge function
-        const isProdutor = profile?.role === 'produtor'
+        const isCliente = profile?.role === 'cliente'
         
         // 4. Validar que existe pelo menos um item
         if (itens.length === 0) {
@@ -237,9 +237,9 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           cpf_motorista: dadosSaida.cpf_motorista || null,
           mopp_motorista: dadosSaida.mopp_motorista || null,
           janela_horario: dadosSaida.janela_horario || null,
-          criado_por_franqueado: !isProdutor,
-          status_aprovacao_produtor: isProdutor ? 'aprovado' : 'pendente',
-          produtor_destinatario_id: isProdutor ? user?.id : dadosSaida.produtor_destinatario,
+          criado_por_franqueado: !isCliente,
+          status_aprovacao_produtor: isCliente ? 'aprovado' : 'pendente',
+          produtor_destinatario_id: isCliente ? user?.id : dadosSaida.produtor_destinatario,
           valor_frete_calculado: dadosSaida.valor_frete_calculado || null,
           reserva_id: reservaId,
           // Campos de janela de entrega

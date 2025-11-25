@@ -377,12 +377,12 @@ export default function PerfisFuncionarios() {
         </div>
       )}
 
-      {/* Producer Profiles Section (only for franchisees) */}
-      {producerProfiles.length > 0 && (
+      {/* Cliente Profiles Section (only for franchisees) */}
+      {clientProfiles.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Perfis de Produtores</h2>
+          <h2 className="text-xl font-semibold">Perfis de Clientes</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {producerProfiles.map((profile) => (
+            {clientProfiles.map((profile) => (
               <Card key={profile.id} className="relative border-muted-foreground/20">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -390,7 +390,7 @@ export default function PerfisFuncionarios() {
                       <CardTitle className="text-lg">{profile.nome}</CardTitle>
                       <Badge variant="outline">
                         <Users className="mr-1 h-3 w-3" />
-                        Produtor
+                        Cliente
                       </Badge>
                     </div>
                     <Badge variant="secondary" className="text-xs">
@@ -408,8 +408,8 @@ export default function PerfisFuncionarios() {
                     <h4 className="text-sm font-medium">Permissões ({profile.permissions.length})</h4>
                     <div className="flex flex-wrap gap-1">
                       {profile.permissions.slice(0, 3).map((permission) => {
-                        const producerPermissions = AVAILABLE_PERMISSIONS.produtor || []
-                        const permissionLabel = producerPermissions.find(p => p.code === permission)?.label || permission
+                        const clientePermissions = AVAILABLE_PERMISSIONS['cliente'] || []
+                        const permissionLabel = clientePermissions.find(p => p.code === permission)?.label || permission
                         return (
                           <Badge key={permission} variant="outline" className="text-xs">
                             {permissionLabel}
