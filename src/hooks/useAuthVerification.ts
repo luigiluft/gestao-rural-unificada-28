@@ -25,6 +25,7 @@ export const useAuthVerification = ({
   const [roleLoading, setRoleLoading] = useState(false);
   const [hasRoleAccess, setHasRoleAccess] = useState(true);
   
+  // Só verificar permissões de página se pageKey estiver definido
   const { canAccess: canAccessPage, isLoading: pageLoading } = useCanAccessPage(pageKey || "");
 
   // Verificação de roles com timeout
@@ -90,9 +91,9 @@ export const useAuthVerification = ({
     };
   }
 
-  // Só verificar permissões de página se tiver sessão
-  const effectivePageLoading = session ? pageLoading : false;
-  const isLoading = authLoading || roleLoading || (pageKey ? effectivePageLoading : false);
+  // Só verificar permissões de página se tiver sessão e pageKey
+  const effectivePageLoading = session && pageKey ? pageLoading : false;
+  const isLoading = authLoading || roleLoading || effectivePageLoading;
 
   // Determinar acesso e redirecionamento
   let hasAccess = true;
@@ -112,13 +113,17 @@ export const useAuthVerification = ({
     isLoading
   });
 
+  // Se tem roles requeridos, verificar acesso por role
   if (allowedRoles && !hasRoleAccess) {
     hasAccess = false;
     redirectPath = "/";
-  } else if (pageKey && !canAccessPage) {
+  }
+  // Se tem pageKey definido, verificar permissão da página
+  else if (pageKey && !canAccessPage) {
     hasAccess = false;
     redirectPath = "/";
   }
+  // Se não tem pageKey nem allowedRoles, apenas requireAuth importa (já tratado no early return)
 
   return {
     isLoading,
