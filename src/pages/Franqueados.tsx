@@ -126,7 +126,7 @@ export default function Franqueados() {
       const credentials = `Email: ${inviteEmail}\nSenha: ${data.default_password}`;
       
       toast({
-        title: "Franqueado criado com sucesso!",
+        title: "Operador criado com sucesso!",
         description: `O usuário foi criado e pode fazer login imediatamente. Credenciais copiadas para a área de transferência.`,
       });
 
@@ -140,7 +140,7 @@ export default function Franqueados() {
       
       toast({
         title: "Convite enviado",
-        description: "O email de confirmação foi enviado automaticamente pelo Supabase. O franqueado deve verificar a caixa de entrada.",
+        description: "O email de confirmação foi enviado automaticamente pelo Supabase. O operador deve verificar a caixa de entrada.",
       });
       
       // Reload the list to show new franchisees
@@ -179,10 +179,10 @@ export default function Franqueados() {
   };
 
   useEffect(() => {
-    document.title = "Franqueados | AgroStock";
+    document.title = "Operadores | AgroStock";
     const metaDesc = document.querySelector('meta[name="description"]');
     const content =
-      "Gerencie franqueados: convites por email, acessos e permissões.";
+      "Gerencie operadores: convites por email, acessos e permissões.";
     if (metaDesc) {
       metaDesc.setAttribute("content", content);
     } else {
@@ -210,9 +210,9 @@ export default function Franqueados() {
       <header className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Franqueados</h1>
+            <h1 className="text-3xl font-bold text-foreground">Operadores</h1>
             <p className="text-muted-foreground">
-              Gerencie os franqueados e seus acessos.
+              Gerencie os operadores e seus acessos.
             </p>
           </div>
           <Dialog open={inviteOpen} onOpenChange={(open) => {
@@ -225,14 +225,14 @@ export default function Franqueados() {
             <DialogTrigger asChild>
               <Button onClick={openInviteDialog} className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
-                Convidar franqueado
+                Convidar operador
               </Button>
             </DialogTrigger>
             <DialogContent className="w-[95vw] sm:w-full">
               <DialogHeader>
-                <DialogTitle>Convidar franqueado</DialogTitle>
+                <DialogTitle>Convidar operador</DialogTitle>
                 <DialogDescription>
-                  Envie um link de acesso por email para o franqueado se
+                  Envie um link de acesso por email para o operador se
                   cadastrar.
                 </DialogDescription>
               </DialogHeader>
@@ -254,7 +254,7 @@ export default function Franqueados() {
                       <pre className="text-sm whitespace-pre-wrap font-mono">{inviteLink}</pre>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Credenciais copiadas automaticamente. O franqueado deve alterar a senha no primeiro login.
+                      Credenciais copiadas automaticamente. O operador deve alterar a senha no primeiro login.
                     </p>
                   </div>
                 )}
@@ -271,7 +271,7 @@ export default function Franqueados() {
                       Cancelar
                     </Button>
                     <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail}>
-                      {sendingInvite ? "Criando usuário..." : "Criar franqueado"}
+                      {sendingInvite ? "Criando usuário..." : "Criar operador"}
                     </Button>
                   </>
                 )}
@@ -284,20 +284,20 @@ export default function Franqueados() {
       <section className="rounded-lg border border-border bg-card p-4">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground">Carregando franqueados...</div>
+            <div className="text-muted-foreground">Carregando operadores...</div>
           </div>
         ) : franqueados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
               <Users className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhum franqueado cadastrado</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhum operador cadastrado</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Comece convidando franqueados para gerenciar operações no sistema.
+              Comece convidando operadores para gerenciar operações no sistema.
             </p>
             <Button onClick={() => setInviteOpen(true)}>
               <MailPlus className="mr-2 h-4 w-4" />
-              Convidar primeiro franqueado
+              Convidar primeiro operador
             </Button>
           </div>
         ) : (
