@@ -14,6 +14,8 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { getRoleLabel, ROLE_LABELS } from "@/utils/roleTranslations";
 import { TablePageLayout } from "@/components/ui/table-page-layout";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUserFranquias } from "@/hooks/useCurrentUserFranquias";
 
 interface ProfileRow {
   user_id: string;
@@ -24,6 +26,8 @@ interface ProfileRow {
 export default function Usuarios() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { isOperador } = useUserRole();
+  const { franquias: currentUserFranquias = [] } = useCurrentUserFranquias();
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -85,7 +89,7 @@ export default function Usuarios() {
   }, []);
 
   const { data: profiles, isLoading: loadingProfiles } = useQuery({
-    queryKey: ["profiles-all"],
+    queryKey: ["profiles-all", isOperador, currentUserFranquias.map(f => f.id)],
     queryFn: async () => {
       const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
         body: { action: 'list_profiles' }
@@ -97,7 +101,23 @@ export default function Usuarios() {
         throw new Error(response?.error || 'Erro ao buscar profiles')
       }
 
-      return (response.data ?? []) as ProfileRow[];
+      let allProfiles = (response.data ?? []) as ProfileRow[];
+      
+      // Se for operador, filtrar apenas usuários de suas franquias
+      if (isOperador && currentUserFranquias.length > 0) {
+        const franquiaIds = currentUserFranquias.map(f => f.id);
+        
+        // Buscar usuários associados às franquias do operador
+        const { data: franquiaUsers } = await supabase
+          .from('franquia_usuarios')
+          .select('user_id')
+          .in('franquia_id', franquiaIds);
+        
+        const allowedUserIds = new Set(franquiaUsers?.map(fu => fu.user_id) || []);
+        allProfiles = allProfiles.filter(p => allowedUserIds.has(p.user_id));
+      }
+
+      return allProfiles;
     },
   });
 
