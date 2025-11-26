@@ -88,7 +88,7 @@ const menuLabels = {
   'perfil': 'Perfil',
   'empresas': 'Empresas',
   'subcontas': 'Subcontas',
-  'perfis-funcionarios': 'Perfis de Funcionários',
+  'perfis-funcionarios': 'Cargos',
   'funcionarios': 'Folha',
   'contratos': 'Contratos de Serviço',
   'contratos-franquias': 'Contratos com Franquias',

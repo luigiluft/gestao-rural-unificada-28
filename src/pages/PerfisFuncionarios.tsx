@@ -65,7 +65,7 @@ const AVAILABLE_PERMISSIONS = {
     { code: 'produtores.view', label: 'Produtores' },
     { code: 'fazendas.view', label: 'Fazendas' },
     { code: 'subcontas.view', label: 'Subcontas' },
-    { code: 'perfis-funcionarios.view', label: 'Perfis de Funcionários' },
+    { code: 'perfis-funcionarios.view', label: 'Cargos' },
     
     // Sistema
     { code: 'perfil.view', label: 'Perfil' },
@@ -180,7 +180,7 @@ export default function PerfisFuncionarios() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Perfis de Funcionários</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Cargos</h1>
           <p className="text-muted-foreground">
             Gerencie os perfis de acesso para funcionários {userRole === 'operador' ? 'da franquia' : 'do cliente'}
           </p>
@@ -436,7 +436,7 @@ export default function PerfisFuncionarios() {
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Nenhum perfil encontrado</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Crie perfis de funcionários para facilitar o gerenciamento de permissões
+              Crie cargos para facilitar o gerenciamento de permissões
             </p>
             <Button onClick={handleCreateProfile}>
               <Plus className="mr-2 h-4 w-4" />
