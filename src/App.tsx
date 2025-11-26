@@ -212,6 +212,12 @@ const App = () => {
               <Route path="demo/estoque" element={<RequirePageAccess pageKey="estoque"><DemoEstoque /></RequirePageAccess>} />
               <Route path="demo/saidas" element={<RequirePageAccess pageKey="saidas"><DemoSaidas /></RequirePageAccess>} />
               
+              {/* Fiscal Routes */}
+              <Route path="remessa-deposito-ag" element={<RequirePageAccess pageKey="remessa-deposito-ag"><RemessaDepositoAG /></RequirePageAccess>} />
+              <Route path="nota-deposito" element={<RequirePageAccess pageKey="nota-deposito"><NotaDeposito /></RequirePageAccess>} />
+              <Route path="retorno-simbolico" element={<RequirePageAccess pageKey="retorno-simbolico"><RetornoSimbolico /></RequirePageAccess>} />
+              <Route path="retorno-fisico" element={<RequirePageAccess pageKey="retorno-fisico"><RetornoFisico /></RequirePageAccess>} />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
