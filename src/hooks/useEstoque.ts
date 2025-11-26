@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export interface EstoqueItem {
   produto_id: string
@@ -20,8 +21,10 @@ export interface EstoqueItem {
 }
 
 export const useEstoque = () => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+  
   return useQuery({
-    queryKey: ["estoque"],
+    queryKey: ["estoque", depositoId],
     queryFn: async (): Promise<EstoqueItem[]> => {
       // Identificar usuário atual e possível franqueado master (para herdar visibilidade)
       const { data: authData } = await supabase.auth.getUser()
@@ -34,11 +37,16 @@ export const useEstoque = () => {
       if (error) throw error
 
       // Mapear os dados para o formato esperado pelo frontend
-      const estoqueFormatado = (estoque || []).map((item: any) => ({
+      let estoqueFormatado = (estoque || []).map((item: any) => ({
         ...item,
         produtos: typeof item.produtos === 'string' ? JSON.parse(item.produtos) : item.produtos,
         franquias: item.franquia_nome ? { nome: item.franquia_nome } : null
       }))
+
+      // Apply deposit filter if needed (for operador role)
+      if (shouldFilter && depositoId) {
+        estoqueFormatado = estoqueFormatado.filter((item: any) => item.deposito_id === depositoId)
+      }
 
       // Se não houver usuário autenticado ou não há dados, retornar diretamente
       if (!uid || estoqueFormatado.length === 0) {
