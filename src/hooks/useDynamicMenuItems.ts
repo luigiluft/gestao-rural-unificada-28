@@ -414,47 +414,6 @@ export const useDynamicMenuItems = () => {
       }
     }
 
-    // Verificar se tem permissão para pelo menos uma página de Cadastro
-    const hasCadastroPermission = cadastroPages.some(page => 
-      permissions.includes(`${page}.view` as any)
-    )
-
-    if (hasCadastroPermission) {
-      const cadastroSubItems: MenuItem[] = []
-      
-      cadastroPages.forEach(page => {
-        const pageViewPermission = `${page}.view`
-        
-        if (!permissions.includes(pageViewPermission as any)) return
-
-        const label = menuLabels[page as keyof typeof menuLabels]
-        const icon = iconMap[page as keyof typeof iconMap]
-        
-        if (label && icon) {
-          cadastroSubItems.push({
-            path: `/${page}`,
-            label,
-            icon
-          })
-        }
-      })
-
-      if (cadastroSubItems.length > 0) {
-        // Inserir Cadastro após TMS ou WMS
-        const tmsIndex = items.findIndex(item => item.path === '/tms')
-        const wmsIndex = items.findIndex(item => item.path === '/wms')
-        const insertIndex = tmsIndex !== -1 ? tmsIndex + 1 : wmsIndex !== -1 ? wmsIndex + 1 : items.length
-        
-        items.splice(insertIndex, 0, {
-          path: '/cadastro',
-          label: 'Cadastro',
-          icon: FolderOpen,
-          subItems: cadastroSubItems
-        })
-      }
-    }
-
-
     // Verificar se tem permissão para pelo menos uma página Fiscal
     const hasFiscalPermission = fiscalPages.some(page => 
       permissions.includes(`${page}.view` as any)
@@ -481,11 +440,57 @@ export const useDynamicMenuItems = () => {
       })
 
       if (fiscalSubItems.length > 0) {
-        items.push({
+        // Inserir Fiscal após TMS ou WMS
+        const tmsIndex = items.findIndex(item => item.path === '/tms')
+        const wmsIndex = items.findIndex(item => item.path === '/wms')
+        const insertIndex = tmsIndex !== -1 ? tmsIndex + 1 : wmsIndex !== -1 ? wmsIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
           path: '/fiscal',
           label: 'Fiscal',
           icon: FileText,
           subItems: fiscalSubItems
+        })
+      }
+    }
+
+    // Verificar se tem permissão para pelo menos uma página de Cadastro
+    const hasCadastroPermission = cadastroPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasCadastroPermission) {
+      const cadastroSubItems: MenuItem[] = []
+      
+      cadastroPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          cadastroSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (cadastroSubItems.length > 0) {
+        // Inserir Cadastro após Fiscal, TMS ou WMS
+        const fiscalIndex = items.findIndex(item => item.path === '/fiscal')
+        const tmsIndex = items.findIndex(item => item.path === '/tms')
+        const wmsIndex = items.findIndex(item => item.path === '/wms')
+        const insertIndex = fiscalIndex !== -1 ? fiscalIndex + 1 : tmsIndex !== -1 ? tmsIndex + 1 : wmsIndex !== -1 ? wmsIndex + 1 : items.length
+        
+        items.splice(insertIndex, 0, {
+          path: '/cadastro',
+          label: 'Cadastro',
+          icon: FolderOpen,
+          subItems: cadastroSubItems
         })
       }
     }
