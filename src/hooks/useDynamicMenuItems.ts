@@ -58,6 +58,10 @@ const menuLabels = {
   'estoque': 'Estoque',
   'saidas': 'Saídas',
   'rastreio': 'Rastreamento Produtor',
+  'remessa-deposito-ag': 'Remessa para Depósito (AG)',
+  'nota-deposito': 'Nota de Depósito',
+  'retorno-simbolico': 'Retorno Simbólico',
+  'retorno-fisico': 'Retorno Físico',
   'recebimento': 'Recebimento',
   'alocacao-pallets': 'Alocação de Pallets',
   'gerenciar-posicoes': 'Gerenciar Posições',
@@ -107,12 +111,17 @@ const iconMap = {
   'erp': BarChart3,
   'ajuda': HelpCircle,
   'cadastro': FolderOpen,
+  'fiscal': FileText,
   'dashboard': Home,
   'catalogo': Package,
   'entradas': ArrowDownToLine,
   'estoque': Archive,
   'saidas': ArrowUpFromLine,
   'rastreio': MapPin,
+  'remessa-deposito-ag': FileText,
+  'nota-deposito': FileText,
+  'retorno-simbolico': FileText,
+  'retorno-fisico': FileText,
   'recebimento': PackageCheck,
   'alocacao-pallets': Grid3X3,
   'gerenciar-posicoes': Grid2X2,
@@ -190,6 +199,14 @@ export const useDynamicMenuItems = () => {
       'instrucoes',
       'suporte',
       'tutorial'
+    ]
+
+    // Páginas Fiscais
+    const fiscalPages = [
+      'remessa-deposito-ag',
+      'nota-deposito',
+      'retorno-simbolico',
+      'retorno-fisico'
     ]
 
     // Páginas de Cadastro
@@ -437,6 +454,41 @@ export const useDynamicMenuItems = () => {
       }
     }
 
+
+    // Verificar se tem permissão para pelo menos uma página Fiscal
+    const hasFiscalPermission = fiscalPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasFiscalPermission) {
+      const fiscalSubItems: MenuItem[] = []
+      
+      fiscalPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          fiscalSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (fiscalSubItems.length > 0) {
+        items.push({
+          path: '/fiscal',
+          label: 'Fiscal',
+          icon: FileText,
+          subItems: fiscalSubItems
+        })
+      }
+    }
 
     // Adicionar páginas de Ajuda (sempre disponíveis para todos)
     const ajudaSubItems: MenuItem[] = []
