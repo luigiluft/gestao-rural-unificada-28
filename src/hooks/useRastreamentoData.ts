@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
-import { useDepositoFilter } from "./useDepositoFilter"
 
 export const useRastreamentoEntradas = () => {
   const { user } = useAuth()
-  const { depositoId, shouldFilter } = useDepositoFilter()
   
   return useQuery({
-    queryKey: ["rastreamento-entradas", user?.id, depositoId],
+    queryKey: ["rastreamento-entradas", user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
@@ -40,11 +38,6 @@ export const useRastreamentoEntradas = () => {
       // If not admin, filter by user_id
       if (!isAdmin) {
         query = query.eq("user_id", user.id)
-      }
-
-      // Apply deposit filter if needed
-      if (shouldFilter && depositoId) {
-        query = query.eq("deposito_id", depositoId)
       }
 
       const { data: entradas, error } = await query
@@ -97,10 +90,9 @@ export const useRastreamentoEntradas = () => {
 
 export const useRastreamentoEstoque = () => {
   const { user } = useAuth()
-  const { depositoId, shouldFilter } = useDepositoFilter()
   
   return useQuery({
-    queryKey: ["rastreamento-estoque", user?.id, depositoId],
+    queryKey: ["rastreamento-estoque", user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
@@ -128,18 +120,13 @@ export const useRastreamentoEstoque = () => {
         ? estoqueSeguro?.filter(item => item.quantidade_atual > 0) || []
         : estoqueSeguro?.filter(item => item.user_id === user.id && item.quantidade_atual > 0) || []
 
-      // Apply deposit filter if needed
-      const estoqueFiltrado = shouldFilter && depositoId
-        ? (estoque || []).filter(item => item.deposito_id === depositoId)
-        : estoque
-
       if (error) {
         throw error
       }
 
       // Get franquia names and user names for each estoque item
       const estoqueWithFranquias = await Promise.all(
-        (estoqueFiltrado || []).map(async (item) => {
+        (estoque || []).map(async (item) => {
           let franquia_nome = null;
           let user_nome = null;
 
@@ -183,10 +170,9 @@ export const useRastreamentoEstoque = () => {
 
 export const useRastreamentoSaidas = () => {
   const { user } = useAuth()
-  const { depositoId, shouldFilter } = useDepositoFilter()
   
   return useQuery({
-    queryKey: ["rastreamento-saidas", user?.id, depositoId],
+    queryKey: ["rastreamento-saidas", user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated")
 
@@ -224,11 +210,6 @@ export const useRastreamentoSaidas = () => {
       // If not admin, filter by user_id
       if (!isAdmin) {
         query = query.eq("user_id", user.id)
-      }
-
-      // Apply deposit filter if needed
-      if (shouldFilter && depositoId) {
-        query = query.eq("deposito_id", depositoId)
       }
 
       const { data: saidas, error } = await query
