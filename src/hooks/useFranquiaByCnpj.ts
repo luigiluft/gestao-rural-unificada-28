@@ -23,23 +23,59 @@ export const useFranquiaByCnpj = (cnpj?: string, ie?: string) => {
         const cnpjLimpo = cnpj.replace(/[^\d]/g, '')
         const cnpjComMascara = formatarCnpjComMascara(cnpjLimpo)
         
+        console.log('🔍 Buscando franquia por CNPJ:', {
+          original: cnpj,
+          limpo: cnpjLimpo,
+          comMascara: cnpjComMascara
+        })
+        
+        // Primeira tentativa: busca usando .in() com ambos os formatos
         const { data: franquia, error } = await supabase
           .from("franquias")
           .select("id, nome, cnpj, inscricao_municipal")
           .eq("ativo", true)
-          .or(`cnpj.eq.${cnpjLimpo},cnpj.eq.${cnpjComMascara}`)
+          .in("cnpj", [cnpjLimpo, cnpjComMascara])
           .maybeSingle()
 
         if (error && error.code !== 'PGRST116') {
+          console.error('❌ Erro na busca direta:', error)
           throw error
         }
 
-        if (franquia) return franquia
+        if (franquia) {
+          console.log('✅ Franquia encontrada (busca direta):', franquia)
+          return franquia
+        }
+        
+        // Fallback: buscar todas as franquias ativas e filtrar localmente
+        console.log('🔄 Tentando busca alternativa (comparação local)...')
+        const { data: franquias, error: errorFallback } = await supabase
+          .from("franquias")
+          .select("id, nome, cnpj, inscricao_municipal")
+          .eq("ativo", true)
+
+        if (errorFallback) {
+          console.error('❌ Erro na busca alternativa:', errorFallback)
+          throw errorFallback
+        }
+
+        const franquiaEncontrada = franquias?.find(f => 
+          f.cnpj?.replace(/[^\d]/g, '') === cnpjLimpo
+        )
+        
+        if (franquiaEncontrada) {
+          console.log('✅ Franquia encontrada (busca alternativa):', franquiaEncontrada)
+          return franquiaEncontrada
+        }
+        
+        console.log('⚠️ Nenhuma franquia encontrada para o CNPJ:', cnpjLimpo)
       }
       
       // Se não encontrou por CNPJ e tem IE, busca por IE
       if (ie) {
         const ieLimpo = ie.replace(/[^\d]/g, '')
+        
+        console.log('🔍 Buscando franquia por IE:', ieLimpo)
         
         const { data: franquia, error } = await supabase
           .from("franquias")
@@ -49,9 +85,16 @@ export const useFranquiaByCnpj = (cnpj?: string, ie?: string) => {
           .maybeSingle()
 
         if (error && error.code !== 'PGRST116') {
+          console.error('❌ Erro na busca por IE:', error)
           throw error
         }
 
+        if (franquia) {
+          console.log('✅ Franquia encontrada por IE:', franquia)
+        } else {
+          console.log('⚠️ Nenhuma franquia encontrada para a IE:', ieLimpo)
+        }
+        
         return franquia
       }
 
