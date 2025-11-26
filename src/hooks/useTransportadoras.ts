@@ -14,6 +14,7 @@ export interface Transportadora {
   valor_km?: number | null
   valor_minimo?: number | null
   ativo: boolean
+  is_propria?: boolean
   created_at: string
   updated_at: string
 }

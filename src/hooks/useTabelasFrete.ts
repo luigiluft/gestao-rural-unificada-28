@@ -152,6 +152,8 @@ export const useUpdateTabelaFrete = () => {
     mutationFn: async (data: {
       id: string
       nome: string
+      tipo?: string
+      transportadora_id?: string | null
       ativo: boolean
       faixas: Omit<FreteFaixa, 'id' | 'tabela_frete_id'>[]
     }) => {
@@ -160,6 +162,8 @@ export const useUpdateTabelaFrete = () => {
         .from("tabelas_frete")
         .update({
           nome: data.nome,
+          tipo: data.tipo,
+          transportadora_id: data.transportadora_id,
           ativo: data.ativo,
         })
         .eq("id", data.id)
