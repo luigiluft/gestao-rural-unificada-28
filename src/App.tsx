@@ -28,6 +28,7 @@ import Usuarios from "./pages/Usuarios";
 import Produtores from "./pages/Produtores";
 import Subcontas from "./pages/Subcontas";
 import Franquias from "./pages/Franquias";
+import Funcionarios from "./pages/Funcionarios";
 import Fazendas from "./pages/Fazendas";
 import LocaisEntrega from "./pages/LocaisEntrega";
 import Configuracoes from "./pages/Configuracoes";
@@ -143,6 +144,7 @@ const App = () => {
               <Route path="produtores" element={<RequirePageAccess pageKey="produtores"><Produtores /></RequirePageAccess>} />
               <Route path="fazendas" element={<RequirePageAccess pageKey="fazendas"><Fazendas /></RequirePageAccess>} />
               <Route path="locais-entrega" element={<RequirePageAccess pageKey="locais-entrega"><LocaisEntrega /></RequirePageAccess>} />
+              <Route path="funcionarios" element={<RequirePageAccess pageKey="funcionarios"><Funcionarios /></RequirePageAccess>} />
               <Route path="subcontas" element={<RequirePageAccess pageKey="subcontas"><Subcontas /></RequirePageAccess>} />
               <Route path="suporte" element={<RequirePageAccess pageKey="suporte"><Suporte /></RequirePageAccess>} />
               <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />

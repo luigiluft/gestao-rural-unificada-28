@@ -2142,6 +2142,59 @@ export type Database = {
           },
         ]
       }
+      folha_pagamento: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          created_at: string
+          created_by: string | null
+          data_fim: string | null
+          data_inicio: string
+          deposito_id: string
+          id: string
+          observacoes: string | null
+          salario_mensal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          deposito_id: string
+          id?: string
+          observacoes?: string | null
+          salario_mensal: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          deposito_id?: string
+          id?: string
+          observacoes?: string | null
+          salario_mensal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folha_pagamento_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           ativo: boolean | null
