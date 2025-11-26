@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { MailPlus, Settings2, Copy, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useCurrentUserFranquias } from "@/hooks/useCurrentUserFranquias";
 
 interface ProdutorRow {
   user_id: string;
@@ -38,6 +40,8 @@ const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
 export default function Produtores() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isAdmin, isOperador } = useUserRole();
+  const { franquias: currentUserFranquias = [] } = useCurrentUserFranquias();
   const qc = useQueryClient();
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -53,12 +57,12 @@ export default function Produtores() {
   const [inviteCredentials, setInviteCredentials] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "Produtores | AgroStock";
+    document.title = "Clientes | AgroStock";
     const metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       const m = document.createElement('meta');
       m.name = 'description';
-      m.content = 'Gerencie produtores rurais e suas associações com franqueados no AgroStock';
+      m.content = 'Gerencie clientes e suas associações com depósitos no AgroStock';
       document.head.appendChild(m);
     }
   }, []);
@@ -80,7 +84,7 @@ export default function Produtores() {
 
   // Fetch produtores with profiles (excluding subaccounts)
   const { data: produtores, isLoading, error } = useQuery({
-    queryKey: ["produtores-list"],
+    queryKey: ["produtores-list", isAdmin, isOperador, currentUserFranquias.map(f => f.id)],
     queryFn: async () => {
       try {
         // First get produtores
@@ -99,7 +103,21 @@ export default function Produtores() {
         const subaccountIds = new Set(hierarchyData?.map(h => h.child_user_id) || []);
 
         // Filter out subaccounts - only keep master producers
-        const masterProdutores = produtoresData.filter(p => !subaccountIds.has(p.user_id));
+        let masterProdutores = produtoresData.filter(p => !subaccountIds.has(p.user_id));
+
+        // Se for operador, filtrar apenas clientes associados às suas franquias
+        if (isOperador && currentUserFranquias.length > 0) {
+          const franquiaIds = currentUserFranquias.map(f => f.id);
+          
+          // Buscar user_hierarchy para encontrar clientes associados às franquias do operador
+          const { data: clientesAssociados } = await supabase
+            .from('user_hierarchy')
+            .select('child_user_id')
+            .in('parent_user_id', franquiaIds);
+          
+          const allowedClientIds = new Set(clientesAssociados?.map(ca => ca.child_user_id) || []);
+          masterProdutores = masterProdutores.filter(p => allowedClientIds.has(p.user_id));
+        }
 
         if (masterProdutores.length === 0) return [];
 
@@ -170,7 +188,7 @@ export default function Produtores() {
       setInviteCredentials(credentials);
       
       toast({
-        title: "Produtor criado com sucesso!",
+        title: "Cliente criado com sucesso!",
         description: "O usuário foi criado e pode fazer login imediatamente.",
       });
 
@@ -221,8 +239,8 @@ export default function Produtores() {
       <header className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Produtores</h1>
-            <p className="text-muted-foreground">Gerencie produtores rurais e suas associações com franqueados.</p>
+            <h1 className="text-3xl font-bold text-foreground">Clientes</h1>
+            <p className="text-muted-foreground">Gerencie clientes e suas associações com depósitos.</p>
           </div>
           <Dialog open={inviteOpen} onOpenChange={(open) => {
             if (!open) closeInviteDialog();
@@ -231,19 +249,19 @@ export default function Produtores() {
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto">
                 <MailPlus className="mr-2" />
-                Criar produtor
+                Criar cliente
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md w-[95vw] sm:w-full">
               <DialogHeader>
-                <DialogTitle>Criar produtor rural</DialogTitle>
+                <DialogTitle>Criar cliente</DialogTitle>
                 <DialogDescription>
-                  Crie um produtor com senha padrão e associe-o a um franqueado responsável.
+                  Crie um cliente com senha padrão e associe-o a um depósito responsável.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="invite-email">Email do produtor</Label>
+                  <Label htmlFor="invite-email">Email do cliente</Label>
                   <Input
                     id="invite-email"
                     type="email"
@@ -253,10 +271,10 @@ export default function Produtores() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="franqueado-select">Franqueado responsável *</Label>
+                  <Label htmlFor="franqueado-select">Depósito responsável *</Label>
                   <Select value={selectedFranqueado} onValueChange={setSelectedFranqueado}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um franqueado" />
+                      <SelectValue placeholder="Selecione um depósito" />
                     </SelectTrigger>
                     <SelectContent>
                       {franqueados?.map((f) => (
@@ -314,7 +332,7 @@ export default function Produtores() {
                       Cancelar
                     </Button>
                     <Button onClick={sendInvite} disabled={sendingInvite || !inviteEmail || !selectedFranqueado}>
-                      {sendingInvite ? "Criando usuário..." : "Criar produtor"}
+                      {sendingInvite ? "Criando usuário..." : "Criar cliente"}
                     </Button>
                   </>
                 )}
@@ -327,12 +345,12 @@ export default function Produtores() {
       <section className="rounded-lg border border-border bg-card p-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground">Carregando produtores...</div>
+            <div className="text-muted-foreground">Carregando clientes...</div>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
-              <p className="text-destructive mb-2">Erro ao carregar produtores</p>
+              <p className="text-destructive mb-2">Erro ao carregar clientes</p>
               <Button variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["produtores-list"] })}>
                 Tentar novamente
               </Button>
@@ -376,13 +394,13 @@ export default function Produtores() {
             <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
               <MailPlus className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Nenhum produtor cadastrado</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhum cliente cadastrado</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Comece convidando produtores rurais para gerenciar seu estoque e operações no sistema.
+              Comece convidando clientes para gerenciar seu estoque e operações no sistema.
             </p>
             <Button onClick={() => setInviteOpen(true)}>
               <MailPlus className="mr-2 h-4 w-4" />
-              Criar primeiro produtor
+              Criar primeiro cliente
             </Button>
           </div>
         )}

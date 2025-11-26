@@ -79,7 +79,7 @@ const menuLabels = {
   'tracking': 'Rastreamento TMS',
   'tabelas-frete': 'Tabelas de Frete',
   'franqueados': 'Franqueados',
-  'produtores': 'Produtores',
+  'produtores': 'Clientes',
   'locais-entrega': 'Locais de Entrega',
   'franquias': 'Depósitos',
   'usuarios': 'Usuários',
