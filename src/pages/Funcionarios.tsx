@@ -105,7 +105,7 @@ export default function Funcionarios() {
   
   return (
     <TablePageLayout
-      title="Funcionários"
+      title="Folha de Pagamento"
       description="Gestão de folha de pagamento por depósito"
       tableContent={
         <div className="p-6 space-y-6">
