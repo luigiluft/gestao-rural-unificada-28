@@ -5,6 +5,8 @@ import { FreteFaixa } from "./useTabelasFrete"
 export interface ResultadoFreteTabela {
   tabela_id: string
   tabela_nome: string
+  transportadora_nome?: string
+  is_propria: boolean
   faixa_aplicada: FreteFaixa
   valor_frete: number
   valor_pedagio: number
@@ -28,6 +30,10 @@ export const useCalcularFreteMultiplasTabelas = () => {
         .select(`
           id,
           nome,
+          transportadora_id,
+          transportadoras (
+            nome
+          ),
           frete_faixas (*)
         `)
         .eq("ativo", true)
@@ -70,6 +76,8 @@ export const useCalcularFreteMultiplasTabelas = () => {
         resultados.push({
           tabela_id: tabela.id,
           tabela_nome: tabela.nome,
+          transportadora_nome: (tabela.transportadoras as any)?.nome,
+          is_propria: !tabela.transportadora_id,
           faixa_aplicada: faixa,
           valor_frete,
           valor_pedagio,
