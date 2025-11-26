@@ -62,6 +62,9 @@ import InstrucoesProdutor from "./pages/InstrucoesProdutor";
 import Divergencias from "./pages/Divergencias";
 import Faturas from "./pages/Faturas";
 import Financeiro from "./pages/Financeiro";
+import Receitas from "./pages/Receitas";
+import Despesas from "./pages/Despesas";
+import Caixa from "./pages/Caixa";
 import Royalties from "./pages/Royalties";
 import Contratos from "./pages/Contratos";
 import ContratoDetalhes from "./pages/ContratoDetalhes";
@@ -155,6 +158,9 @@ const App = () => {
               <Route path="contratos-franquias/:id/editar" element={<RequireAdmin><ContratoFranquiaForm /></RequireAdmin>} />
               <Route path="faturas" element={<RequirePageAccess pageKey="faturas"><Faturas /></RequirePageAccess>} />
               <Route path="financeiro" element={<RequirePageAccess pageKey="financeiro"><Financeiro /></RequirePageAccess>} />
+              <Route path="receitas" element={<RequirePageAccess pageKey="receitas"><Receitas /></RequirePageAccess>} />
+              <Route path="despesas" element={<RequirePageAccess pageKey="despesas"><Despesas /></RequirePageAccess>} />
+              <Route path="caixa" element={<RequirePageAccess pageKey="caixa"><Caixa /></RequirePageAccess>} />
               <Route path="royalties" element={<RequirePageAccess pageKey="royalties"><Royalties /></RequirePageAccess>} />
               
               {/* Legacy route redirect */}
