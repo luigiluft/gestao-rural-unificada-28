@@ -7,25 +7,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, MapPin, Truck, DollarSign, Plus, Edit, Trash2, Route, Eye } from 'lucide-react';
+import { Calculator, MapPin, Truck, DollarSign, Plus, Edit, Trash2, Route, Eye, Building2 } from 'lucide-react';
 import { useTabelasFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
+import { useTransportadoras } from '@/hooks/useTransportadoras';
 import { useSimuladorFrete } from '@/hooks/useSimuladorFrete';
 import { useNavigate } from 'react-router-dom';
 const TabelasFrete = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState<'todas' | 'proprias' | 'terceiras'>('todas');
   const {
     data: tabelasFrete = [],
     isLoading
   } = useTabelasFrete();
+  const { data: transportadoras } = useTransportadoras();
   const deleteTabelaMutation = useDeleteTabelaFrete();
   const {
     simulacao,
     setSimulacao,
     calcularFrete
   } = useSimuladorFrete();
+  
   const filteredTabelas = tabelasFrete.filter(tabela => {
     const matchesSearch = tabela.nome.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro por tipo
+    if (filtroTipo === 'proprias' && tabela.transportadora_id) return false;
+    if (filtroTipo === 'terceiras' && !tabela.transportadora_id) return false;
+    
     return matchesSearch;
   });
   const handleCalcularFrete = async () => {
@@ -51,7 +60,7 @@ const TabelasFrete = () => {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Tabelas</CardTitle>
@@ -64,18 +73,28 @@ const TabelasFrete = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ativas</CardTitle>
-            <Route className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Minhas Tabelas</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {tabelasFrete.filter(t => t.ativo).length}
+              {tabelasFrete.filter(t => !t.transportadora_id).length}
             </div>
-            <p className="text-xs text-muted-foreground">Em uso</p>
+            <p className="text-xs text-muted-foreground">Próprias</p>
           </CardContent>
         </Card>
-        
-        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Transportadoras</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {tabelasFrete.filter(t => t.transportadora_id).length}
+            </div>
+            <p className="text-xs text-muted-foreground">Terceiras</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Abas de Conteúdo */}
@@ -89,6 +108,16 @@ const TabelasFrete = () => {
           {/* Filtros */}
           <div className="flex gap-4">
             <Input placeholder="Buscar por nome..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="max-w-sm" />
+            <Select value={filtroTipo} onValueChange={(value: any) => setFiltroTipo(value)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filtrar por tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as Tabelas</SelectItem>
+                <SelectItem value="proprias">Minhas Tabelas</SelectItem>
+                <SelectItem value="terceiras">Transportadoras</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Tabela de Fretes */}
@@ -98,6 +127,7 @@ const TabelasFrete = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Faixas</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Criada em</TableHead>
@@ -106,15 +136,28 @@ const TabelasFrete = () => {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         Carregando tabelas...
                       </TableCell>
                     </TableRow> : filteredTabelas.length === 0 ? <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         Nenhuma tabela de frete encontrada.
                       </TableCell>
                     </TableRow> : filteredTabelas.map(tabela => <TableRow key={tabela.id}>
                         <TableCell className="font-medium">{tabela.nome}</TableCell>
+                        <TableCell>
+                          {tabela.transportadora_id ? (
+                            <Badge variant="outline" className="gap-1">
+                              <Truck className="h-3 w-3" />
+                              {(tabela.transportadoras as any)?.nome || 'Terceira'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="default" className="gap-1">
+                              <Building2 className="h-3 w-3" />
+                              Própria
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>{tabela.frete_faixas?.length || 0} faixas</TableCell>
                         <TableCell>
                           <Badge variant={tabela.ativo ? 'default' : 'secondary'}>

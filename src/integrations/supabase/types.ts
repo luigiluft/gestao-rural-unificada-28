@@ -4091,6 +4091,7 @@ export type Database = {
           nome: string
           origem: string | null
           tipo: string | null
+          transportadora_id: string | null
           unidade: string
           updated_at: string
           user_id: string
@@ -4106,6 +4107,7 @@ export type Database = {
           nome: string
           origem?: string | null
           tipo?: string | null
+          transportadora_id?: string | null
           unidade?: string
           updated_at?: string
           user_id: string
@@ -4121,12 +4123,21 @@ export type Database = {
           nome?: string
           origem?: string | null
           tipo?: string | null
+          transportadora_id?: string | null
           unidade?: string
           updated_at?: string
           user_id?: string
           valor_base?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tabelas_frete_transportadora_id_fkey"
+            columns: ["transportadora_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tracking_entregas: {
         Row: {

@@ -82,6 +82,7 @@ const menuLabels = {
   'agenda': 'Agenda',
   'tracking': 'Rastreamento TMS',
   'tabelas-frete': 'Tabelas de Frete',
+  'transportadoras': 'Transportadoras',
   'produtores': 'Clientes',
   'locais-entrega': 'Locais de Entrega',
   'franquias': 'Depósitos',
@@ -142,6 +143,7 @@ const iconMap = {
   'agenda': Calendar,
   'tracking': MapPin,
   'tabelas-frete': Calculator,
+  'transportadoras': Truck,
   'franqueados': Building2,
   'produtores': Wheat,
   'locais-entrega': MapPin,
@@ -250,6 +252,8 @@ export const useDynamicMenuItems = () => {
       'ocorrencias',
       'veiculos',
       'motoristas',
+      'transportadoras',
+      'tabelas-frete',
       'tracking'
     ]
 

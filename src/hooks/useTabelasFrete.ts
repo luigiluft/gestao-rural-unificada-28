@@ -8,9 +8,14 @@ export interface TabelaFrete {
   nome: string
   tipo: string
   ativo: boolean
+  transportadora_id?: string | null
   created_at: string
   updated_at: string
   frete_faixas?: FreteFaixa[]
+  transportadoras?: {
+    id: string
+    nome: string
+  }
 }
 
 export interface FreteFaixa {
@@ -34,7 +39,11 @@ export const useTabelasFrete = () => {
         .from("tabelas_frete")
         .select(`
           *,
-          frete_faixas (*)
+          frete_faixas (*),
+          transportadoras (
+            id,
+            nome
+          )
         `)
         .order("created_at", { ascending: false })
 
@@ -53,6 +62,7 @@ export const useCreateTabelaFrete = () => {
       franqueado_id: string
       nome: string
       tipo?: string
+      transportadora_id?: string | null
       faixas: Omit<FreteFaixa, 'id' | 'tabela_frete_id'>[]
     }) => {
       // Create table
@@ -63,6 +73,7 @@ export const useCreateTabelaFrete = () => {
           franqueado_id: data.franqueado_id,
           nome: data.nome,
           tipo: data.tipo || null,
+          transportadora_id: data.transportadora_id || null,
           origem: '',
           data_vigencia: new Date().toISOString().split('T')[0],
           valor_base: 0
