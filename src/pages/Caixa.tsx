@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react"
 import { useFaturas, useFaturaStats } from "@/hooks/useFaturas"
 import { useRoyalties } from "@/hooks/useRoyalties"
+import { useTotalFolhaPagamento } from "@/hooks/useFolhaPagamento"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -42,6 +43,9 @@ export default function Caixa() {
     franquia_id: franquia?.id
   })
   
+  // Buscar total da folha de pagamento
+  const { data: totalFolhaPagamento = 0 } = useTotalFolhaPagamento()
+  
   // Filtrar royalties em aberto
   const royaltiesEmAberto = royaltiesData.filter(r => r.status === 'rascunho' || r.status === 'pendente')
   
@@ -57,9 +61,13 @@ export default function Caixa() {
     .filter(r => r.status === 'pago')
     .reduce((sum, r) => sum + Number(r.valor_total || 0), 0)
   
+  // Calcular despesas totais (royalties + folha)
+  const totalDespesas = totalRoyalties + totalFolhaPagamento
+  const totalDespesasPagas = totalRoyaltiesPagos // Por enquanto só royalties são "pagos"
+  
   // Cálculos de fluxo de caixa
-  const saldoLiquido = totalAReceber - totalRoyalties
-  const fluxoCaixaRealizado = receitaTotal - totalRoyaltiesPagos
+  const saldoLiquido = totalAReceber - totalDespesas
+  const fluxoCaixaRealizado = receitaTotal - totalDespesasPagas
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -100,9 +108,9 @@ export default function Caixa() {
                   <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{formatCurrency(totalRoyalties)}</div>
+                  <div className="text-2xl font-bold text-red-600">{formatCurrency(totalDespesas)}</div>
                   <p className="text-xs text-muted-foreground">
-                    Despesas pendentes
+                    Royalties + Folha de pagamento
                   </p>
                 </CardContent>
               </Card>
@@ -151,9 +159,9 @@ export default function Caixa() {
                   <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{formatCurrency(totalRoyaltiesPagos)}</div>
+                  <div className="text-2xl font-bold text-red-600">{formatCurrency(totalDespesasPagas)}</div>
                   <p className="text-xs text-muted-foreground">
-                    Despesas pagas
+                    Despesas efetivadas
                   </p>
                 </CardContent>
               </Card>
