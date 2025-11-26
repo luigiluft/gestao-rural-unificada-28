@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTransportadoras, useCreateTransportadora, useUpdateTransportadora, useDeleteTransportadora } from "@/hooks/useTransportadoras"
 import { LoadingState } from "@/components/ui/loading-state"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -37,7 +38,8 @@ export default function Transportadoras() {
     regiao_atendimento: "",
     valor_km: "",
     valor_minimo: "",
-    ativo: true
+    ativo: true,
+    is_propria: false
   })
 
   const { data: transportadoras, isLoading } = useTransportadoras()
@@ -62,7 +64,8 @@ export default function Transportadoras() {
       regiao_atendimento: formData.regiao_atendimento || null,
       valor_km: formData.valor_km ? parseFloat(formData.valor_km) : null,
       valor_minimo: formData.valor_minimo ? parseFloat(formData.valor_minimo) : null,
-      ativo: formData.ativo
+      ativo: formData.ativo,
+      is_propria: formData.is_propria
     }
 
     if (editingId) {
@@ -85,7 +88,8 @@ export default function Transportadoras() {
       regiao_atendimento: transportadora.regiao_atendimento || "",
       valor_km: transportadora.valor_km?.toString() || "",
       valor_minimo: transportadora.valor_minimo?.toString() || "",
-      ativo: transportadora.ativo
+      ativo: transportadora.ativo,
+      is_propria: transportadora.is_propria || false
     })
     setDialogOpen(true)
   }
@@ -108,7 +112,8 @@ export default function Transportadoras() {
       regiao_atendimento: "",
       valor_km: "",
       valor_minimo: "",
-      ativo: true
+      ativo: true,
+      is_propria: false
     })
   }
 
@@ -149,14 +154,15 @@ export default function Transportadoras() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>CNPJ</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Especialidade</TableHead>
-                <TableHead>Região</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>CNPJ</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Contato</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Especialidade</TableHead>
+              <TableHead>Região</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,6 +175,11 @@ export default function Transportadoras() {
                     </div>
                   </TableCell>
                   <TableCell>{transportadora.cnpj}</TableCell>
+                  <TableCell>
+                    <Badge variant={transportadora.is_propria ? "default" : "outline"}>
+                      {transportadora.is_propria ? "Própria" : "Terceira"}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{transportadora.contato || "-"}</TableCell>
                   <TableCell>{transportadora.email || "-"}</TableCell>
                   <TableCell>{transportadora.especialidade || "-"}</TableCell>
@@ -225,6 +236,22 @@ export default function Transportadoras() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="tipo">Tipo *</Label>
+                <Select
+                  value={formData.is_propria ? "propria" : "terceira"}
+                  onValueChange={(value) => setFormData({ ...formData, is_propria: value === "propria" })}
+                >
+                  <SelectTrigger id="tipo">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="propria">Própria</SelectItem>
+                    <SelectItem value="terceira">Terceira</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="col-span-2">
                 <Label htmlFor="nome">Nome *</Label>
                 <Input

@@ -5,19 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ArrowLeft, Save, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Download, Upload, AlertCircle } from 'lucide-react';
 import { useCreateTabelaFrete } from '@/hooks/useTabelasFrete';
+import { useTransportadoras } from '@/hooks/useTransportadoras';
 import { exportToCSV } from '@/utils/csvExport';
 import { importFromCSV } from '@/utils/csvImport';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   franqueado_id: z.string().uuid(),
+  tipo: z.enum(["propria", "terceira"]),
+  transportadora_id: z.string().uuid().optional().nullable(),
   ativo: z.boolean().default(true),
   faixas: z.array(z.object({
     distancia_min: z.number().min(0),
@@ -27,6 +32,14 @@ const formSchema = z.object({
     pedagio_por_ton: z.number().min(0, "Valor deve ser positivo"),
     prazo_dias: z.number().min(1, "Prazo mínimo é 1 dia")
   })).length(10, "Devem ser cadastradas 10 faixas")
+}).refine((data) => {
+  if (data.tipo === "terceira" && !data.transportadora_id) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Selecione uma transportadora para tabelas terceiras",
+  path: ["transportadora_id"]
 });
 
 const faixasPadrao: Array<{
@@ -52,14 +65,20 @@ const faixasPadrao: Array<{
 const NovaTabelaFrete = () => {
   const navigate = useNavigate();
   const createTabelaMutation = useCreateTabelaFrete();
+  const { data: transportadoras = [] } = useTransportadoras();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const transportadoraPropria = transportadoras.find(t => t.is_propria && t.ativo);
+  const transportadorasTerceiras = transportadoras.filter(t => !t.is_propria && t.ativo);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: "",
       franqueado_id: "a695e2b8-a539-4374-ba04-8c2055c485ea",
+      tipo: "propria",
+      transportadora_id: null,
       ativo: true,
       faixas: faixasPadrao as Array<{
         distancia_min: number;
@@ -72,11 +91,25 @@ const NovaTabelaFrete = () => {
     }
   });
 
+  const tipoTabela = form.watch("tipo");
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Validar se tem transportadora própria cadastrada para tabelas próprias
+    if (values.tipo === "propria" && !transportadoraPropria) {
+      toast({
+        title: "Transportadora própria não cadastrada",
+        description: "Cadastre uma transportadora própria antes de criar tabelas próprias.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       await createTabelaMutation.mutateAsync({
         franqueado_id: values.franqueado_id,
         nome: values.nome,
+        tipo: values.tipo,
+        transportadora_id: values.tipo === "propria" ? transportadoraPropria?.id : values.transportadora_id,
         faixas: values.faixas as Array<{
           distancia_min: number;
           distancia_max: number;
@@ -198,6 +231,77 @@ const NovaTabelaFrete = () => {
               <CardTitle>Informações Básicas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="tipo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Tabela *</FormLabel>
+                    <FormDescription>
+                      Selecione se esta é uma tabela própria ou de transportadora terceira
+                    </FormDescription>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="propria">Própria</SelectItem>
+                        <SelectItem value="terceira">Terceira</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {tipoTabela === "propria" && !transportadoraPropria && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Você precisa cadastrar uma transportadora própria antes de criar tabelas próprias.
+                    <Button 
+                      variant="link" 
+                      className="h-auto p-0 ml-1"
+                      onClick={() => navigate('/transportadoras')}
+                    >
+                      Cadastrar agora
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {tipoTabela === "terceira" && (
+                <FormField
+                  control={form.control}
+                  name="transportadora_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transportadora *</FormLabel>
+                      <FormDescription>
+                        Selecione a transportadora terceira para esta tabela
+                      </FormDescription>
+                      <Select onValueChange={field.onChange} value={field.value || undefined}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a transportadora" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {transportadorasTerceiras.map(t => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="nome"
