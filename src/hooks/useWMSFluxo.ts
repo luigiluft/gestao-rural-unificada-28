@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 interface StatusCount {
   status: string
@@ -9,13 +10,24 @@ interface StatusCount {
 }
 
 export const useWMSFluxo = () => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+  
   return useQuery({
-    queryKey: ["wms-fluxo"],
+    queryKey: ["wms-fluxo", depositoId],
     queryFn: async () => {
       // Buscar todas as entradas e saídas
+      let entradasQuery = supabase.from("entradas").select("status_aprovacao, deposito_id")
+      let saidasQuery = supabase.from("saidas").select("status, deposito_id")
+      
+      // Apply deposit filter if needed
+      if (shouldFilter && depositoId) {
+        entradasQuery = entradasQuery.eq("deposito_id", depositoId)
+        saidasQuery = saidasQuery.eq("deposito_id", depositoId)
+      }
+      
       const [entradasResult, saidasResult] = await Promise.all([
-        supabase.from("entradas").select("status_aprovacao"),
-        supabase.from("saidas").select("status")
+        entradasQuery,
+        saidasQuery
       ])
 
       if (entradasResult.error) throw entradasResult.error

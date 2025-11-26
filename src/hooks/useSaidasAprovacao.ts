@@ -2,16 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export const useSaidasPendentesAprovacao = () => {
   const { user } = useAuth()
+  const { depositoId, shouldFilter } = useDepositoFilter()
   
   return useQuery({
-    queryKey: ["saidas-pendentes-aprovacao", user?.id],
+    queryKey: ["saidas-pendentes-aprovacao", user?.id, depositoId],
     queryFn: async () => {
       if (!user?.id) return []
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("saidas")
         .select(`
           *,
@@ -24,6 +26,13 @@ export const useSaidasPendentesAprovacao = () => {
         .eq("criado_por_franqueado", true)
         .eq("status_aprovacao_produtor", "pendente")
         .order("created_at", { ascending: false })
+      
+      // Apply deposit filter if needed
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId)
+      }
+      
+      const { data, error } = await query
 
       if (error) throw error
       return data || []
