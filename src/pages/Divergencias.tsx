@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
+import { useDepositoFilter } from "@/hooks/useDepositoFilter";
 
 interface Divergencia {
   id: string;
@@ -56,6 +57,7 @@ const prioridadeColors = {
 
 const Divergencias = () => {
   const updateNotificationView = useUpdateNotificationView();
+  const { depositoId, shouldFilter } = useDepositoFilter();
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroPrioridade, setFiltroPrioridade] = useState<string>("todos");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
@@ -67,7 +69,7 @@ const Divergencias = () => {
   }, []);
 
   const { data: divergencias = [], isLoading } = useQuery({
-    queryKey: ["divergencias", filtroStatus, filtroPrioridade, filtroTipo, searchTerm],
+    queryKey: ["divergencias", filtroStatus, filtroPrioridade, filtroTipo, searchTerm, depositoId],
     queryFn: async (): Promise<Divergencia[]> => {
       let query = supabase
         .from("divergencias")
@@ -87,9 +89,14 @@ const Divergencias = () => {
           tipo_origem,
           entrada_id,
           produto_id,
-          user_id
+          user_id,
+          deposito_id
         `)
         .order("created_at", { ascending: false });
+
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId);
+      }
 
       if (filtroStatus !== "todos") {
         query = query.eq("status", filtroStatus);

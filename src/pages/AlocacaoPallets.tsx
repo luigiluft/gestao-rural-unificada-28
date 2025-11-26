@@ -10,11 +10,14 @@ import { usePalletsPendentes } from "@/hooks/usePalletPositions";
 import { AllocationDialog } from "@/components/Entradas/AllocationDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useDepositoFilter } from "@/hooks/useDepositoFilter";
 
 export default function AlocacaoPallets() {
   const [selectedPallets, setSelectedPallets] = useState<string[]>([]);
   const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
   const [allocationMethod, setAllocationMethod] = useState<"manual" | "scanner" | null>(null);
+  
+  const { depositoId } = useDepositoFilter();
   
   const {
     data: palletsPendentes,
