@@ -1,51 +1,50 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useDepositoFilter } from "./useDepositoFilter"
 
-export const useStoragePositions = (depositoId?: string) => {
+export const useStoragePositions = () => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+
   return useQuery({
     queryKey: ["storage-positions", depositoId],
     queryFn: async () => {
-      let query = supabase
+      if (!depositoId || !shouldFilter) return []
+
+      const { data, error } = await supabase
         .from("storage_positions")
         .select("*")
         .eq("ativo", true)
         .order("codigo", { ascending: true })
-
-      if (depositoId) {
-        query = query.eq("deposito_id", depositoId)
-      }
-
-      const { data, error } = await query
+        .eq("deposito_id", depositoId)
 
       if (error) throw error
       return data || []
     },
-    enabled: !!depositoId,
+    enabled: !!depositoId && shouldFilter,
   })
 }
 
-export const useAvailablePositions = (depositoId?: string) => {
+export const useAvailablePositions = () => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+
   return useQuery({
     queryKey: ["available-positions", depositoId],
     queryFn: async () => {
-      let query = supabase
+      if (!depositoId || !shouldFilter) return []
+
+      const { data, error } = await supabase
         .from("storage_positions")
         .select("*")
         .eq("ativo", true)
         .eq("ocupado", false)
         .order("codigo", { ascending: true })
-
-      if (depositoId) {
-        query = query.eq("deposito_id", depositoId)
-      }
-
-      const { data, error } = await query
+        .eq("deposito_id", depositoId)
 
       if (error) throw error
       return data || []
     },
-    enabled: !!depositoId,
+    enabled: !!depositoId && shouldFilter,
   })
 }
 

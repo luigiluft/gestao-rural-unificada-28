@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDepositoFilter } from "./useDepositoFilter";
 
 export interface PalletAllocationResult {
   pallet_id: string;
@@ -151,8 +152,9 @@ export const usePalletPositionsAvariados = (depositoId?: string) => {
 };
 
 // Hook para pallets pendentes de alocação 
-export const usePalletsPendentes = (depositoId?: string) => {
+export const usePalletsPendentes = () => {
   const { user } = useAuth();
+  const { depositoId, shouldFilter } = useDepositoFilter();
 
   return useQuery({
     queryKey: ["pallets-pendentes", depositoId, user?.id],
@@ -207,8 +209,11 @@ export const usePalletsPendentes = (depositoId?: string) => {
         `)
         .eq("entradas.status_aprovacao", "confirmado");
 
-      // Apply franchise filtering for non-admin users
-      if (!isAdmin) {
+      // Se houver depósito selecionado no filtro global, aplicar diretamente
+      if (shouldFilter && depositoId) {
+        query = query.eq("entradas.deposito_id", depositoId);
+      } else if (!isAdmin) {
+        // Caso contrário, aplicar filtro pelas franquias do usuário (visão consolidada)
         const { data: franquias } = await supabase
           .from("franquias")
           .select("id")
@@ -217,14 +222,7 @@ export const usePalletsPendentes = (depositoId?: string) => {
         const franquiaIds = franquias?.map(f => f.id) || [];
         if (franquiaIds.length > 0) {
           query = query.in("entradas.deposito_id", franquiaIds);
-        } else {
-          // If user has no franchises, return empty array
-          return [];
         }
-      }
-
-      if (depositoId) {
-        query = query.eq("entradas.deposito_id", depositoId);
       }
 
       const { data: allData, error } = await query.order("created_at", { ascending: true });

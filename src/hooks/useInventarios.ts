@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export interface Inventario {
   id: string
@@ -57,13 +58,21 @@ export interface InventarioItem {
 }
 
 export const useInventarios = () => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+
   return useQuery({
-    queryKey: ["inventarios"],
+    queryKey: ["inventarios", depositoId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("inventarios")
         .select("*")
         .order("created_at", { ascending: false })
+
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       return data as any[] || []

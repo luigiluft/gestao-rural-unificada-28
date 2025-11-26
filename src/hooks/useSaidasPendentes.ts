@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 interface DateRange {
   from?: Date
@@ -8,8 +9,10 @@ interface DateRange {
 }
 
 export const useSaidasPendentes = (dateRange?: DateRange) => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+
   return useQuery({
-    queryKey: ["saidas-pendentes", dateRange],
+    queryKey: ["saidas-pendentes", dateRange, depositoId],
     queryFn: async () => {
       let query = supabase
         .from("saidas")
@@ -29,14 +32,18 @@ export const useSaidasPendentes = (dateRange?: DateRange) => {
           )
         `)
         .in("status", ["separacao_pendente", "separado", "expedido", "entregue"])
-        .is("viagem_id", null) // Only saidas not yet in any viagem
-        
+        .is("viagem_id", null)
+      
       // Apply date filters if provided
       if (dateRange?.from) {
         query = query.gte("data_saida", dateRange.from.toISOString().split('T')[0])
       }
       if (dateRange?.to) {
         query = query.lte("data_saida", dateRange.to.toISOString().split('T')[0])
+      }
+
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId)
       }
       
       const { data, error } = await query

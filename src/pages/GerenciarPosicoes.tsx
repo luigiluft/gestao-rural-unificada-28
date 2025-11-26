@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePalletPositions, usePalletPositionsAvariados, useRemovePalletAllocation, useReallocatePallet } from "@/hooks/usePalletPositions";
 import { useAvailablePositions } from "@/hooks/useStoragePositions";
 import { usePalletDetails } from "@/hooks/usePalletDetails";
-import { useTodasFranquias } from "@/hooks/useDepositosDisponiveis";
+import { useDepositoFilter } from "@/hooks/useDepositoFilter";
 import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,15 +23,13 @@ import { ptBR } from "date-fns/locale";
 export default function GerenciarPosicoes() {
   const updateNotificationView = useUpdateNotificationView();
 
-  // Mark as viewed when component mounts
+  // Marcar como visualizado ao montar
   useEffect(() => {
     updateNotificationView.mutate("posicoes");
   }, []);
 
-  // Estado para seleção de depósito (fallback para depósito padrão)
-  const [selectedDepositoForMap, setSelectedDepositoForMap] = useState<string>(
-    '75edbf21-1efa-4397-8d0c-dddca9d572aa'
-  );
+  const { depositoId, shouldFilter } = useDepositoFilter();
+
   const [reallocateDialog, setReallocateDialog] = useState<{
     open: boolean;
     pallet?: any;
@@ -43,13 +41,10 @@ export default function GerenciarPosicoes() {
   const [newPositionId, setNewPositionId] = useState<string>("");
   const [observacoes, setObservacoes] = useState<string>("");
   
-  // Buscar todas as franquias disponíveis
-  const { data: franquias, isLoading: isLoadingFranquias } = useTodasFranquias();
-  
-  // Usar o depósito selecionado para buscar dados
-  const { data: palletPositions, isLoading } = usePalletPositions(selectedDepositoForMap);
-  const { data: palletPositionsAvariados, isLoading: isLoadingAvariados } = usePalletPositionsAvariados(selectedDepositoForMap);
-  const { data: availablePositions } = useAvailablePositions(selectedDepositoForMap);
+  // Usar o depósito selecionado globalmente para buscar dados
+  const { data: palletPositions, isLoading } = usePalletPositions(depositoId || undefined);
+  const { data: palletPositionsAvariados, isLoading: isLoadingAvariados } = usePalletPositionsAvariados(depositoId || undefined);
+  const { data: availablePositions } = useAvailablePositions();
   const { data: palletDetails } = usePalletDetails(detailsDialog.pallet?.pallet_id);
   const removeAllocation = useRemovePalletAllocation();
   const reallocatePallet = useReallocatePallet();
@@ -227,7 +222,7 @@ export default function GerenciarPosicoes() {
     </div>
   );
 
-  if (isLoading || isLoadingAvariados || isLoadingFranquias) {
+  if (isLoading || isLoadingAvariados) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex justify-between items-center">
@@ -253,26 +248,11 @@ export default function GerenciarPosicoes() {
         </div>
       </div>
 
-      {/* Seletor de Depósito */}
-      <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
-        <Label htmlFor="deposito-select" className="font-medium whitespace-nowrap">
-          Depósito:
-        </Label>
-        <Select 
-          value={selectedDepositoForMap} 
-          onValueChange={setSelectedDepositoForMap}
-        >
-          <SelectTrigger id="deposito-select" className="w-[300px]">
-            <SelectValue placeholder="Selecione um depósito" />
-          </SelectTrigger>
-          <SelectContent>
-            {franquias?.map((franquia) => (
-              <SelectItem key={franquia.id} value={franquia.id}>
-                {franquia.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Informativo de depósito atual baseado no filtro do cabeçalho */}
+      <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Dados filtrados pelo depósito selecionado no topo.</span>
+        </div>
         <div className="text-sm text-muted-foreground">
           {palletPositions?.length || 0} pallet(s) em estoque
         </div>
@@ -324,7 +304,7 @@ export default function GerenciarPosicoes() {
         </TabsContent>
 
         <TabsContent value="mapa">
-          <WarehouseMapViewer depositoId={selectedDepositoForMap} />
+          <WarehouseMapViewer depositoId={depositoId || ""} />
         </TabsContent>
       </Tabs>
 

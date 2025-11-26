@@ -95,7 +95,7 @@ export default function Inventario() {
   const { data: inventarioAtual } = useInventario(currentInventoryId || undefined)
   const { data: posicoes } = useInventarioPosicoes(currentInventoryId || undefined)
   const { data: itens } = useInventarioItens(currentInventoryId || undefined)
-  const { data: todasPosicoes } = useStoragePositions(inventoryConfig.franquiaId)
+  const { data: todasPosicoes } = useStoragePositions()
   // Removed estoquePosicao hook - no longer needed in new allocation system
   const estoquePosicao: any[] = []
   const { user } = useAuth()
