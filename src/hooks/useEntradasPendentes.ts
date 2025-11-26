@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 interface DateRange {
   from?: Date
@@ -8,8 +9,10 @@ interface DateRange {
 }
 
 export const useEntradasPendentes = (dateRange?: DateRange) => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+
   return useQuery({
-    queryKey: ["entradas-pendentes", dateRange],
+    queryKey: ["entradas-pendentes", dateRange, depositoId],
     staleTime: 30000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
@@ -32,6 +35,11 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
         }
         if (dateRange?.to) {
           query = query.lte("data_entrada", dateRange.to.toISOString().split('T')[0])
+        }
+
+        // Apply deposit filter if needed
+        if (shouldFilter && depositoId) {
+          query = query.eq("deposito_id", depositoId)
         }
         
         const { data: entradas, error } = await query.order("created_at", { ascending: false })
