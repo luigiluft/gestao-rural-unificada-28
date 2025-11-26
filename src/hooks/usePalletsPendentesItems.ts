@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDepositoFilter } from "./useDepositoFilter";
 
 interface PalletPendenteItem {
   produto_id: string;
@@ -12,9 +13,10 @@ interface PalletPendenteItem {
 
 export const usePalletsPendentesItems = () => {
   const { user } = useAuth();
+  const { depositoId, shouldFilter } = useDepositoFilter();
 
   return useQuery({
-    queryKey: ["pallets-pendentes-items", user?.id],
+    queryKey: ["pallets-pendentes-items", user?.id, depositoId],
     queryFn: async () => {
       if (!user?.id) throw new Error("User not authenticated");
 
@@ -48,6 +50,11 @@ export const usePalletsPendentesItems = () => {
       // If not admin, filter by user_id
       if (!isAdmin) {
         palletQuery = palletQuery.eq("entradas.user_id", user.id);
+      }
+      
+      // Apply deposit filter if needed
+      if (shouldFilter && depositoId) {
+        palletQuery = palletQuery.eq("entradas.deposito_id", depositoId);
       }
 
       const { data: allPallets, error: palletsError } = await palletQuery;
