@@ -1,5 +1,5 @@
 import { useFranquia } from "@/contexts/FranquiaContext"
-import { useUserRole } from "./useUserRole"
+
 
 /**
  * Hook utilitário para gerenciar filtros de depósito
@@ -7,12 +7,12 @@ import { useUserRole } from "./useUserRole"
  */
 export const useDepositoFilter = () => {
   const { selectedFranquia } = useFranquia()
-  const { isCliente } = useUserRole()
   
   return {
     depositoId: selectedFranquia?.id === "ALL" ? null : selectedFranquia?.id,
     isAllDeposits: selectedFranquia?.id === "ALL",
-    shouldFilter: isCliente && selectedFranquia?.id !== "ALL",
+    // Aplica filtro sempre que houver um depósito específico selecionado
+    shouldFilter: !!selectedFranquia && selectedFranquia.id !== "ALL",
     hasFilter: !!selectedFranquia && selectedFranquia.id !== "ALL"
   }
 }
