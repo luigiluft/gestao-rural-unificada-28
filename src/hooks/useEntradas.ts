@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+  
   return useQuery({
-    queryKey: ["entradas", dateRange],
+    queryKey: ["entradas", dateRange, depositoId],
     queryFn: async () => {
       console.log('[useEntradas] Starting query with dateRange:', dateRange);
       
@@ -29,6 +32,11 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
         const endDate = new Date(dateRange.to)
         endDate.setHours(23, 59, 59, 999)
         query = query.lte("created_at", endDate.toISOString())
+      }
+
+      // Apply deposit filter if needed
+      if (shouldFilter && depositoId) {
+        query = query.eq("deposito_id", depositoId)
       }
 
       const { data: entradas, error } = await query.order("created_at", { ascending: false })

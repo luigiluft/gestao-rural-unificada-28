@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useDepositoFilter } from "./useDepositoFilter"
 
 export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
+  const { depositoId, shouldFilter } = useDepositoFilter()
+  
   return useQuery({
-    queryKey: ["saidas", dateRange],
+    queryKey: ["saidas", dateRange, depositoId],
     queryFn: async () => {
       console.log('🔍 HOOK DEBUG - useSaidas INICIANDO')
       console.log('📅 dateRange:', dateRange)
@@ -56,6 +59,11 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             ownSaidasQuery = ownSaidasQuery.lte("created_at", endDate.toISOString())
           }
 
+          // Apply deposit filter if needed
+          if (shouldFilter && depositoId) {
+            ownSaidasQuery = ownSaidasQuery.eq("deposito_id", depositoId)
+          }
+
           // Second, get approval saídas from franchisees (no date filter)
           // Show pending and approved saídas, hide only rejected ones
           let pendingSaidasQuery = supabase
@@ -64,6 +72,11 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             .eq("criado_por_franqueado", true)
             .eq("produtor_destinatario_id", user.id)
             .in("status_aprovacao_produtor", ["pendente", "aprovado"])
+
+          // Apply deposit filter if needed
+          if (shouldFilter && depositoId) {
+            pendingSaidasQuery = pendingSaidasQuery.eq("deposito_id", depositoId)
+          }
 
           console.log('🚀 Executando queries para produtor...')
           const [ownSaidasResult, pendingSaidasResult] = await Promise.all([
@@ -100,6 +113,11 @@ export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
             const endDate = new Date(dateRange.to)
             endDate.setHours(23, 59, 59, 999)
             query = query.lte("created_at", endDate.toISOString())
+          }
+
+          // Apply deposit filter if needed
+          if (shouldFilter && depositoId) {
+            query = query.eq("deposito_id", depositoId)
           }
 
           console.log('🚀 Executando query para não-produtor...')
