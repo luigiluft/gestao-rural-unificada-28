@@ -165,10 +165,14 @@ export const useDynamicMenuItems = () => {
       'entradas',
       'estoque',
       'saidas',
-      'rastreio',
-      'royalties',
+      'rastreio'
+    ]
+
+    // Páginas do ERP
+    const erpPages = [
       'financeiro',
-      'faturas'
+      'faturas',
+      'royalties'
     ]
 
     // Páginas de Ajuda
@@ -261,6 +265,41 @@ export const useDynamicMenuItems = () => {
           label: 'OMS',
           icon: BarChart3,
           subItems: omsSubItems
+        })
+      }
+    }
+
+    // Verificar se tem permissão para pelo menos uma página do ERP
+    const hasErpPermission = erpPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasErpPermission) {
+      const erpSubItems: MenuItem[] = []
+      
+      erpPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        
+        if (!permissions.includes(pageViewPermission as any)) return
+
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        
+        if (label && icon) {
+          erpSubItems.push({
+            path: `/${page}`,
+            label,
+            icon
+          })
+        }
+      })
+
+      if (erpSubItems.length > 0) {
+        items.push({
+          path: '/erp',
+          label: 'ERP',
+          icon: BarChart3,
+          subItems: erpSubItems
         })
       }
     }
