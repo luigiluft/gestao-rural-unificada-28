@@ -35,17 +35,8 @@ export default function RetornoFisico() {
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const { data: entradasOperador, isLoading: isLoadingOperador } = useEntradas({
-    enabled: !isCliente,
-    startDate: dateRange?.from,
-    endDate: dateRange?.to,
-  });
-
-  const { data: entradasCliente, isLoading: isLoadingCliente } = useProducerEntradas({
-    enabled: isCliente,
-    startDate: dateRange?.from,
-    endDate: dateRange?.to,
-  });
+  const { data: entradasOperador, isLoading: isLoadingOperador } = useEntradas(dateRange);
+  const { data: entradasCliente, isLoading: isLoadingCliente } = useProducerEntradas(dateRange);
 
   const entradas = isCliente ? entradasCliente : entradasOperador;
   const isLoading = isCliente ? isLoadingCliente : isLoadingOperador;
@@ -70,7 +61,20 @@ export default function RetornoFisico() {
       'Natureza Operação': entrada.natureza_operacao || '',
     }));
     
-    exportToCSV(csvData, 'retorno-fisico');
+    exportToCSV({
+      data: csvData,
+      columns: [
+        { key: 'Número NF', label: 'Número NF', visible: true, category: 'Básico' },
+        { key: 'Data Emissão', label: 'Data Emissão', visible: true, category: 'Básico' },
+        { key: 'Emitente', label: 'Emitente', visible: true, category: 'Básico' },
+        { key: 'CNPJ Emitente', label: 'CNPJ Emitente', visible: true, category: 'Básico' },
+        { key: 'Destinatário', label: 'Destinatário', visible: true, category: 'Básico' },
+        { key: 'Valor Total', label: 'Valor Total', visible: true, category: 'Básico' },
+        { key: 'Status', label: 'Status', visible: true, category: 'Básico' },
+        { key: 'Natureza Operação', label: 'Natureza Operação', visible: true, category: 'Básico' },
+      ],
+      filename: 'retorno-fisico'
+    });
   };
 
   return (
@@ -92,7 +96,7 @@ export default function RetornoFisico() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Notas Fiscais</CardTitle>
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+            <DateRangeFilter dateRange={dateRange || { from: undefined, to: undefined }} onDateRangeChange={setDateRange} />
           </div>
         </CardHeader>
         <CardContent>
