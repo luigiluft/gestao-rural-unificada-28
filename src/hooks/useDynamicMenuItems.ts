@@ -93,6 +93,9 @@ const menuLabels = {
   'contratos-franquias': 'Contratos com Franquias',
   'faturas': 'Faturas',
   'financeiro': 'Financeiro',
+  'receitas': 'Receitas',
+  'despesas': 'Despesas',
+  'caixa': 'Fluxo de Caixa',
   'royalties': 'Royalties',
   'instrucoes': 'Instruções',
   'suporte': 'Suporte',
@@ -144,6 +147,9 @@ const iconMap = {
   'contratos-franquias': FileText,
   'faturas': FileText,
   'financeiro': DollarSign,
+  'receitas': TrendingUp,
+  'despesas': Receipt,
+  'caixa': DollarSign,
   'royalties': TrendingUp,
   'instrucoes': BookOpen,
   'suporte': HelpCircle,
@@ -170,7 +176,9 @@ export const useDynamicMenuItems = () => {
 
     // Páginas do ERP
     const erpPages = [
-      'financeiro',
+      'receitas',
+      'despesas',
+      'caixa',
       'faturas',
       'royalties'
     ]
