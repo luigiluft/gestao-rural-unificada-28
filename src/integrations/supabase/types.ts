@@ -4797,6 +4797,7 @@ export type Database = {
         Args: { p_pallet_id: string }
         Returns: boolean
       }
+      current_user_id: { Args: never; Returns: string }
       define_wave_positions: { Args: { p_wave_id: string }; Returns: Json }
       diagnose_user_signup: { Args: { _email: string }; Returns: string }
       find_or_create_produto: {
@@ -4908,6 +4909,8 @@ export type Database = {
         Args: { _child: string; _parent: string }
         Returns: boolean
       }
+      is_entrada_of_user: { Args: { e_id: string }; Returns: boolean }
+      is_saida_of_user: { Args: { s_id: string }; Returns: boolean }
       is_subaccount: { Args: { _user_id: string }; Returns: boolean }
       link_motorista_to_auth_user: {
         Args: { p_auth_user_id: string; p_cpf: string }
@@ -4936,6 +4939,18 @@ export type Database = {
         Args: { p_franquia_id: string; p_user_id: string }
         Returns: boolean
       }
+      user_can_access_royalty: {
+        Args: { p_royalty_id: string }
+        Returns: boolean
+      }
+      user_can_access_saida_item: {
+        Args: { p_saida_item_id: string }
+        Returns: boolean
+      }
+      user_has_access_to_cliente: {
+        Args: { p_cliente_id: string }
+        Returns: boolean
+      }
       user_has_cliente_association: {
         Args: { _cliente_id: string; _user_id: string }
         Returns: boolean
@@ -4946,6 +4961,10 @@ export type Database = {
       }
       user_is_cliente_owner: {
         Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_is_franqueado_of_franquia: {
+        Args: { p_franquia_id: string }
         Returns: boolean
       }
       user_is_franquia_master: {
