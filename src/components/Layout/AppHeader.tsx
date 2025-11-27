@@ -19,15 +19,20 @@ import { getRoleLabel } from "@/utils/roleTranslations"
 import { useCliente } from "@/contexts/ClienteContext"
 import { useClientes } from "@/hooks/useClientes"
 import { useFranquia } from "@/contexts/FranquiaContext"
+import { useUserRole } from "@/hooks/useUserRole"
 
 export function AppHeader() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [displayName, setDisplayName] = useState<string>("")
-  const [roleLabel, setRoleLabel] = useState<string>(getRoleLabel('cliente', false, true))
+  const { userRole, isAdmin, isOperador, isCliente } = useUserRole()
   const { selectedCliente, setSelectedCliente, availableClientes } = useCliente()
   const { data: clientes } = useClientes()
   const { selectedFranquia, setSelectedFranquia, availableFranquias } = useFranquia()
+  
+  // Get role label from the userRole
+  const roleLabel = userRole ? getRoleLabel(userRole, false, true) : getRoleLabel('cliente', false, true)
+  
   useEffect(() => {
     const load = async () => {
       if (!user) return
@@ -43,33 +48,6 @@ export function AppHeader() {
       }
     }
     load()
-  }, [user])
-
-  useEffect(() => {
-    const loadRole = async () => {
-      if (!user) { 
-        setRoleLabel(getRoleLabel('cliente', false, true))
-        return 
-      }
-      try {
-        const [adminRes, operadorRes, motoristaRes] = await Promise.all([
-          supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
-          supabase.rpc('has_role', { _user_id: user.id, _role: 'operador' }),
-          supabase.rpc('has_role', { _user_id: user.id, _role: 'motorista' }),
-        ])
-        const isAdmin = adminRes.data === true
-        const isOperador = operadorRes.data === true
-        const isMotorista = motoristaRes.data === true
-        
-        if (isAdmin) setRoleLabel(getRoleLabel('admin', false, true))
-        else if (isOperador) setRoleLabel(getRoleLabel('operador', false, true))
-        else if (isMotorista) setRoleLabel(getRoleLabel('motorista', false, true))
-        else setRoleLabel(getRoleLabel('cliente', false, true))
-      } catch {
-        setRoleLabel(getRoleLabel('cliente', false, true))
-      }
-    }
-    loadRole()
   }, [user])
 
   const initials = (displayName || user?.email || "U")
@@ -103,7 +81,7 @@ export function AppHeader() {
         </div>
 
         {/* Empresa selector - only for cliente role */}
-        {roleLabel === 'Cliente' && clientes && clientes.length > 0 && (
+        {isCliente && clientes && clientes.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -146,7 +124,7 @@ export function AppHeader() {
         )}
 
         {/* Depósito selector - for operador/cliente roles */}
-        {(roleLabel === 'Operador' || roleLabel === 'Cliente') && availableFranquias.length > 0 && (
+        {(isOperador || isCliente) && availableFranquias.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -189,7 +167,7 @@ export function AppHeader() {
             </div>
             
             {/* Info badge quando "Todos" está selecionado para operadores */}
-            {roleLabel === 'Operador' && selectedFranquia?.id === 'ALL' && (
+            {isOperador && selectedFranquia?.id === 'ALL' && (
               <Badge variant="secondary" className="text-xs">
                 WMS/TMS ocultos (visão consolidada)
               </Badge>
