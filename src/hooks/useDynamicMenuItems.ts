@@ -58,10 +58,8 @@ const menuLabels = {
   'estoque': 'Estoque',
   'saidas': 'Saídas',
   'rastreio': 'Rastreamento Produtor',
-  'remessa-deposito-ag': 'Remessa para Depósito (AG)',
-  'nota-deposito': 'Nota de Depósito',
-  'retorno-simbolico': 'Retorno Simbólico',
-  'retorno-fisico': 'Retorno Físico',
+  'nfe-entradas': 'NF-e Entradas',
+  'nfe-saidas': 'NF-e Saídas',
   'recebimento': 'Recebimento',
   'alocacao-pallets': 'Alocação de Pallets',
   'gerenciar-posicoes': 'Gerenciar Posições',
@@ -101,7 +99,7 @@ const menuLabels = {
   'financeiro': 'Financeiro',
   'receitas': 'Receitas',
   'despesas': 'Despesas',
-  'caixa': 'Fluxo de Caixa',
+  'caixa': 'Caixa',
   'royalties': 'Royalties',
   'instrucoes': 'Instruções',
   'suporte': 'Suporte',
@@ -119,10 +117,8 @@ const iconMap = {
   'estoque': Archive,
   'saidas': ArrowUpFromLine,
   'rastreio': MapPin,
-  'remessa-deposito-ag': FileText,
-  'nota-deposito': FileText,
-  'retorno-simbolico': FileText,
-  'retorno-fisico': FileText,
+  'nfe-entradas': FileText,
+  'nfe-saidas': FileText,
   'recebimento': PackageCheck,
   'alocacao-pallets': Grid3X3,
   'gerenciar-posicoes': Grid2X2,
@@ -205,10 +201,8 @@ export const useDynamicMenuItems = () => {
 
     // Páginas Fiscais
     const fiscalPages = [
-      'remessa-deposito-ag',
-      'nota-deposito',
-      'retorno-simbolico',
-      'retorno-fisico'
+      'nfe-entradas',
+      'nfe-saidas'
     ]
 
     // Páginas de Cadastro

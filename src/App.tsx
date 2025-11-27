@@ -72,10 +72,8 @@ import Contratos from "./pages/Contratos";
 import ContratoDetalhes from "./pages/ContratoDetalhes";
 import ContratosFranquias from "./pages/ContratosFranquias";
 import ContratoFranquiaForm from "./pages/ContratoFranquiaForm";
-import RemessaDepositoAG from "./pages/RemessaDepositoAG";
-import NotaDeposito from "./pages/NotaDeposito";
-import RetornoSimbolico from "./pages/RetornoSimbolico";
-import RetornoFisico from "./pages/RetornoFisico";
+import NFeEntradas from "./pages/NFeEntradas";
+import NFeSaidas from "./pages/NFeSaidas";
 import ConfiguracaoPriorizacao from "./pages/ConfiguracaoPriorizacao";
 import DemoDashboard from "./pages/Demo/DemoDashboard";
 import DemoEntradas from "./pages/Demo/DemoEntradas";
@@ -215,10 +213,8 @@ const App = () => {
               <Route path="demo/saidas" element={<RequirePageAccess pageKey="saidas"><DemoSaidas /></RequirePageAccess>} />
               
               {/* Fiscal Routes */}
-              <Route path="remessa-deposito-ag" element={<RequirePageAccess pageKey="remessa-deposito-ag"><RemessaDepositoAG /></RequirePageAccess>} />
-              <Route path="nota-deposito" element={<RequirePageAccess pageKey="nota-deposito"><NotaDeposito /></RequirePageAccess>} />
-              <Route path="retorno-simbolico" element={<RequirePageAccess pageKey="retorno-simbolico"><RetornoSimbolico /></RequirePageAccess>} />
-              <Route path="retorno-fisico" element={<RequirePageAccess pageKey="retorno-fisico"><RetornoFisico /></RequirePageAccess>} />
+              <Route path="nfe-entradas" element={<RequirePageAccess pageKey="nfe-entradas"><NFeEntradas /></RequirePageAccess>} />
+              <Route path="nfe-saidas" element={<RequirePageAccess pageKey="nfe-saidas"><NFeSaidas /></RequirePageAccess>} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
