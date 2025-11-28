@@ -9,21 +9,84 @@ interface DepositoDisponivel {
   tipo_deposito: 'franquia' | 'filial';
 }
 
-export const useDepositosDisponiveis = (produtorId?: string) => {
+export const useDepositosDisponiveis = (clienteId?: string) => {
   return useQuery<DepositoDisponivel[]>({
-    queryKey: ["depositos-disponiveis", produtorId],
+    queryKey: ["depositos-disponiveis", clienteId],
     queryFn: async () => {
-      if (!produtorId) return []
+      if (!clienteId) return []
       
-      const { data, error } = await supabase.rpc(
-        'get_producer_available_deposits',
-        { _producer_id: produtorId }
-      )
+      // 1. Buscar depósitos onde o cliente tem filiais ativas
+      const { data: filiaisDepositos, error: filiaisError } = await supabase
+        .from("cliente_depositos")
+        .select(`
+          franquia_id,
+          franquias (
+            id,
+            nome
+          )
+        `)
+        .eq("cliente_id", clienteId)
+        .eq("tipo_regime", "filial")
+        .eq("ativo", true)
 
-      if (error) throw error
-      return (data || []) as DepositoDisponivel[]
+      if (filiaisError) throw filiaisError
+
+      // 2. Buscar depósitos únicos onde o cliente tem estoque em armazém geral
+      const { data: estoqueMovs, error: estoqueError } = await supabase
+        .from("movimentacoes")
+        .select("deposito_id")
+        .eq("user_id", clienteId)
+        .gt("quantidade_atual", 0)
+
+      if (estoqueError) throw estoqueError
+
+      // Obter IDs únicos de depósitos com estoque
+      const depositosComEstoque = [...new Set(estoqueMovs?.map(m => m.deposito_id).filter(Boolean) || [])]
+
+      // Buscar informações das franquias dos depósitos com estoque
+      let franquiasEstoque: any[] = []
+      if (depositosComEstoque.length > 0) {
+        const { data, error } = await supabase
+          .from("franquias")
+          .select("id, nome")
+          .in("id", depositosComEstoque)
+
+        if (error) throw error
+        franquiasEstoque = data || []
+      }
+
+      // Combinar e remover duplicatas
+      const depositosMap = new Map<string, DepositoDisponivel>()
+
+      // Adicionar depósitos de filiais
+      filiaisDepositos?.forEach(item => {
+        if (item.franquias) {
+          depositosMap.set(item.franquia_id, {
+            deposito_id: item.franquias.id,
+            deposito_nome: item.franquias.nome,
+            franqueado_id: null,
+            franqueado_nome: item.franquias.nome,
+            tipo_deposito: 'filial'
+          })
+        }
+      })
+
+      // Adicionar depósitos com estoque (apenas se não forem filiais)
+      franquiasEstoque.forEach(franquia => {
+        if (!depositosMap.has(franquia.id)) {
+          depositosMap.set(franquia.id, {
+            deposito_id: franquia.id,
+            deposito_nome: franquia.nome,
+            franqueado_id: null,
+            franqueado_nome: franquia.nome,
+            tipo_deposito: 'franquia'
+          })
+        }
+      })
+
+      return Array.from(depositosMap.values())
     },
-    enabled: !!produtorId,
+    enabled: !!clienteId,
   })
 }
 
