@@ -9,12 +9,24 @@ interface DepositoDisponivel {
   tipo_deposito: 'franquia' | 'filial';
 }
 
-export const useDepositosDisponiveis = (clienteId?: string) => {
+export const useDepositosDisponiveis = (userId?: string) => {
   return useQuery<DepositoDisponivel[]>({
-    queryKey: ["depositos-disponiveis", clienteId],
+    queryKey: ["depositos-disponiveis", userId],
     queryFn: async () => {
-      if (!clienteId) return []
+      if (!userId) return []
       
+      // Primeiro, buscar todas as empresas (clientes) que este usuário gerencia
+      const { data: clienteUsuarios, error: clienteError } = await supabase
+        .from("cliente_usuarios")
+        .select("cliente_id")
+        .eq("user_id", userId)
+        .eq("ativo", true)
+
+      if (clienteError) throw clienteError
+
+      const clienteIds = clienteUsuarios?.map(cu => cu.cliente_id) || []
+      if (clienteIds.length === 0) return []
+
       // 1. Buscar depósitos onde o cliente tem filiais ativas
       const { data: filiaisDepositos, error: filiaisError } = await supabase
         .from("cliente_depositos")
@@ -25,31 +37,46 @@ export const useDepositosDisponiveis = (clienteId?: string) => {
             nome
           )
         `)
-        .eq("cliente_id", clienteId)
+        .in("cliente_id", clienteIds)
         .eq("tipo_regime", "filial")
         .eq("ativo", true)
 
       if (filiaisError) throw filiaisError
 
-      // 2. Buscar depósitos únicos onde o cliente tem estoque em armazém geral
+      // 2. Buscar depósitos onde o cliente tem estoque em armazém geral
+      // Via entradas que têm itens e estoque atual > 0
+      const { data: entradasDepositos, error: entradasError } = await supabase
+        .from("entradas")
+        .select("deposito_id")
+        .in("cliente_id", clienteIds)
+        .not("deposito_id", "is", null)
+
+      if (entradasError) throw entradasError
+
+      // Obter IDs únicos de depósitos com entradas
+      const depositosComEntradas = [...new Set(entradasDepositos?.map(e => e.deposito_id).filter(Boolean) || [])]
+
+      // Verificar quais desses depósitos têm estoque atual
       const { data: estoqueMovs, error: estoqueError } = await supabase
         .from("movimentacoes")
         .select("deposito_id")
-        .eq("user_id", clienteId)
+        .eq("user_id", userId)
         .gt("quantidade_atual", 0)
 
       if (estoqueError) throw estoqueError
 
-      // Obter IDs únicos de depósitos com estoque
       const depositosComEstoque = [...new Set(estoqueMovs?.map(m => m.deposito_id).filter(Boolean) || [])]
+
+      // Combinar depósitos com entradas e estoque
+      const depositosArmazemGeral = depositosComEntradas.filter(d => depositosComEstoque.includes(d))
 
       // Buscar informações das franquias dos depósitos com estoque
       let franquiasEstoque: any[] = []
-      if (depositosComEstoque.length > 0) {
+      if (depositosArmazemGeral.length > 0) {
         const { data, error } = await supabase
           .from("franquias")
           .select("id, nome")
-          .in("id", depositosComEstoque)
+          .in("id", depositosArmazemGeral)
 
         if (error) throw error
         franquiasEstoque = data || []
@@ -86,7 +113,7 @@ export const useDepositosDisponiveis = (clienteId?: string) => {
 
       return Array.from(depositosMap.values())
     },
-    enabled: !!clienteId,
+    enabled: !!userId,
   })
 }
 
