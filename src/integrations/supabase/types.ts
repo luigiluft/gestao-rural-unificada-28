@@ -4007,6 +4007,73 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_filial: {
+        Row: {
+          aprovado_por: string | null
+          created_at: string | null
+          data_conclusao: string | null
+          deposito_id: string
+          documentos: Json | null
+          empresa_matriz_id: string
+          filial_id: string | null
+          id: string
+          observacoes: string | null
+          solicitado_por: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          aprovado_por?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          deposito_id: string
+          documentos?: Json | null
+          empresa_matriz_id: string
+          filial_id?: string | null
+          id?: string
+          observacoes?: string | null
+          solicitado_por: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          aprovado_por?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          deposito_id?: string
+          documentos?: Json | null
+          empresa_matriz_id?: string
+          filial_id?: string | null
+          id?: string
+          observacoes?: string | null
+          solicitado_por?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_filial_deposito_id_fkey"
+            columns: ["deposito_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_filial_empresa_matriz_id_fkey"
+            columns: ["empresa_matriz_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_filial_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_positions: {
         Row: {
           ativo: boolean | null
