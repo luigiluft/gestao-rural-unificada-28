@@ -3,6 +3,7 @@ import { UseFormularioLogicProps, ItemGenerico, DadosEntrada, DadosSaida, Formul
 import { useToast } from "@/hooks/use-toast"
 import { useTutorial } from "@/contexts/TutorialContext"
 import { useFranquiaByCnpj } from "@/hooks/useFranquiaByCnpj"
+import { useDetectarTipoEntrada } from "@/hooks/useDetectarTipoEntrada"
 import { useEstoque } from "@/hooks/useEstoque"
 import { useProdutosFallback } from "@/hooks/useProdutosFallback"
 import { useAuth } from "@/contexts/AuthContext"
@@ -23,7 +24,12 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
   const { data: produtosFallback = [] } = useProdutosFallback()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   
-  // Para entrada - buscar franquia através dos dados de entrega da NFe
+  // Para entrada - detectar automaticamente tipo e depósito
+  const { data: deteccaoEntrada, isLoading: deteccaoLoading } = useDetectarTipoEntrada(
+    tipo === 'entrada' ? nfData : undefined
+  )
+  
+  // Fallback: buscar franquia através dos dados de entrega da NFe (método antigo)
   const entregaCnpj = nfData?.entrega?.cnpj
   const entregaIe = nfData?.entrega?.ie
   const { data: franquiaData, isLoading: franquiaLoading } = useFranquiaByCnpj(
@@ -281,7 +287,7 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         dataEmissao: nfData.dataEmissao,
         origem: nfData.emitente.nome,
         observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
-        depositoId: franquiaData?.id || '',
+        depositoId: deteccaoEntrada?.depositoId || franquiaData?.id || '',
         // Mapear todos os dados da NFe para submissão backend
         nfeData: nfeDataToSave
       } as DadosEntrada)
@@ -322,20 +328,27 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
 
       setItens(itensConvertidos)
 
-      if (franquiaData) {
+      // Mostrar toast com o resultado da detecção
+      if (deteccaoEntrada?.tipoEntrada !== 'nao_detectado') {
+        const tipoLabel = deteccaoEntrada.tipoEntrada === 'filial_cliente' ? 'Filial de Cliente' : 'Armazém Geral'
+        toast({
+          title: `${tipoLabel} detectado automaticamente`,
+          description: deteccaoEntrada.motivoDeteccao,
+        })
+      } else if (franquiaData) {
         toast({
           title: "Franquia identificada",
           description: `Franquia ${franquiaData.nome} selecionada automaticamente pelos dados de entrega.`,
         })
-      } else if ((entregaCnpj || entregaIe) && !franquiaLoading) {
+      } else if ((entregaCnpj || entregaIe) && !franquiaLoading && !deteccaoLoading) {
         toast({
-          title: "Franquia não foi encontrada",
-          description: "Não foi possível identificar uma franquia pelos dados de entrega. Selecione manualmente.",
+          title: "Depósito não identificado",
+          description: "Não foi possível identificar automaticamente. Selecione manualmente o depósito.",
           variant: "destructive"
         })
       }
     }
-  }, [nfData, franquiaData, franquiaLoading, entregaCnpj, entregaIe, toast, isTutorialActive, tipo])
+  }, [nfData, deteccaoEntrada, franquiaData, franquiaLoading, deteccaoLoading, entregaCnpj, entregaIe, toast, isTutorialActive, tipo])
 
   const adicionarItem = () => {
     if (!novoItem.produto && !novoItem.produto_id) {
