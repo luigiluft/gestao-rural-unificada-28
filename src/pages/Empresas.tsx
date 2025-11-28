@@ -38,6 +38,7 @@ export default function Empresas() {
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
   const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null)
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
+  const [empresaMatriz, setEmpresaMatriz] = useState<Cliente | null>(null) // Para adicionar filial
   
   const [formData, setFormData] = useState({
     tipo_cliente: 'cnpj' as 'cpf' | 'cnpj',
@@ -57,6 +58,7 @@ export default function Empresas() {
     atividade_principal: '',
     regime_tributario: '',
     observacoes: '',
+    empresa_matriz_id: undefined as string | undefined,
   })
 
   const [semNumero, setSemNumero] = useState(false)
@@ -112,9 +114,11 @@ export default function Empresas() {
       atividade_principal: '',
       regime_tributario: '',
       observacoes: '',
+      empresa_matriz_id: undefined,
     })
     setSemNumero(false)
     setSemComplemento(false)
+    setEmpresaMatriz(null)
   }
 
   const handleEdit = (cliente: Cliente) => {
@@ -137,9 +141,37 @@ export default function Empresas() {
       atividade_principal: cliente.atividade_principal || '',
       regime_tributario: cliente.regime_tributario || '',
       observacoes: cliente.observacoes || '',
+      empresa_matriz_id: undefined,
     })
     setSemNumero(cliente.numero_fiscal === 'S/N')
     setSemComplemento(cliente.complemento_fiscal === 'S/C')
+    setIsDialogOpen(true)
+  }
+
+  const handleAdicionarFilial = (matriz: Cliente) => {
+    setEmpresaMatriz(matriz)
+    setFormData({
+      tipo_cliente: 'cnpj',
+      razao_social: '',
+      nome_fantasia: '',
+      cpf_cnpj: '',
+      inscricao_estadual: '',
+      endereco_fiscal: '',
+      numero_fiscal: '',
+      complemento_fiscal: '',
+      bairro_fiscal: '',
+      cidade_fiscal: '',
+      estado_fiscal: '',
+      cep_fiscal: '',
+      telefone_comercial: '',
+      email_comercial: '',
+      atividade_principal: '',
+      regime_tributario: '',
+      observacoes: '',
+      empresa_matriz_id: matriz.id,
+    })
+    setSemNumero(false)
+    setSemComplemento(false)
     setIsDialogOpen(true)
   }
 
@@ -167,12 +199,26 @@ export default function Empresas() {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingCliente ? 'Editar Empresa' : 'Nova Empresa'}
+                {editingCliente ? 'Editar Empresa' : empresaMatriz ? 'Nova Filial' : 'Nova Empresa'}
               </DialogTitle>
               <DialogDescription>
-                Cadastre uma nova entidade fiscal (pessoa física ou jurídica)
+                {empresaMatriz 
+                  ? `Adicionar filial da empresa: ${empresaMatriz.razao_social} (${empresaMatriz.cpf_cnpj})`
+                  : 'Cadastre uma nova entidade fiscal (pessoa física ou jurídica)'
+                }
               </DialogDescription>
             </DialogHeader>
+            
+            {empresaMatriz && (
+              <div className="bg-muted p-4 rounded-lg mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Empresa Matriz:</span>
+                  <span>{empresaMatriz.razao_social}</span>
+                  <Badge variant="outline">{empresaMatriz.cpf_cnpj}</Badge>
+                </div>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <Tabs defaultValue="basico" className="w-full">
@@ -524,7 +570,7 @@ export default function Empresas() {
                 </Badge>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
                   variant="outline"
@@ -532,6 +578,16 @@ export default function Empresas() {
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
+                {cliente.tipo_cliente === 'cnpj' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAdicionarFilial(cliente)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Filial
+                  </Button>
+                )}
                 <Button 
                   size="sm"
                   variant="outline"

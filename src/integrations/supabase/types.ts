@@ -187,6 +187,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           email_comercial: string | null
+          empresa_matriz_id: string | null
           endereco_fiscal: string | null
           estado_fiscal: string | null
           id: string
@@ -211,6 +212,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email_comercial?: string | null
+          empresa_matriz_id?: string | null
           endereco_fiscal?: string | null
           estado_fiscal?: string | null
           id?: string
@@ -235,6 +237,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email_comercial?: string | null
+          empresa_matriz_id?: string | null
           endereco_fiscal?: string | null
           estado_fiscal?: string | null
           id?: string
@@ -255,6 +258,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "clientes_empresa_matriz_id_fkey"
+            columns: ["empresa_matriz_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
           },
         ]
       }
