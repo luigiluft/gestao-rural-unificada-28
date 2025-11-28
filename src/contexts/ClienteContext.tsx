@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from "react"
 import { Cliente, useClientes as useClientesHook } from "@/hooks/useClientes"
 
 interface ClienteContextType {
@@ -17,6 +17,7 @@ export function ClienteProvider({ children }: { children: ReactNode }) {
   const [selectedCliente, setSelectedClienteState] = useState<Cliente | null>(null)
   const [availableClientes, setAvailableClientes] = useState<Cliente[]>([])
   const { data: clientes } = useClientesHook()
+  const hasInitialized = useRef(false)
 
   // Atualizar availableClientes quando os clientes carregarem
   useEffect(() => {
@@ -57,10 +58,11 @@ export function ClienteProvider({ children }: { children: ReactNode }) {
 
   // Auto-selecionar primeiro cliente se não houver seleção e houver clientes disponíveis
   useEffect(() => {
-    if (!selectedCliente && availableClientes.length > 0) {
+    if (!hasInitialized.current && !selectedCliente && availableClientes.length > 0) {
+      hasInitialized.current = true
       setSelectedCliente(availableClientes[0])
     }
-  }, [availableClientes, selectedCliente])
+  }, [availableClientes])
 
   return (
     <ClienteContext.Provider

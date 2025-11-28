@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from "react"
 import { useCurrentUserFranquias } from "@/hooks/useCurrentUserFranquias"
 import { useDepositosDisponiveis } from "@/hooks/useDepositosDisponiveis"
 import { useAuth } from "./AuthContext"
@@ -27,6 +27,7 @@ export const FranquiaProvider = ({ children }: { children: ReactNode }) => {
   const { franquias: franqueadoFranquias, isLoading: franqueadoLoading } = useCurrentUserFranquias()
   const { data: clienteDepositos, isLoading: clienteLoading } = useDepositosDisponiveis(user?.id)
   const [selectedFranquia, setSelectedFranquiaState] = useState<Franquia | null>(null)
+  const hasInitialized = useRef(false)
 
   // Determinar franquias disponíveis baseado no role
   const availableFranquias = isCliente 
@@ -46,20 +47,24 @@ export const FranquiaProvider = ({ children }: { children: ReactNode }) => {
 
   // Carregar franquia do localStorage na inicialização
   useEffect(() => {
+    if (hasInitialized.current || franquiasWithAll.length === 0) return
+    
+    hasInitialized.current = true
     const savedFranquiaId = localStorage.getItem("selectedFranquiaId")
-    if (savedFranquiaId && franquiasWithAll.length > 0) {
+    
+    if (savedFranquiaId) {
       const franquia = franquiasWithAll.find(f => f.id === savedFranquiaId)
       if (franquia) {
         setSelectedFranquiaState(franquia)
       } else {
-        // Se a franquia salva não existe mais, seleciona "Todos" para clientes ou primeira para outros
+        // Se a franquia salva não existe mais, seleciona "Todos" ou primeira
         setSelectedFranquiaState(franquiasWithAll[0])
       }
-    } else if (franquiasWithAll.length > 0 && !selectedFranquia) {
-      // Se não tem franquia salva, seleciona "Todos" para clientes ou primeira para outros
+    } else {
+      // Se não tem franquia salva, seleciona "Todos" ou primeira
       setSelectedFranquiaState(franquiasWithAll[0])
     }
-  }, [franquiasWithAll, isCliente])
+  }, [franquiasWithAll.length])
 
   const setSelectedFranquia = (franquia: Franquia) => {
     setSelectedFranquiaState(franquia)
