@@ -53,7 +53,10 @@ export const useClientes = () => {
         .eq("user_id", user.id)
         .eq("ativo", true)
 
-      if (clienteUsuariosError) throw clienteUsuariosError
+      if (clienteUsuariosError) {
+        console.error("Erro ao carregar clientes para o usuário logado:", clienteUsuariosError)
+        throw clienteUsuariosError
+      }
       
       // Transformar resultado para incluir o papel
       return (clienteUsuarios || []).map(cu => ({
