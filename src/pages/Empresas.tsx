@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
 import { GerenciarLocaisEntrega } from "@/components/Clientes/GerenciarLocaisEntrega"
 import { useCliente } from "@/contexts/ClienteContext"
+import { SolicitarFilialDialog } from "@/components/Empresas/SolicitarFilialDialog"
 
 export default function Empresas() {
   const { data: clientes, isLoading } = useClientes()
@@ -39,6 +40,7 @@ export default function Empresas() {
   const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null)
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
   const [empresaMatriz, setEmpresaMatriz] = useState<Cliente | null>(null) // Para adicionar filial
+  const [solicitarFilialOpen, setSolicitarFilialOpen] = useState(false) // Dialog de solicitação
   
   const [formData, setFormData] = useState({
     tipo_cliente: 'cnpj' as 'cpf' | 'cnpj',
@@ -582,10 +584,13 @@ export default function Empresas() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleAdicionarFilial(cliente)}
+                    onClick={() => {
+                      setEmpresaMatriz(cliente)
+                      setSolicitarFilialOpen(true)
+                    }}
                   >
                     <Plus className="h-4 w-4 mr-1" />
-                    Filial
+                    Solicitar Filial
                   </Button>
                 )}
                 <Button 
@@ -678,6 +683,12 @@ export default function Empresas() {
           )}
         </DialogContent>
       </Dialog>
+
+      <SolicitarFilialDialog
+        open={solicitarFilialOpen}
+        onOpenChange={setSolicitarFilialOpen}
+        empresaMatriz={empresaMatriz ? { id: empresaMatriz.id, razao_social: empresaMatriz.razao_social } : { id: "", razao_social: "" }}
+      />
     </div>
   )
 }
