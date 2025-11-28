@@ -44,31 +44,28 @@ export const useDepositosDisponiveis = (userId?: string) => {
       if (filiaisError) throw filiaisError
 
       // 2. Buscar depósitos onde o cliente tem estoque em armazém geral
-      // Via entradas que têm itens e estoque atual > 0
-      const { data: entradasDepositos, error: entradasError } = await supabase
-        .from("entradas")
-        .select("deposito_id")
-        .in("cliente_id", clienteIds)
-        .not("deposito_id", "is", null)
-
-      if (entradasError) throw entradasError
-
-      // Obter IDs únicos de depósitos com entradas
-      const depositosComEntradas = [...new Set(entradasDepositos?.map(e => e.deposito_id).filter(Boolean) || [])]
-
-      // Verificar quais desses depósitos têm estoque atual
-      const { data: estoqueMovs, error: estoqueError } = await supabase
-        .from("movimentacoes")
-        .select("deposito_id")
-        .eq("user_id", userId)
+      // Via entrada_pallets (fonte real de estoque atual)
+      const { data: palletsEstoque, error: estoqueError } = await supabase
+        .from("entrada_pallets")
+        .select(`
+          id,
+          quantidade_atual,
+          entradas!inner (
+            deposito_id,
+            cliente_id
+          )
+        `)
         .gt("quantidade_atual", 0)
 
       if (estoqueError) throw estoqueError
 
-      const depositosComEstoque = [...new Set(estoqueMovs?.map(m => m.deposito_id).filter(Boolean) || [])]
-
-      // Combinar depósitos com entradas e estoque
-      const depositosArmazemGeral = depositosComEntradas.filter(d => depositosComEstoque.includes(d))
+      // Filtrar apenas pallets de clientes do usuário e extrair deposito_id únicos
+      const depositosArmazemGeral = [...new Set(
+        palletsEstoque
+          ?.filter(ep => clienteIds.includes(ep.entradas.cliente_id))
+          ?.map(ep => ep.entradas.deposito_id)
+          ?.filter(Boolean) || []
+      )]
 
       // Buscar informações das franquias dos depósitos com estoque
       let franquiasEstoque: any[] = []

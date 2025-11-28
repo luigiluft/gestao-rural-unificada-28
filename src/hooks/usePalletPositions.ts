@@ -66,8 +66,9 @@ export const usePalletPositions = (depositoId?: string) => {
         `)
         .eq("status", "alocado");
 
+      // Filtrar por deposito_id via storage_positions (mais eficiente e correto)
       if (depositoId) {
-        query = query.eq("entrada_pallets.entradas.deposito_id", depositoId);
+        query = query.eq("storage_positions.deposito_id", depositoId);
       }
 
       const { data, error } = await query.order("alocado_em", { ascending: false });
@@ -138,8 +139,9 @@ export const usePalletPositionsAvariados = (depositoId?: string) => {
         .eq("status", "alocado")
         .eq("entrada_pallets.entrada_pallet_itens.is_avaria", true);
 
+      // Filtrar por deposito_id via storage_positions (mais eficiente e correto)
       if (depositoId) {
-        query = query.eq("entrada_pallets.entradas.deposito_id", depositoId);
+        query = query.eq("storage_positions.deposito_id", depositoId);
       }
 
       const { data, error } = await query.order("alocado_em", { ascending: false });
