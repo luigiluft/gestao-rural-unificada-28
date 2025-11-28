@@ -57,7 +57,7 @@ export const usePalletPositions = (depositoId?: string) => {
               )
             )
           ),
-          storage_positions (
+          storage_positions!inner (
             id,
             codigo,
             deposito_id,
@@ -66,7 +66,7 @@ export const usePalletPositions = (depositoId?: string) => {
         `)
         .eq("status", "alocado");
 
-      // Filtrar por deposito_id via storage_positions (mais eficiente e correto)
+      // Filtrar por deposito_id via storage_positions
       if (depositoId) {
         query = query.eq("storage_positions.deposito_id", depositoId);
       }
@@ -129,7 +129,7 @@ export const usePalletPositionsAvariados = (depositoId?: string) => {
               )
             )
           ),
-          storage_positions (
+          storage_positions!inner (
             id,
             codigo,
             deposito_id,
@@ -139,7 +139,7 @@ export const usePalletPositionsAvariados = (depositoId?: string) => {
         .eq("status", "alocado")
         .eq("entrada_pallets.entrada_pallet_itens.is_avaria", true);
 
-      // Filtrar por deposito_id via storage_positions (mais eficiente e correto)
+      // Filtrar por deposito_id via storage_positions
       if (depositoId) {
         query = query.eq("storage_positions.deposito_id", depositoId);
       }
