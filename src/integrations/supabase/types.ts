@@ -4951,11 +4951,16 @@ export type Database = {
         Args: { p_cliente_id: string }
         Returns: boolean
       }
+      user_has_cliente_access: { Args: { _user_id: string }; Returns: boolean }
       user_has_cliente_association: {
         Args: { _cliente_id: string; _user_id: string }
         Returns: boolean
       }
       user_is_cliente_admin: {
+        Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_is_cliente_member: {
         Args: { _cliente_id: string; _user_id: string }
         Returns: boolean
       }
