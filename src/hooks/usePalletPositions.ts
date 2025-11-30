@@ -64,8 +64,7 @@ export const usePalletPositions = (depositoId?: string) => {
             ativo
           )
         `)
-        .eq("status", "alocado")
-        .eq("entrada_pallets.entrada_pallet_itens.is_avaria", false);
+        .eq("status", "alocado");
 
       // Filtrar por deposito_id via storage_positions
       if (depositoId) {
