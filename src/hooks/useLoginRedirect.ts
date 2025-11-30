@@ -78,10 +78,8 @@ export const useLoginRedirect = () => {
       return () => clearTimeout(redirectTimeout)
     }
 
-    // Aguardar permissões carregarem, mas com timeout
-    if (permissionsLoading) {
-      return () => clearTimeout(redirectTimeout)
-    }
+    // ⚠️ Não bloquear o redirect se as permissões demorarem a carregar
+    // Vamos continuar usando fallbacks baseados em role mesmo que permissionsLoading seja true
 
     // Calcular primeira rota acessível baseada nas permissões
     let firstAccessibleRoute = null
