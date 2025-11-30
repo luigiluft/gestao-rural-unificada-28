@@ -24,37 +24,24 @@ export const usePalletPositions = (depositoId?: string) => {
       let query = supabase
         .from("pallet_positions")
         .select(`
-          *,
-          entrada_pallets!inner (
+          id,
+          pallet_id,
+          posicao_id,
+          status,
+          alocado_em,
+          observacoes,
+          created_at,
+          updated_at,
+          entrada_pallets (
             id,
             numero_pallet,
             descricao,
-            peso_total,
             entrada_id,
-            entradas!inner (
+            entradas (
               id,
               deposito_id,
               numero_nfe,
               user_id
-            ),
-            entrada_pallet_itens (
-              id,
-              quantidade,
-              is_avaria,
-              entrada_itens (
-                id,
-                produto_id,
-                nome_produto,
-                lote,
-                data_validade,
-                unidade_comercial,
-                produtos (
-                  id,
-                  nome,
-                  codigo,
-                  unidade_medida
-                )
-              )
             )
           ),
           storage_positions!inner (
@@ -73,16 +60,13 @@ export const usePalletPositions = (depositoId?: string) => {
 
       const { data, error } = await query.order("alocado_em", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar pallet_positions:", error);
+        throw error;
+      }
       
-      // Filtrar pallets que não são exclusivamente avariados
-      const filteredData = data?.filter(position => {
-        const items = position.entrada_pallets?.entrada_pallet_itens || [];
-        // Manter apenas pallets que têm pelo menos um item não avariado
-        return items.some((item: any) => !item.is_avaria);
-      }) || [];
-      
-      return filteredData;
+      // Retornar todas as posições encontradas para o depósito
+      return data || [];
     },
     enabled: true,
   });
