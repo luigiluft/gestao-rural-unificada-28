@@ -24,24 +24,37 @@ export const usePalletPositions = (depositoId?: string) => {
       let query = supabase
         .from("pallet_positions")
         .select(`
-          id,
-          pallet_id,
-          posicao_id,
-          status,
-          alocado_em,
-          observacoes,
-          created_at,
-          updated_at,
-          entrada_pallets (
+          *,
+          entrada_pallets!inner (
             id,
             numero_pallet,
             descricao,
+            peso_total,
             entrada_id,
-            entradas (
+            entradas!inner (
               id,
               deposito_id,
               numero_nfe,
               user_id
+            ),
+            entrada_pallet_itens!inner (
+              id,
+              quantidade,
+              is_avaria,
+              entrada_itens (
+                id,
+                produto_id,
+                nome_produto,
+                lote,
+                data_validade,
+                unidade_comercial,
+                produtos (
+                  id,
+                  nome,
+                  codigo,
+                  unidade_medida
+                )
+              )
             )
           ),
           storage_positions!inner (
@@ -51,7 +64,8 @@ export const usePalletPositions = (depositoId?: string) => {
             ativo
           )
         `)
-        .eq("status", "alocado");
+        .eq("status", "alocado")
+        .eq("entrada_pallets.entrada_pallet_itens.is_avaria", false);
 
       // Filtrar por deposito_id via storage_positions
       if (depositoId) {
