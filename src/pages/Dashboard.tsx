@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom"
 import { useDashboardStats, useRecentMovements } from "@/hooks/useDashboard"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { BrazilDepositMap } from "@/components/Dashboard/BrazilDepositMap"
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -103,6 +104,9 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Brazil Map */}
+      <BrazilDepositMap />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent Movements */}
