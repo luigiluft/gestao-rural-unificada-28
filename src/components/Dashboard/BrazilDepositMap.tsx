@@ -4,7 +4,7 @@ import { MapPin, Warehouse } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useDepositosParaMapa } from "@/hooks/useDepositosParaMapa";
 import { Skeleton } from "@/components/ui/skeleton";
-import brazilMapSvg from "@/assets/brazil-map.svg?raw";
+import BrazilMapSvg from "@/assets/brazil-map.svg?react";
 
 export const BrazilDepositMap = () => {
   const svgRef = useRef<HTMLDivElement>(null);
@@ -129,8 +129,9 @@ export const BrazilDepositMap = () => {
           <div
             ref={svgRef}
             className="w-full h-[500px] rounded-lg border bg-muted/20 flex items-center justify-center"
-            dangerouslySetInnerHTML={{ __html: brazilMapSvg }}
-          />
+          >
+            <BrazilMapSvg className="w-full h-full" />
+          </div>
           
           {/* Tooltip */}
           {hoveredDeposito && (
