@@ -23,13 +23,30 @@ export const BrazilDepositMap = () => {
 
     // Aguardar o SVG ser completamente renderizado
     const timeoutId = setTimeout(() => {
-      const svgElement = svgRef.current?.querySelector("svg");
-      if (!svgElement) return;
+      const container = svgRef.current;
+      if (!container) return;
+
+      const svgElement = container.querySelector("svg");
+      if (!svgElement) {
+        console.warn("⚠️ SVG ainda não está no DOM");
+        return;
+      }
+
+      console.log("✅ SVG encontrado no DOM");
 
       // Ajustar viewBox para garantir que o mapa inteiro seja visível
       svgElement.setAttribute("width", "100%");
       svgElement.setAttribute("height", "100%");
       svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+      // Limpar destaques anteriores
+      svgElement.querySelectorAll("[data-highlight='1']").forEach((el) => {
+        el.removeAttribute("data-highlight");
+        el.removeAttribute("fill");
+        el.removeAttribute("stroke");
+        el.removeAttribute("stroke-width");
+        el.removeAttribute("style");
+      });
 
       // Reset all paths to default color
       const allPaths = svgElement.querySelectorAll("path");
@@ -38,6 +55,8 @@ export const BrazilDepositMap = () => {
         path.setAttribute("stroke", "#ffffff");
         path.setAttribute("stroke-width", "0.5");
       });
+
+      console.log(`🗺️ Tentando destacar ${depositos.length} municípios`);
 
       // Highlight municipalities with deposits
       depositos.forEach((deposito) => {
@@ -51,17 +70,18 @@ export const BrazilDepositMap = () => {
           console.log(`✅ Município encontrado: ${deposito.svgId}`);
           const color = deposito.tipo_deposito === "franquia" ? "#10b981" : "#3b82f6";
           
-          // Forçar o estilo inline para garantir visibilidade
-          path.style.fill = color;
-          path.style.stroke = "#ffffff";
-          path.style.strokeWidth = "1";
-          path.style.cursor = "pointer";
-          path.style.transition = "all 0.2s";
-          
+          // Usar setAttribute para garantir que o estilo seja aplicado
+          path.setAttribute("data-highlight", "1");
+          path.setAttribute("fill", color);
+          path.setAttribute("stroke", "#ffffff");
+          path.setAttribute("stroke-width", "1");
+          path.setAttribute("cursor", "pointer");
           path.setAttribute("data-deposito", JSON.stringify(deposito));
 
+          console.log(`🎨 Aplicado fill="${color}" no município ${deposito.svgId}`);
+
           const handleMouseEnter = (e: MouseEvent) => {
-            path.style.opacity = "0.8";
+            path.setAttribute("opacity", "0.8");
             setHoveredDeposito({
               nome: deposito.nome,
               cidade: deposito.cidade,
@@ -73,7 +93,7 @@ export const BrazilDepositMap = () => {
           };
 
           const handleMouseLeave = () => {
-            path.style.opacity = "1";
+            path.setAttribute("opacity", "1");
             setHoveredDeposito(null);
           };
 
@@ -81,9 +101,18 @@ export const BrazilDepositMap = () => {
           path.addEventListener("mouseleave", handleMouseLeave as any);
         } else {
           console.warn(`❌ Município não encontrado no SVG: ${deposito.svgId}`);
+          
+          // Debug: tentar encontrar com selector mais amplo
+          const allIds = Array.from(svgElement.querySelectorAll("[id]")).map(el => el.id);
+          const similar = allIds.filter(id => id.toLowerCase().includes(deposito.cidade.toLowerCase()));
+          if (similar.length > 0) {
+            console.log(`💡 IDs similares encontrados:`, similar);
+          }
         }
       });
-    }, 100);
+
+      console.log(`✅ Processo de destaque concluído`);
+    }, 200);
 
     return () => clearTimeout(timeoutId);
   }, [depositos]);
