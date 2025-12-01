@@ -24,6 +24,11 @@ export const BrazilDepositMap = () => {
     const svgElement = svgRef.current.querySelector("svg");
     if (!svgElement) return;
 
+    // Ajustar viewBox para garantir que o mapa inteiro seja visível
+    svgElement.setAttribute("width", "100%");
+    svgElement.setAttribute("height", "100%");
+    svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
     // Reset all paths to default color
     const allPaths = svgElement.querySelectorAll("path");
     allPaths.forEach((path) => {
@@ -34,8 +39,11 @@ export const BrazilDepositMap = () => {
 
     // Highlight municipalities with deposits
     depositos.forEach((deposito) => {
+      console.log(`🔍 Procurando município: #${deposito.svgId}`);
       const path = svgElement.querySelector(`#${deposito.svgId}`);
+      
       if (path) {
+        console.log(`✅ Município encontrado: ${deposito.svgId}`);
         const color = deposito.tipo_deposito === "franquia" ? "#10b981" : "#3b82f6";
         path.setAttribute("fill", color);
         path.setAttribute("stroke", "#ffffff");
@@ -63,6 +71,8 @@ export const BrazilDepositMap = () => {
 
         path.addEventListener("mouseenter", handleMouseEnter as any);
         path.addEventListener("mouseleave", handleMouseLeave as any);
+      } else {
+        console.warn(`❌ Município não encontrado no SVG: ${deposito.svgId}`);
       }
     });
   }, [depositos]);
@@ -107,7 +117,7 @@ export const BrazilDepositMap = () => {
         <div className="relative">
           <div
             ref={svgRef}
-            className="w-full h-[400px] overflow-hidden rounded-lg border bg-muted/20"
+            className="w-full h-[500px] rounded-lg border bg-muted/20 flex items-center justify-center"
             dangerouslySetInnerHTML={{ __html: brazilMapSvg }}
           />
           
