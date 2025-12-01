@@ -11,11 +11,13 @@ interface DepositoMapa {
 }
 
 const normalizarParaSvgId = (cidade: string, estado: string): string => {
-  // Remove acentos e caracteres especiais, mantém espaços como underscores
+  // Remove acentos e caracteres especiais, capitaliza primeira letra de cada palavra
   const cidadeNormalizada = cidade
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "_");
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join("_");
   
   return `${cidadeNormalizada}_${estado}`;
 };
