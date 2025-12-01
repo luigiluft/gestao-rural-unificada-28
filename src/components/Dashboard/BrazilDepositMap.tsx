@@ -4,7 +4,7 @@ import { MapPin, Warehouse } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useDepositosParaMapa } from "@/hooks/useDepositosParaMapa";
 import { Skeleton } from "@/components/ui/skeleton";
-import brazilMapSvg from "/Mapa_do_Brasil_por_Municípios.svg?raw";
+import brazilMapSvg from "@/assets/Mapa_do_Brasil_por_Municipios.svg?raw";
 
 export const BrazilDepositMap = () => {
   const svgRef = useRef<HTMLDivElement>(null);
