@@ -11,13 +11,23 @@ interface DepositoMapa {
 }
 
 const normalizarParaSvgId = (cidade: string, estado: string): string => {
-  // Capitaliza primeira letra de cada palavra e mantém acentos
+  // Mantém acentos e capitaliza corretamente (preposições em minúsculo)
+  const preposicoes = ['de', 'do', 'da', 'dos', 'das'];
+  
   const cidadeNormalizada = cidade
+    .trim()
     .split(/\s+/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word, index) => {
+      const wordLower = word.toLowerCase();
+      // Primeira palavra sempre capitalizada, preposições em minúsculo
+      if (index === 0 || !preposicoes.includes(wordLower)) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
+      return wordLower;
+    })
     .join("_");
   
-  return `${cidadeNormalizada}_${estado}`;
+  return `${cidadeNormalizada}_${estado.toUpperCase()}`;
 };
 
 export const useDepositosParaMapa = () => {
