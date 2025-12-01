@@ -21,60 +21,71 @@ export const BrazilDepositMap = () => {
   useEffect(() => {
     if (!svgRef.current || !depositos || depositos.length === 0) return;
 
-    const svgElement = svgRef.current.querySelector("svg");
-    if (!svgElement) return;
+    // Aguardar o SVG ser completamente renderizado
+    const timeoutId = setTimeout(() => {
+      const svgElement = svgRef.current?.querySelector("svg");
+      if (!svgElement) return;
 
-    // Ajustar viewBox para garantir que o mapa inteiro seja visível
-    svgElement.setAttribute("width", "100%");
-    svgElement.setAttribute("height", "100%");
-    svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      // Ajustar viewBox para garantir que o mapa inteiro seja visível
+      svgElement.setAttribute("width", "100%");
+      svgElement.setAttribute("height", "100%");
+      svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-    // Reset all paths to default color
-    const allPaths = svgElement.querySelectorAll("path");
-    allPaths.forEach((path) => {
-      path.setAttribute("fill", "#e5e7eb");
-      path.setAttribute("stroke", "#ffffff");
-      path.setAttribute("stroke-width", "0.5");
-    });
-
-    // Highlight municipalities with deposits
-    depositos.forEach((deposito) => {
-      console.log(`🔍 Procurando município: #${deposito.svgId}`);
-      const path = svgElement.querySelector(`#${deposito.svgId}`);
-      
-      if (path) {
-        console.log(`✅ Município encontrado: ${deposito.svgId}`);
-        const color = deposito.tipo_deposito === "franquia" ? "#10b981" : "#3b82f6";
-        path.setAttribute("fill", color);
+      // Reset all paths to default color
+      const allPaths = svgElement.querySelectorAll("path");
+      allPaths.forEach((path) => {
+        path.setAttribute("fill", "#e5e7eb");
         path.setAttribute("stroke", "#ffffff");
-        path.setAttribute("stroke-width", "1");
-        path.classList.add("cursor-pointer", "transition-all", "duration-200");
-        path.setAttribute("data-deposito", JSON.stringify(deposito));
+        path.setAttribute("stroke-width", "0.5");
+      });
 
-        const handleMouseEnter = (e: MouseEvent) => {
-          path.setAttribute("opacity", "0.8");
-          const rect = (e.target as SVGElement).getBoundingClientRect();
-          setHoveredDeposito({
-            nome: deposito.nome,
-            cidade: deposito.cidade,
-            estado: deposito.estado,
-            tipo: deposito.tipo_deposito,
-            x: e.clientX,
-            y: e.clientY,
-          });
-        };
+      // Highlight municipalities with deposits
+      depositos.forEach((deposito) => {
+        console.log(`🔍 Procurando município: #${deposito.svgId}`);
+        
+        // Usar CSS.escape para lidar com caracteres especiais no ID
+        const escapedId = CSS.escape(deposito.svgId);
+        const path = svgElement.querySelector(`#${escapedId}`) as SVGPathElement;
+        
+        if (path) {
+          console.log(`✅ Município encontrado: ${deposito.svgId}`);
+          const color = deposito.tipo_deposito === "franquia" ? "#10b981" : "#3b82f6";
+          
+          // Forçar o estilo inline para garantir visibilidade
+          path.style.fill = color;
+          path.style.stroke = "#ffffff";
+          path.style.strokeWidth = "1";
+          path.style.cursor = "pointer";
+          path.style.transition = "all 0.2s";
+          
+          path.setAttribute("data-deposito", JSON.stringify(deposito));
 
-        const handleMouseLeave = () => {
-          path.setAttribute("opacity", "1");
-          setHoveredDeposito(null);
-        };
+          const handleMouseEnter = (e: MouseEvent) => {
+            path.style.opacity = "0.8";
+            setHoveredDeposito({
+              nome: deposito.nome,
+              cidade: deposito.cidade,
+              estado: deposito.estado,
+              tipo: deposito.tipo_deposito,
+              x: e.clientX,
+              y: e.clientY,
+            });
+          };
 
-        path.addEventListener("mouseenter", handleMouseEnter as any);
-        path.addEventListener("mouseleave", handleMouseLeave as any);
-      } else {
-        console.warn(`❌ Município não encontrado no SVG: ${deposito.svgId}`);
-      }
-    });
+          const handleMouseLeave = () => {
+            path.style.opacity = "1";
+            setHoveredDeposito(null);
+          };
+
+          path.addEventListener("mouseenter", handleMouseEnter as any);
+          path.addEventListener("mouseleave", handleMouseLeave as any);
+        } else {
+          console.warn(`❌ Município não encontrado no SVG: ${deposito.svgId}`);
+        }
+      });
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [depositos]);
 
   if (isLoading) {
