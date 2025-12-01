@@ -10,6 +10,15 @@ interface DepositoMapa {
   svgId: string;
 }
 
+// Mapeamento de fallback para variações comuns de escrita sem acentos
+const MAPEAMENTO_MUNICIPIOS: Record<string, string> = {
+  "Aparecida_de_Goiania_GO": "Aparecida_de_Goiânia_GO",
+  "Araguaina_TO": "Araguaína_TO",
+  "Luis_Eduardo_Magalhaes_BA": "Luís_Eduardo_Magalhães_BA",
+  "Ibipora_PR": "Ibiporã_PR",
+  "Uberlandia_MG": "Uberlândia_MG",
+};
+
 const normalizarParaSvgId = (cidade: string, estado: string): string => {
   // Mantém acentos e capitaliza corretamente (preposições em minúsculo)
   const preposicoes = ['de', 'do', 'da', 'dos', 'das'];
@@ -27,7 +36,10 @@ const normalizarParaSvgId = (cidade: string, estado: string): string => {
     })
     .join("_");
   
-  return `${cidadeNormalizada}_${estado.toUpperCase()}`;
+  const svgIdBase = `${cidadeNormalizada}_${estado.toUpperCase()}`;
+  
+  // Verificar se existe mapeamento de correção para variações sem acento
+  return MAPEAMENTO_MUNICIPIOS[svgIdBase] || svgIdBase;
 };
 
 export const useDepositosParaMapa = () => {
