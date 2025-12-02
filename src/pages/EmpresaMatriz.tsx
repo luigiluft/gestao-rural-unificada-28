@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Building2, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,8 @@ export default function EmpresaMatriz() {
   const { data: empresaData, isLoading } = useEmpresaMatriz();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+  const [semNumero, setSemNumero] = useState(false);
+  const [semComplemento, setSemComplemento] = useState(false);
   const [formData, setFormData] = useState<EmpresaMatrizData>({
     razao_social: "",
     nome_fantasia: "",
@@ -32,12 +35,32 @@ export default function EmpresaMatriz() {
   useEffect(() => {
     if (empresaData) {
       setFormData(empresaData);
+      setSemNumero(empresaData.numero === "S/N");
+      setSemComplemento(empresaData.complemento === "-" || empresaData.complemento === "");
     }
   }, [empresaData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSemNumeroChange = (checked: boolean) => {
+    setSemNumero(checked);
+    if (checked) {
+      setFormData(prev => ({ ...prev, numero: "S/N" }));
+    } else {
+      setFormData(prev => ({ ...prev, numero: "" }));
+    }
+  };
+
+  const handleSemComplementoChange = (checked: boolean) => {
+    setSemComplemento(checked);
+    if (checked) {
+      setFormData(prev => ({ ...prev, complemento: "-" }));
+    } else {
+      setFormData(prev => ({ ...prev, complemento: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -214,23 +237,49 @@ export default function EmpresaMatriz() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="numero">Número</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="numero">Número</Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="sem_numero"
+                      checked={semNumero}
+                      onCheckedChange={handleSemNumeroChange}
+                    />
+                    <Label htmlFor="sem_numero" className="text-sm font-normal cursor-pointer">
+                      Sem número
+                    </Label>
+                  </div>
+                </div>
                 <Input
                   id="numero"
                   name="numero"
                   value={formData.numero}
                   onChange={handleInputChange}
                   placeholder="123"
+                  disabled={semNumero}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="complemento">Complemento</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="complemento">Complemento</Label>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="sem_complemento"
+                      checked={semComplemento}
+                      onCheckedChange={handleSemComplementoChange}
+                    />
+                    <Label htmlFor="sem_complemento" className="text-sm font-normal cursor-pointer">
+                      Sem complemento
+                    </Label>
+                  </div>
+                </div>
                 <Input
                   id="complemento"
                   name="complemento"
                   value={formData.complemento}
                   onChange={handleInputChange}
                   placeholder="Sala, Andar, etc."
+                  disabled={semComplemento}
                 />
               </div>
               <div className="space-y-2">
