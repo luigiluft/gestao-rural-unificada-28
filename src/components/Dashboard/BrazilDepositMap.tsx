@@ -1,162 +1,121 @@
-import { useEffect, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Warehouse } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { useDepositosParaMapa } from "@/hooks/useDepositosParaMapa";
-import { Skeleton } from "@/components/ui/skeleton";
-import brazilMapSvg from "@/assets/brazil-map.svg?raw";
+useEffect(() => {
+  if (!depositos || depositos.length === 0) return;
 
-export const BrazilDepositMap = () => {
-  const svgRef = useRef<HTMLDivElement>(null);
-  const { data: depositos, isLoading } = useDepositosParaMapa();
-  const [hoveredDeposito, setHoveredDeposito] = useState<{
-    nome: string;
-    cidade: string;
-    estado: string;
-    tipo: string;
-    x: number;
-    y: number;
-  } | null>(null);
+  const container = svgRef.current;
+  if (!container) return;
 
-  useEffect(() => {
-    if (!depositos || depositos.length === 0) return;
+  const svgElement = container.querySelector("svg");
+  if (!svgElement) {
+    console.warn("⚠️ SVG ainda não está no DOM");
+    return;
+  }
 
-    const container = svgRef.current;
-    if (!container) return;
+  console.log("✅ SVG encontrado, processando destaques...");
 
-    const svgElement = container.querySelector("svg");
-    if (!svgElement) {
-      console.warn("⚠️ SVG ainda não está no DOM");
+  // Ajustar viewBox / responsivo
+  svgElement.setAttribute("width", "100%");
+  svgElement.setAttribute("height", "100%");
+  svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  // Reset todos os paths para cor padrão
+  const allPaths = svgElement.querySelectorAll("path");
+  allPaths.forEach((path) => {
+    const p = path as SVGPathElement;
+    p.setAttribute("fill", "#e5e7eb");
+    p.setAttribute("stroke", "#ffffff");
+    p.setAttribute("stroke-width", "0.5");
+    p.style.cursor = "default";
+  });
+
+  // Remover marcadores antigos
+  svgElement.querySelectorAll("[data-marker='deposito']").forEach((el) => el.remove());
+
+  // guardar listeners pra limpar depois
+  const listeners: {
+    el: Element;
+    enter: (e: MouseEvent) => void;
+    leave: (e: MouseEvent) => void;
+  }[] = [];
+
+  // Destacar municípios com depósitos + criar marcador
+  depositos.forEach((deposito) => {
+    const escapedId = CSS.escape(deposito.svgId);
+    const path = svgElement.querySelector(`#${escapedId}`) as SVGPathElement | null;
+
+    if (!path) {
+      console.warn(`❌ Município não encontrado: ${deposito.svgId}`);
       return;
     }
 
-    console.log("✅ SVG encontrado, processando destaques...");
+    console.log(`✅ Destacando: ${deposito.svgId}`);
+    const color = deposito.tipo_deposito === "franquia" ? "#22c55e" : "#3b82f6";
 
-    // Ajustar viewBox
-    svgElement.setAttribute("width", "100%");
-    svgElement.setAttribute("height", "100%");
-    svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    // destacar o município
+    path.setAttribute("fill", color);
+    path.setAttribute("stroke", "#14532d");
+    path.setAttribute("stroke-width", "1.5");
+    path.style.cursor = "pointer";
 
-    // Reset todos os paths para cor padrão
-    const allPaths = svgElement.querySelectorAll("path");
-    allPaths.forEach((path) => {
-      path.setAttribute("fill", "#e5e7eb");
-      path.setAttribute("stroke", "#ffffff");
-      path.setAttribute("stroke-width", "0.5");
-    });
+    // calcular centro do município
+    const bbox = path.getBBox();
+    const cx = bbox.x + bbox.width / 2;
+    const cy = bbox.y + bbox.height / 2;
 
-    // Destacar municípios com depósitos
-    depositos.forEach((deposito) => {
-      const escapedId = CSS.escape(deposito.svgId);
-      const path = svgElement.querySelector(`#${escapedId}`) as SVGPathElement;
-      
-      if (path) {
-        console.log(`✅ Destacando: ${deposito.svgId}`);
-        const color = deposito.tipo_deposito === "franquia" ? "#22c55e" : "#3b82f6";
-        
-        path.setAttribute("fill", color);
-        path.setAttribute("stroke", "#14532d");
-        path.setAttribute("stroke-width", "1.5");
-        path.setAttribute("cursor", "pointer");
+    // criar marcador (círculo) no mesmo lugar
+    const marker = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    marker.setAttribute("data-marker", "deposito");
+    marker.setAttribute("cx", String(cx));
+    marker.setAttribute("cy", String(cy));
+    marker.setAttribute("r", "4");
+    marker.setAttribute("fill", deposito.tipo_deposito === "franquia" ? "#16a34a" : "#2563eb");
+    marker.setAttribute("stroke", "#ffffff");
+    marker.setAttribute("stroke-width", "1.2");
+    marker.style.cursor = "pointer";
 
-        const handleMouseEnter = (e: MouseEvent) => {
-          path.setAttribute("opacity", "0.8");
-          setHoveredDeposito({
-            nome: deposito.nome,
-            cidade: deposito.cidade,
-            estado: deposito.estado,
-            tipo: deposito.tipo_deposito,
-            x: e.clientX,
-            y: e.clientY,
-          });
-        };
+    svgElement.appendChild(marker);
 
-        const handleMouseLeave = () => {
-          path.setAttribute("opacity", "1");
-          setHoveredDeposito(null);
-        };
+    // handlers de hover (usando a posição do mouse)
+    const handleMouseEnter = (e: MouseEvent) => {
+      path.setAttribute("opacity", "0.8");
+      marker.setAttribute("opacity", "0.9");
+      setHoveredDeposito({
+        nome: deposito.nome,
+        cidade: deposito.cidade,
+        estado: deposito.estado,
+        tipo: deposito.tipo_deposito,
+        x: e.clientX,
+        y: e.clientY,
+      });
+    };
 
-        path.addEventListener("mouseenter", handleMouseEnter as any);
-        path.addEventListener("mouseleave", handleMouseLeave as any);
-      } else {
-        console.warn(`❌ Município não encontrado: ${deposito.svgId}`);
-      }
-    });
+    const handleMouseLeave = () => {
+      path.setAttribute("opacity", "1");
+      marker.setAttribute("opacity", "1");
+      setHoveredDeposito(null);
+    };
 
-    console.log(`✅ ${depositos.length} depósitos processados`);
-  }, [depositos]);
+    // aplica nos dois: path + marcador
+    path.addEventListener("mouseenter", handleMouseEnter);
+    path.addEventListener("mouseleave", handleMouseLeave);
+    marker.addEventListener("mouseenter", handleMouseEnter);
+    marker.addEventListener("mouseleave", handleMouseLeave);
 
-  if (isLoading) {
-    return (
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Mapa de Depósitos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[400px] w-full rounded-lg" />
-        </CardContent>
-      </Card>
+    listeners.push(
+      { el: path, enter: handleMouseEnter, leave: handleMouseLeave },
+      { el: marker, enter: handleMouseEnter, leave: handleMouseLeave },
     );
-  }
+  });
 
-  return (
-    <Card className="shadow-card">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Mapa de Depósitos
-          </CardTitle>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-success" />
-              <span className="text-xs text-muted-foreground">Franquia</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-primary" />
-              <span className="text-xs text-muted-foreground">Filial</span>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="relative">
-          <div
-            ref={svgRef}
-            className="w-full h-[500px] rounded-lg border bg-muted/20 flex items-center justify-center"
-            dangerouslySetInnerHTML={{ __html: brazilMapSvg }}
-          />
-          
-          {/* Tooltip */}
-          {hoveredDeposito && (
-            <div
-              className="fixed z-50 pointer-events-none"
-              style={{
-                left: `${hoveredDeposito.x + 10}px`,
-                top: `${hoveredDeposito.y + 10}px`,
-              }}
-            >
-              <Card className="shadow-lg border-2">
-                <CardContent className="p-3 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Warehouse className="w-4 h-4" />
-                    <p className="font-semibold text-sm">{hoveredDeposito.nome}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {hoveredDeposito.cidade}, {hoveredDeposito.estado}
-                  </p>
-                  <Badge variant={hoveredDeposito.tipo === "franquia" ? "default" : "secondary"} className="text-xs">
-                    {hoveredDeposito.tipo === "franquia" ? "Franquia" : "Filial"}
-                  </Badge>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+  console.log(`✅ ${depositos.length} depósitos processados`);
+
+  // cleanup quando os deps mudarem / componente desmontar
+  return () => {
+    listeners.forEach(({ el, enter, leave }) => {
+      el.removeEventListener("mouseenter", enter);
+      el.removeEventListener("mouseleave", leave);
+    });
+
+    // remove marcadores
+    svgElement.querySelectorAll("[data-marker='deposito']").forEach((el) => el.remove());
+  };
+}, [depositos]);
