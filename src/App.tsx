@@ -119,6 +119,20 @@ const App = () => {
                     window.location.search.includes('__lovable_token');
   const Router = isLovable ? HashRouter : BrowserRouter;
 
+  // Renderizar landing page pública diretamente (sem router) para que funcione com qualquer URL
+  const pathname = window.location.pathname;
+  if (pathname === '/seja-franqueado' || pathname === '/seja-franqueado/') {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <SejaFranqueado />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
     <AuthProvider>
