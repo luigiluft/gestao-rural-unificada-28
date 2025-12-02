@@ -83,6 +83,13 @@ import DemoSaidas from "./pages/Demo/DemoSaidas";
 import DemoRecebimento from "./pages/Demo/DemoRecebimento";
 import Tutorial from "./pages/Tutorial";
 import SejaFranqueado from "./pages/SejaFranqueado";
+import PublicLayout from "./components/Public/PublicLayout";
+import PublicHome from "./pages/Public/Home";
+import PublicSobre from "./pages/Public/Sobre";
+import PublicComoFunciona from "./pages/Public/ComoFunciona";
+import PublicBeneficios from "./pages/Public/Beneficios";
+import PublicContato from "./pages/Public/Contato";
+import SejaFranqueadoPublic from "./pages/Public/SejaFranqueadoPublic";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -119,16 +126,28 @@ const App = () => {
                     window.location.search.includes('__lovable_token');
   const Router = isLovable ? HashRouter : BrowserRouter;
 
-  // Renderizar landing page pública diretamente (sem router) para que funcione com qualquer URL
+  // Renderizar site institucional público diretamente (sem router) para que funcione com qualquer URL
   const pathname = window.location.pathname;
-  if (pathname === '/seja-franqueado' || pathname === '/seja-franqueado/') {
+  if (pathname.startsWith('/site') || pathname === '/seja-franqueado' || pathname === '/seja-franqueado/') {
     return (
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <SejaFranqueado />
-        </TooltipProvider>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/site" element={<PublicLayout />}>
+                <Route index element={<PublicHome />} />
+                <Route path="sobre" element={<PublicSobre />} />
+                <Route path="como-funciona" element={<PublicComoFunciona />} />
+                <Route path="beneficios" element={<PublicBeneficios />} />
+                <Route path="seja-franqueado" element={<SejaFranqueadoPublic />} />
+                <Route path="contato" element={<PublicContato />} />
+              </Route>
+              <Route path="/seja-franqueado" element={<SejaFranqueado />} />
+            </Routes>
+          </TooltipProvider>
+        </BrowserRouter>
       </QueryClientProvider>
     );
   }
@@ -141,6 +160,16 @@ const App = () => {
           <Toaster />
           <Sonner />
           <Routes>
+            {/* Site Institucional Público */}
+            <Route path="/site" element={<PublicLayout />}>
+              <Route index element={<PublicHome />} />
+              <Route path="sobre" element={<PublicSobre />} />
+              <Route path="como-funciona" element={<PublicComoFunciona />} />
+              <Route path="beneficios" element={<PublicBeneficios />} />
+              <Route path="seja-franqueado" element={<SejaFranqueadoPublic />} />
+              <Route path="contato" element={<PublicContato />} />
+            </Route>
+            
             {/* Rotas Públicas */}
             <Route path="/seja-franqueado" element={<SejaFranqueado />} />
             <Route path="/auth" element={<AuthPage />} />
