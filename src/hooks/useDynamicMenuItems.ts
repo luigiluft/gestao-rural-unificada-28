@@ -21,6 +21,7 @@ import {
   FileCheck,
   Grid2X2,
   Grid3X3,
+  Headphones,
   HelpCircle,
   Home,
   MapPin,
@@ -104,7 +105,8 @@ const menuLabels = {
   'instrucoes': 'Instruções',
   'suporte': 'Suporte',
   'tutorial': 'Tutorial',
-  'empresa-matriz': 'Empresa Matriz'
+  'empresa-matriz': 'Empresa Matriz',
+  'atendimento': 'Atendimento'
 }
 
 const iconMap = {
@@ -164,7 +166,8 @@ const iconMap = {
   'instrucoes': BookOpen,
   'suporte': HelpCircle,
   'tutorial': BookOpen,
-  'empresa-matriz': Building2
+  'empresa-matriz': Building2,
+  'atendimento': Headphones
 }
 
 export const useDynamicMenuItems = () => {
@@ -502,6 +505,15 @@ export const useDynamicMenuItems = () => {
           subItems: cadastroSubItems
         })
       }
+    }
+
+    // Adicionar Atendimento como item separado (se tiver permissão)
+    if (permissions.includes('atendimento.view' as any)) {
+      items.push({
+        path: '/atendimento',
+        label: menuLabels['atendimento'],
+        icon: iconMap['atendimento']
+      })
     }
 
     // Adicionar páginas de Ajuda (sempre disponíveis para todos)
