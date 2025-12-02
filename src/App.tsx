@@ -82,6 +82,7 @@ import DemoEstoque from "./pages/Demo/DemoEstoque";
 import DemoSaidas from "./pages/Demo/DemoSaidas";
 import DemoRecebimento from "./pages/Demo/DemoRecebimento";
 import Tutorial from "./pages/Tutorial";
+import SejaFranqueado from "./pages/SejaFranqueado";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -126,6 +127,8 @@ const App = () => {
           <Toaster />
           <Sonner />
           <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/seja-franqueado" element={<SejaFranqueado />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/motorista/login" element={<MotoristaLogin />} />
             <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
