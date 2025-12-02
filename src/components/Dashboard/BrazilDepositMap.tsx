@@ -86,7 +86,7 @@ export function BrazilDepositMap() {
       marker.setAttribute("data-marker", "deposito");
       marker.setAttribute("cx", String(cx));
       marker.setAttribute("cy", String(cy));
-      marker.setAttribute("r", "4");
+      marker.setAttribute("r", "8");
       marker.setAttribute("fill", deposito.tipo_deposito === "franquia" ? "#16a34a" : "#2563eb");
       marker.setAttribute("stroke", "#ffffff");
       marker.setAttribute("stroke-width", "1.2");
