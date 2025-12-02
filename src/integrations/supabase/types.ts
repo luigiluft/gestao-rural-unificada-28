@@ -20,10 +20,15 @@ export type Database = {
           created_at: string
           data_resposta: string | null
           descricao: string
+          email_contato: string | null
+          empresa_contato: string | null
           id: string
+          nome_contato: string | null
+          origem: string | null
           prioridade: string | null
           resposta: string | null
           status: string | null
+          telefone_contato: string | null
           titulo: string
           updated_at: string
           user_id: string
@@ -33,10 +38,15 @@ export type Database = {
           created_at?: string
           data_resposta?: string | null
           descricao: string
+          email_contato?: string | null
+          empresa_contato?: string | null
           id?: string
+          nome_contato?: string | null
+          origem?: string | null
           prioridade?: string | null
           resposta?: string | null
           status?: string | null
+          telefone_contato?: string | null
           titulo: string
           updated_at?: string
           user_id: string
@@ -46,10 +56,15 @@ export type Database = {
           created_at?: string
           data_resposta?: string | null
           descricao?: string
+          email_contato?: string | null
+          empresa_contato?: string | null
           id?: string
+          nome_contato?: string | null
+          origem?: string | null
           prioridade?: string | null
           resposta?: string | null
           status?: string | null
+          telefone_contato?: string | null
           titulo?: string
           updated_at?: string
           user_id?: string
