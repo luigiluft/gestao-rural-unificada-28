@@ -92,7 +92,8 @@ export function BrazilDepositMap() {
       marker.setAttribute("stroke-width", "1.2");
       marker.style.cursor = "pointer";
 
-      svgElement.appendChild(marker);
+      const parent = (path.parentNode as SVGGElement) ?? svgElement;
+      parent.appendChild(marker);
 
       // handlers de hover (usando a posição do mouse)
       const handleMouseEnter = (e: MouseEvent) => {
@@ -122,7 +123,7 @@ export function BrazilDepositMap() {
 
       listeners.push(
         { el: path, enter: handleMouseEnter, leave: handleMouseLeave },
-        { el: marker, enter: handleMouseEnter, leave: handleMouseLeave }
+        { el: marker, enter: handleMouseEnter, leave: handleMouseLeave },
       );
     });
 
@@ -150,16 +151,10 @@ export function BrazilDepositMap() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-            Carregando mapa...
-          </div>
+          <div className="h-[400px] flex items-center justify-center text-muted-foreground">Carregando mapa...</div>
         ) : (
           <div className="relative">
-            <div
-              ref={svgRef}
-              className="w-full h-[400px]"
-              dangerouslySetInnerHTML={{ __html: brazilMapSvg }}
-            />
+            <div ref={svgRef} className="w-full h-[400px]" dangerouslySetInnerHTML={{ __html: brazilMapSvg }} />
             {hoveredDeposito && (
               <div
                 className="fixed z-50 bg-popover text-popover-foreground border rounded-lg shadow-lg p-3 pointer-events-none"
@@ -172,9 +167,7 @@ export function BrazilDepositMap() {
                 <p className="text-sm text-muted-foreground">
                   {hoveredDeposito.cidade}, {hoveredDeposito.estado}
                 </p>
-                <p className="text-xs capitalize mt-1">
-                  {hoveredDeposito.tipo === "franquia" ? "Franquia" : "Filial"}
-                </p>
+                <p className="text-xs capitalize mt-1">{hoveredDeposito.tipo === "franquia" ? "Franquia" : "Filial"}</p>
               </div>
             )}
           </div>
