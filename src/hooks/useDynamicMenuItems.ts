@@ -170,7 +170,7 @@ const iconMap = {
 export const useDynamicMenuItems = () => {
   const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
   const { selectedFranquia } = useFranquia()
-  const { isOperador } = useUserRole()
+  const { isOperador, isAdmin } = useUserRole()
 
   const menuItems = useMemo(() => {
     if (isLoading || !permissions?.length) return []
@@ -211,7 +211,6 @@ export const useDynamicMenuItems = () => {
     const cadastroPages = [
       'perfil',
       'empresas',
-      'empresa-matriz',
       'subcontas',
       'usuarios',
       'perfis-funcionarios',
@@ -480,6 +479,15 @@ export const useDynamicMenuItems = () => {
         }
       })
 
+      // Adicionar Empresa Matriz especificamente para admins (não depende de page_permissions)
+      if (isAdmin) {
+        cadastroSubItems.push({
+          path: '/empresa-matriz',
+          label: menuLabels['empresa-matriz'],
+          icon: iconMap['empresa-matriz']
+        })
+      }
+
       if (cadastroSubItems.length > 0) {
         // Inserir Cadastro após Fiscal, TMS ou WMS
         const fiscalIndex = items.findIndex(item => item.path === '/fiscal')
@@ -523,7 +531,7 @@ export const useDynamicMenuItems = () => {
     }
 
     return items
-  }, [permissions, isLoading, selectedFranquia, isOperador])
+  }, [permissions, isLoading, selectedFranquia, isOperador, isAdmin])
 
   return { menuItems, isLoading }
 }
