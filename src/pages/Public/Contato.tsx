@@ -9,6 +9,7 @@ import { Mail, Phone, MapPin, Clock, Send, Loader2 } from "lucide-react";
 import { useEmpresaMatriz, getEnderecoResumido } from "@/hooks/useEmpresaMatriz";
 import { PublicBrazilMap } from "@/components/Public/PublicBrazilMap";
 import { useDepositosParaMapa } from "@/hooks/useDepositosParaMapa";
+import { createPublicAtendimento } from "@/hooks/useAtendimentos";
 
 export default function Contato() {
   const { data: empresaData, isLoading: isLoadingEmpresa } = useEmpresaMatriz();
@@ -33,18 +34,23 @@ export default function Contato() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
-    setFormData({
-      nome: "",
-      email: "",
-      telefone: "",
-      empresa: "",
-      assunto: "",
-      mensagem: ""
-    });
-    setIsSubmitting(false);
+    try {
+      await createPublicAtendimento(formData);
+      toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
+      setFormData({
+        nome: "",
+        email: "",
+        telefone: "",
+        empresa: "",
+        assunto: "",
+        mensagem: ""
+      });
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      toast.error("Erro ao enviar mensagem. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
