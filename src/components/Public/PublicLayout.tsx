@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useEmpresaMatriz, getEnderecoResumido } from "@/hooks/useEmpresaMatriz";
 
 const navItems = [
   { label: "Home", path: "/site" },
@@ -15,6 +16,7 @@ const navItems = [
 export default function PublicLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { data: empresaData } = useEmpresaMatriz();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -27,7 +29,9 @@ export default function PublicLayout() {
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xl">L</span>
               </div>
-              <span className="font-bold text-xl text-foreground">Luft AgroHub</span>
+              <span className="font-bold text-xl text-foreground">
+                {empresaData?.nome_fantasia || "Luft AgroHub"}
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -107,7 +111,9 @@ export default function PublicLayout() {
                 <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                   <span className="text-primary-foreground font-bold text-xl">L</span>
                 </div>
-                <span className="font-bold text-xl text-foreground">Luft AgroHub</span>
+                <span className="font-bold text-xl text-foreground">
+                  {empresaData?.nome_fantasia || "Luft AgroHub"}
+                </span>
               </div>
               <p className="text-muted-foreground max-w-md">
                 A maior rede de armazenagem rural digital do Brasil. Conectando produtores, 
@@ -136,15 +142,29 @@ export default function PublicLayout() {
             <div>
               <h4 className="font-semibold text-foreground mb-4">Contato</h4>
               <ul className="space-y-2 text-muted-foreground">
-                <li>contato@luftagrohub.com.br</li>
-                <li>(43) 99999-9999</li>
-                <li>Londrina, PR - Brasil</li>
+                <li>
+                  <a 
+                    href={`mailto:${empresaData?.email || "contato@luftagrohub.com.br"}`}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {empresaData?.email || "contato@luftagrohub.com.br"}
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href={`tel:${(empresaData?.telefone || "").replace(/\D/g, "")}`}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {empresaData?.telefone || "(43) 99999-9999"}
+                  </a>
+                </li>
+                <li>{empresaData ? getEnderecoResumido(empresaData) : "Londrina, PR - Brasil"}</li>
               </ul>
             </div>
           </div>
 
           <div className="mt-8 pt-8 border-t border-border text-center text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Luft AgroHub. Todos os direitos reservados.
+            © {new Date().getFullYear()} {empresaData?.nome_fantasia || "Luft AgroHub"}. Todos os direitos reservados.
           </div>
         </div>
       </footer>

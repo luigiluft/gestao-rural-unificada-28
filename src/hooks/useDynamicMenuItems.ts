@@ -103,7 +103,8 @@ const menuLabels = {
   'royalties': 'Royalties',
   'instrucoes': 'Instruções',
   'suporte': 'Suporte',
-  'tutorial': 'Tutorial'
+  'tutorial': 'Tutorial',
+  'empresa-matriz': 'Empresa Matriz'
 }
 
 const iconMap = {
@@ -162,7 +163,8 @@ const iconMap = {
   'royalties': TrendingUp,
   'instrucoes': BookOpen,
   'suporte': HelpCircle,
-  'tutorial': BookOpen
+  'tutorial': BookOpen,
+  'empresa-matriz': Building2
 }
 
 export const useDynamicMenuItems = () => {
@@ -209,6 +211,7 @@ export const useDynamicMenuItems = () => {
     const cadastroPages = [
       'perfil',
       'empresas',
+      'empresa-matriz',
       'subcontas',
       'usuarios',
       'perfis-funcionarios',

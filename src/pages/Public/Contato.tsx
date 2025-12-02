@@ -5,9 +5,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Send, Loader2 } from "lucide-react";
+import { useEmpresaMatriz, getEnderecoResumido } from "@/hooks/useEmpresaMatriz";
+import { PublicBrazilMap } from "@/components/Public/PublicBrazilMap";
+import { useDepositosParaMapa } from "@/hooks/useDepositosParaMapa";
 
 export default function Contato() {
+  const { data: empresaData, isLoading: isLoadingEmpresa } = useEmpresaMatriz();
+  const { data: depositos } = useDepositosParaMapa();
+  
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -27,7 +33,6 @@ export default function Contato() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simular envio
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast.success("Mensagem enviada com sucesso! Entraremos em contato em breve.");
@@ -46,25 +51,25 @@ export default function Contato() {
     {
       icon: Mail,
       label: "E-mail",
-      value: "contato@luftagrohub.com.br",
-      href: "mailto:contato@luftagrohub.com.br"
+      value: empresaData?.email || "contato@luftagrohub.com.br",
+      href: `mailto:${empresaData?.email || "contato@luftagrohub.com.br"}`
     },
     {
       icon: Phone,
       label: "Telefone",
-      value: "(43) 99999-9999",
-      href: "tel:+5543999999999"
+      value: empresaData?.telefone || "(43) 99999-9999",
+      href: `tel:${(empresaData?.telefone || "").replace(/\D/g, "")}`
     },
     {
       icon: MapPin,
       label: "Endereço",
-      value: "Londrina, PR - Brasil",
+      value: empresaData ? getEnderecoResumido(empresaData) : "Londrina, PR - Brasil",
       href: null
     },
     {
       icon: Clock,
       label: "Horário",
-      value: "Seg - Sex: 8h às 18h",
+      value: empresaData?.horario_funcionamento || "Seg - Sex: 8h às 18h",
       href: null
     }
   ];
@@ -93,28 +98,36 @@ export default function Contato() {
             {/* Contact Info */}
             <div className="lg:col-span-1">
               <h2 className="text-2xl font-bold text-foreground mb-6">Informações de contato</h2>
-              <div className="space-y-6">
-                {contactInfo.map((info) => (
-                  <div key={info.label} className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <info.icon className="h-5 w-5 text-primary" />
+              
+              {isLoadingEmpresa ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando...
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {contactInfo.map((info) => (
+                    <div key={info.label} className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <info.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-sm text-muted-foreground">{info.label}</div>
+                        {info.href ? (
+                          <a 
+                            href={info.href} 
+                            className="font-medium text-foreground hover:text-primary transition-colors"
+                          >
+                            {info.value}
+                          </a>
+                        ) : (
+                          <div className="font-medium text-foreground">{info.value}</div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">{info.label}</div>
-                      {info.href ? (
-                        <a 
-                          href={info.href} 
-                          className="font-medium text-foreground hover:text-primary transition-colors"
-                        >
-                          {info.value}
-                        </a>
-                      ) : (
-                        <div className="font-medium text-foreground">{info.value}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* FAQ Link */}
               <Card className="mt-8 border-border">
@@ -231,23 +244,57 @@ export default function Contato() {
         </div>
       </section>
 
-      {/* Map Section (placeholder) */}
+      {/* Map Section */}
       <section className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-foreground">Onde estamos</h2>
             <p className="mt-4 text-muted-foreground">
-              Nossa sede fica em Londrina, PR, mas atendemos todo o Brasil através da nossa rede de franqueados.
+              Nossa sede fica em {empresaData?.cidade || "Londrina"}, {empresaData?.estado || "PR"}, 
+              mas atendemos todo o Brasil através da nossa rede de {depositos?.length || 0} depósitos.
             </p>
           </div>
-          <div className="bg-card border border-border rounded-2xl h-80 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Londrina, Paraná - Brasil</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Atendimento em todo o território nacional
-              </p>
-            </div>
+          
+          <Card className="border-border overflow-hidden">
+            <CardContent className="p-0">
+              <PublicBrazilMap />
+            </CardContent>
+          </Card>
+
+          {/* Stats */}
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-3xl font-bold text-primary">
+                  {depositos?.filter(d => d.tipo_deposito === "franquia").length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Franquias</div>
+              </CardContent>
+            </Card>
+            <Card className="border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-3xl font-bold text-blue-500">
+                  {depositos?.filter(d => d.tipo_deposito === "filial").length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Filiais</div>
+              </CardContent>
+            </Card>
+            <Card className="border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-3xl font-bold text-foreground">
+                  {new Set(depositos?.map(d => d.estado)).size || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Estados</div>
+              </CardContent>
+            </Card>
+            <Card className="border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-3xl font-bold text-foreground">
+                  {depositos?.length || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">Total de Depósitos</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
