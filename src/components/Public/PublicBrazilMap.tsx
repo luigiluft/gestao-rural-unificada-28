@@ -127,7 +127,7 @@ export function PublicBrazilMap() {
 
   if (isLoading) {
     return (
-      <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
         Carregando mapa...
       </div>
     );
@@ -137,7 +137,7 @@ export function PublicBrazilMap() {
     <div className="relative">
       <div 
         ref={svgRef} 
-        className="w-full h-[400px]" 
+        className="w-full h-[300px]" 
         dangerouslySetInnerHTML={{ __html: brazilMapSvg }} 
       />
       
