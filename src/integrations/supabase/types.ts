@@ -2717,6 +2717,271 @@ export type Database = {
           },
         ]
       }
+      loja_anuncios: {
+        Row: {
+          ativo: boolean | null
+          categoria: string | null
+          cliente_id: string
+          created_at: string | null
+          descricao_anuncio: string | null
+          id: string
+          imagens: Json | null
+          preco_promocional: number | null
+          preco_unitario: number
+          produto_id: string | null
+          quantidade_disponivel: number | null
+          quantidade_minima: number | null
+          tags: string[] | null
+          titulo: string
+          unidade_venda: string | null
+          updated_at: string | null
+          usar_estoque_real: boolean | null
+          visivel_loja_propria: boolean | null
+          visivel_marketplace: boolean | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria?: string | null
+          cliente_id: string
+          created_at?: string | null
+          descricao_anuncio?: string | null
+          id?: string
+          imagens?: Json | null
+          preco_promocional?: number | null
+          preco_unitario: number
+          produto_id?: string | null
+          quantidade_disponivel?: number | null
+          quantidade_minima?: number | null
+          tags?: string[] | null
+          titulo: string
+          unidade_venda?: string | null
+          updated_at?: string | null
+          usar_estoque_real?: boolean | null
+          visivel_loja_propria?: boolean | null
+          visivel_marketplace?: boolean | null
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string | null
+          cliente_id?: string
+          created_at?: string | null
+          descricao_anuncio?: string | null
+          id?: string
+          imagens?: Json | null
+          preco_promocional?: number | null
+          preco_unitario?: number
+          produto_id?: string | null
+          quantidade_disponivel?: number | null
+          quantidade_minima?: number | null
+          tags?: string[] | null
+          titulo?: string
+          unidade_venda?: string | null
+          updated_at?: string | null
+          usar_estoque_real?: boolean | null
+          visivel_loja_propria?: boolean | null
+          visivel_marketplace?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_anuncios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loja_anuncios_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loja_configuracao: {
+        Row: {
+          banner_url: string | null
+          cliente_id: string
+          created_at: string | null
+          descricao: string | null
+          email_contato: string | null
+          horario_atendimento: string | null
+          id: string
+          logo_url: string | null
+          loja_habilitada: boolean | null
+          mostrar_endereco: boolean | null
+          mostrar_telefone: boolean | null
+          nome_loja: string | null
+          participar_marketplace: boolean | null
+          slug: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          cliente_id: string
+          created_at?: string | null
+          descricao?: string | null
+          email_contato?: string | null
+          horario_atendimento?: string | null
+          id?: string
+          logo_url?: string | null
+          loja_habilitada?: boolean | null
+          mostrar_endereco?: boolean | null
+          mostrar_telefone?: boolean | null
+          nome_loja?: string | null
+          participar_marketplace?: boolean | null
+          slug?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          cliente_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          email_contato?: string | null
+          horario_atendimento?: string | null
+          id?: string
+          logo_url?: string | null
+          loja_habilitada?: boolean | null
+          mostrar_endereco?: boolean | null
+          mostrar_telefone?: boolean | null
+          nome_loja?: string | null
+          participar_marketplace?: boolean | null
+          slug?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_configuracao_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loja_pedido_itens: {
+        Row: {
+          anuncio_id: string
+          created_at: string | null
+          id: string
+          pedido_id: string
+          preco_unitario: number
+          quantidade: number
+          valor_total: number
+        }
+        Insert: {
+          anuncio_id: string
+          created_at?: string | null
+          id?: string
+          pedido_id: string
+          preco_unitario: number
+          quantidade: number
+          valor_total: number
+        }
+        Update: {
+          anuncio_id?: string
+          created_at?: string | null
+          id?: string
+          pedido_id?: string
+          preco_unitario?: number
+          quantidade?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_pedido_itens_anuncio_id_fkey"
+            columns: ["anuncio_id"]
+            isOneToOne: false
+            referencedRelation: "loja_anuncios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loja_pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "loja_pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loja_pedidos: {
+        Row: {
+          comprador_cpf_cnpj: string | null
+          comprador_email: string
+          comprador_nome: string
+          comprador_telefone: string | null
+          comprador_user_id: string | null
+          created_at: string | null
+          endereco_entrega: Json
+          id: string
+          loja_slug: string | null
+          numero_pedido: string
+          observacoes: string | null
+          origem: string | null
+          status: string | null
+          subtotal: number
+          updated_at: string | null
+          valor_desconto: number | null
+          valor_frete: number | null
+          valor_total: number
+          vendedor_cliente_id: string
+        }
+        Insert: {
+          comprador_cpf_cnpj?: string | null
+          comprador_email: string
+          comprador_nome: string
+          comprador_telefone?: string | null
+          comprador_user_id?: string | null
+          created_at?: string | null
+          endereco_entrega: Json
+          id?: string
+          loja_slug?: string | null
+          numero_pedido: string
+          observacoes?: string | null
+          origem?: string | null
+          status?: string | null
+          subtotal: number
+          updated_at?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_total: number
+          vendedor_cliente_id: string
+        }
+        Update: {
+          comprador_cpf_cnpj?: string | null
+          comprador_email?: string
+          comprador_nome?: string
+          comprador_telefone?: string | null
+          comprador_user_id?: string | null
+          created_at?: string | null
+          endereco_entrega?: Json
+          id?: string
+          loja_slug?: string | null
+          numero_pedido?: string
+          observacoes?: string | null
+          origem?: string | null
+          status?: string | null
+          subtotal?: number
+          updated_at?: string | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_total?: number
+          vendedor_cliente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_pedidos_vendedor_cliente_id_fkey"
+            columns: ["vendedor_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       motoristas: {
         Row: {
           ativo: boolean
@@ -4931,6 +5196,7 @@ export type Database = {
         Returns: string
       }
       gerar_numero_fatura: { Args: { p_franquia_id: string }; Returns: string }
+      gerar_numero_pedido: { Args: never; Returns: string }
       get_current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
