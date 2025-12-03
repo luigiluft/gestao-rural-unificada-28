@@ -9,7 +9,7 @@
  * 
  * Use getRoleLabel() de @/utils/roleTranslations para exibição na UI
  */
-export type UserRole = 'admin' | 'operador' | 'cliente' | 'motorista';
+export type UserRole = 'admin' | 'operador' | 'cliente' | 'motorista' | 'consumidor';
 // All possible permissions for pages and actions
 export type PermissionCode = 
   | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 
