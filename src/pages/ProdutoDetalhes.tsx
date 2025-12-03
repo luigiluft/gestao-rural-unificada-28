@@ -1,10 +1,13 @@
 import { useParams, Link, useLocation } from "react-router-dom"
 import { useAnuncioDetalhes, AnuncioDetalhesComLoja } from "@/hooks/useMarketplace"
+import { useCarrinho } from "@/contexts/CarrinhoContext"
+import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Package, Store, ArrowLeft, Phone, Mail, Loader2, ShoppingCart, Minus, Plus } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Package, Store, ArrowLeft, Phone, Mail, Loader2, ShoppingCart, Minus, Plus, Check } from "lucide-react"
 import { useState } from "react"
 
 export default function ProdutoDetalhes() {
@@ -12,8 +15,11 @@ export default function ProdutoDetalhes() {
   const location = useLocation()
   const isFromLoja = location.pathname.includes("/loja/")
   const { data: anuncio, isLoading, isError } = useAnuncioDetalhes(id || "")
+  const { adicionarItem } = useCarrinho()
+  const { toast } = useToast()
   const [quantidade, setQuantidade] = useState(1)
   const [imagemSelecionada, setImagemSelecionada] = useState(0)
+  const [adicionado, setAdicionado] = useState(false)
 
   if (isLoading) {
     return (
@@ -67,6 +73,16 @@ export default function ProdutoDetalhes() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header with cart */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/marketplace" className="font-bold text-xl text-primary">
+            AgroHub
+          </Link>
+          <CarrinhoDrawer />
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         {/* Voltar */}
         <Link to={backLink} className="inline-flex items-center text-sm text-muted-foreground hover:text-primary mb-6">
@@ -202,19 +218,36 @@ export default function ProdutoDetalhes() {
 
                 {/* Botões de ação */}
                 <div className="space-y-2">
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => {
+                      adicionarItem(anuncio as any, quantidade)
+                      setAdicionado(true)
+                      toast({
+                        title: "Produto adicionado!",
+                        description: `${quantidade}x ${anuncio.titulo} adicionado ao carrinho.`,
+                      })
+                      setTimeout(() => setAdicionado(false), 2000)
+                    }}
+                  >
+                    {adicionado ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Adicionado!
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Adicionar ao Carrinho
+                      </>
+                    )}
+                  </Button>
                   {whatsappLink && (
                     <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="block">
-                      <Button className="w-full" size="lg">
-                        <Phone className="h-4 w-4 mr-2" />
-                        Fazer Pedido via WhatsApp
-                      </Button>
-                    </a>
-                  )}
-                  {anuncio.loja?.email_contato && (
-                    <a href={`mailto:${anuncio.loja.email_contato}?subject=Interesse: ${anuncio.titulo}`} className="block">
                       <Button variant="outline" className="w-full" size="lg">
-                        <Mail className="h-4 w-4 mr-2" />
-                        Enviar E-mail
+                        <Phone className="h-4 w-4 mr-2" />
+                        Contato via WhatsApp
                       </Button>
                     </a>
                   )}

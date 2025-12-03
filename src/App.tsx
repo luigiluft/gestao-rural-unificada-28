@@ -95,12 +95,14 @@ import SejaFranqueadoPublic from "./pages/Public/SejaFranqueadoPublic";
 import Marketplace from "./pages/Marketplace";
 import LojaPublica from "./pages/LojaPublica";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
+import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
 import { RequirePageAccess } from "@/components/Auth/RequirePageAccess";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CarrinhoProvider } from "@/contexts/CarrinhoContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -160,6 +162,7 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
+    <CarrinhoProvider>
     <AuthProvider>
       <Router>
         <TooltipProvider>
@@ -182,6 +185,7 @@ const App = () => {
             <Route path="/marketplace/produto/:id" element={<ProdutoDetalhes />} />
             <Route path="/loja/:slug" element={<LojaPublica />} />
             <Route path="/loja/:slug/produto/:id" element={<ProdutoDetalhes />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/motorista/login" element={<MotoristaLogin />} />
             <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
@@ -285,6 +289,7 @@ const App = () => {
         </TooltipProvider>
       </Router>
     </AuthProvider>
+    </CarrinhoProvider>
   </QueryClientProvider>
   );
 };

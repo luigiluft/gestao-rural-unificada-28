@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useLojaAnunciosPublicos, MarketplaceAnuncio } from "@/hooks/useMarketplace"
+import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -111,6 +112,16 @@ export default function LojaPublica() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header with cart */}
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/marketplace" className="font-bold text-xl text-primary">
+            AgroHub
+          </Link>
+          <CarrinhoDrawer />
+        </div>
+      </div>
+
       {/* Header da Loja */}
       <div className="relative">
         {loja.banner_url ? (
