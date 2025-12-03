@@ -12,6 +12,7 @@ import {
   Mail,
   Phone,
   Building2,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,7 @@ export default function AtendimentoPage() {
     emAndamento: atendimentos.filter((a) => a.status === "em_andamento").length,
     respondidos: atendimentos.filter((a) => a.status === "respondido").length,
     site: atendimentos.filter((a) => a.origem === "site").length,
+    loja: atendimentos.filter((a) => a.origem === "loja").length,
   };
 
   const getStatusBadge = (status: string | null) => {
@@ -125,6 +127,14 @@ export default function AtendimentoPage() {
         <Badge variant="outline" className="gap-1">
           <Globe className="h-3 w-3" />
           Site
+        </Badge>
+      );
+    }
+    if (origem === "loja") {
+      return (
+        <Badge variant="outline" className="gap-1 border-primary text-primary">
+          <Store className="h-3 w-3" />
+          Loja
         </Badge>
       );
     }
@@ -333,6 +343,7 @@ export default function AtendimentoPage() {
                   <SelectItem value="todos">Todas Origens</SelectItem>
                   <SelectItem value="interno">Interno</SelectItem>
                   <SelectItem value="site">Site</SelectItem>
+                  <SelectItem value="loja">Loja</SelectItem>
                 </SelectContent>
               </Select>
             )}

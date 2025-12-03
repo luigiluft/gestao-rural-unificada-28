@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { useLojaAnunciosPublicos, MarketplaceAnuncio } from "@/hooks/useMarketplace"
 import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
+import { FloatingAtendimentoButton } from "@/components/Loja/FloatingAtendimentoButton"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -223,6 +224,12 @@ export default function LojaPublica() {
           ← Voltar ao Marketplace AgroHub
         </Link>
       </div>
+
+      {/* Floating Atendimento Button */}
+      <FloatingAtendimentoButton 
+        clienteId={loja.cliente_id} 
+        nomeLoja={loja.nome_loja} 
+      />
     </div>
   )
 }

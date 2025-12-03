@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCliente } from "@/contexts/ClienteContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 
 export interface Atendimento {
@@ -24,14 +26,23 @@ export interface Atendimento {
 
 export const useAtendimentos = () => {
   const { user } = useAuth();
+  const { selectedCliente } = useCliente();
+  const { isCliente, isAdmin } = useUserRole();
 
   return useQuery({
-    queryKey: ["atendimentos", user?.id],
+    queryKey: ["atendimentos", user?.id, selectedCliente?.id, isCliente],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("chamados_suporte")
         .select("*")
         .order("created_at", { ascending: false });
+
+      // Se for cliente, filtrar por cliente selecionado (atendimentos da loja)
+      if (isCliente && selectedCliente?.id) {
+        query = query.eq("user_id", selectedCliente.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as Atendimento[];
@@ -138,4 +149,24 @@ export const createPublicAtendimento = async (data: {
 
   if (error) throw error;
   return true;
+};
+
+// Hook para buscar atendimentos de um cliente específico (para página Atendimento do cliente)
+export const useAtendimentosCliente = (clienteId?: string) => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["atendimentos-cliente", clienteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chamados_suporte")
+        .select("*")
+        .eq("user_id", clienteId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as Atendimento[];
+    },
+    enabled: !!user && !!clienteId,
+  });
 };
