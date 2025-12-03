@@ -9,6 +9,7 @@ const navItems = [
   { label: "Sobre", path: "/site/sobre" },
   { label: "Como Funciona", path: "/site/como-funciona" },
   { label: "Benefícios", path: "/site/beneficios" },
+  { label: "Marketplace", path: "/marketplace" },
   { label: "Seja um Franqueado", path: "/site/seja-franqueado" },
   { label: "Contato", path: "/site/contato" },
 ];
