@@ -138,6 +138,17 @@ export const useLojaAnunciosPublicos = (slug: string) => {
   })
 }
 
+// Extended type for product details with full shop info
+export interface AnuncioDetalhesComLoja extends MarketplaceAnuncio {
+  loja: {
+    nome_loja: string
+    slug: string
+    logo_url: string | null
+    whatsapp: string | null
+    email_contato: string | null
+  } | null
+}
+
 // Hook para buscar detalhes de um anúncio
 export const useAnuncioDetalhes = (anuncioId: string) => {
   return useQuery({
@@ -163,7 +174,7 @@ export const useAnuncioDetalhes = (anuncioId: string) => {
         ...data,
         imagens: (data.imagens as string[]) || [],
         loja: loja || null
-      } as MarketplaceAnuncio
+      } as AnuncioDetalhesComLoja
     },
     enabled: !!anuncioId,
   })

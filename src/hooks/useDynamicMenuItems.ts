@@ -32,6 +32,7 @@ import {
   Settings,
   Shield,
   Ship,
+  Store,
   TrendingUp,
   TreePine,
   Truck,
@@ -106,7 +107,8 @@ const menuLabels = {
   'suporte': 'Suporte',
   'tutorial': 'Tutorial',
   'empresa-matriz': 'Empresa Matriz',
-  'atendimento': 'Atendimento'
+  'atendimento': 'Atendimento',
+  'minha-loja': 'Minha Loja'
 }
 
 const iconMap = {
@@ -167,7 +169,8 @@ const iconMap = {
   'suporte': HelpCircle,
   'tutorial': BookOpen,
   'empresa-matriz': Building2,
-  'atendimento': Headphones
+  'atendimento': Headphones,
+  'minha-loja': Store
 }
 
 export const useDynamicMenuItems = () => {
@@ -513,6 +516,15 @@ export const useDynamicMenuItems = () => {
         path: '/atendimento',
         label: menuLabels['atendimento'],
         icon: iconMap['atendimento']
+      })
+    }
+
+    // Adicionar Minha Loja como item separado (se tiver permissão - clientes)
+    if (permissions.includes('minha-loja.view' as any)) {
+      items.push({
+        path: '/minha-loja',
+        label: menuLabels['minha-loja'],
+        icon: iconMap['minha-loja']
       })
     }
 
