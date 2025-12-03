@@ -154,6 +154,7 @@ export type Database = {
           nome_produto: string
           preco_promocional: number | null
           preco_unitario: number | null
+          quantidade_embalagem: number | null
           quantidade_minima: number | null
           unidade_medida: string
           updated_at: string | null
@@ -174,6 +175,7 @@ export type Database = {
           nome_produto: string
           preco_promocional?: number | null
           preco_unitario?: number | null
+          quantidade_embalagem?: number | null
           quantidade_minima?: number | null
           unidade_medida?: string
           updated_at?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           nome_produto?: string
           preco_promocional?: number | null
           preco_unitario?: number | null
+          quantidade_embalagem?: number | null
           quantidade_minima?: number | null
           unidade_medida?: string
           updated_at?: string | null

@@ -140,7 +140,7 @@ export default function MinhaLoja() {
           {configuracao.slug && (
             <Button variant="outline" asChild>
               <a
-                href={`/loja/${configuracao.slug}`}
+                href={`#/loja/${configuracao.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
