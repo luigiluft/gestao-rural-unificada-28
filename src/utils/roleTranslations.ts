@@ -9,21 +9,24 @@ export const ROLE_LABELS = {
   admin: 'Administrador',
   operador: 'Operador',
   cliente: 'Cliente',
-  motorista: 'Motorista'
+  motorista: 'Motorista',
+  consumidor: 'Consumidor'
 } as const
 
 export const ROLE_LABELS_PLURAL = {
   admin: 'Administradores',
   operador: 'Operadores',
   cliente: 'Clientes',
-  motorista: 'Motoristas'
+  motorista: 'Motoristas',
+  consumidores: 'Consumidores'
 } as const
 
 export const ROLE_LABELS_SHORT = {
   admin: 'Admin',
   operador: 'Operador',
   cliente: 'Cliente',
-  motorista: 'Motorista'
+  motorista: 'Motorista',
+  consumidor: 'Consumidor'
 } as const
 
 /**

@@ -5430,6 +5430,7 @@ export type Database = {
         | "motorista"
         | "cliente"
         | "operador"
+        | "consumidor"
       comprovante_status: "pendente" | "em_andamento" | "entregue" | "cancelado"
       entrada_status:
         | "aguardando_transporte"
@@ -5669,6 +5670,7 @@ export const Constants = {
         "motorista",
         "cliente",
         "operador",
+        "consumidor",
       ],
       comprovante_status: ["pendente", "em_andamento", "entregue", "cancelado"],
       entrada_status: [

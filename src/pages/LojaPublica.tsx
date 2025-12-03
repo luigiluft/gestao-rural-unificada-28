@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useParams, Link } from "react-router-dom"
+import { useState, useMemo } from "react"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { useLojaAnunciosPublicos, MarketplaceAnuncio } from "@/hooks/useMarketplace"
 import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
 import { FloatingAtendimentoButton } from "@/components/Loja/FloatingAtendimentoButton"
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft } from "lucide-react"
+import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, User, LogIn } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 function ProdutoCard({ anuncio, lojaSlug }: { anuncio: MarketplaceAnuncio; lojaSlug: string }) {
   const precoFinal = anuncio.preco_promocional || anuncio.preco_unitario
@@ -76,14 +77,28 @@ function ProdutoCard({ anuncio, lojaSlug }: { anuncio: MarketplaceAnuncio; lojaS
 
 export default function LojaPublica() {
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [busca, setBusca] = useState("")
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null)
   const { data, isLoading, isError } = useLojaAnunciosPublicos(slug || "")
 
-  const anunciosFiltrados = data?.anuncios.filter(a => 
-    !busca || 
-    a.titulo.toLowerCase().includes(busca.toLowerCase()) ||
-    a.descricao_anuncio?.toLowerCase().includes(busca.toLowerCase())
-  )
+  // Extract unique categories
+  const categorias = useMemo(() => {
+    if (!data?.anuncios) return []
+    const cats = data.anuncios
+      .map(a => a.categoria)
+      .filter((c): c is string => !!c)
+    return [...new Set(cats)]
+  }, [data?.anuncios])
+
+  const anunciosFiltrados = data?.anuncios.filter(a => {
+    const matchBusca = !busca || 
+      a.titulo.toLowerCase().includes(busca.toLowerCase()) ||
+      a.descricao_anuncio?.toLowerCase().includes(busca.toLowerCase())
+    const matchCategoria = !categoriaSelecionada || a.categoria === categoriaSelecionada
+    return matchBusca && matchCategoria
+  })
 
   if (isLoading) {
     return (
@@ -112,14 +127,31 @@ export default function LojaPublica() {
   const { loja, anuncios } = data
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header with cart */}
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header with cart and auth */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/marketplace" className="font-bold text-xl text-primary">
             AgroHub
           </Link>
-          <CarrinhoDrawer />
+          <div className="flex items-center gap-3">
+            <CarrinhoDrawer />
+            {user ? (
+              <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+                <User className="h-4 w-4 mr-2" />
+                Minha Conta
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate(`/loja/${slug}/auth`)}
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                Entrar / Cadastrar
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -185,9 +217,9 @@ export default function LojaPublica() {
         </div>
       </div>
 
-      {/* Busca e Produtos */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mb-8">
+      {/* Busca e Categorias */}
+      <div className="container mx-auto px-4 py-8 flex-1">
+        <div className="max-w-md mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
@@ -199,13 +231,36 @@ export default function LojaPublica() {
           </div>
         </div>
 
+        {/* Category Filters */}
+        {categorias.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Button
+              variant={categoriaSelecionada === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCategoriaSelecionada(null)}
+            >
+              Todos
+            </Button>
+            {categorias.map((cat) => (
+              <Button
+                key={cat}
+                variant={categoriaSelecionada === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCategoriaSelecionada(cat)}
+              >
+                {cat}
+              </Button>
+            ))}
+          </div>
+        )}
+
         {anunciosFiltrados?.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
               <p className="text-muted-foreground">
-                {busca ? "Tente buscar com outros termos" : "Esta loja ainda não possui produtos"}
+                {busca || categoriaSelecionada ? "Tente buscar com outros termos ou limpar os filtros" : "Esta loja ainda não possui produtos"}
               </p>
             </CardContent>
           </Card>
@@ -218,12 +273,80 @@ export default function LojaPublica() {
         )}
       </div>
 
-      {/* Link voltar ao marketplace */}
-      <div className="container mx-auto px-4 pb-8">
-        <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-primary">
-          ← Voltar ao Marketplace AgroHub
-        </Link>
-      </div>
+      {/* Footer */}
+      <footer className="bg-muted/50 border-t mt-auto">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Store Info */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                {loja.logo_url ? (
+                  <img src={loja.logo_url} alt={loja.nome_loja} className="h-10 w-10 rounded-lg object-cover" />
+                ) : (
+                  <Store className="h-10 w-10 text-primary" />
+                )}
+                <h3 className="font-bold text-lg">{loja.nome_loja}</h3>
+              </div>
+              {loja.descricao && (
+                <p className="text-sm text-muted-foreground">{loja.descricao}</p>
+              )}
+            </div>
+
+            {/* Contact */}
+            <div className="space-y-4">
+              <h4 className="font-semibold">Contato</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                {loja.email_contato && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <a href={`mailto:${loja.email_contato}`} className="hover:text-primary">
+                      {loja.email_contato}
+                    </a>
+                  </div>
+                )}
+                {loja.whatsapp && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <a 
+                      href={`https://wa.me/${loja.whatsapp.replace(/\D/g, '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="hover:text-primary"
+                    >
+                      {loja.whatsapp}
+                    </a>
+                  </div>
+                )}
+                {loja.horario_atendimento && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>{loja.horario_atendimento}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div className="space-y-4">
+              <h4 className="font-semibold">Links</h4>
+              <div className="space-y-2 text-sm">
+                <Link to="/marketplace" className="block text-muted-foreground hover:text-primary">
+                  Marketplace AgroHub
+                </Link>
+                {!user && (
+                  <Link to={`/loja/${slug}/auth`} className="block text-muted-foreground hover:text-primary">
+                    Criar uma conta
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
+            <p>© {new Date().getFullYear()} {loja.nome_loja}. Powered by AgroHub.</p>
+          </div>
+        </div>
+      </footer>
 
       {/* Floating Atendimento Button */}
       <FloatingAtendimentoButton 

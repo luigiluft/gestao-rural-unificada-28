@@ -94,6 +94,7 @@ import PublicContato from "./pages/Public/Contato";
 import SejaFranqueadoPublic from "./pages/Public/SejaFranqueadoPublic";
 import Marketplace from "./pages/Marketplace";
 import LojaPublica from "./pages/LojaPublica";
+import LojaAuth from "./pages/LojaAuth";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
@@ -184,6 +185,7 @@ const App = () => {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/marketplace/produto/:id" element={<ProdutoDetalhes />} />
             <Route path="/loja/:slug" element={<LojaPublica />} />
+            <Route path="/loja/:slug/auth" element={<LojaAuth />} />
             <Route path="/loja/:slug/produto/:id" element={<ProdutoDetalhes />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/auth" element={<AuthPage />} />
