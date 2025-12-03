@@ -1,14 +1,25 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useEmpresaMatriz, getEnderecoResumido } from "@/hooks/useEmpresaMatriz";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
   { label: "Home", path: "/site" },
   { label: "Sobre", path: "/site/sobre" },
   { label: "Como Funciona", path: "/site/como-funciona" },
   { label: "Benefícios", path: "/site/beneficios" },
+  { label: "Encontre um Depósito", path: "/site/encontre-deposito" },
   { label: "Marketplace", path: "/marketplace" },
   { label: "Seja um Franqueado", path: "/site/seja-franqueado" },
   { label: "Contato", path: "/site/contato" },
@@ -17,7 +28,23 @@ const navItems = [
 export default function PublicLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session, logout } = useAuth();
+  const { data: profile } = useProfile();
   const { data: empresaData } = useEmpresaMatriz();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/site");
+  };
+
+  const getAccountPath = () => {
+    // Consumidor goes to /minha-conta, others go to /dashboard
+    if (profile?.role === "consumidor") {
+      return "/minha-conta";
+    }
+    return "/dashboard";
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -52,11 +79,39 @@ export default function PublicLayout() {
               ))}
             </nav>
 
-            {/* Login Button */}
+            {/* Login/Account Button */}
             <div className="hidden lg:flex items-center gap-3">
-              <Link to="/auth">
-                <Button>Login</Button>
-              </Link>
+              {session ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {profile?.nome?.charAt(0)?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden xl:inline">
+                        {profile?.nome?.split(" ")[0] || "Usuário"}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate(getAccountPath())}>
+                      <User className="h-4 w-4 mr-2" />
+                      Minha Conta
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth">
+                  <Button>Login</Button>
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -88,9 +143,36 @@ export default function PublicLayout() {
                 </Link>
               ))}
               <div className="pt-3 border-t border-border">
-                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full">Login</Button>
-                </Link>
+                {session ? (
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        navigate(getAccountPath());
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Minha Conta
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-destructive"
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sair
+                    </Button>
+                  </div>
+                ) : (
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full">Login</Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
