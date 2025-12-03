@@ -20,7 +20,7 @@ import { LojaConfiguracoes } from "@/components/Loja/LojaConfiguracoes"
 import { useLojaConfiguracao } from "@/hooks/useLojaConfiguracao"
 
 export default function Configuracoes() {
-  const { isCliente } = useUserRole()
+  const { isCliente, isOperador, isAdmin } = useUserRole()
   const { configuracao: lojaConfig } = useLojaConfiguracao()
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
   const updateConfiguracao = useUpdateConfiguracao()
@@ -235,7 +235,8 @@ export default function Configuracoes() {
         </div>
 
         <div className="space-y-6">
-          {/* Configurações de Separação */}
+          {/* Configurações de Separação - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -336,8 +337,10 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Configuração de Peso Mínimo MOPP */}
+          {/* Configuração de Peso Mínimo MOPP - apenas para operadores */}
+          {isOperador && (
           <Card>
             <CardHeader>
               <CardTitle>Peso Mínimo MOPP</CardTitle>
@@ -366,8 +369,10 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Configuração de Horários de Retirada */}
+          {/* Configuração de Horários de Retirada - apenas para operadores */}
+          {isOperador && (
           <Card>
             <CardHeader>
               <CardTitle>Horários de Retirada</CardTitle>
@@ -425,8 +430,10 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Configuração de Dias Úteis de Expedição */}
+          {/* Configuração de Dias Úteis de Expedição - apenas para operadores */}
+          {isOperador && (
           <Card>
             <CardHeader>
               <CardTitle>Dias Úteis de Expedição</CardTitle>
@@ -460,8 +467,10 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Configuração de Janela de Entrega */}
+          {/* Configuração de Janela de Entrega - apenas para operadores */}
+          {isOperador && (
           <Card>
             <CardHeader>
               <CardTitle>Janela de Entrega</CardTitle>
@@ -497,8 +506,10 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Configuração de Peso Bruto Máximo por Pallet */}
+          {/* Configuração de Peso Bruto Máximo por Pallet - apenas para operadores */}
+          {isOperador && (
           <Card>
             <CardHeader>
               <CardTitle>Peso Bruto Máximo por Pallet</CardTitle>
@@ -533,8 +544,10 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Configuração de Período de Análise do SLA */}
+          {/* Configuração de Período de Análise do SLA - apenas para operadores */}
+          {isOperador && (
           <Card>
             <CardHeader>
               <CardTitle>Período de Análise do SLA</CardTitle>
@@ -568,6 +581,7 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Configurações da Loja - apenas para clientes com loja habilitada */}
           {isCliente && lojaConfig?.loja_habilitada && (
@@ -587,7 +601,8 @@ export default function Configuracoes() {
             </Card>
           )}
 
-          {/* Botão para Limpar Cache */}
+          {/* Botão para Limpar Cache - apenas para admins */}
+          {isAdmin && (
           <Card>
             <CardHeader>
               <CardTitle>Cache do Sistema</CardTitle>
@@ -606,6 +621,7 @@ export default function Configuracoes() {
               </Button>
             </CardContent>
           </Card>
+          )}
       </div>
     </div>
   )
