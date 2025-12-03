@@ -98,6 +98,7 @@ import LojaAuth from "./pages/LojaAuth";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
+import LojaCotacao from "./pages/LojaCotacao";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -186,6 +187,7 @@ const App = () => {
             <Route path="/marketplace/produto/:id" element={<ProdutoDetalhes />} />
             <Route path="/loja/:slug" element={<LojaPublica />} />
             <Route path="/loja/:slug/auth" element={<LojaAuth />} />
+            <Route path="/loja/:slug/cotacao" element={<LojaCotacao />} />
             <Route path="/loja/:slug/produto/:id" element={<ProdutoDetalhes />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/auth" element={<AuthPage />} />

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, User, LogIn } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, User, LogIn, FileText } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 function ProdutoCard({ anuncio, lojaSlug }: { anuncio: MarketplaceAnuncio; lojaSlug: string }) {
@@ -217,60 +218,96 @@ export default function LojaPublica() {
         </div>
       </div>
 
-      {/* Busca e Categorias */}
+      {/* Content with Tabs */}
       <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="max-w-md mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar produtos..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-10"
-            />
+        <Tabs defaultValue="spot" className="w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <TabsList>
+              <TabsTrigger value="spot" className="gap-2">
+                <Package className="h-4 w-4" />
+                Spot
+              </TabsTrigger>
+              <TabsTrigger value="cotacao" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Cotação
+              </TabsTrigger>
+            </TabsList>
           </div>
-        </div>
 
-        {/* Category Filters */}
-        {categorias.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            <Button
-              variant={categoriaSelecionada === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCategoriaSelecionada(null)}
-            >
-              Todos
-            </Button>
-            {categorias.map((cat) => (
-              <Button
-                key={cat}
-                variant={categoriaSelecionada === cat ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCategoriaSelecionada(cat)}
-              >
-                {cat}
-              </Button>
-            ))}
-          </div>
-        )}
+          {/* Spot Tab - Normal purchases */}
+          <TabsContent value="spot" className="space-y-6">
+            <div className="max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar produtos..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
 
-        {anunciosFiltrados?.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <Package className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
-              <p className="text-muted-foreground">
-                {busca || categoriaSelecionada ? "Tente buscar com outros termos ou limpar os filtros" : "Esta loja ainda não possui produtos"}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {anunciosFiltrados?.map((anuncio) => (
-              <ProdutoCard key={anuncio.id} anuncio={anuncio} lojaSlug={slug || ""} />
-            ))}
-          </div>
-        )}
+            {/* Category Filters */}
+            {categorias.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={categoriaSelecionada === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategoriaSelecionada(null)}
+                >
+                  Todos
+                </Button>
+                {categorias.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant={categoriaSelecionada === cat ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCategoriaSelecionada(cat)}
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {anunciosFiltrados?.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                  <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
+                  <p className="text-muted-foreground">
+                    {busca || categoriaSelecionada ? "Tente buscar com outros termos ou limpar os filtros" : "Esta loja ainda não possui produtos"}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {anunciosFiltrados?.map((anuncio) => (
+                  <ProdutoCard key={anuncio.id} anuncio={anuncio} lojaSlug={slug || ""} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Cotação Tab */}
+          <TabsContent value="cotacao">
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <FileText className="h-16 w-16 text-primary/30 mb-6" />
+                <h3 className="text-2xl font-bold mb-2">Solicite uma Cotação</h3>
+                <p className="text-muted-foreground max-w-md mb-6">
+                  Planeje suas compras para os próximos 12 meses. Informe a quantidade de cada produto 
+                  que você precisará mês a mês e receba uma proposta personalizada.
+                </p>
+                <Button size="lg" onClick={() => navigate(`/loja/${slug}/cotacao`)}>
+                  <FileText className="h-5 w-5 mr-2" />
+                  Iniciar Cotação
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Footer */}
