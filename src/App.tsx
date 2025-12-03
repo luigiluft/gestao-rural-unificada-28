@@ -92,6 +92,10 @@ import PublicComoFunciona from "./pages/Public/ComoFunciona";
 import PublicBeneficios from "./pages/Public/Beneficios";
 import PublicContato from "./pages/Public/Contato";
 import SejaFranqueadoPublic from "./pages/Public/SejaFranqueadoPublic";
+import Marketplace from "./pages/Marketplace";
+import LojaPublica from "./pages/LojaPublica";
+import ProdutoDetalhes from "./pages/ProdutoDetalhes";
+import MinhaLoja from "./pages/MinhaLoja";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -174,6 +178,10 @@ const App = () => {
             
             {/* Rotas Públicas */}
             <Route path="/seja-franqueado" element={<SejaFranqueado />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace/produto/:id" element={<ProdutoDetalhes />} />
+            <Route path="/loja/:slug" element={<LojaPublica />} />
+            <Route path="/loja/:slug/produto/:id" element={<ProdutoDetalhes />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/motorista/login" element={<MotoristaLogin />} />
             <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
@@ -267,6 +275,9 @@ const App = () => {
               {/* Fiscal Routes */}
               <Route path="nfe-entradas" element={<RequirePageAccess pageKey="nfe-entradas"><NFeEntradas /></RequirePageAccess>} />
               <Route path="nfe-saidas" element={<RequirePageAccess pageKey="nfe-saidas"><NFeSaidas /></RequirePageAccess>} />
+              
+              {/* Minha Loja (Cliente) */}
+              <Route path="minha-loja" element={<RequirePageAccess pageKey="minha-loja"><MinhaLoja /></RequirePageAccess>} />
               
               <Route path="*" element={<NotFound />} />
             </Route>
