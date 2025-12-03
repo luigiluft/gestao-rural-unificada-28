@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2 } from "lucide-react"
+import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2, Store } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useConfiguracoesSistema, useUpdateConfiguracao } from "@/hooks/useConfiguracoesSistema"
@@ -15,8 +15,13 @@ import { usePriorizacaoConfig } from "@/hooks/usePriorizacaoSeparacao"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useQuery } from "@tanstack/react-query"
+import { useUserRole } from "@/hooks/useUserRole"
+import { LojaConfiguracoes } from "@/components/Loja/LojaConfiguracoes"
+import { useLojaConfiguracao } from "@/hooks/useLojaConfiguracao"
 
 export default function Configuracoes() {
+  const { isCliente } = useUserRole()
+  const { configuracao: lojaConfig } = useLojaConfiguracao()
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
   const updateConfiguracao = useUpdateConfiguracao()
   const { toast } = useToast()
@@ -563,6 +568,24 @@ export default function Configuracoes() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Configurações da Loja - apenas para clientes com loja habilitada */}
+          {isCliente && lojaConfig?.loja_habilitada && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Store className="h-5 w-5" />
+                  Configurações da Loja
+                </CardTitle>
+                <CardDescription>
+                  Personalize sua loja online e informações de contato
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LojaConfiguracoes />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Botão para Limpar Cache */}
           <Card>
