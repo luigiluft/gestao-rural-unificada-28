@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -16,12 +15,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   MapPin,
-  Search,
   Warehouse,
   Shield,
   BarChart3,
   Truck,
-  CheckCircle,
   Phone,
 } from "lucide-react";
 import { PublicBrazilMap } from "@/components/Public/PublicBrazilMap";
@@ -86,8 +83,7 @@ const beneficios = [
 export default function EncontreDeposito() {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const [estadoSelecionado, setEstadoSelecionado] = useState<string>("");
-  const [buscaCidade, setBuscaCidade] = useState("");
+  const [estadoSelecionado, setEstadoSelecionado] = useState<string>("all");
 
   // Fetch deposits
   const { data: depositos = [], isLoading } = useQuery({
@@ -107,15 +103,9 @@ export default function EncontreDeposito() {
 
   // Filter deposits
   const depositosFiltrados = useMemo(() => {
-    return depositos.filter((d) => {
-      const matchEstado = !estadoSelecionado || d.estado === estadoSelecionado;
-      const matchCidade =
-        !buscaCidade ||
-        d.cidade?.toLowerCase().includes(buscaCidade.toLowerCase()) ||
-        d.nome?.toLowerCase().includes(buscaCidade.toLowerCase());
-      return matchEstado && matchCidade;
-    });
-  }, [depositos, estadoSelecionado, buscaCidade]);
+    if (estadoSelecionado === "all") return depositos;
+    return depositos.filter((d) => d.estado === estadoSelecionado);
+  }, [depositos, estadoSelecionado]);
 
   const handleQueroArmazenar = (depositoId: string) => {
     if (session) {
@@ -153,10 +143,10 @@ export default function EncontreDeposito() {
       {/* Search Section */}
       <section className="py-8 border-b">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
+          <div className="flex justify-center">
             <Select value={estadoSelecionado} onValueChange={setEstadoSelecionado}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Selecione o estado" />
+              <SelectTrigger className="w-full max-w-xs">
+                <SelectValue placeholder="Todos os estados" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os estados</SelectItem>
@@ -167,15 +157,6 @@ export default function EncontreDeposito() {
                 ))}
               </SelectContent>
             </Select>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por cidade ou nome do depósito..."
-                value={buscaCidade}
-                onChange={(e) => setBuscaCidade(e.target.value)}
-                className="pl-10"
-              />
-            </div>
           </div>
         </div>
       </section>
@@ -185,7 +166,7 @@ export default function EncontreDeposito() {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Map */}
-            <div className="bg-muted/30 rounded-xl p-4 min-h-[400px] flex items-center justify-center">
+            <div className="bg-muted/30 rounded-xl p-4 h-[400px] overflow-hidden flex items-center justify-center">
               <PublicBrazilMap />
             </div>
 
