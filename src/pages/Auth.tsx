@@ -24,6 +24,8 @@ export default function AuthPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const [roleFromUrl, setRoleFromUrl] = useState<string | null>(null);
+  const [depositoFromUrl, setDepositoFromUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
@@ -39,6 +41,23 @@ export default function AuthPage() {
       navigate("/", { replace: true });
     }
   }, [session, navigate, isInviteFlow]);
+
+  // Check for role and deposito params in URL (from EncontreDeposito page)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role');
+    const deposito = urlParams.get('deposito');
+    
+    if (role) {
+      setRoleFromUrl(role);
+      setActiveTab("signup"); // Auto-switch to signup for new users
+    }
+    if (deposito) {
+      setDepositoFromUrl(deposito);
+      // Store in localStorage for later use in profile setup
+      localStorage.setItem('pending_deposito_id', deposito);
+    }
+  }, []);
 
   // Check for invite parameters in URL and pre-fill email
   useEffect(() => {
@@ -187,12 +206,22 @@ export default function AuthPage() {
       console.log('🔐 Starting signup process for:', email, 'invite flow:', isInviteFlow);
       
       const redirectUrl = `${window.location.origin}/`;
+      
+      // Build user metadata with optional role from URL
+      const userData: Record<string, any> = { nome: name };
+      if (roleFromUrl) {
+        userData.requested_role = roleFromUrl;
+      }
+      if (depositoFromUrl) {
+        userData.requested_deposito = depositoFromUrl;
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { 
           emailRedirectTo: redirectUrl, 
-          data: { nome: name }
+          data: userData
         },
       });
       
@@ -270,11 +299,20 @@ export default function AuthPage() {
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="text-center">
-              {isInviteFlow ? "Complete seu cadastro de franqueado" : "Acesse sua conta"}
+              {isInviteFlow 
+                ? "Complete seu cadastro de franqueado" 
+                : roleFromUrl === 'cliente'
+                  ? "Crie sua conta de cliente"
+                  : "Acesse sua conta"}
             </CardTitle>
             {isInviteFlow && (
               <p className="text-sm text-muted-foreground text-center">
                 Você foi convidado para se tornar um franqueado. Complete as informações abaixo.
+              </p>
+            )}
+            {roleFromUrl === 'cliente' && !isInviteFlow && (
+              <p className="text-sm text-muted-foreground text-center">
+                Cadastre-se para armazenar sua produção com a Luft AgroHub.
               </p>
             )}
           </CardHeader>

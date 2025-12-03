@@ -99,6 +99,8 @@ import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
 import LojaCotacao from "./pages/LojaCotacao";
+import MinhaContaConsumidor from "./pages/MinhaContaConsumidor";
+import EncontreDeposito from "./pages/Public/EncontreDeposito";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -151,6 +153,7 @@ const App = () => {
                 <Route path="sobre" element={<PublicSobre />} />
                 <Route path="como-funciona" element={<PublicComoFunciona />} />
                 <Route path="beneficios" element={<PublicBeneficios />} />
+                <Route path="encontre-deposito" element={<EncontreDeposito />} />
                 <Route path="seja-franqueado" element={<SejaFranqueadoPublic />} />
                 <Route path="contato" element={<PublicContato />} />
               </Route>
@@ -177,6 +180,7 @@ const App = () => {
               <Route path="sobre" element={<PublicSobre />} />
               <Route path="como-funciona" element={<PublicComoFunciona />} />
               <Route path="beneficios" element={<PublicBeneficios />} />
+              <Route path="encontre-deposito" element={<EncontreDeposito />} />
               <Route path="seja-franqueado" element={<SejaFranqueadoPublic />} />
               <Route path="contato" element={<PublicContato />} />
             </Route>
@@ -194,6 +198,7 @@ const App = () => {
             <Route path="/motorista/login" element={<MotoristaLogin />} />
             <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
             <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastro /></RequireAuth>} />
+            <Route path="/minha-conta" element={<RequireAuth><MinhaContaConsumidor /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<Index />} />
               <Route path="dashboard" element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
