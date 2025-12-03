@@ -138,6 +138,77 @@ export type Database = {
           },
         ]
       }
+      cliente_produtos: {
+        Row: {
+          ativo_loja_propria: boolean | null
+          ativo_marketplace: boolean | null
+          categoria: string | null
+          cliente_id: string
+          codigo_produto: string | null
+          created_at: string | null
+          descricao: string | null
+          descricao_anuncio: string | null
+          id: string
+          imagens: Json | null
+          ncm: string | null
+          nome_produto: string
+          preco_promocional: number | null
+          preco_unitario: number | null
+          quantidade_minima: number | null
+          unidade_medida: string
+          updated_at: string | null
+          usar_estoque_real: boolean | null
+        }
+        Insert: {
+          ativo_loja_propria?: boolean | null
+          ativo_marketplace?: boolean | null
+          categoria?: string | null
+          cliente_id: string
+          codigo_produto?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          descricao_anuncio?: string | null
+          id?: string
+          imagens?: Json | null
+          ncm?: string | null
+          nome_produto: string
+          preco_promocional?: number | null
+          preco_unitario?: number | null
+          quantidade_minima?: number | null
+          unidade_medida?: string
+          updated_at?: string | null
+          usar_estoque_real?: boolean | null
+        }
+        Update: {
+          ativo_loja_propria?: boolean | null
+          ativo_marketplace?: boolean | null
+          categoria?: string | null
+          cliente_id?: string
+          codigo_produto?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          descricao_anuncio?: string | null
+          id?: string
+          imagens?: Json | null
+          ncm?: string | null
+          nome_produto?: string
+          preco_promocional?: number | null
+          preco_unitario?: number | null
+          quantidade_minima?: number | null
+          unidade_medida?: string
+          updated_at?: string | null
+          usar_estoque_real?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cliente_produtos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cliente_usuarios: {
         Row: {
           ativo: boolean

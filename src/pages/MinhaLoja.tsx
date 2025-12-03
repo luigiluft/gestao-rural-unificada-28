@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useLojaConfiguracao } from "@/hooks/useLojaConfiguracao"
-import { useLojaAnuncios } from "@/hooks/useLojaAnuncios"
+import { useClienteProdutos, ClienteProduto } from "@/hooks/useClienteProdutos"
 import { useCliente } from "@/contexts/ClienteContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,19 +8,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Store, Package, Plus, ExternalLink, Loader2 } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { AnuncioForm } from "@/components/Loja/AnuncioForm"
-import { AnuncioCard } from "@/components/Loja/AnuncioCard"
+import { Store, Package, ExternalLink, Loader2, Search, Settings2, Check, X } from "lucide-react"
+import { ProdutoConfigDialog } from "@/components/Loja/ProdutoConfigDialog"
 
 export default function MinhaLoja() {
   const { selectedCliente } = useCliente()
   const { configuracao, isLoading, habilitarLoja, isHabilitando } = useLojaConfiguracao()
-  const { anuncios, isLoading: loadingAnuncios } = useLojaAnuncios()
+  const { produtos, isLoading: loadingProdutos, updateProduto, isUpdating, toggleMarketplace, toggleLoja } = useClienteProdutos()
   
   const [nomeLoja, setNomeLoja] = useState("")
   const [participarMarketplace, setParticiparMarketplace] = useState(true)
-  const [showNovoAnuncio, setShowNovoAnuncio] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedProduto, setSelectedProduto] = useState<ClienteProduto | null>(null)
+  const [showConfigDialog, setShowConfigDialog] = useState(false)
 
   if (!selectedCliente) {
     return (
@@ -86,7 +86,7 @@ export default function MinhaLoja() {
                 <p className="font-medium text-sm">Você terá acesso a:</p>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>✓ Loja própria com URL personalizada</li>
-                  <li>✓ Gerenciamento de anúncios e preços</li>
+                  <li>✓ Gerenciamento de preços e visibilidade</li>
                   <li>✓ Pedidos viram saídas no OMS automaticamente</li>
                   {participarMarketplace && (
                     <li>✓ Exposição no Marketplace AgroHub</li>
@@ -114,8 +114,14 @@ export default function MinhaLoja() {
     )
   }
 
-  // Dashboard da loja - apenas anúncios
-  const anunciosAtivos = anuncios.filter(a => a.ativo).length
+  // Filtrar produtos
+  const filteredProdutos = produtos.filter(p => 
+    p.nome_produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.codigo_produto?.toLowerCase().includes(searchTerm.toLowerCase()))
+  )
+
+  const produtosAtivosMarketplace = produtos.filter(p => p.ativo_marketplace).length
+  const produtosAtivosLoja = produtos.filter(p => p.ativo_loja_propria).length
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
@@ -127,7 +133,7 @@ export default function MinhaLoja() {
             {configuracao.nome_loja || "Minha Loja"}
           </h1>
           <p className="text-muted-foreground">
-            Gerencie seus anúncios
+            Configure quais produtos aparecerão para venda
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -143,25 +149,11 @@ export default function MinhaLoja() {
               </a>
             </Button>
           )}
-          <Dialog open={showNovoAnuncio} onOpenChange={setShowNovoAnuncio}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Anúncio
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Novo Anúncio</DialogTitle>
-              </DialogHeader>
-              <AnuncioForm onSuccess={() => setShowNovoAnuncio(false)} />
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -169,8 +161,8 @@ export default function MinhaLoja() {
                 <Package className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{anunciosAtivos}</p>
-                <p className="text-sm text-muted-foreground">Anúncios Ativos</p>
+                <p className="text-2xl font-bold">{produtos.length}</p>
+                <p className="text-sm text-muted-foreground">Produtos Cadastrados</p>
               </div>
             </div>
           </CardContent>
@@ -179,41 +171,158 @@ export default function MinhaLoja() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <Badge variant={configuracao.participar_marketplace ? "default" : "secondary"}>
-                {configuracao.participar_marketplace ? "No Marketplace" : "Loja Própria"}
-              </Badge>
+              <div className="p-3 rounded-full bg-green-500/10">
+                <Check className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{produtosAtivosMarketplace}</p>
+                <p className="text-sm text-muted-foreground">No Marketplace</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-blue-500/10">
+                <Store className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{produtosAtivosLoja}</p>
+                <p className="text-sm text-muted-foreground">Na Loja Própria</p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Anúncios */}
+      {/* Produtos */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Anúncios</h2>
-        {loadingAnuncios ? (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold">Meus Produtos ({produtos.length})</h2>
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar produto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {loadingProdutos ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : anuncios.length === 0 ? (
+        ) : produtos.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum anúncio ainda</h3>
-              <p className="text-muted-foreground mb-4">Crie seu primeiro anúncio para começar a vender</p>
-              <Button onClick={() => setShowNovoAnuncio(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Anúncio
-              </Button>
+              <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
+              <p className="text-muted-foreground">
+                Os produtos serão adicionados automaticamente quando você receber entradas de estoque.
+              </p>
+            </CardContent>
+          </Card>
+        ) : filteredProdutos.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+              <Search className="h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-muted-foreground">Nenhum produto encontrado para "{searchTerm}"</p>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {anuncios.map((anuncio) => (
-              <AnuncioCard key={anuncio.id} anuncio={anuncio} />
+          <div className="space-y-3">
+            {filteredProdutos.map((produto) => (
+              <Card key={produto.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* Info do produto */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{produto.nome_produto}</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <span>Código: {produto.codigo_produto || "N/A"}</span>
+                        <span>•</span>
+                        <span>Unidade: {produto.unidade_medida}</span>
+                        {produto.preco_unitario && (
+                          <>
+                            <span>•</span>
+                            <span className="text-foreground font-medium">
+                              R$ {produto.preco_unitario.toFixed(2)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {produto.categoria && (
+                        <Badge variant="outline" className="mt-2">{produto.categoria}</Badge>
+                      )}
+                    </div>
+
+                    {/* Controles */}
+                    <div className="flex items-center gap-4">
+                      {/* Toggle Marketplace */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground hidden sm:inline">Marketplace</span>
+                        <button
+                          onClick={() => toggleMarketplace({ id: produto.id, ativo: !produto.ativo_marketplace })}
+                          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
+                            produto.ativo_marketplace 
+                              ? "bg-green-500 text-white" 
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                          title={produto.ativo_marketplace ? "Desativar do Marketplace" : "Ativar no Marketplace"}
+                        >
+                          {produto.ativo_marketplace ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                        </button>
+                      </div>
+
+                      {/* Toggle Loja Própria */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground hidden sm:inline">Loja</span>
+                        <button
+                          onClick={() => toggleLoja({ id: produto.id, ativo: !produto.ativo_loja_propria })}
+                          className={`flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
+                            produto.ativo_loja_propria 
+                              ? "bg-blue-500 text-white" 
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                          title={produto.ativo_loja_propria ? "Desativar da Loja" : "Ativar na Loja"}
+                        >
+                          {produto.ativo_loja_propria ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                        </button>
+                      </div>
+
+                      {/* Configurar */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedProduto(produto)
+                          setShowConfigDialog(true)
+                        }}
+                      >
+                        <Settings2 className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Configurar</span>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
+
+      {/* Dialog de configuração */}
+      <ProdutoConfigDialog
+        produto={selectedProduto}
+        open={showConfigDialog}
+        onOpenChange={setShowConfigDialog}
+        onSave={(id, data) => updateProduto({ id, data })}
+        isSaving={isUpdating}
+      />
     </div>
   )
 }
