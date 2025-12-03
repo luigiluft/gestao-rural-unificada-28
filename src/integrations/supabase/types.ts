@@ -3843,6 +3843,7 @@ export type Database = {
           id: string
           inscricao_estadual: string | null
           is_produtor_rural: boolean | null
+          loja_origem: string | null
           nome: string
           observacoes_empresa: string | null
           razao_social: string | null
@@ -3861,6 +3862,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           is_produtor_rural?: boolean | null
+          loja_origem?: string | null
           nome: string
           observacoes_empresa?: string | null
           razao_social?: string | null
@@ -3879,6 +3881,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           is_produtor_rural?: boolean | null
+          loja_origem?: string | null
           nome?: string
           observacoes_empresa?: string | null
           razao_social?: string | null

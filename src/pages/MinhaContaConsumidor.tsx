@@ -23,10 +23,13 @@ export default function MinhaContaConsumidor() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const { data: cotacoes = [], isLoading: cotacoesLoading } = useCotacoesLoja();
+  const { cotacoes = [], isLoading: cotacoesLoading } = useCotacoesLoja();
 
   // Filtrar cotações do consumidor atual
   const minhasCotacoes = cotacoes.filter((c) => c.consumidor_id === user?.id);
+
+  // Get loja_origem from profile (cast to any since migration just ran)
+  const lojaOrigem = (profile as any)?.loja_origem as string | undefined;
 
   const handleLogout = async () => {
     await logout();
@@ -34,8 +37,8 @@ export default function MinhaContaConsumidor() {
   };
 
   const goToStore = () => {
-    if (profile?.loja_origem) {
-      navigate(`/loja/${profile.loja_origem}`);
+    if (lojaOrigem) {
+      navigate(`/loja/${lojaOrigem}`);
     }
   };
 
@@ -55,11 +58,11 @@ export default function MinhaContaConsumidor() {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {profile?.full_name?.charAt(0)?.toUpperCase() || "C"}
+                {profile?.nome?.charAt(0)?.toUpperCase() || "C"}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="font-semibold">{profile?.full_name || "Consumidor"}</h1>
+              <h1 className="font-semibold">{profile?.nome || "Consumidor"}</h1>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
@@ -132,7 +135,7 @@ export default function MinhaContaConsumidor() {
                                   </span>
                                 </div>
                                 <p className="text-sm">
-                                  {cotacao.cotacao_itens?.length || 0} produto(s) cotado(s)
+                                  {(cotacao as any).cotacao_itens?.length || 0} produto(s) cotado(s)
                                 </p>
                                 {cotacao.observacoes && (
                                   <p className="text-sm text-muted-foreground">
