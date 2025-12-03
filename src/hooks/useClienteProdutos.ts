@@ -19,6 +19,7 @@ export interface ClienteProduto {
   ativo_marketplace: boolean
   ativo_loja_propria: boolean
   quantidade_minima: number
+  quantidade_embalagem: number
   usar_estoque_real: boolean
   created_at: string
   updated_at: string
