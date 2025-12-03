@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Store, Package, ExternalLink, Loader2, Search, Settings2, Check, X } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Store, Package, ExternalLink, Loader2, Search, Settings2, Check, X, FileText } from "lucide-react"
 import { ProdutoConfigDialog } from "@/components/Loja/ProdutoConfigDialog"
+import CotacoesRecebidas from "@/components/Loja/CotacoesRecebidas"
 
 export default function MinhaLoja() {
   const { selectedCliente } = useCliente()
@@ -133,7 +135,7 @@ export default function MinhaLoja() {
             {configuracao.nome_loja || "Minha Loja"}
           </h1>
           <p className="text-muted-foreground">
-            Configure quais produtos aparecerão para venda
+            Gerencie produtos e cotações da sua loja
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -151,6 +153,21 @@ export default function MinhaLoja() {
           )}
         </div>
       </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="produtos" className="w-full">
+        <TabsList>
+          <TabsTrigger value="produtos" className="gap-2">
+            <Package className="h-4 w-4" />
+            Produtos
+          </TabsTrigger>
+          <TabsTrigger value="cotacoes" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Cotações
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="produtos" className="space-y-6 mt-6">
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -323,6 +340,12 @@ export default function MinhaLoja() {
         onSave={(id, data) => updateProduto({ id, data })}
         isSaving={isUpdating}
       />
+        </TabsContent>
+
+        <TabsContent value="cotacoes" className="mt-6">
+          <CotacoesRecebidas />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

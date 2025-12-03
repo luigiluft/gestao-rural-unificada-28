@@ -861,6 +861,140 @@ export type Database = {
           },
         ]
       }
+      cotacao_itens: {
+        Row: {
+          cotacao_id: string
+          created_at: string
+          id: string
+          mes_1: number | null
+          mes_10: number | null
+          mes_11: number | null
+          mes_12: number | null
+          mes_2: number | null
+          mes_3: number | null
+          mes_4: number | null
+          mes_5: number | null
+          mes_6: number | null
+          mes_7: number | null
+          mes_8: number | null
+          mes_9: number | null
+          observacoes: string | null
+          preco_sugerido: number | null
+          produto_id: string
+        }
+        Insert: {
+          cotacao_id: string
+          created_at?: string
+          id?: string
+          mes_1?: number | null
+          mes_10?: number | null
+          mes_11?: number | null
+          mes_12?: number | null
+          mes_2?: number | null
+          mes_3?: number | null
+          mes_4?: number | null
+          mes_5?: number | null
+          mes_6?: number | null
+          mes_7?: number | null
+          mes_8?: number | null
+          mes_9?: number | null
+          observacoes?: string | null
+          preco_sugerido?: number | null
+          produto_id: string
+        }
+        Update: {
+          cotacao_id?: string
+          created_at?: string
+          id?: string
+          mes_1?: number | null
+          mes_10?: number | null
+          mes_11?: number | null
+          mes_12?: number | null
+          mes_2?: number | null
+          mes_3?: number | null
+          mes_4?: number | null
+          mes_5?: number | null
+          mes_6?: number | null
+          mes_7?: number | null
+          mes_8?: number | null
+          mes_9?: number | null
+          observacoes?: string | null
+          preco_sugerido?: number | null
+          produto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotacao_itens_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "cotacoes_loja"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotacao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cotacoes_loja: {
+        Row: {
+          cliente_id: string
+          consumidor_email: string
+          consumidor_empresa: string | null
+          consumidor_id: string | null
+          consumidor_nome: string
+          consumidor_telefone: string | null
+          created_at: string
+          data_resposta: string | null
+          id: string
+          observacoes: string | null
+          resposta_cliente: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          consumidor_email: string
+          consumidor_empresa?: string | null
+          consumidor_id?: string | null
+          consumidor_nome: string
+          consumidor_telefone?: string | null
+          created_at?: string
+          data_resposta?: string | null
+          id?: string
+          observacoes?: string | null
+          resposta_cliente?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          consumidor_email?: string
+          consumidor_empresa?: string | null
+          consumidor_id?: string | null
+          consumidor_nome?: string
+          consumidor_telefone?: string | null
+          created_at?: string
+          data_resposta?: string | null
+          id?: string
+          observacoes?: string | null
+          resposta_cliente?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotacoes_loja_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ctes: {
         Row: {
           cfop: string
