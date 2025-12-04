@@ -20,6 +20,7 @@ const navItems = [
   { label: "Como Funciona", path: "/site/como-funciona" },
   { label: "Benefícios", path: "/site/beneficios" },
   { label: "Encontre um Depósito", path: "/site/encontre-deposito" },
+  { label: "Parceiros", path: "/site/parceiros" },
   { label: "Marketplace", path: "/marketplace" },
   { label: "Seja um Franqueado", path: "/site/seja-franqueado" },
   { label: "Contato", path: "/site/contato" },
@@ -39,9 +40,9 @@ export default function PublicLayout() {
   };
 
   const getAccountPath = () => {
-    // Consumidor goes to /minha-conta, others go to /dashboard
+    // Consumidor goes to /marketplace/minha-conta, others go to /dashboard
     if (profile?.role === "consumidor") {
-      return "/minha-conta";
+      return "/marketplace/minha-conta";
     }
     return "/dashboard";
   };

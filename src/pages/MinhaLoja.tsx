@@ -140,15 +140,12 @@ export default function MinhaLoja() {
         </div>
         <div className="flex items-center gap-2">
           {configuracao.slug && (
-            <Button variant="outline" asChild>
-              <a
-                href={`#/loja/${configuracao.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Ver Loja
-              </a>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open(`${window.location.origin}/#/loja/${configuracao.slug}`, '_blank')}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Ver Loja
             </Button>
           )}
         </div>

@@ -43,7 +43,7 @@ export default function LojaAuth() {
       }
 
       toast.success("Login realizado com sucesso!")
-      navigate(`/loja/${slug}`)
+      navigate(`/loja/${slug}/minha-conta`)
     } catch (err) {
       toast.error("Erro ao fazer login")
     } finally {
@@ -104,7 +104,7 @@ export default function LojaAuth() {
       }
 
       toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar.")
-      navigate(`/loja/${slug}`)
+      navigate(`/loja/${slug}/minha-conta`)
     } catch (err) {
       toast.error("Erro ao criar conta")
     } finally {

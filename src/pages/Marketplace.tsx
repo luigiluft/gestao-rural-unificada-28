@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Package, Store, ShoppingCart, Loader2, User, Heart } from "lucide-react"
+import { Search, Package, Store, ShoppingCart, Loader2, User, Heart, Home } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useConsumidorWishlist } from "@/hooks/useConsumidorWishlist"
 
@@ -142,9 +142,14 @@ export default function Marketplace() {
         {/* Header with cart */}
         <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <Link to="/marketplace" className="font-bold text-xl text-primary">
-              AgroHub
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link to="/site" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Home className="h-5 w-5" />
+              </Link>
+              <Link to="/marketplace" className="font-bold text-xl text-primary">
+                AgroHub
+              </Link>
+            </div>
             <div className="flex items-center gap-2">
               <Button 
                 variant="ghost" 
