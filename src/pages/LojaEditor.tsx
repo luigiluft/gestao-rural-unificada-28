@@ -73,7 +73,7 @@ export default function LojaEditor() {
           {lojaSlug && (
             <Button
               variant="outline"
-              onClick={() => window.open(`/loja/${lojaSlug}`, '_blank')}
+              onClick={() => window.open(`${window.location.origin}/loja/${lojaSlug}`, '_blank')}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Ver Loja
