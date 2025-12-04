@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useCliente } from '@/contexts/ClienteContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,6 +36,8 @@ export function usePageBuilder() {
   const queryClient = useQueryClient();
   const [selectedBlocoId, setSelectedBlocoId] = useState<string | null>(null);
   const [paginaAtual, setPaginaAtual] = useState<string>('home');
+  const [localLayout, setLocalLayout] = useState<LayoutPaginas | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Fetch store configuration including layout
   const { data: lojaConfig, isLoading: isLoadingConfig } = useQuery({
@@ -84,9 +86,17 @@ export function usePageBuilder() {
     enabled: !!selectedCliente?.id
   });
 
-  const layout: LayoutPaginas = lojaConfig?.layout_paginas 
-    ? (lojaConfig.layout_paginas as unknown as LayoutPaginas)
-    : DEFAULT_LAYOUT;
+  // Initialize local layout from database
+  useEffect(() => {
+    if (lojaConfig?.layout_paginas) {
+      setLocalLayout(lojaConfig.layout_paginas as unknown as LayoutPaginas);
+    } else {
+      setLocalLayout(DEFAULT_LAYOUT);
+    }
+    setHasUnsavedChanges(false);
+  }, [lojaConfig]);
+
+  const layout: LayoutPaginas = localLayout || DEFAULT_LAYOUT;
 
   const lojaData: LojaData | undefined = lojaConfig ? {
     nome_loja: lojaConfig.nome_loja || 'Minha Loja',
@@ -115,6 +125,8 @@ export function usePageBuilder() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['loja-configuracao-editor', selectedCliente?.id] });
+      queryClient.invalidateQueries({ queryKey: ['loja-anuncios-publicos'] });
+      setHasUnsavedChanges(false);
       toast.success('Layout salvo com sucesso!');
     },
     onError: () => {
@@ -123,6 +135,13 @@ export function usePageBuilder() {
   });
 
   const blocos = layout[paginaAtual]?.blocos || [];
+
+  // Manual save function
+  const salvarLayout = useCallback(() => {
+    if (localLayout) {
+      saveMutation.mutate(localLayout);
+    }
+  }, [localLayout, saveMutation]);
 
   const adicionarBloco = useCallback((tipo: BlocoLoja['tipo']) => {
     const definicao = BLOCOS_DISPONIVEIS.find(b => b.tipo === tipo);
@@ -142,9 +161,10 @@ export function usePageBuilder() {
       }
     };
 
-    saveMutation.mutate(novoLayout);
+    setLocalLayout(novoLayout);
+    setHasUnsavedChanges(true);
     setSelectedBlocoId(novoBloco.id);
-  }, [layout, blocos, paginaAtual, saveMutation]);
+  }, [layout, blocos, paginaAtual]);
 
   const removerBloco = useCallback((blocoId: string) => {
     const novoLayout: LayoutPaginas = {
@@ -154,11 +174,12 @@ export function usePageBuilder() {
       }
     };
 
-    saveMutation.mutate(novoLayout);
+    setLocalLayout(novoLayout);
+    setHasUnsavedChanges(true);
     if (selectedBlocoId === blocoId) {
       setSelectedBlocoId(null);
     }
-  }, [layout, blocos, paginaAtual, selectedBlocoId, saveMutation]);
+  }, [layout, blocos, paginaAtual, selectedBlocoId]);
 
   const atualizarBlocoConfig = useCallback((blocoId: string, novaConfig: Record<string, any>) => {
     const novoLayout: LayoutPaginas = {
@@ -170,8 +191,9 @@ export function usePageBuilder() {
       }
     };
 
-    saveMutation.mutate(novoLayout);
-  }, [layout, blocos, paginaAtual, saveMutation]);
+    setLocalLayout(novoLayout);
+    setHasUnsavedChanges(true);
+  }, [layout, blocos, paginaAtual]);
 
   const reordenarBlocos = useCallback((activeId: string, overId: string) => {
     if (activeId === overId) return;
@@ -192,8 +214,9 @@ export function usePageBuilder() {
       }
     };
 
-    saveMutation.mutate(novoLayout);
-  }, [layout, blocos, paginaAtual, saveMutation]);
+    setLocalLayout(novoLayout);
+    setHasUnsavedChanges(true);
+  }, [layout, blocos, paginaAtual]);
 
   const selectedBloco = blocos.find(b => b.id === selectedBlocoId);
 
@@ -205,6 +228,7 @@ export function usePageBuilder() {
     lojaSlug: lojaData?.slug || '',
     isLoading: isLoadingConfig,
     isSaving: saveMutation.isPending,
+    hasUnsavedChanges,
     selectedBloco,
     selectedBlocoId,
     setSelectedBlocoId,
@@ -214,6 +238,7 @@ export function usePageBuilder() {
     adicionarBloco,
     removerBloco,
     atualizarBlocoConfig,
-    reordenarBlocos
+    reordenarBlocos,
+    salvarLayout
   };
 }

@@ -18,6 +18,7 @@ export default function LojaEditor() {
     lojaSlug,
     isLoading,
     isSaving,
+    hasUnsavedChanges,
     selectedBloco,
     selectedBlocoId,
     setSelectedBlocoId,
@@ -27,7 +28,8 @@ export default function LojaEditor() {
     adicionarBloco,
     removerBloco,
     atualizarBlocoConfig,
-    reordenarBlocos
+    reordenarBlocos,
+    salvarLayout
   } = usePageBuilder();
 
   if (!selectedCliente) {
@@ -77,13 +79,17 @@ export default function LojaEditor() {
               Ver Loja
             </Button>
           )}
-          <Button disabled={isSaving}>
+          <Button 
+            onClick={salvarLayout} 
+            disabled={isSaving || !hasUnsavedChanges}
+            variant={hasUnsavedChanges ? "default" : "outline"}
+          >
             {isSaving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {isSaving ? 'Salvando...' : 'Salvo'}
+            {isSaving ? 'Salvando...' : hasUnsavedChanges ? 'Salvar' : 'Salvo'}
           </Button>
         </div>
       </header>
