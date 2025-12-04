@@ -7,8 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { BlocoLoja, BLOCOS_DISPONIVEIS } from './types';
 
 interface PageBuilderSettingsProps {
-  bloco: BlocoLoja | undefined;
-  onUpdateConfig: (blocoId: string, config: Record<string, any>) => void;
+  bloco: BlocoLoja | null | undefined;
+  onUpdateConfig: (config: Record<string, any>) => void;
 }
 
 export function PageBuilderSettings({ bloco, onUpdateConfig }: PageBuilderSettingsProps) {
@@ -25,7 +25,7 @@ export function PageBuilderSettings({ bloco, onUpdateConfig }: PageBuilderSettin
   const definicao = BLOCOS_DISPONIVEIS.find(b => b.tipo === bloco.tipo);
 
   const handleChange = (key: string, value: any) => {
-    onUpdateConfig(bloco.id, { [key]: value });
+    onUpdateConfig({ [key]: value });
   };
 
   return (

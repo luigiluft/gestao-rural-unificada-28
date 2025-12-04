@@ -8,7 +8,9 @@ export type TipoBlocoLoja =
   | 'contato' 
   | 'video' 
   | 'separador' 
-  | 'redes_sociais';
+  | 'redes_sociais'
+  | 'tabs_navegacao'
+  | 'footer';
 
 export interface BlocoLoja {
   id: string;
@@ -26,6 +28,12 @@ export interface LayoutPaginas {
   [key: string]: PaginaLoja;
 }
 
+export interface PaginaDisponivel {
+  id: string;
+  nome: string;
+  descricao: string;
+}
+
 export interface BlocoDefinicao {
   tipo: TipoBlocoLoja;
   nome: string;
@@ -41,11 +49,10 @@ export const BLOCOS_DISPONIVEIS: BlocoDefinicao[] = [
     icone: '🖼️',
     descricao: 'Banner com título, subtítulo e botão',
     configPadrao: {
-      titulo: 'Bem-vindo à nossa loja',
-      subtitulo: 'Produtos de qualidade para você',
-      textoBotao: 'Ver Produtos',
-      imagemFundo: null,
-      corFundo: '#22c55e'
+      titulo: '',
+      subtitulo: '',
+      mostrarLogo: true,
+      mostrarBanner: true
     }
   },
   {
@@ -54,10 +61,21 @@ export const BLOCOS_DISPONIVEIS: BlocoDefinicao[] = [
     icone: '🛍️',
     descricao: 'Exibe produtos em grid',
     configPadrao: {
-      titulo: 'Nossos Produtos',
-      quantidade: 8,
-      categoria: null,
-      mostrarPreco: true
+      colunas: 4,
+      limite: 0,
+      mostrarBusca: true,
+      mostrarCategorias: true
+    }
+  },
+  {
+    tipo: 'tabs_navegacao',
+    nome: 'Tabs de Navegação',
+    icone: '📑',
+    descricao: 'Abas para Spot e Cotação',
+    configPadrao: {
+      mostrarSpot: true,
+      mostrarCotacao: true,
+      tabAtiva: 'spot'
     }
   },
   {
@@ -108,9 +126,9 @@ export const BLOCOS_DISPONIVEIS: BlocoDefinicao[] = [
     icone: '📧',
     descricao: 'Informações de contato',
     configPadrao: {
-      mostrarWhatsapp: true,
       mostrarEmail: true,
-      mostrarEndereco: false
+      mostrarTelefone: true,
+      mostrarHorario: true
     }
   },
   {
@@ -129,8 +147,8 @@ export const BLOCOS_DISPONIVEIS: BlocoDefinicao[] = [
     icone: '➖',
     descricao: 'Linha divisória',
     configPadrao: {
-      estilo: 'linha',
-      margem: 'normal'
+      estilo: 'solid',
+      margem: 'md'
     }
   },
   {
@@ -144,5 +162,22 @@ export const BLOCOS_DISPONIVEIS: BlocoDefinicao[] = [
       youtube: '',
       linkedin: ''
     }
+  },
+  {
+    tipo: 'footer',
+    nome: 'Rodapé',
+    icone: '📋',
+    descricao: 'Rodapé da loja',
+    configPadrao: {
+      mostrarInfoLoja: true,
+      mostrarContato: true,
+      mostrarLinks: true
+    }
   }
+];
+
+export const PAGINAS_DISPONIVEIS: PaginaDisponivel[] = [
+  { id: 'home', nome: 'Página Inicial', descricao: 'Página principal da loja' },
+  { id: 'produto', nome: 'Página de Produto', descricao: 'Template para página de produto individual' },
+  { id: 'cotacao', nome: 'Cotação', descricao: 'Página de solicitação de cotação' }
 ];

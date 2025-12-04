@@ -5,16 +5,43 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Trash2 } from 'lucide-react';
 import { BlocoLoja, BLOCOS_DISPONIVEIS } from './types';
+import { BlockRenderer } from './BlockRenderer';
 import { cn } from '@/lib/utils';
+
+interface LojaData {
+  nome_loja: string;
+  descricao?: string;
+  logo_url?: string;
+  banner_url?: string;
+  email_contato?: string;
+  whatsapp?: string;
+  horario_atendimento?: string;
+  mostrar_telefone?: boolean;
+}
+
+interface Anuncio {
+  id: string;
+  titulo: string;
+  preco_unitario: number;
+  preco_promocional?: number | null;
+  quantidade_minima: number;
+  unidade_venda: string;
+  categoria?: string | null;
+  imagens?: string[] | null;
+  descricao_anuncio?: string | null;
+}
 
 interface SortableBlocoProps {
   bloco: BlocoLoja;
   isSelected: boolean;
   onSelect: () => void;
   onRemove: () => void;
+  lojaData?: LojaData;
+  anuncios: Anuncio[];
+  lojaSlug: string;
 }
 
-function SortableBloco({ bloco, isSelected, onSelect, onRemove }: SortableBlocoProps) {
+function SortableBloco({ bloco, isSelected, onSelect, onRemove, lojaData, anuncios, lojaSlug }: SortableBlocoProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: bloco.id });
 
   const style = {
@@ -29,38 +56,48 @@ function SortableBloco({ bloco, isSelected, onSelect, onRemove }: SortableBlocoP
       ref={setNodeRef}
       style={style}
       className={cn(
-        "bg-card border rounded-lg p-4 mb-3 cursor-pointer transition-all",
+        "relative group rounded-lg border-2 mb-2 transition-all bg-background",
         isSelected && "ring-2 ring-primary border-primary",
+        !isSelected && "border-transparent hover:border-border",
         isDragging && "opacity-50"
       )}
       onClick={onSelect}
     >
-      <div className="flex items-center gap-3">
+      {/* Floating Toolbar */}
+      <div className={cn(
+        "absolute -top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-2 py-1 rounded-md bg-background border shadow-sm transition-opacity",
+        isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+      )}>
         <button
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
         >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
-        <span className="text-xl">{definicao?.icone}</span>
-        <div className="flex-1">
-          <div className="font-medium text-sm">{definicao?.nome}</div>
-          <div className="text-xs text-muted-foreground">
-            {bloco.config.titulo || bloco.config.conteudo?.substring(0, 30) || 'Sem título'}
-          </div>
-        </div>
+        <span className="text-xs font-medium px-1">{definicao?.nome}</span>
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive"
+          className="h-5 w-5 text-destructive hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
           }}
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3 w-3" />
         </Button>
+      </div>
+
+      {/* Block Preview */}
+      <div className="cursor-pointer overflow-hidden rounded-lg">
+        <BlockRenderer 
+          bloco={bloco} 
+          lojaData={lojaData}
+          anuncios={anuncios}
+          lojaSlug={lojaSlug}
+          isPreview={true}
+        />
       </div>
     </div>
   );
@@ -69,9 +106,12 @@ function SortableBloco({ bloco, isSelected, onSelect, onRemove }: SortableBlocoP
 interface PageBuilderCanvasProps {
   blocos: BlocoLoja[];
   selectedBlocoId: string | null;
-  onSelectBloco: (id: string) => void;
+  onSelectBloco: (id: string | null) => void;
   onRemoveBloco: (id: string) => void;
   onReorder: (activeId: string, overId: string) => void;
+  lojaData?: LojaData;
+  anuncios?: Anuncio[];
+  lojaSlug?: string;
 }
 
 export function PageBuilderCanvas({
@@ -79,10 +119,13 @@ export function PageBuilderCanvas({
   selectedBlocoId,
   onSelectBloco,
   onRemoveBloco,
-  onReorder
+  onReorder,
+  lojaData,
+  anuncios = [],
+  lojaSlug = ''
 }: PageBuilderCanvasProps) {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -98,17 +141,17 @@ export function PageBuilderCanvas({
   return (
     <div className="flex-1 bg-muted/20 flex flex-col">
       <div className="p-4 border-b bg-background">
-        <h3 className="font-semibold text-sm">Preview do Layout</h3>
+        <h3 className="font-semibold text-sm">Preview da Loja</h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Arraste para reordenar os blocos
+          Clique em um bloco para editar, arraste para reordenar
         </p>
       </div>
       <ScrollArea className="flex-1">
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="p-4">
           {blocos.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>Nenhum bloco adicionado.</p>
-              <p className="text-sm">Clique nos blocos à esquerda para começar.</p>
+            <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+              <p className="text-lg font-medium">Página vazia</p>
+              <p className="text-sm">Clique nos blocos à esquerda para começar</p>
             </div>
           ) : (
             <DndContext
@@ -117,15 +160,20 @@ export function PageBuilderCanvas({
               onDragEnd={handleDragEnd}
             >
               <SortableContext items={blocos.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                {blocos.map((bloco) => (
-                  <SortableBloco
-                    key={bloco.id}
-                    bloco={bloco}
-                    isSelected={selectedBlocoId === bloco.id}
-                    onSelect={() => onSelectBloco(bloco.id)}
-                    onRemove={() => onRemoveBloco(bloco.id)}
-                  />
-                ))}
+                <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
+                  {blocos.map((bloco) => (
+                    <SortableBloco
+                      key={bloco.id}
+                      bloco={bloco}
+                      isSelected={selectedBlocoId === bloco.id}
+                      onSelect={() => onSelectBloco(bloco.id)}
+                      onRemove={() => onRemoveBloco(bloco.id)}
+                      lojaData={lojaData}
+                      anuncios={anuncios}
+                      lojaSlug={lojaSlug}
+                    />
+                  ))}
+                </div>
               </SortableContext>
             </DndContext>
           )}
