@@ -91,7 +91,7 @@ export default function MarketplaceMinhaContaPage() {
         <User className="h-16 w-16 text-muted-foreground" />
         <h1 className="text-2xl font-bold">Acesso Restrito</h1>
         <p className="text-muted-foreground">Você precisa fazer login para acessar sua conta.</p>
-        <Button onClick={() => navigate('/auth?redirect=/marketplace/minha-conta')}>
+        <Button onClick={() => navigate('/marketplace/auth')}>
           Fazer Login
         </Button>
       </div>

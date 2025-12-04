@@ -145,7 +145,7 @@ export default function Marketplace() {
               <PlatformLogo to="/marketplace" size="sm" />
             </div>
             <HeaderActions 
-              loginUrl="/auth?redirect=/marketplace/minha-conta"
+              loginUrl="/marketplace/auth"
               minhaContaUrl="/marketplace/minha-conta"
             />
           </div>
