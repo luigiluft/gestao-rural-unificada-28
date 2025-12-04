@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ClienteProduto, ClienteProdutoFormData } from "@/hooks/useClienteProdutos"
-import { Loader2 } from "lucide-react"
+import { Loader2, Upload, X, Image } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 
 interface ProdutoConfigDialogProps {
   produto: ClienteProduto | null
@@ -35,6 +37,8 @@ export function ProdutoConfigDialog({
   onSave,
   isSaving,
 }: ProdutoConfigDialogProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const [formData, setFormData] = useState<ClienteProdutoFormData>({
     preco_unitario: null,
     preco_promocional: null,
@@ -44,6 +48,7 @@ export function ProdutoConfigDialog({
     ativo_loja_propria: false,
     quantidade_minima: 1,
     usar_estoque_real: true,
+    imagens: [],
   })
 
   useEffect(() => {
@@ -57,6 +62,7 @@ export function ProdutoConfigDialog({
         ativo_loja_propria: produto.ativo_loja_propria,
         quantidade_minima: produto.quantidade_minima,
         usar_estoque_real: produto.usar_estoque_real,
+        imagens: Array.isArray(produto.imagens) ? produto.imagens : [],
       })
     }
   }, [produto])
@@ -67,11 +73,59 @@ export function ProdutoConfigDialog({
     onOpenChange(false)
   }
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0 || !produto) return
+
+    setIsUploading(true)
+    const newImages: string[] = [...(formData.imagens || [])]
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${produto.cliente_id}/${produto.id}/${Date.now()}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('produto-imagens')
+          .upload(fileName, file)
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError)
+          toast.error(`Erro ao enviar ${file.name}`)
+          continue
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('produto-imagens')
+          .getPublicUrl(fileName)
+
+        newImages.push(publicUrl)
+      }
+
+      setFormData(prev => ({ ...prev, imagens: newImages }))
+      toast.success("Imagens enviadas com sucesso!")
+    } catch (error) {
+      console.error("Error uploading images:", error)
+      toast.error("Erro ao enviar imagens")
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...(formData.imagens || [])]
+    newImages.splice(index, 1)
+    setFormData(prev => ({ ...prev, imagens: newImages }))
+  }
+
   if (!produto) return null
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configurar Produto para Venda</DialogTitle>
         </DialogHeader>
@@ -82,6 +136,57 @@ export function ProdutoConfigDialog({
             <p className="font-medium">{produto.nome_produto}</p>
             <p className="text-sm text-muted-foreground">
               Código: {produto.codigo_produto || "N/A"} | Unidade: {produto.unidade_medida}
+            </p>
+          </div>
+
+          {/* Imagens */}
+          <div className="space-y-2">
+            <Label>Fotos do Produto</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {(formData.imagens || []).map((url, index) => (
+                <div key={index} className="relative aspect-square group">
+                  <img
+                    src={url}
+                    alt={`Imagem ${index + 1}`}
+                    className="w-full h-full object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              
+              {/* Add image button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="h-6 w-6" />
+                    <span className="text-xs">Adicionar</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <p className="text-xs text-muted-foreground">
+              Adicione até 8 fotos do produto. Recomendado: 800x800px
             </p>
           </div>
 
@@ -229,7 +334,7 @@ export function ProdutoConfigDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving || isUploading}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Salvar
           </Button>

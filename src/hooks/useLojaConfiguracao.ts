@@ -19,6 +19,9 @@ export interface LojaConfiguracao {
   horario_atendimento: string | null
   mostrar_endereco: boolean
   mostrar_telefone: boolean
+  cor_primaria: string | null
+  cor_secundaria: string | null
+  cor_fundo: string | null
   created_at: string
   updated_at: string
 }
@@ -115,6 +118,88 @@ export const useLojaConfiguracao = () => {
     },
   })
 
+  // Upload de logo
+  const uploadLogoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!selectedCliente?.id) throw new Error("Cliente não selecionado")
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${selectedCliente.id}/logo.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('loja-assets')
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('loja-assets')
+        .getPublicUrl(fileName)
+
+      // Atualizar configuração com a URL
+      const { error: updateError } = await supabase
+        .from("loja_configuracao")
+        .update({ 
+          logo_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq("cliente_id", selectedCliente.id)
+
+      if (updateError) throw updateError
+
+      return publicUrl
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loja-configuracao"] })
+      toast.success("Logo atualizado!")
+    },
+    onError: (error) => {
+      console.error("Erro ao fazer upload do logo:", error)
+      toast.error("Erro ao fazer upload do logo")
+    },
+  })
+
+  // Upload de banner
+  const uploadBannerMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!selectedCliente?.id) throw new Error("Cliente não selecionado")
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${selectedCliente.id}/banner.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('loja-assets')
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('loja-assets')
+        .getPublicUrl(fileName)
+
+      // Atualizar configuração com a URL
+      const { error: updateError } = await supabase
+        .from("loja_configuracao")
+        .update({ 
+          banner_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq("cliente_id", selectedCliente.id)
+
+      if (updateError) throw updateError
+
+      return publicUrl
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loja-configuracao"] })
+      toast.success("Banner atualizado!")
+    },
+    onError: (error) => {
+      console.error("Erro ao fazer upload do banner:", error)
+      toast.error("Erro ao fazer upload do banner")
+    },
+  })
+
   return {
     configuracao: query.data,
     isLoading: query.isLoading,
@@ -123,5 +208,9 @@ export const useLojaConfiguracao = () => {
     isSaving: createOrUpdateMutation.isPending,
     habilitarLoja: habilitarLoja.mutate,
     isHabilitando: habilitarLoja.isPending,
+    uploadLogo: uploadLogoMutation.mutate,
+    isUploadingLogo: uploadLogoMutation.isPending,
+    uploadBanner: uploadBannerMutation.mutate,
+    isUploadingBanner: uploadBannerMutation.isPending,
   }
 }
