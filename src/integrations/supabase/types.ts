@@ -3215,6 +3215,7 @@ export type Database = {
           email_contato: string | null
           horario_atendimento: string | null
           id: string
+          layout_paginas: Json | null
           logo_url: string | null
           loja_habilitada: boolean | null
           mostrar_endereco: boolean | null
@@ -3236,6 +3237,7 @@ export type Database = {
           email_contato?: string | null
           horario_atendimento?: string | null
           id?: string
+          layout_paginas?: Json | null
           logo_url?: string | null
           loja_habilitada?: boolean | null
           mostrar_endereco?: boolean | null
@@ -3257,6 +3259,7 @@ export type Database = {
           email_contato?: string | null
           horario_atendimento?: string | null
           id?: string
+          layout_paginas?: Json | null
           logo_url?: string | null
           loja_habilitada?: boolean | null
           mostrar_endereco?: boolean | null

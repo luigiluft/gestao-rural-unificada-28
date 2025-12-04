@@ -100,6 +100,7 @@ import LojaAuth from "./pages/LojaAuth";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
+import LojaEditor from "./pages/LojaEditor";
 import LojaCotacao from "./pages/LojaCotacao";
 import EncontreDeposito from "./pages/Public/EncontreDeposito";
 import Parceiros from "./pages/Public/Parceiros";
@@ -297,6 +298,7 @@ const App = () => {
               
               {/* Minha Loja (Cliente) */}
               <Route path="minha-loja" element={<RequirePageAccess pageKey="minha-loja"><MinhaLoja /></RequirePageAccess>} />
+              <Route path="editor-loja" element={<RequirePageAccess pageKey="minha-loja"><LojaEditor /></RequirePageAccess>} />
               
               <Route path="*" element={<NotFound />} />
             </Route>

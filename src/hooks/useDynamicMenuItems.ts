@@ -24,6 +24,7 @@ import {
   Headphones,
   HelpCircle,
   Home,
+  LayoutTemplate,
   MapPin,
   Package,
   PackageCheck,
@@ -108,7 +109,8 @@ const menuLabels = {
   'tutorial': 'Tutorial',
   'empresa-matriz': 'Empresa Matriz',
   'atendimento': 'Atendimento',
-  'minha-loja': 'Minha Loja'
+  'minha-loja': 'Minha Loja',
+  'editor-loja': 'Editor da Loja'
 }
 
 const iconMap = {
@@ -170,7 +172,8 @@ const iconMap = {
   'tutorial': BookOpen,
   'empresa-matriz': Building2,
   'atendimento': Headphones,
-  'minha-loja': Store
+  'minha-loja': Store,
+  'editor-loja': LayoutTemplate
 }
 
 export const useDynamicMenuItems = () => {
@@ -525,6 +528,13 @@ export const useDynamicMenuItems = () => {
         path: '/minha-loja',
         label: menuLabels['minha-loja'],
         icon: iconMap['minha-loja']
+      })
+      
+      // Adicionar Editor da Loja junto com Minha Loja
+      items.push({
+        path: '/editor-loja',
+        label: menuLabels['editor-loja'],
+        icon: iconMap['editor-loja']
       })
     }
 
