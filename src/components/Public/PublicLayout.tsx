@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useEmpresaMatriz, getEnderecoResumido } from "@/hooks/useEmpresaMatriz";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { PlatformLogo } from "@/components/Marketplace/PlatformLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,10 +20,10 @@ const navItems = [
   { label: "Sobre", path: "/site/sobre" },
   { label: "Como Funciona", path: "/site/como-funciona" },
   { label: "Benefícios", path: "/site/beneficios" },
-  { label: "Encontre um Depósito", path: "/site/encontre-deposito" },
+  { label: "Depósitos", path: "/site/encontre-deposito" },
   { label: "Parceiros", path: "/site/parceiros" },
   { label: "Marketplace", path: "/marketplace" },
-  { label: "Seja um Franqueado", path: "/site/seja-franqueado" },
+  { label: "Franqueado", path: "/site/seja-franqueado" },
   { label: "Contato", path: "/site/contato" },
 ];
 
@@ -54,22 +55,15 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/site" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">L</span>
-              </div>
-              <span className="font-bold text-xl text-foreground">
-                {empresaData?.nome_fantasia || "Luft AgroHub"}
-              </span>
-            </Link>
+            <PlatformLogo to="/site" size="sm" />
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden xl:flex items-center gap-0.5">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-2.5 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                     location.pathname === item.path
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -81,7 +75,7 @@ export default function PublicLayout() {
             </nav>
 
             {/* Login/Account Button */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden xl:flex items-center gap-3">
               {session ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -91,7 +85,7 @@ export default function PublicLayout() {
                           {profile?.nome?.charAt(0)?.toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="hidden xl:inline">
+                      <span className="hidden 2xl:inline">
                         {profile?.nome?.split(" ")[0] || "Usuário"}
                       </span>
                     </Button>
@@ -110,7 +104,7 @@ export default function PublicLayout() {
                 </DropdownMenu>
               ) : (
                 <Link to="/auth">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 whitespace-nowrap">
                     <LogIn className="h-4 w-4" />
                     Entrar / Cadastrar
                   </Button>
@@ -120,7 +114,7 @@ export default function PublicLayout() {
 
             {/* Mobile Menu Button */}
             <button
-              className="lg:hidden p-2 text-muted-foreground hover:text-foreground"
+              className="xl:hidden p-2 text-muted-foreground hover:text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -130,7 +124,7 @@ export default function PublicLayout() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background">
+          <div className="xl:hidden border-t border-border bg-background">
             <div className="px-4 py-3 space-y-1">
               {navItems.map((item) => (
                 <Link
@@ -197,13 +191,8 @@ export default function PublicLayout() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Logo & Description */}
             <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-xl">L</span>
-                </div>
-                <span className="font-bold text-xl text-foreground">
-                  {empresaData?.nome_fantasia || "Luft AgroHub"}
-                </span>
+              <div className="mb-4">
+                <PlatformLogo to="/site" />
               </div>
               <p className="text-muted-foreground max-w-md">
                 A maior rede de armazenagem rural digital do Brasil. Conectando produtores, 

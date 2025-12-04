@@ -15,6 +15,7 @@ export interface EmpresaMatrizData {
   estado: string;
   cep: string;
   horario_funcionamento: string;
+  logo_url: string;
 }
 
 const defaultData: EmpresaMatrizData = {
@@ -30,7 +31,8 @@ const defaultData: EmpresaMatrizData = {
   cidade: "Londrina",
   estado: "PR",
   cep: "",
-  horario_funcionamento: "Seg - Sex: 8h às 18h"
+  horario_funcionamento: "Seg - Sex: 8h às 18h",
+  logo_url: ""
 };
 
 export const useEmpresaMatriz = () => {

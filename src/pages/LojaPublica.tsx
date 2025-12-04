@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { useLojaAnunciosPublicos, MarketplaceAnuncio } from "@/hooks/useMarketplace"
 import { HeaderActions } from "@/components/Marketplace/HeaderActions"
+import { PlatformLogo } from "@/components/Marketplace/PlatformLogo"
 import { FloatingAtendimentoButton } from "@/components/Loja/FloatingAtendimentoButton"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -131,15 +132,13 @@ export default function LojaPublica() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header with cart and auth */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors" title="Ir para Marketplace">
-              <Home className="h-5 w-5" />
-            </Link>
-            <Link to="/marketplace" className="font-bold text-xl text-primary">
-              AgroHub
-            </Link>
-          </div>
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors" title="Ir para Marketplace">
+                <Home className="h-5 w-5" />
+              </Link>
+              <PlatformLogo to="/marketplace" size="sm" />
+            </div>
           <HeaderActions 
             loginUrl={`/loja/${slug}/auth`}
             minhaContaUrl={`/loja/${slug}/minha-conta`}
