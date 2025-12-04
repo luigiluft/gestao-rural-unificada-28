@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { useCliente } from "@/contexts/ClienteContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
-import { Json } from "@/integrations/supabase/types"
 
 export interface CotacaoLoja {
   id: string
@@ -134,7 +133,7 @@ export const useCotacoesLoja = () => {
           resposta_cliente: resposta,
           data_resposta: new Date().toISOString(),
           versao: novaVersao,
-          historico_negociacao: [...historico, novoHistorico],
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
           ultima_acao_por: 'vendedor',
           updated_at: new Date().toISOString()
         })
@@ -191,7 +190,7 @@ export const useCotacoesLoja = () => {
           resposta_cliente: mensagem,
           data_resposta: new Date().toISOString(),
           versao: novaVersao,
-          historico_negociacao: [...historico, novoHistorico],
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
           ultima_acao_por: 'vendedor',
           updated_at: new Date().toISOString()
         })
@@ -247,9 +246,9 @@ export const useCotacoesConsumidor = () => {
       return (data || []).map(item => ({
         ...item,
         historico_negociacao: Array.isArray(item.historico_negociacao) 
-          ? item.historico_negociacao 
+          ? item.historico_negociacao as unknown as NegociacaoHistorico[]
           : []
-      })) as CotacaoComItens[]
+      })) as unknown as CotacaoComItens[]
     },
     enabled: !!user?.id,
   })
@@ -280,7 +279,7 @@ export const useCotacoesConsumidor = () => {
         .update({ 
           status: 'aprovada',
           versao: novaVersao,
-          historico_negociacao: [...historico, novoHistorico],
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
           ultima_acao_por: 'consumidor',
           updated_at: new Date().toISOString()
         })
@@ -325,7 +324,7 @@ export const useCotacoesConsumidor = () => {
         .update({ 
           status: 'rejeitada',
           versao: novaVersao,
-          historico_negociacao: [...historico, novoHistorico],
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
           ultima_acao_por: 'consumidor',
           updated_at: new Date().toISOString()
         })
@@ -380,7 +379,7 @@ export const useCotacoesConsumidor = () => {
           status: 'pendente',
           precos_negociados: precos,
           versao: novaVersao,
-          historico_negociacao: [...historico, novoHistorico],
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
           ultima_acao_por: 'consumidor',
           updated_at: new Date().toISOString()
         })
@@ -424,7 +423,7 @@ export const useCotacoesConsumidor = () => {
         .update({ 
           status: 'convertida',
           versao: novaVersao,
-          historico_negociacao: [...historico, novoHistorico],
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
           ultima_acao_por: 'consumidor',
           updated_at: new Date().toISOString()
         })
@@ -491,7 +490,7 @@ export const useEnviarCotacao = () => {
       // Create cotacao
       const { data: cotacao, error: cotacaoError } = await supabase
         .from("cotacoes_loja")
-        .insert({
+        .insert([{
           cliente_id: clienteId,
           consumidor_id: consumidor.userId || null,
           consumidor_nome: consumidor.nome,
@@ -500,9 +499,9 @@ export const useEnviarCotacao = () => {
           consumidor_empresa: consumidor.empresa || null,
           observacoes: observacoes || null,
           versao: 1,
-          historico_negociacao: [historicoInicial],
+          historico_negociacao: [historicoInicial] as unknown as null,
           ultima_acao_por: 'consumidor'
-        })
+        }])
         .select()
         .single()
 
