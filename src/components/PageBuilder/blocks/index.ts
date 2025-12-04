@@ -1,0 +1,5 @@
+export { HeroBlock } from './HeroBlock'
+export { ContatoInfoBlock } from './ContatoInfoBlock'
+export { ProdutosGridBlock } from './ProdutosGridBlock'
+export { TabsNavegacaoBlock } from './TabsNavegacaoBlock'
+export { FooterBlock } from './FooterBlock'

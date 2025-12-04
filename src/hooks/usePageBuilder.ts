@@ -3,18 +3,31 @@ import { useCliente } from '@/contexts/ClienteContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { BlocoLoja, LayoutPaginas, BLOCOS_DISPONIVEIS } from '@/components/PageBuilder/types';
-import type { Json } from '@/integrations/supabase/types';
+import { BlocoLoja, LayoutPaginas, BLOCOS_DISPONIVEIS, PAGINAS_DISPONIVEIS } from '@/components/PageBuilder/types';
 
 const DEFAULT_LAYOUT: LayoutPaginas = {
   home: {
     blocos: [
-      { id: 'hero-1', tipo: 'hero', ordem: 0, config: BLOCOS_DISPONIVEIS.find(b => b.tipo === 'hero')?.configPadrao || {} },
-      { id: 'produtos-1', tipo: 'grade_produtos', ordem: 1, config: BLOCOS_DISPONIVEIS.find(b => b.tipo === 'grade_produtos')?.configPadrao || {} },
-      { id: 'contato-1', tipo: 'contato', ordem: 2, config: BLOCOS_DISPONIVEIS.find(b => b.tipo === 'contato')?.configPadrao || {} }
+      { id: 'hero-1', tipo: 'hero', ordem: 0, config: { mostrarLogo: true, mostrarBanner: true } },
+      { id: 'contato-1', tipo: 'contato', ordem: 1, config: { mostrarEmail: true, mostrarTelefone: true, mostrarHorario: true } },
+      { id: 'tabs-1', tipo: 'tabs_navegacao', ordem: 2, config: { mostrarSpot: true, mostrarCotacao: true } },
+      { id: 'produtos-1', tipo: 'grade_produtos', ordem: 3, config: { colunas: 4, mostrarBusca: true, mostrarCategorias: true } },
+      { id: 'footer-1', tipo: 'footer', ordem: 4, config: { mostrarInfoLoja: true, mostrarContato: true, mostrarLinks: true } }
     ]
   }
 };
+
+interface LojaData {
+  nome_loja: string;
+  descricao?: string;
+  logo_url?: string;
+  banner_url?: string;
+  email_contato?: string;
+  whatsapp?: string;
+  horario_atendimento?: string;
+  mostrar_telefone?: boolean;
+  slug?: string;
+}
 
 export function usePageBuilder() {
   const { selectedCliente } = useCliente();
@@ -22,23 +35,68 @@ export function usePageBuilder() {
   const [selectedBlocoId, setSelectedBlocoId] = useState<string | null>(null);
   const [paginaAtual, setPaginaAtual] = useState<string>('home');
 
-  const { data: layout, isLoading } = useQuery({
-    queryKey: ['page-builder-layout', selectedCliente?.id],
+  // Fetch store configuration including layout
+  const { data: lojaConfig, isLoading: isLoadingConfig } = useQuery({
+    queryKey: ['loja-configuracao-editor', selectedCliente?.id],
     queryFn: async () => {
-      if (!selectedCliente?.id) return DEFAULT_LAYOUT;
+      if (!selectedCliente?.id) return null;
       
       const { data, error } = await supabase
         .from('loja_configuracao')
-        .select('layout_paginas')
+        .select('*')
         .eq('cliente_id', selectedCliente.id)
         .maybeSingle();
 
       if (error) throw error;
-      if (!data?.layout_paginas) return DEFAULT_LAYOUT;
-      return data.layout_paginas as unknown as LayoutPaginas;
+      return data;
     },
     enabled: !!selectedCliente?.id
   });
+
+  // Fetch store products for preview
+  const { data: anuncios = [] } = useQuery({
+    queryKey: ['loja-anuncios-editor', selectedCliente?.id],
+    queryFn: async () => {
+      if (!selectedCliente?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('cliente_produtos')
+        .select('*')
+        .eq('cliente_id', selectedCliente.id)
+        .or('ativo_loja_propria.eq.true,ativo_marketplace.eq.true')
+        .limit(20);
+
+      if (error) throw error;
+      return data?.map(p => ({
+        id: p.id,
+        titulo: p.nome_produto,
+        preco_unitario: p.preco_unitario || 0,
+        preco_promocional: p.preco_promocional,
+        quantidade_minima: p.quantidade_minima || 1,
+        unidade_venda: p.unidade_medida || 'un',
+        categoria: p.categoria,
+        imagens: p.imagens as string[] | null,
+        descricao_anuncio: p.descricao_anuncio
+      })) || [];
+    },
+    enabled: !!selectedCliente?.id
+  });
+
+  const layout: LayoutPaginas = lojaConfig?.layout_paginas 
+    ? (lojaConfig.layout_paginas as unknown as LayoutPaginas)
+    : DEFAULT_LAYOUT;
+
+  const lojaData: LojaData | undefined = lojaConfig ? {
+    nome_loja: lojaConfig.nome_loja || 'Minha Loja',
+    descricao: lojaConfig.descricao || undefined,
+    logo_url: lojaConfig.logo_url || undefined,
+    banner_url: lojaConfig.banner_url || undefined,
+    email_contato: lojaConfig.email_contato || undefined,
+    whatsapp: lojaConfig.whatsapp || undefined,
+    horario_atendimento: lojaConfig.horario_atendimento || undefined,
+    mostrar_telefone: lojaConfig.mostrar_telefone ?? true,
+    slug: lojaConfig.slug || undefined
+  } : undefined;
 
   const saveMutation = useMutation({
     mutationFn: async (newLayout: LayoutPaginas) => {
@@ -54,7 +112,7 @@ export function usePageBuilder() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['page-builder-layout', selectedCliente?.id] });
+      queryClient.invalidateQueries({ queryKey: ['loja-configuracao-editor', selectedCliente?.id] });
       toast.success('Layout salvo com sucesso!');
     },
     onError: () => {
@@ -62,11 +120,11 @@ export function usePageBuilder() {
     }
   });
 
-  const blocos = layout?.[paginaAtual]?.blocos || [];
+  const blocos = layout[paginaAtual]?.blocos || [];
 
   const adicionarBloco = useCallback((tipo: BlocoLoja['tipo']) => {
     const definicao = BLOCOS_DISPONIVEIS.find(b => b.tipo === tipo);
-    if (!definicao || !layout) return;
+    if (!definicao) return;
 
     const novoBloco: BlocoLoja = {
       id: `${tipo}-${Date.now()}`,
@@ -87,8 +145,6 @@ export function usePageBuilder() {
   }, [layout, blocos, paginaAtual, saveMutation]);
 
   const removerBloco = useCallback((blocoId: string) => {
-    if (!layout) return;
-
     const novoLayout: LayoutPaginas = {
       ...layout,
       [paginaAtual]: {
@@ -103,8 +159,6 @@ export function usePageBuilder() {
   }, [layout, blocos, paginaAtual, selectedBlocoId, saveMutation]);
 
   const atualizarBlocoConfig = useCallback((blocoId: string, novaConfig: Record<string, any>) => {
-    if (!layout) return;
-
     const novoLayout: LayoutPaginas = {
       ...layout,
       [paginaAtual]: {
@@ -118,7 +172,7 @@ export function usePageBuilder() {
   }, [layout, blocos, paginaAtual, saveMutation]);
 
   const reordenarBlocos = useCallback((activeId: string, overId: string) => {
-    if (!layout || activeId === overId) return;
+    if (activeId === overId) return;
 
     const oldIndex = blocos.findIndex(b => b.id === activeId);
     const newIndex = blocos.findIndex(b => b.id === overId);
@@ -144,13 +198,17 @@ export function usePageBuilder() {
   return {
     layout,
     blocos,
-    isLoading,
+    lojaData,
+    anuncios,
+    lojaSlug: lojaData?.slug || '',
+    isLoading: isLoadingConfig,
     isSaving: saveMutation.isPending,
     selectedBloco,
     selectedBlocoId,
     setSelectedBlocoId,
     paginaAtual,
     setPaginaAtual,
+    paginasDisponiveis: PAGINAS_DISPONIVEIS,
     adicionarBloco,
     removerBloco,
     atualizarBlocoConfig,
