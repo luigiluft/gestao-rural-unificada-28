@@ -4,10 +4,18 @@ import { useCarrinho } from "@/contexts/CarrinhoContext"
 import { useProfile } from "@/hooks/useProfile"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, User, LogIn } from "lucide-react"
+import { ShoppingCart, User, LogIn, ShoppingBag, FileText, Heart, MapPin, Gift, Tractor, RefreshCw, LogOut, ChevronDown } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { Trash2, Plus, Minus, Package } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface HeaderActionsProps {
   /** URL para página de login */
@@ -20,22 +28,29 @@ interface HeaderActionsProps {
 
 export function HeaderActions({ loginUrl, minhaContaUrl, checkoutUrl = "/checkout" }: HeaderActionsProps) {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { data: profile } = useProfile()
   const { itens, removerItem, atualizarQuantidade, subtotal } = useCarrinho()
 
   const quantidadeProdutosDiferentes = itens.length
 
-  const handleAuthClick = () => {
-    if (user) {
-      navigate(minhaContaUrl)
-    } else {
-      navigate(loginUrl)
-    }
+  const handleLogout = async () => {
+    await logout()
+    navigate("/marketplace")
   }
 
   // Get first name for display
   const displayName = profile?.nome?.split(" ")[0] || user?.email?.split("@")[0] || "Usuário"
+
+  const menuItems = [
+    { icon: ShoppingBag, label: "Pedidos", tab: "pedidos" },
+    { icon: FileText, label: "Cotações", tab: "cotacoes" },
+    { icon: Heart, label: "Desejos", tab: "desejos" },
+    { icon: MapPin, label: "Endereços", tab: "enderecos" },
+    { icon: Gift, label: "Pontos", tab: "pontos" },
+    { icon: Tractor, label: "Fazendas", tab: "fazendas" },
+    { icon: RefreshCw, label: "Devoluções", tab: "devolucoes" },
+  ]
 
   return (
     <div className="flex items-center gap-2">
@@ -168,25 +183,55 @@ export function HeaderActions({ loginUrl, minhaContaUrl, checkoutUrl = "/checkou
         </SheetContent>
       </Sheet>
 
-      {/* Auth Button */}
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleAuthClick}
-        className="gap-2"
-      >
-        {user ? (
-          <>
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">{displayName}</span>
-          </>
-        ) : (
-          <>
-            <LogIn className="h-4 w-4" />
-            <span className="hidden sm:inline">Entrar / Cadastrar</span>
-          </>
-        )}
-      </Button>
+      {/* Auth Button / User Menu Dropdown */}
+      {user ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">{displayName}</span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-background">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">{profile?.nome || displayName}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {menuItems.map((item) => (
+              <DropdownMenuItem
+                key={item.tab}
+                onClick={() => navigate(`${minhaContaUrl}?tab=${item.tab}`)}
+                className="cursor-pointer"
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="cursor-pointer text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate(loginUrl)}
+          className="gap-2"
+        >
+          <LogIn className="h-4 w-4" />
+          <span className="hidden sm:inline">Entrar / Cadastrar</span>
+        </Button>
+      )}
     </div>
   )
 }

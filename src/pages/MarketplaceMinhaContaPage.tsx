@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useProfile } from "@/hooks/useProfile"
 import { useConsumidorPedidos } from "@/hooks/useConsumidorPedidos"
@@ -41,6 +41,8 @@ import { ptBR } from "date-fns/locale"
 
 export default function MarketplaceMinhaContaPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const tabFromUrl = searchParams.get("tab") || "pedidos"
   const { user, logout } = useAuth()
   const { data: profile, isLoading: profileLoading } = useProfile()
   
@@ -173,7 +175,7 @@ export default function MarketplaceMinhaContaPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="pedidos" className="space-y-6">
+        <Tabs defaultValue={tabFromUrl} className="space-y-6">
           <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="pedidos" className="gap-2">
               <ShoppingBag className="h-4 w-4" />
