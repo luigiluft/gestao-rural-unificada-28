@@ -1,5 +1,5 @@
 import { BlocoLoja } from './types'
-import { HeroBlock, ContatoInfoBlock, ProdutosGridBlock, TabsNavegacaoBlock, FooterBlock } from './blocks'
+import { HeroBlock, ContatoInfoBlock, ProdutosGridBlock, TabsNavegacaoBlock, FooterBlock, BuscaProdutosBlock, CategoriasBlock } from './blocks'
 
 interface LojaData {
   nome_loja: string
@@ -55,11 +55,17 @@ export function BlockRenderer({
       case 'contato':
         return <ContatoInfoBlock config={bloco.config} lojaData={lojaData} isPreview={isPreview} />
       
-      case 'grade_produtos':
-        return <ProdutosGridBlock config={bloco.config} anuncios={anuncios} lojaSlug={lojaSlug} isPreview={isPreview} />
-      
       case 'tabs_navegacao':
         return <TabsNavegacaoBlock config={bloco.config} isPreview={isPreview} />
+      
+      case 'busca_produtos':
+        return <BuscaProdutosBlock config={bloco.config} isPreview={isPreview} />
+      
+      case 'categorias':
+        return <CategoriasBlock config={bloco.config} anuncios={anuncios} isPreview={isPreview} />
+      
+      case 'grade_produtos':
+        return <ProdutosGridBlock config={bloco.config} anuncios={anuncios} lojaSlug={lojaSlug} isPreview={isPreview} />
       
       case 'footer':
         return <FooterBlock config={bloco.config} lojaData={lojaData} lojaSlug={lojaSlug} isPreview={isPreview} />

@@ -11,8 +11,10 @@ const DEFAULT_LAYOUT: LayoutPaginas = {
       { id: 'hero-1', tipo: 'hero', ordem: 0, config: { mostrarLogo: true, mostrarBanner: true } },
       { id: 'contato-1', tipo: 'contato', ordem: 1, config: { mostrarEmail: true, mostrarTelefone: true, mostrarHorario: true } },
       { id: 'tabs-1', tipo: 'tabs_navegacao', ordem: 2, config: { mostrarSpot: true, mostrarCotacao: true } },
-      { id: 'produtos-1', tipo: 'grade_produtos', ordem: 3, config: { colunas: 4, mostrarBusca: true, mostrarCategorias: true } },
-      { id: 'footer-1', tipo: 'footer', ordem: 4, config: { mostrarInfoLoja: true, mostrarContato: true, mostrarLinks: true } }
+      { id: 'busca-1', tipo: 'busca_produtos', ordem: 3, config: {} },
+      { id: 'categorias-1', tipo: 'categorias', ordem: 4, config: {} },
+      { id: 'produtos-1', tipo: 'grade_produtos', ordem: 5, config: { colunas: 4 } },
+      { id: 'footer-1', tipo: 'footer', ordem: 6, config: { mostrarInfoLoja: true, mostrarContato: true, mostrarLinks: true } }
     ]
   }
 };

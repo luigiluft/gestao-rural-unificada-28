@@ -10,6 +10,7 @@ export type TipoBlocoLoja =
   | 'separador' 
   | 'redes_sociais'
   | 'tabs_navegacao'
+  | 'busca_produtos'
   | 'footer';
 
 export interface BlocoLoja {
@@ -79,14 +80,18 @@ export const BLOCOS_DISPONIVEIS: BlocoDefinicao[] = [
     }
   },
   {
+    tipo: 'busca_produtos',
+    nome: 'Busca de Produtos',
+    icone: '🔍',
+    descricao: 'Barra de busca de produtos',
+    configPadrao: {}
+  },
+  {
     tipo: 'categorias',
-    nome: 'Categorias',
+    nome: 'Filtro de Categorias',
     icone: '📦',
-    descricao: 'Seções de categorias em destaque',
-    configPadrao: {
-      titulo: 'Categorias',
-      categorias: []
-    }
+    descricao: 'Botões de filtro por categoria',
+    configPadrao: {}
   },
   {
     tipo: 'carrossel',

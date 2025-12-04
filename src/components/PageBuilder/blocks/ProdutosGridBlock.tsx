@@ -1,10 +1,8 @@
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { Link } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Package, Search } from "lucide-react"
+import { Package } from "lucide-react"
 
 interface ProdutosGridBlockConfig {
   titulo?: string
@@ -92,36 +90,16 @@ function ProdutoCard({ anuncio, lojaSlug, isPreview }: { anuncio: Anuncio; lojaS
 }
 
 export function ProdutosGridBlock({ config, anuncios = [], lojaSlug = "", isPreview }: ProdutosGridBlockProps) {
-  const [busca, setBusca] = useState("")
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null)
-
-  const mostrarBusca = config.mostrarBusca !== false
-  const mostrarCategorias = config.mostrarCategorias !== false
   const colunas = config.colunas || 4
   const limite = config.limite || 0
 
-  const categorias = useMemo(() => {
-    const cats = anuncios
-      .map(a => a.categoria)
-      .filter((c): c is string => !!c)
-    return [...new Set(cats)]
-  }, [anuncios])
-
   const anunciosFiltrados = useMemo(() => {
-    let filtered = anuncios.filter(a => {
-      const matchBusca = !busca || 
-        a.titulo.toLowerCase().includes(busca.toLowerCase()) ||
-        a.descricao_anuncio?.toLowerCase().includes(busca.toLowerCase())
-      const matchCategoria = !categoriaSelecionada || a.categoria === categoriaSelecionada
-      return matchBusca && matchCategoria
-    })
-    
+    let filtered = [...anuncios]
     if (limite > 0) {
       filtered = filtered.slice(0, limite)
     }
-    
     return filtered
-  }, [anuncios, busca, categoriaSelecionada, limite])
+  }, [anuncios, limite])
 
   // Preview placeholder products
   const previewProducts: Anuncio[] = isPreview && anuncios.length === 0 ? [
@@ -136,52 +114,15 @@ export function ProdutosGridBlock({ config, anuncios = [], lojaSlug = "", isPrev
     : `grid-cols-2 md:grid-cols-3 lg:grid-cols-${Math.min(colunas, 4)} xl:grid-cols-${colunas}`
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {config.titulo && (
-        <h2 className={`font-bold mb-4 ${isPreview ? 'text-sm' : 'text-xl'}`}>{config.titulo}</h2>
-      )}
-
-      {mostrarBusca && !isPreview && (
-        <div className="max-w-md mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar produtos..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-      )}
-
-      {mostrarCategorias && categorias.length > 0 && !isPreview && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Button
-            variant={categoriaSelecionada === null ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCategoriaSelecionada(null)}
-          >
-            Todos
-          </Button>
-          {categorias.map((cat) => (
-            <Button
-              key={cat}
-              variant={categoriaSelecionada === cat ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCategoriaSelecionada(cat)}
-            >
-              {cat}
-            </Button>
-          ))}
-        </div>
-      )}
-
+    <div className="container mx-auto px-4 py-4">
       {previewProducts.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Package className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum produto encontrado</h3>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Package className={`text-muted-foreground mb-3 ${isPreview ? 'h-8 w-8' : 'h-12 w-12'}`} />
+            <h3 className={`font-semibold mb-1 ${isPreview ? 'text-sm' : 'text-lg'}`}>Nenhum produto</h3>
+            <p className={`text-muted-foreground ${isPreview ? 'text-xs' : 'text-sm'}`}>
+              Configure seus produtos na aba "Minha Loja"
+            </p>
           </CardContent>
         </Card>
       ) : (

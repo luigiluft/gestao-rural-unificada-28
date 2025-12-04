@@ -75,16 +75,25 @@ export function FooterBlock({ config, lojaData, lojaSlug, isPreview }: FooterBlo
           )}
 
           {/* Quick Links */}
-          {mostrarLinks && !isPreview && (
+          {mostrarLinks && (
             <div className="space-y-3">
-              <h4 className="font-semibold">Links</h4>
-              <div className="space-y-2 text-sm">
-                <Link to="/marketplace" className="block text-muted-foreground hover:text-primary">
-                  Marketplace AgroHub
-                </Link>
-                <Link to={`/loja/${lojaSlug}/auth`} className="block text-muted-foreground hover:text-primary">
-                  Criar uma conta
-                </Link>
+              <h4 className={`font-semibold ${isPreview ? 'text-sm' : ''}`}>Links</h4>
+              <div className={`text-muted-foreground ${isPreview ? 'text-xs space-y-1' : 'text-sm space-y-2'}`}>
+                {isPreview ? (
+                  <>
+                    <p className="hover:text-primary cursor-pointer">Marketplace AgroHub</p>
+                    <p className="hover:text-primary cursor-pointer">Criar uma conta</p>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/marketplace" className="block hover:text-primary">
+                      Marketplace AgroHub
+                    </Link>
+                    <Link to={`/loja/${lojaSlug}/auth`} className="block hover:text-primary">
+                      Criar uma conta
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           )}
