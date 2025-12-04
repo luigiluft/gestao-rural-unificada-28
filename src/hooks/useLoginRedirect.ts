@@ -96,7 +96,8 @@ export const useLoginRedirect = () => {
     if (profile.role === 'consumidor') {
       clearTimeout(redirectTimeout)
       hasRedirectedRef.current = true
-      navigate('/marketplace/minha-conta', { replace: true })
+      // Usar window.location para sair completamente do router interno
+      window.location.href = '/marketplace/minha-conta'
       return () => clearTimeout(redirectTimeout)
     }
 
