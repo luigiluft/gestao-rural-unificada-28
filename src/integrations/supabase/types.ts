@@ -532,6 +532,191 @@ export type Database = {
         }
         Relationships: []
       }
+      consumidor_enderecos: {
+        Row: {
+          apelido: string
+          bairro: string
+          cep: string
+          cidade: string
+          complemento: string | null
+          created_at: string
+          estado: string
+          id: string
+          is_default: boolean | null
+          logradouro: string
+          numero: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apelido: string
+          bairro: string
+          cep: string
+          cidade: string
+          complemento?: string | null
+          created_at?: string
+          estado: string
+          id?: string
+          is_default?: boolean | null
+          logradouro: string
+          numero: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apelido?: string
+          bairro?: string
+          cep?: string
+          cidade?: string
+          complemento?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          is_default?: boolean | null
+          logradouro?: string
+          numero?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      consumidor_fazendas: {
+        Row: {
+          area_hectares: number | null
+          car: string | null
+          created_at: string
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_complemento: string | null
+          endereco_estado: string | null
+          endereco_logradouro: string | null
+          endereco_numero: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area_hectares?: number | null
+          car?: string | null
+          created_at?: string
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_estado?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          id?: string
+          nome: string
+          tipo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area_hectares?: number | null
+          car?: string | null
+          created_at?: string
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_estado?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      consumidor_pontos: {
+        Row: {
+          id: string
+          saldo_atual: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          saldo_atual?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          saldo_atual?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      consumidor_pontos_historico: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          origem: string | null
+          quantidade: number
+          referencia_id: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          origem?: string | null
+          quantidade: number
+          referencia_id?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          origem?: string | null
+          quantidade?: number
+          referencia_id?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      consumidor_wishlist: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumidor_wishlist_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contrato_franquia: {
         Row: {
           created_at: string
@@ -3092,6 +3277,56 @@ export type Database = {
           },
         ]
       }
+      loja_devolucoes: {
+        Row: {
+          created_at: string
+          data_resposta: string | null
+          descricao: string | null
+          fotos: Json | null
+          id: string
+          motivo: string
+          pedido_id: string
+          resposta_vendedor: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_resposta?: string | null
+          descricao?: string | null
+          fotos?: Json | null
+          id?: string
+          motivo: string
+          pedido_id: string
+          resposta_vendedor?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_resposta?: string | null
+          descricao?: string | null
+          fotos?: Json | null
+          id?: string
+          motivo?: string
+          pedido_id?: string
+          resposta_vendedor?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_devolucoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "loja_pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loja_pedido_itens: {
         Row: {
           anuncio_id: string
@@ -3740,6 +3975,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      produto_avaliacoes: {
+        Row: {
+          aprovada: boolean | null
+          comentario: string | null
+          created_at: string
+          fotos: Json | null
+          id: string
+          nota: number
+          pedido_id: string | null
+          produto_id: string
+          titulo: string | null
+          user_id: string
+        }
+        Insert: {
+          aprovada?: boolean | null
+          comentario?: string | null
+          created_at?: string
+          fotos?: Json | null
+          id?: string
+          nota: number
+          pedido_id?: string | null
+          produto_id: string
+          titulo?: string | null
+          user_id: string
+        }
+        Update: {
+          aprovada?: boolean | null
+          comentario?: string | null
+          created_at?: string
+          fotos?: Json | null
+          id?: string
+          nota?: number
+          pedido_id?: string | null
+          produto_id?: string
+          titulo?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produto_avaliacoes_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "loja_pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produto_avaliacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_produtos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       produtores: {
         Row: {

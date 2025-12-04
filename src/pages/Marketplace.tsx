@@ -1,34 +1,38 @@
 import { useState } from "react"
 import { useMarketplaceAnuncios, MarketplaceAnuncio } from "@/hooks/useMarketplace"
+import { useMarketplaceCategorias } from "@/hooks/useMarketplaceCategorias"
+import { useAuth } from "@/contexts/AuthContext"
 import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Package, Store, ShoppingCart, Loader2 } from "lucide-react"
-import { Link } from "react-router-dom"
-
-const CATEGORIAS = [
-  "Todos",
-  "Grãos",
-  "Frutas",
-  "Verduras",
-  "Legumes",
-  "Laticínios",
-  "Carnes",
-  "Ovos",
-  "Mel",
-  "Café",
-  "Outros",
-]
+import { Search, Package, Store, ShoppingCart, Loader2, User, Heart } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { useConsumidorWishlist } from "@/hooks/useConsumidorWishlist"
 
 function ProdutoCard({ anuncio }: { anuncio: MarketplaceAnuncio }) {
+  const { user } = useAuth()
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useConsumidorWishlist()
+  const inWishlist = isInWishlist(anuncio.id)
+  
   const precoFinal = anuncio.preco_promocional || anuncio.preco_unitario
   const temDesconto = anuncio.preco_promocional && anuncio.preco_promocional < anuncio.preco_unitario
   const desconto = temDesconto
     ? Math.round((1 - anuncio.preco_promocional! / anuncio.preco_unitario) * 100)
     : 0
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!user) return
+    if (inWishlist) {
+      removeFromWishlist(anuncio.id)
+    } else {
+      addToWishlist(anuncio.id)
+    }
+  }
 
   return (
     <Link to={`/marketplace/produto/${anuncio.id}`}>
@@ -51,6 +55,14 @@ function ProdutoCard({ anuncio }: { anuncio: MarketplaceAnuncio }) {
               <Badge className="absolute top-2 left-2 bg-red-500">
                 -{desconto}%
               </Badge>
+            )}
+            {user && (
+              <button
+                onClick={handleWishlistClick}
+                className="absolute top-2 right-2 p-2 bg-background/80 rounded-full hover:bg-background transition-colors"
+              >
+                <Heart className={`h-4 w-4 ${inWishlist ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+              </button>
             )}
           </div>
 
@@ -102,15 +114,28 @@ function ProdutoCard({ anuncio }: { anuncio: MarketplaceAnuncio }) {
 }
 
 export default function Marketplace() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [busca, setBusca] = useState("")
   const [categoria, setCategoria] = useState("Todos")
   const [orderBy, setOrderBy] = useState<"recentes" | "preco_asc" | "preco_desc">("recentes")
 
+  const { data: categorias, isLoading: categoriasLoading } = useMarketplaceCategorias()
   const { data: anuncios, isLoading, isError } = useMarketplaceAnuncios({
     busca: busca || undefined,
     categoria: categoria !== "Todos" ? categoria : undefined,
     orderBy,
   })
+
+  const handleMinhaContaClick = () => {
+    if (user) {
+      navigate("/minha-conta")
+    } else {
+      navigate("/auth?redirect=/minha-conta")
+    }
+  }
+
+  const categoriasToShow = categorias || ["Todos"]
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,7 +145,20 @@ export default function Marketplace() {
             <Link to="/marketplace" className="font-bold text-xl text-primary">
               AgroHub
             </Link>
-            <CarrinhoDrawer />
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleMinhaContaClick}
+                className="gap-2"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {user ? "Minha Conta" : "Entrar"}
+                </span>
+              </Button>
+              <CarrinhoDrawer />
+            </div>
           </div>
         </div>
 
@@ -154,16 +192,23 @@ export default function Marketplace() {
           {/* Filtros */}
           <div className="flex flex-col md:flex-row gap-4 mb-8">
             <div className="flex flex-wrap gap-2">
-              {CATEGORIAS.map((cat) => (
-                <Button
-                  key={cat}
-                  variant={categoria === cat ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCategoria(cat)}
-                >
-                  {cat}
-                </Button>
-              ))}
+              {categoriasLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Carregando categorias...</span>
+                </div>
+              ) : (
+                categoriasToShow.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant={categoria === cat ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCategoria(cat)}
+                  >
+                    {cat}
+                  </Button>
+                ))
+              )}
             </div>
 
             <div className="md:ml-auto">
