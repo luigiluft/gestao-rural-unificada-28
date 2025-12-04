@@ -138,7 +138,7 @@ export default function LojaPublica() {
           <div className="flex items-center gap-3">
             <CarrinhoDrawer />
             {user ? (
-              <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+              <Button variant="outline" size="sm" onClick={() => navigate(`/loja/${slug}/minha-conta`)}>
                 <User className="h-4 w-4 mr-2" />
                 Minha Conta
               </Button>

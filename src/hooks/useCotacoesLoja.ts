@@ -397,6 +397,83 @@ export const useCotacoesConsumidor = () => {
     },
   })
 
+  // Consumidor edita quantidades e envia para reanálise
+  const editarQuantidadesMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      itens,
+      mensagem 
+    }: { 
+      id: string
+      itens: Array<{ item_id: string; quantidades: number[] }>
+      mensagem?: string 
+    }) => {
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: 'contra_proposta',
+        por: 'consumidor',
+        mensagem: mensagem || 'Quantidades editadas pelo consumidor'
+      }
+
+      // Atualizar cotação
+      const { error: cotacaoError } = await supabase
+        .from("cotacoes_loja")
+        .update({ 
+          status: 'pendente',
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico] as unknown as null,
+          ultima_acao_por: 'consumidor',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+
+      if (cotacaoError) throw cotacaoError
+
+      // Atualizar itens
+      for (const item of itens) {
+        const { error: itemError } = await supabase
+          .from("cotacao_itens")
+          .update({
+            mes_1: item.quantidades[0] || 0,
+            mes_2: item.quantidades[1] || 0,
+            mes_3: item.quantidades[2] || 0,
+            mes_4: item.quantidades[3] || 0,
+            mes_5: item.quantidades[4] || 0,
+            mes_6: item.quantidades[5] || 0,
+            mes_7: item.quantidades[6] || 0,
+            mes_8: item.quantidades[7] || 0,
+            mes_9: item.quantidades[8] || 0,
+            mes_10: item.quantidades[9] || 0,
+            mes_11: item.quantidades[10] || 0,
+            mes_12: item.quantidades[11] || 0,
+          })
+          .eq("id", item.item_id)
+
+        if (itemError) throw itemError
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cotacoes-consumidor"] })
+      toast.success("Cotação enviada para reanálise!")
+    },
+    onError: (error) => {
+      console.error("Erro ao editar quantidades:", error)
+      toast.error("Erro ao editar quantidades")
+    },
+  })
+
   // Converter cotação aprovada em pedido
   const converterEmPedidoMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
@@ -453,6 +530,8 @@ export const useCotacoesConsumidor = () => {
     isRejeitando: rejeitarPropostaMutation.isPending,
     enviarContraProposta: enviarContraPropostaConsumidorMutation.mutate,
     isEnviandoProposta: enviarContraPropostaConsumidorMutation.isPending,
+    editarQuantidades: editarQuantidadesMutation.mutate,
+    isEditandoQuantidades: editarQuantidadesMutation.isPending,
     converterEmPedido: converterEmPedidoMutation.mutate,
     isConvertendo: converterEmPedidoMutation.isPending,
   }

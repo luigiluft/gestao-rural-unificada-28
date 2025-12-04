@@ -50,7 +50,7 @@ export const useLoginRedirect = () => {
           'operador': '/dashboard',
           'cliente': '/rastreio',
           'motorista': '/proof-of-delivery',
-          'consumidor': '/minha-conta'
+          'consumidor': '/marketplace/minha-conta'
         }
         
         const fallbackRoute = roleFallbacks[profile.role as string] || '/dashboard'
@@ -99,7 +99,7 @@ export const useLoginRedirect = () => {
         'operador': { path: '/dashboard', permission: 'dashboard.view' },
         'cliente': { path: '/rastreio', permission: 'rastreio.view' },
         'motorista': { path: '/proof-of-delivery', permission: 'proof-of-delivery.view' },
-        'consumidor': { path: '/minha-conta', permission: '' }
+        'consumidor': { path: '/marketplace/minha-conta', permission: '' }
       }
       
       const roleDefault = roleDefaults[profile.role as string]

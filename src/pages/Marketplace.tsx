@@ -129,9 +129,9 @@ export default function Marketplace() {
 
   const handleMinhaContaClick = () => {
     if (user) {
-      navigate("/minha-conta")
+      navigate("/marketplace/minha-conta")
     } else {
-      navigate("/auth?redirect=/minha-conta")
+      navigate("/auth?redirect=/marketplace/minha-conta")
     }
   }
 
