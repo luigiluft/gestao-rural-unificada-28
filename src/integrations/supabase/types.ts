@@ -949,11 +949,15 @@ export type Database = {
           consumidor_telefone: string | null
           created_at: string
           data_resposta: string | null
+          historico_negociacao: Json | null
           id: string
           observacoes: string | null
+          precos_negociados: Json | null
           resposta_cliente: string | null
           status: string
+          ultima_acao_por: string | null
           updated_at: string
+          versao: number | null
         }
         Insert: {
           cliente_id: string
@@ -964,11 +968,15 @@ export type Database = {
           consumidor_telefone?: string | null
           created_at?: string
           data_resposta?: string | null
+          historico_negociacao?: Json | null
           id?: string
           observacoes?: string | null
+          precos_negociados?: Json | null
           resposta_cliente?: string | null
           status?: string
+          ultima_acao_por?: string | null
           updated_at?: string
+          versao?: number | null
         }
         Update: {
           cliente_id?: string
@@ -979,11 +987,15 @@ export type Database = {
           consumidor_telefone?: string | null
           created_at?: string
           data_resposta?: string | null
+          historico_negociacao?: Json | null
           id?: string
           observacoes?: string | null
+          precos_negociados?: Json | null
           resposta_cliente?: string | null
           status?: string
+          ultima_acao_por?: string | null
           updated_at?: string
+          versao?: number | null
         }
         Relationships: [
           {
@@ -3010,6 +3022,9 @@ export type Database = {
         Row: {
           banner_url: string | null
           cliente_id: string
+          cor_fundo: string | null
+          cor_primaria: string | null
+          cor_secundaria: string | null
           created_at: string | null
           descricao: string | null
           email_contato: string | null
@@ -3028,6 +3043,9 @@ export type Database = {
         Insert: {
           banner_url?: string | null
           cliente_id: string
+          cor_fundo?: string | null
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
           created_at?: string | null
           descricao?: string | null
           email_contato?: string | null
@@ -3046,6 +3064,9 @@ export type Database = {
         Update: {
           banner_url?: string | null
           cliente_id?: string
+          cor_fundo?: string | null
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
           created_at?: string | null
           descricao?: string | null
           email_contato?: string | null

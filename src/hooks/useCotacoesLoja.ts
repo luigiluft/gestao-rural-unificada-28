@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useCliente } from "@/contexts/ClienteContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
+import { Json } from "@/integrations/supabase/types"
 
 export interface CotacaoLoja {
   id: string
@@ -11,12 +13,25 @@ export interface CotacaoLoja {
   consumidor_email: string
   consumidor_telefone: string | null
   consumidor_empresa: string | null
-  status: 'pendente' | 'em_analise' | 'aprovada' | 'rejeitada' | 'convertida'
+  status: 'pendente' | 'em_analise' | 'aprovada' | 'rejeitada' | 'convertida' | 'contra_proposta'
   observacoes: string | null
   resposta_cliente: string | null
   data_resposta: string | null
+  precos_negociados: Record<string, number> | null
+  versao: number
+  historico_negociacao: NegociacaoHistorico[]
+  ultima_acao_por: string | null
   created_at: string
   updated_at: string
+}
+
+export interface NegociacaoHistorico {
+  versao: number
+  data: string
+  acao: 'criada' | 'aprovada' | 'rejeitada' | 'contra_proposta' | 'aceita' | 'convertida'
+  por: 'consumidor' | 'vendedor'
+  mensagem?: string
+  precos?: Record<string, number>
 }
 
 export interface CotacaoItem {
@@ -71,7 +86,13 @@ export const useCotacoesLoja = () => {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-      return data as CotacaoComItens[]
+      
+      return (data || []).map(item => ({
+        ...item,
+        historico_negociacao: Array.isArray(item.historico_negociacao) 
+          ? item.historico_negociacao as unknown as NegociacaoHistorico[]
+          : []
+      })) as unknown as CotacaoComItens[]
     },
     enabled: !!selectedCliente?.id,
   })
@@ -86,12 +107,35 @@ export const useCotacoesLoja = () => {
       status: CotacaoLoja['status']
       resposta?: string 
     }) => {
+      // Fetch current cotacao to update historico
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: status as NegociacaoHistorico['acao'],
+        por: 'vendedor',
+        mensagem: resposta
+      }
+
       const { error } = await supabase
         .from("cotacoes_loja")
         .update({ 
           status, 
           resposta_cliente: resposta,
           data_resposta: new Date().toISOString(),
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico],
+          ultima_acao_por: 'vendedor',
           updated_at: new Date().toISOString()
         })
         .eq("id", id)
@@ -108,12 +152,310 @@ export const useCotacoesLoja = () => {
     },
   })
 
+  // Enviar contra-proposta (vendedor)
+  const enviarContraPropostaMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      precos,
+      mensagem 
+    }: { 
+      id: string
+      precos: Record<string, number>
+      mensagem?: string 
+    }) => {
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: 'contra_proposta',
+        por: 'vendedor',
+        mensagem,
+        precos
+      }
+
+      const { error } = await supabase
+        .from("cotacoes_loja")
+        .update({ 
+          status: 'contra_proposta',
+          precos_negociados: precos,
+          resposta_cliente: mensagem,
+          data_resposta: new Date().toISOString(),
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico],
+          ultima_acao_por: 'vendedor',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cotacoes-loja"] })
+      toast.success("Contra-proposta enviada!")
+    },
+    onError: (error) => {
+      console.error("Erro ao enviar contra-proposta:", error)
+      toast.error("Erro ao enviar contra-proposta")
+    },
+  })
+
   return {
     cotacoes: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     updateStatus: updateStatusMutation.mutate,
     isUpdating: updateStatusMutation.isPending,
+    enviarContraProposta: enviarContraPropostaMutation.mutate,
+    isEnviandoProposta: enviarContraPropostaMutation.isPending,
+  }
+}
+
+// Hook para consumidor gerenciar suas cotações
+export const useCotacoesConsumidor = () => {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+
+  const query = useQuery({
+    queryKey: ["cotacoes-consumidor", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return []
+
+      const { data, error } = await supabase
+        .from("cotacoes_loja")
+        .select(`
+          *,
+          itens:cotacao_itens(
+            *,
+            produto:cliente_produtos(nome_produto, unidade_medida, preco_unitario)
+          )
+        `)
+        .eq("consumidor_id", user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      
+      return (data || []).map(item => ({
+        ...item,
+        historico_negociacao: Array.isArray(item.historico_negociacao) 
+          ? item.historico_negociacao 
+          : []
+      })) as CotacaoComItens[]
+    },
+    enabled: !!user?.id,
+  })
+
+  // Consumidor aceita a proposta
+  const aceitarPropostaMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: 'aceita',
+        por: 'consumidor'
+      }
+
+      const { error } = await supabase
+        .from("cotacoes_loja")
+        .update({ 
+          status: 'aprovada',
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico],
+          ultima_acao_por: 'consumidor',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cotacoes-consumidor"] })
+      toast.success("Proposta aceita!")
+    },
+    onError: (error) => {
+      console.error("Erro ao aceitar proposta:", error)
+      toast.error("Erro ao aceitar proposta")
+    },
+  })
+
+  // Consumidor rejeita a proposta
+  const rejeitarPropostaMutation = useMutation({
+    mutationFn: async ({ id, mensagem }: { id: string; mensagem?: string }) => {
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: 'rejeitada',
+        por: 'consumidor',
+        mensagem
+      }
+
+      const { error } = await supabase
+        .from("cotacoes_loja")
+        .update({ 
+          status: 'rejeitada',
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico],
+          ultima_acao_por: 'consumidor',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cotacoes-consumidor"] })
+      toast.success("Proposta rejeitada")
+    },
+    onError: (error) => {
+      console.error("Erro ao rejeitar proposta:", error)
+      toast.error("Erro ao rejeitar proposta")
+    },
+  })
+
+  // Consumidor envia contra-proposta
+  const enviarContraPropostaConsumidorMutation = useMutation({
+    mutationFn: async ({ 
+      id, 
+      precos,
+      mensagem 
+    }: { 
+      id: string
+      precos: Record<string, number>
+      mensagem?: string 
+    }) => {
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: 'contra_proposta',
+        por: 'consumidor',
+        mensagem,
+        precos
+      }
+
+      const { error } = await supabase
+        .from("cotacoes_loja")
+        .update({ 
+          status: 'pendente',
+          precos_negociados: precos,
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico],
+          ultima_acao_por: 'consumidor',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cotacoes-consumidor"] })
+      toast.success("Contra-proposta enviada!")
+    },
+    onError: (error) => {
+      console.error("Erro ao enviar contra-proposta:", error)
+      toast.error("Erro ao enviar contra-proposta")
+    },
+  })
+
+  // Converter cotação aprovada em pedido
+  const converterEmPedidoMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { data: current } = await supabase
+        .from("cotacoes_loja")
+        .select("versao, historico_negociacao")
+        .eq("id", id)
+        .single()
+
+      const historico = Array.isArray(current?.historico_negociacao) 
+        ? current.historico_negociacao 
+        : []
+      
+      const novaVersao = (current?.versao || 1) + 1
+      const novoHistorico: NegociacaoHistorico = {
+        versao: novaVersao,
+        data: new Date().toISOString(),
+        acao: 'convertida',
+        por: 'consumidor'
+      }
+
+      const { error } = await supabase
+        .from("cotacoes_loja")
+        .update({ 
+          status: 'convertida',
+          versao: novaVersao,
+          historico_negociacao: [...historico, novoHistorico],
+          ultima_acao_por: 'consumidor',
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+
+      if (error) throw error
+      
+      // TODO: Criar pedido em loja_pedidos com base na cotação
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cotacoes-consumidor"] })
+      toast.success("Cotação convertida em pedido!")
+    },
+    onError: (error) => {
+      console.error("Erro ao converter em pedido:", error)
+      toast.error("Erro ao converter em pedido")
+    },
+  })
+
+  return {
+    cotacoes: query.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    aceitarProposta: aceitarPropostaMutation.mutate,
+    isAceitando: aceitarPropostaMutation.isPending,
+    rejeitarProposta: rejeitarPropostaMutation.mutate,
+    isRejeitando: rejeitarPropostaMutation.isPending,
+    enviarContraProposta: enviarContraPropostaConsumidorMutation.mutate,
+    isEnviandoProposta: enviarContraPropostaConsumidorMutation.isPending,
+    converterEmPedido: converterEmPedidoMutation.mutate,
+    isConvertendo: converterEmPedidoMutation.isPending,
   }
 }
 
@@ -139,6 +481,13 @@ export const useEnviarCotacao = () => {
       }>
       observacoes?: string
     }) => {
+      const historicoInicial: NegociacaoHistorico = {
+        versao: 1,
+        data: new Date().toISOString(),
+        acao: 'criada',
+        por: 'consumidor'
+      }
+
       // Create cotacao
       const { data: cotacao, error: cotacaoError } = await supabase
         .from("cotacoes_loja")
@@ -150,6 +499,9 @@ export const useEnviarCotacao = () => {
           consumidor_telefone: consumidor.telefone || null,
           consumidor_empresa: consumidor.empresa || null,
           observacoes: observacoes || null,
+          versao: 1,
+          historico_negociacao: [historicoInicial],
+          ultima_acao_por: 'consumidor'
         })
         .select()
         .single()
