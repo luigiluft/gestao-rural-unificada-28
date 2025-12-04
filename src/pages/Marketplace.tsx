@@ -4,6 +4,7 @@ import { useMarketplaceCategorias } from "@/hooks/useMarketplaceCategorias"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEmpresaMatriz, getEnderecoCompleto } from "@/hooks/useEmpresaMatriz"
 import { HeaderActions } from "@/components/Marketplace/HeaderActions"
+import { PlatformLogo } from "@/components/Marketplace/PlatformLogo"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -141,9 +142,7 @@ export default function Marketplace() {
                 <ArrowLeft className="h-4 w-4" />
                 <span className="hidden sm:inline text-sm">Site</span>
               </Link>
-              <Link to="/marketplace" className="font-bold text-xl text-primary">
-                AgroHub Marketplace
-              </Link>
+              <PlatformLogo to="/marketplace" size="sm" />
             </div>
             <HeaderActions 
               loginUrl="/auth?redirect=/marketplace/minha-conta"

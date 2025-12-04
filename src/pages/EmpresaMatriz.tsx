@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Building2, Save, Loader2 } from "lucide-react";
+import { Building2, Save, Loader2, Upload, X, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresaMatriz, EmpresaMatrizData } from "@/hooks/useEmpresaMatriz";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,8 +14,10 @@ export default function EmpresaMatriz() {
   const { data: empresaData, isLoading } = useEmpresaMatriz();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [semNumero, setSemNumero] = useState(false);
   const [semComplemento, setSemComplemento] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<EmpresaMatrizData>({
     razao_social: "",
     nome_fantasia: "",
@@ -29,7 +31,8 @@ export default function EmpresaMatriz() {
     cidade: "",
     estado: "",
     cep: "",
-    horario_funcionamento: ""
+    horario_funcionamento: "",
+    logo_url: ""
   });
 
   useEffect(() => {
@@ -61,6 +64,45 @@ export default function EmpresaMatriz() {
     } else {
       setFormData(prev => ({ ...prev, complemento: "" }));
     }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `empresa-matriz-logo.${fileExt}`;
+      const filePath = `public/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('logos')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, logo_url: urlData.publicUrl }));
+      toast.success("Logo enviado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao fazer upload do logo:", error);
+      toast.error("Erro ao fazer upload do logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setFormData(prev => ({ ...prev, logo_url: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,46 +172,107 @@ export default function EmpresaMatriz() {
                 Informações legais e identificação da empresa
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid sm:grid-cols-2 gap-4">
+            <CardContent className="space-y-6">
+              {/* Logo Upload */}
               <div className="space-y-2">
-                <Label htmlFor="razao_social">Razão Social</Label>
-                <Input
-                  id="razao_social"
-                  name="razao_social"
-                  value={formData.razao_social}
-                  onChange={handleInputChange}
-                  placeholder="Razão Social da empresa"
-                />
+                <Label>Logo da Plataforma</Label>
+                <p className="text-sm text-muted-foreground">
+                  Este logo será exibido no site institucional, marketplace e lojas dos clientes.
+                </p>
+                <div className="flex items-center gap-4">
+                  {formData.logo_url ? (
+                    <div className="relative">
+                      <img 
+                        src={formData.logo_url} 
+                        alt="Logo" 
+                        className="h-20 w-20 object-contain rounded-lg border bg-background"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={handleRemoveLogo}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="h-20 w-20 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted">
+                      <Image className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      ref={logoInputRef}
+                      onChange={handleLogoUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={isUploadingLogo}
+                    >
+                      {isUploadingLogo ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          {formData.logo_url ? "Trocar Logo" : "Enviar Logo"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                <Input
-                  id="nome_fantasia"
-                  name="nome_fantasia"
-                  value={formData.nome_fantasia}
-                  onChange={handleInputChange}
-                  placeholder="Nome fantasia"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cnpj">CNPJ</Label>
-                <Input
-                  id="cnpj"
-                  name="cnpj"
-                  value={formData.cnpj}
-                  onChange={handleInputChange}
-                  placeholder="00.000.000/0001-00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="horario_funcionamento">Horário de Funcionamento</Label>
-                <Input
-                  id="horario_funcionamento"
-                  name="horario_funcionamento"
-                  value={formData.horario_funcionamento}
-                  onChange={handleInputChange}
-                  placeholder="Seg - Sex: 8h às 18h"
-                />
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="razao_social">Razão Social</Label>
+                  <Input
+                    id="razao_social"
+                    name="razao_social"
+                    value={formData.razao_social}
+                    onChange={handleInputChange}
+                    placeholder="Razão Social da empresa"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    name="nome_fantasia"
+                    value={formData.nome_fantasia}
+                    onChange={handleInputChange}
+                    placeholder="Nome fantasia"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cnpj">CNPJ</Label>
+                  <Input
+                    id="cnpj"
+                    name="cnpj"
+                    value={formData.cnpj}
+                    onChange={handleInputChange}
+                    placeholder="00.000.000/0001-00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="horario_funcionamento">Horário de Funcionamento</Label>
+                  <Input
+                    id="horario_funcionamento"
+                    name="horario_funcionamento"
+                    value={formData.horario_funcionamento}
+                    onChange={handleInputChange}
+                    placeholder="Seg - Sex: 8h às 18h"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
