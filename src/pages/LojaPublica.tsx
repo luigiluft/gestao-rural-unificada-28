@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { useLojaAnunciosPublicos, MarketplaceAnuncio } from "@/hooks/useMarketplace"
-import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
+import { HeaderActions } from "@/components/Marketplace/HeaderActions"
 import { FloatingAtendimentoButton } from "@/components/Loja/FloatingAtendimentoButton"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, User, LogIn, FileText, Home } from "lucide-react"
+import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, FileText, Home } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 function ProdutoCard({ anuncio, lojaSlug }: { anuncio: MarketplaceAnuncio; lojaSlug: string }) {
@@ -140,24 +140,10 @@ export default function LojaPublica() {
               AgroHub
             </Link>
           </div>
-          <div className="flex items-center gap-3">
-            <CarrinhoDrawer />
-            {user ? (
-              <Button variant="outline" size="sm" onClick={() => navigate(`/loja/${slug}/minha-conta`)}>
-                <User className="h-4 w-4 mr-2" />
-                Minha Conta
-              </Button>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate(`/loja/${slug}/auth`)}
-              >
-                <LogIn className="h-4 w-4 mr-2" />
-                Entrar / Cadastrar
-              </Button>
-            )}
-          </div>
+          <HeaderActions 
+            loginUrl={`/loja/${slug}/auth`}
+            minhaContaUrl={`/loja/${slug}/minha-conta`}
+          />
         </div>
       </div>
 

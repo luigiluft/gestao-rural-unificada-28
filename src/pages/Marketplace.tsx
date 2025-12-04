@@ -3,15 +3,15 @@ import { useMarketplaceAnuncios, MarketplaceAnuncio } from "@/hooks/useMarketpla
 import { useMarketplaceCategorias } from "@/hooks/useMarketplaceCategorias"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEmpresaMatriz, getEnderecoCompleto } from "@/hooks/useEmpresaMatriz"
-import { CarrinhoDrawer } from "@/components/Marketplace/CarrinhoDrawer"
+import { HeaderActions } from "@/components/Marketplace/HeaderActions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Package, Store, ShoppingCart, Loader2, User, Heart, ArrowLeft, FileText, Mail, Phone, MapPin, Clock } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
+import { Search, Package, Store, ShoppingCart, Loader2, Heart, ArrowLeft, FileText, Mail, Phone, MapPin, Clock } from "lucide-react"
+import { Link } from "react-router-dom"
 import { useConsumidorWishlist } from "@/hooks/useConsumidorWishlist"
 
 function ProdutoCard({ anuncio }: { anuncio: MarketplaceAnuncio }) {
@@ -116,7 +116,6 @@ function ProdutoCard({ anuncio }: { anuncio: MarketplaceAnuncio }) {
 }
 
 export default function Marketplace() {
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [busca, setBusca] = useState("")
   const [categoria, setCategoria] = useState("Todos")
@@ -129,14 +128,6 @@ export default function Marketplace() {
     categoria: categoria !== "Todos" ? categoria : undefined,
     orderBy,
   })
-
-  const handleMinhaContaClick = () => {
-    if (user) {
-      navigate("/marketplace/minha-conta")
-    } else {
-      navigate("/auth?redirect=/marketplace/minha-conta")
-    }
-  }
 
   const categoriasToShow = categorias || ["Todos"]
 
@@ -154,20 +145,10 @@ export default function Marketplace() {
                 AgroHub Marketplace
               </Link>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleMinhaContaClick}
-                className="gap-2"
-              >
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {user ? "Minha Conta" : "Entrar"}
-                </span>
-              </Button>
-              <CarrinhoDrawer />
-            </div>
+            <HeaderActions 
+              loginUrl="/auth?redirect=/marketplace/minha-conta"
+              minhaContaUrl="/marketplace/minha-conta"
+            />
           </div>
         </div>
 
