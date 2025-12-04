@@ -92,6 +92,14 @@ export const useLoginRedirect = () => {
       }
     }
 
+    // Consumidor sempre vai para o marketplace/minha-conta (interface pública)
+    if (profile.role === 'consumidor') {
+      clearTimeout(redirectTimeout)
+      hasRedirectedRef.current = true
+      navigate('/marketplace/minha-conta', { replace: true })
+      return () => clearTimeout(redirectTimeout)
+    }
+
     // Fallback baseado no role se não encontrou rota nas permissões
     if (!firstAccessibleRoute) {
       const roleDefaults: Record<string, { path: string; permission: string }> = {

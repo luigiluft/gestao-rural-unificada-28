@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, User, LogIn, FileText } from "lucide-react"
+import { Search, Package, Store, Mail, Phone, Clock, Loader2, ArrowLeft, User, LogIn, FileText, Home } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 function ProdutoCard({ anuncio, lojaSlug }: { anuncio: MarketplaceAnuncio; lojaSlug: string }) {
@@ -132,9 +132,14 @@ export default function LojaPublica() {
       {/* Header with cart and auth */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/marketplace" className="font-bold text-xl text-primary">
-            AgroHub
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors" title="Ir para Marketplace">
+              <Home className="h-5 w-5" />
+            </Link>
+            <Link to="/marketplace" className="font-bold text-xl text-primary">
+              AgroHub
+            </Link>
+          </div>
           <div className="flex items-center gap-3">
             <CarrinhoDrawer />
             {user ? (
