@@ -93,13 +93,13 @@ import PublicBeneficios from "./pages/Public/Beneficios";
 import PublicContato from "./pages/Public/Contato";
 import SejaFranqueadoPublic from "./pages/Public/SejaFranqueadoPublic";
 import Marketplace from "./pages/Marketplace";
+import MarketplaceMinhaContaPage from "./pages/MarketplaceMinhaContaPage";
 import LojaPublica from "./pages/LojaPublica";
 import LojaAuth from "./pages/LojaAuth";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
 import LojaCotacao from "./pages/LojaCotacao";
-import MinhaContaConsumidor from "./pages/MinhaContaConsumidor";
 import EncontreDeposito from "./pages/Public/EncontreDeposito";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
@@ -189,16 +189,17 @@ const App = () => {
             <Route path="/seja-franqueado" element={<SejaFranqueado />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/marketplace/produto/:id" element={<ProdutoDetalhes />} />
+            <Route path="/marketplace/minha-conta" element={<MarketplaceMinhaContaPage />} />
             <Route path="/loja/:slug" element={<LojaPublica />} />
             <Route path="/loja/:slug/auth" element={<LojaAuth />} />
             <Route path="/loja/:slug/cotacao" element={<LojaCotacao />} />
             <Route path="/loja/:slug/produto/:id" element={<ProdutoDetalhes />} />
+            <Route path="/loja/:slug/minha-conta" element={<MarketplaceMinhaContaPage />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/motorista/login" element={<MotoristaLogin />} />
             <Route path="/motorista/deliveries" element={<RequireAuth><MotoristaDeliveries /></RequireAuth>} />
             <Route path="/completar-cadastro" element={<RequireAuth><CompletarCadastro /></RequireAuth>} />
-            <Route path="/minha-conta" element={<RequireAuth><MinhaContaConsumidor /></RequireAuth>} />
             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
               <Route index element={<Index />} />
               <Route path="dashboard" element={<RequirePageAccess pageKey="dashboard"><Dashboard /></RequirePageAccess>} />
