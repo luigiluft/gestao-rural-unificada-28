@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, LogIn } from "lucide-react";
 import { useState } from "react";
 import { useEmpresaMatriz, getEnderecoResumido } from "@/hooks/useEmpresaMatriz";
 import { useAuth } from "@/contexts/AuthContext";
@@ -110,7 +110,10 @@ export default function PublicLayout() {
                 </DropdownMenu>
               ) : (
                 <Link to="/auth">
-                  <Button>Login</Button>
+                  <Button variant="outline" className="gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Entrar / Cadastrar
+                  </Button>
                 </Link>
               )}
             </div>
@@ -171,7 +174,10 @@ export default function PublicLayout() {
                   </div>
                 ) : (
                   <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    <Button className="w-full">Login</Button>
+                    <Button variant="outline" className="w-full gap-2">
+                      <LogIn className="h-4 w-4" />
+                      Entrar / Cadastrar
+                    </Button>
                   </Link>
                 )}
               </div>
