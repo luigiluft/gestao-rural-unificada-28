@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Package, Eye, Edit, MoreHorizontal, Trash2, Check, X, GripVertical, Save, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Plus, Package, Eye, Edit, MoreHorizontal, Trash2, Check, X, GripVertical, Save, ChevronLeft, ChevronRight, Download, PackageOpen } from "lucide-react";
 import { DndContext, DragEndEvent, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, arrayMove, horizontalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
@@ -22,6 +22,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
 import { TablePageLayout } from "@/components/ui/table-page-layout";
 import { useTableState } from "@/hooks/useTableState";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useNavigate } from "react-router-dom";
 
 // Sortable Table Header Component
 function SortableTableHeader({
@@ -174,6 +176,8 @@ const SortableTableHead = ({
     </TableHead>;
 };
 const Saidas = () => {
+  const navigate = useNavigate();
+  const { isOperador } = useUserRole();
   const {
     user
   } = useAuth();
@@ -608,6 +612,40 @@ const Saidas = () => {
       });
     }
   };
+
+  // Operadores devem usar WMS > Separação ou TMS
+  if (isOperador) {
+    return (
+      <div className="min-h-screen flex flex-col overflow-x-hidden">
+        <div className="flex-shrink-0 border-b bg-background">
+          <div className="p-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Saídas</h1>
+              <p className="text-muted-foreground">
+                Gerencie e registre as saídas de produtos do estoque
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          <Card className="shadow-card">
+            <CardContent className="pt-12 pb-12">
+              <EmptyState 
+                icon={<PackageOpen className="w-12 h-12 text-muted-foreground" />} 
+                title="Acesse a Separação ou TMS" 
+                description="Para processar saídas, acesse WMS → Separação ou TMS → Viagens. Esta página mostra apenas as saídas dos clientes."
+                action={{
+                  label: "Ir para Separação",
+                  onClick: () => navigate('/separacao')
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Title Section */}
       <div className="flex-shrink-0 border-b bg-background">

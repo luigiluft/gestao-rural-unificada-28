@@ -186,16 +186,12 @@ export const useDynamicMenuItems = () => {
 
     const items: MenuItem[] = []
 
-    // Páginas do OMS (excluindo dashboard que será item separado)
-    const omsPages = [
+    // Páginas do ERP (inclui páginas do antigo OMS)
+    const erpPages = [
       'entradas',
       'estoque',
       'saidas',
-      'rastreio'
-    ]
-
-    // Páginas do ERP
-    const erpPages = [
+      'rastreio',
       'receitas',
       'despesas',
       'caixa',
@@ -261,50 +257,6 @@ export const useDynamicMenuItems = () => {
       'tabelas-frete',
       'tracking'
     ]
-
-    // Adicionar Dashboard como item separado (se tiver permissão)
-    if (permissions.includes('dashboard.view' as any)) {
-      items.push({
-        path: '/',
-        label: menuLabels['dashboard'],
-        icon: iconMap['dashboard']
-      })
-    }
-
-    // Verificar se tem permissão para pelo menos uma página do OMS
-    const hasOmsPermission = omsPages.some(page => 
-      permissions.includes(`${page}.view` as any)
-    )
-
-    if (hasOmsPermission) {
-      const omsSubItems: MenuItem[] = []
-      
-      omsPages.forEach(page => {
-        const pageViewPermission = `${page}.view`
-        
-        if (!permissions.includes(pageViewPermission as any)) return
-
-        const label = menuLabels[page as keyof typeof menuLabels]
-        const icon = iconMap[page as keyof typeof iconMap]
-        
-        if (label && icon) {
-          omsSubItems.push({
-            path: `/${page}`,
-            label,
-            icon
-          })
-        }
-      })
-
-      if (omsSubItems.length > 0) {
-        items.push({
-          path: '/oms',
-          label: 'OMS',
-          icon: BarChart3,
-          subItems: omsSubItems
-        })
-      }
-    }
 
     // Verificar se tem permissão para pelo menos uma página do ERP
     const hasErpPermission = erpPages.some(page => 
