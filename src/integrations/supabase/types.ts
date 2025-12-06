@@ -288,7 +288,9 @@ export type Database = {
           regime_tributario: string | null
           telefone_comercial: string | null
           tipo_cliente: string
+          tms_habilitado: boolean | null
           updated_at: string
+          wms_habilitado: boolean | null
         }
         Insert: {
           atividade_principal?: string | null
@@ -313,7 +315,9 @@ export type Database = {
           regime_tributario?: string | null
           telefone_comercial?: string | null
           tipo_cliente: string
+          tms_habilitado?: boolean | null
           updated_at?: string
+          wms_habilitado?: boolean | null
         }
         Update: {
           atividade_principal?: string | null
@@ -338,7 +342,9 @@ export type Database = {
           regime_tributario?: string | null
           telefone_comercial?: string | null
           tipo_cliente?: string
+          tms_habilitado?: boolean | null
           updated_at?: string
+          wms_habilitado?: boolean | null
         }
         Relationships: [
           {

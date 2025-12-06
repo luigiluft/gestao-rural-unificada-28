@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import { useSimplifiedPermissions } from "./useSimplifiedPermissions"
 import { useFranquia } from "@/contexts/FranquiaContext"
 import { useUserRole } from "./useUserRole"
+import { useClienteModulos } from "./useClienteModulos"
 import {
   AlertTriangle,
   AlertCircle,
@@ -187,10 +188,11 @@ const iconMap = {
 export const useDynamicMenuItems = () => {
   const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
   const { selectedFranquia } = useFranquia()
-  const { isOperador, isAdmin } = useUserRole()
+  const { isOperador, isAdmin, isCliente } = useUserRole()
+  const { wmsHabilitado, tmsHabilitado, isLoading: isLoadingModulos } = useClienteModulos()
 
   const menuItems = useMemo(() => {
-    if (isLoading || !permissions?.length) return []
+    if (isLoading || isLoadingModulos || !permissions?.length) return []
 
     const items: MenuItem[] = []
 
@@ -344,7 +346,9 @@ export const useDynamicMenuItems = () => {
 
     // Verificar se tem permissão para pelo menos uma página do WMS
     // Ocultar WMS se operador tiver "Todos os Depósitos" selecionado
-    const shouldShowWms = !(isOperador && selectedFranquia?.id === "ALL")
+    // Ocultar WMS para clientes que não habilitaram o módulo
+    const shouldShowWms = !(isOperador && selectedFranquia?.id === "ALL") && 
+                          !(isCliente && !wmsHabilitado)
     const hasWmsPermission = wmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
@@ -385,7 +389,9 @@ export const useDynamicMenuItems = () => {
 
     // Verificar se tem permissão para pelo menos uma página do TMS
     // Ocultar TMS se operador tiver "Todos os Depósitos" selecionado
-    const shouldShowTms = !(isOperador && selectedFranquia?.id === "ALL")
+    // Ocultar TMS para clientes que não habilitaram o módulo
+    const shouldShowTms = !(isOperador && selectedFranquia?.id === "ALL") &&
+                          !(isCliente && !tmsHabilitado)
     const hasTmsPermission = tmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
@@ -566,7 +572,7 @@ export const useDynamicMenuItems = () => {
     }
 
     return items
-  }, [permissions, isLoading, selectedFranquia, isOperador, isAdmin])
+  }, [permissions, isLoading, isLoadingModulos, selectedFranquia, isOperador, isAdmin, isCliente, wmsHabilitado, tmsHabilitado])
 
-  return { menuItems, isLoading }
+  return { menuItems, isLoading: isLoading || isLoadingModulos }
 }
