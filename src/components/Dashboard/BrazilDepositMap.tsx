@@ -149,12 +149,16 @@ export function BrazilDepositMap() {
           Mapa de Depósitos
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-2">
         {isLoading ? (
-          <div className="h-[280px] flex items-center justify-center text-muted-foreground">Carregando mapa...</div>
+          <div className="h-[380px] flex items-center justify-center text-muted-foreground">Carregando mapa...</div>
         ) : (
           <div className="relative">
-            <div ref={svgRef} className="w-full h-[280px] max-h-[280px] overflow-hidden" dangerouslySetInnerHTML={{ __html: brazilMapSvg }} />
+            <div 
+              ref={svgRef} 
+              className="w-full h-[380px] flex items-center justify-center" 
+              dangerouslySetInnerHTML={{ __html: brazilMapSvg }} 
+            />
             {hoveredDeposito && (
               <div
                 className="fixed z-50 bg-popover text-popover-foreground border rounded-lg shadow-lg p-3 pointer-events-none"
