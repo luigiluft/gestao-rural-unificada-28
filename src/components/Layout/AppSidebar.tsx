@@ -203,7 +203,7 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   {item.subItems ? (
-                    // Item com submenu (WMS)
+                    // Item com submenu (ERP, WMS, TMS, etc.)
                     <>
                       <SidebarMenuButton 
                         onClick={() => toggleExpanded(item.path)}
@@ -231,28 +231,66 @@ export function AppSidebar() {
                         <SidebarMenuSub>
                           {item.subItems.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.label}>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink 
-                                  to={convertToTutorialPath(subItem.path)}
-                                  data-tutorial={subItem.label === "Recebimento" ? "menu-recebimento" : undefined}
-                                  className={({ isActive }) => 
-                                    `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
-                                  }
-                                >
-                                   <div className="relative">
+                              {subItem.subItems ? (
+                                // Nível 3: submenu aninhado (Vendas, Compras, Financeiro)
+                                <>
+                                  <SidebarMenuSubButton 
+                                    onClick={() => toggleExpanded(subItem.path)}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-secondary/50 cursor-pointer w-full"
+                                  >
                                     {subItem.icon && <subItem.icon className="w-4 h-4 flex-shrink-0" />}
-                                    {notifications && getNotificationCount(subItem.label, notifications) > 0 && (
-                                      <Badge 
-                                        variant="destructive" 
-                                        className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
-                                      >
-                                        {getNotificationCount(subItem.label, notifications)}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <span className="font-medium">{subItem.label}</span>
-                                </NavLink>
-                              </SidebarMenuSubButton>
+                                    <span className="font-medium flex-1">{subItem.label}</span>
+                                    <ChevronRight 
+                                      className={`h-3 w-3 transition-transform duration-200 ${
+                                        expandedItems.has(subItem.path) ? 'rotate-90' : ''
+                                      }`} 
+                                    />
+                                  </SidebarMenuSubButton>
+                                  {expandedItems.has(subItem.path) && (
+                                    <SidebarMenuSub className="ml-3 border-l border-border/50">
+                                      {subItem.subItems.map((nestedItem) => (
+                                        <SidebarMenuSubItem key={nestedItem.label}>
+                                          <SidebarMenuSubButton asChild>
+                                            <NavLink 
+                                              to={convertToTutorialPath(nestedItem.path)}
+                                              className={({ isActive }) => 
+                                                `flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} text-sm`
+                                              }
+                                            >
+                                              {nestedItem.icon && <nestedItem.icon className="w-3.5 h-3.5 flex-shrink-0" />}
+                                              <span>{nestedItem.label}</span>
+                                            </NavLink>
+                                          </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                      ))}
+                                    </SidebarMenuSub>
+                                  )}
+                                </>
+                              ) : (
+                                // Nível 2: link direto (Rastreamento Produtor)
+                                <SidebarMenuSubButton asChild>
+                                  <NavLink 
+                                    to={convertToTutorialPath(subItem.path)}
+                                    data-tutorial={subItem.label === "Recebimento" ? "menu-recebimento" : undefined}
+                                    className={({ isActive }) => 
+                                      `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${getNavClasses(isActive)} relative`
+                                    }
+                                  >
+                                     <div className="relative">
+                                      {subItem.icon && <subItem.icon className="w-4 h-4 flex-shrink-0" />}
+                                      {notifications && getNotificationCount(subItem.label, notifications) > 0 && (
+                                        <Badge 
+                                          variant="destructive" 
+                                          className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center p-0 text-xs min-w-4"
+                                        >
+                                          {getNotificationCount(subItem.label, notifications)}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <span className="font-medium">{subItem.label}</span>
+                                  </NavLink>
+                                </SidebarMenuSubButton>
+                              )}
                             </SidebarMenuSubItem>
                           ))}
                         </SidebarMenuSub>
