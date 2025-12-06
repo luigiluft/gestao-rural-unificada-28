@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download } from "lucide-react";
+import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download, PackageCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useProfile } from "@/hooks/useProfile";
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -119,6 +120,7 @@ function SortableTableHeader({
 }
 
 export default function Entradas() {
+  const navigate = useNavigate();
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false);
   const [selectedEntrada, setSelectedEntrada] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -835,6 +837,40 @@ export default function Entradas() {
         return value || "N/A";
     }
   };
+
+
+  // Operadores devem usar WMS > Recebimento
+  if (isOperador) {
+    return (
+      <div className="min-h-screen flex flex-col overflow-x-hidden">
+        <div className="flex-shrink-0 border-b bg-background">
+          <div className="p-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Entradas</h1>
+              <p className="text-muted-foreground">
+                Gerencie e registre as entradas de produtos no estoque
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          <Card className="shadow-card">
+            <CardContent className="pt-12 pb-12">
+              <EmptyState 
+                icon={<PackageCheck className="w-12 h-12 text-muted-foreground" />} 
+                title="Acesse o Recebimento" 
+                description="Para processar entradas de clientes, acesse WMS → Recebimento. Esta página mostra apenas as entradas dos clientes."
+                action={{
+                  label: "Ir para Recebimento",
+                  onClick: () => navigate('/recebimento')
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Title Section */}

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDepositoFilter } from "./useDepositoFilter"
+import { useUserRole } from "./useUserRole"
 
 export interface EstoqueItem {
   produto_id: string
@@ -22,10 +23,15 @@ export interface EstoqueItem {
 
 export const useEstoque = () => {
   const { depositoId, shouldFilter } = useDepositoFilter()
+  const { isOperador } = useUserRole()
   
   return useQuery({
-    queryKey: ["estoque", depositoId],
+    queryKey: ["estoque", depositoId, isOperador],
     queryFn: async (): Promise<EstoqueItem[]> => {
+      // Operadores não veem estoque nessa página - eles usam WMS > Rastreamento WMS
+      if (isOperador) {
+        return []
+      }
       // Identificar usuário atual e possível franqueado master (para herdar visibilidade)
       const { data: authData } = await supabase.auth.getUser()
       const uid = authData.user?.id

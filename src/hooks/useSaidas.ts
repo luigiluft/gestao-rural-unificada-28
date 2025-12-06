@@ -1,15 +1,22 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDepositoFilter } from "./useDepositoFilter"
+import { useUserRole } from "./useUserRole"
 
 export const useSaidas = (dateRange?: { from?: Date; to?: Date }) => {
   const { depositoId, shouldFilter } = useDepositoFilter()
+  const { isOperador } = useUserRole()
   
   return useQuery({
-    queryKey: ["saidas", dateRange, depositoId],
+    queryKey: ["saidas", dateRange, depositoId, isOperador],
     queryFn: async () => {
       console.log('🔍 HOOK DEBUG - useSaidas INICIANDO')
       console.log('📅 dateRange:', dateRange)
+      
+      // Operadores não veem saídas nessa página - eles usam WMS > Separação ou TMS
+      if (isOperador) {
+        return []
+      }
       
       try {
         // Get current user to determine role and build appropriate query

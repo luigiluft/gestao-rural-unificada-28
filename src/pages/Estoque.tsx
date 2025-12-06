@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History } from "lucide-react";
+import { Search, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEstoque, useMovimentacoes } from "@/hooks/useEstoque";
 import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import AvariasTab from "@/components/Estoque/AvariasTab";
+
 export default function Estoque() {
   const navigate = useNavigate();
+  const { isOperador } = useUserRole();
   const {
     data: estoque,
     isLoading
@@ -87,6 +90,36 @@ export default function Estoque() {
     };
   };
   const stats = getStockStats();
+
+  // Operadores devem usar WMS > Rastreamento WMS
+  if (isOperador) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Estoque</h1>
+            <p className="text-muted-foreground">
+              Controle e monitore os produtos em estoque
+            </p>
+          </div>
+        </div>
+        <Card className="shadow-card">
+          <CardContent className="pt-12 pb-12">
+            <EmptyState 
+              icon={<Warehouse className="w-12 h-12 text-muted-foreground" />} 
+              title="Acesse o Rastreamento WMS" 
+              description="Para visualizar o estoque dos depósitos, acesse WMS → Rastreamento WMS. Esta página mostra apenas o estoque dos clientes."
+              action={{
+                label: "Ir para Rastreamento WMS",
+                onClick: () => navigate('/rastreamento-wms')
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
