@@ -10,6 +10,8 @@ import Index from "./pages/Index";
 import Catalogo from "./pages/Catalogo";
 import Entradas from "./pages/Entradas";
 import Estoque from "./pages/Estoque";
+import MovimentosEstoque from "./pages/MovimentosEstoque";
+import PosicionamentoEstoque from "./pages/PosicionamentoEstoque";
 import Saidas from "./pages/Saidas";
 import Rastreio from "./pages/Rastreio";
 import RastreamentoWMS from "./pages/RastreamentoWMS";
@@ -212,6 +214,8 @@ const App = () => {
               <Route path="catalogo" element={<RequirePageAccess pageKey="catalogo"><Catalogo /></RequirePageAccess>} />
               <Route path="entradas" element={<RequirePageAccess pageKey="entradas"><Entradas /></RequirePageAccess>} />
               <Route path="estoque" element={<RequirePageAccess pageKey="estoque"><Estoque /></RequirePageAccess>} />
+              <Route path="movimentos-estoque" element={<RequirePageAccess pageKey="movimentos-estoque"><MovimentosEstoque /></RequirePageAccess>} />
+              <Route path="posicionamento-estoque" element={<RequirePageAccess pageKey="posicionamento-estoque"><PosicionamentoEstoque /></RequirePageAccess>} />
               <Route path="saidas" element={<RequirePageAccess pageKey="saidas"><Saidas /></RequirePageAccess>} />
               <Route path="rastreio" element={<RequirePageAccess pageKey="rastreio"><Rastreio /></RequirePageAccess>} />
               <Route path="rastreamento-wms" element={<RequirePageAccess pageKey="rastreamento-wms"><RastreamentoWMS /></RequirePageAccess>} />
