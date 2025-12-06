@@ -19,6 +19,7 @@ import RastreamentoWMS from "./pages/RastreamentoWMS";
 import Suporte from "./pages/Suporte";
 import Perfil from "./pages/Perfil";
 import Empresas from "./pages/Empresas";
+import Clientes from "./pages/Clientes";
 import SolicitacoesFilial from "./pages/SolicitacoesFilial";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
@@ -235,6 +236,7 @@ const App = () => {
               <Route path="atendimento" element={<RequirePageAccess pageKey="atendimento"><Atendimento /></RequirePageAccess>} />
               <Route path="perfil" element={<RequirePageAccess pageKey="perfil"><Perfil /></RequirePageAccess>} />
               <Route path="empresas" element={<RequirePageAccess pageKey="empresas"><Empresas /></RequirePageAccess>} />
+              <Route path="clientes" element={<RequirePageAccess pageKey="clientes"><Clientes /></RequirePageAccess>} />
               <Route path="fornecedores" element={<RequirePageAccess pageKey="fornecedores"><Fornecedores /></RequirePageAccess>} />
               <Route path="empresa-matriz" element={<RequireAdmin><EmpresaMatriz /></RequireAdmin>} />
               <Route path="solicitacoes-filial" element={<RequireAdmin><SolicitacoesFilial /></RequireAdmin>} />
