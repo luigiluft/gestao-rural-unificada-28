@@ -142,19 +142,19 @@ export function BrazilDepositMap() {
   }, [depositos]);
 
   return (
-    <Card className="col-span-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="shadow-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <MapPin className="h-5 w-5" />
           Mapa de Depósitos
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4">
         {isLoading ? (
-          <div className="h-[400px] flex items-center justify-center text-muted-foreground">Carregando mapa...</div>
+          <div className="h-[280px] flex items-center justify-center text-muted-foreground">Carregando mapa...</div>
         ) : (
           <div className="relative">
-            <div ref={svgRef} className="w-full h-[400px]" dangerouslySetInnerHTML={{ __html: brazilMapSvg }} />
+            <div ref={svgRef} className="w-full h-[280px] max-h-[280px] overflow-hidden" dangerouslySetInnerHTML={{ __html: brazilMapSvg }} />
             {hoveredDeposito && (
               <div
                 className="fixed z-50 bg-popover text-popover-foreground border rounded-lg shadow-lg p-3 pointer-events-none"

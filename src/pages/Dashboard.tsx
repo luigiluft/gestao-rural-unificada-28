@@ -105,9 +105,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Brazil Map */}
-      <BrazilDepositMap />
-
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent Movements */}
         <div className="lg:col-span-2">
@@ -186,8 +183,11 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Alerts and Quick Actions */}
+        {/* Map and Alerts */}
         <div className="space-y-6">
+          {/* Brazil Map - Compact */}
+          <BrazilDepositMap />
+          
           {/* Stock Alerts */}
           <Card className="shadow-card">
             <CardHeader>
