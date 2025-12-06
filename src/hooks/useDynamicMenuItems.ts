@@ -186,18 +186,88 @@ export const useDynamicMenuItems = () => {
 
     const items: MenuItem[] = []
 
-    // Páginas do ERP (inclui páginas do antigo OMS)
-    const erpPages = [
-      'entradas',
-      'estoque',
-      'saidas',
-      'rastreio',
-      'receitas',
-      'despesas',
-      'caixa',
-      'faturas',
-      'royalties'
+    // Estrutura do ERP com submenus
+    const erpStructure = [
+      { pageKey: 'rastreio', title: 'Rastreamento Produtor' },
+      { 
+        title: 'Vendas',
+        subPages: ['saidas']
+      },
+      { 
+        title: 'Compras',
+        subPages: ['entradas']
+      },
+      { 
+        title: 'Financeiro',
+        subPages: ['receitas', 'faturas']
+      }
     ]
+
+    // Verificar se tem permissão para pelo menos uma página do ERP
+    const allErpPages = ['rastreio', 'saidas', 'entradas', 'receitas', 'faturas']
+    const hasErpPermission = allErpPages.some(page => 
+      permissions.includes(`${page}.view` as any)
+    )
+
+    if (hasErpPermission) {
+      const erpSubItems: MenuItem[] = []
+      
+      erpStructure.forEach(item => {
+        if ('subPages' in item && item.subPages) {
+          // É um submenu (Vendas, Compras, Financeiro)
+          const nestedSubItems: MenuItem[] = []
+          
+          item.subPages.forEach(page => {
+            const pageViewPermission = `${page}.view`
+            if (!permissions.includes(pageViewPermission as any)) return
+            
+            const label = menuLabels[page as keyof typeof menuLabels]
+            const icon = iconMap[page as keyof typeof iconMap]
+            
+            if (label && icon) {
+              nestedSubItems.push({
+                path: `/${page}`,
+                label,
+                icon
+              })
+            }
+          })
+          
+          if (nestedSubItems.length > 0) {
+            erpSubItems.push({
+              path: `/${item.title.toLowerCase()}`,
+              label: item.title,
+              icon: item.title === 'Vendas' ? TrendingUp : item.title === 'Compras' ? ArrowDownToLine : DollarSign,
+              subItems: nestedSubItems
+            })
+          }
+        } else if ('pageKey' in item) {
+          // É uma página direta (Rastreamento Produtor)
+          const pageViewPermission = `${item.pageKey}.view`
+          if (!permissions.includes(pageViewPermission as any)) return
+          
+          const label = menuLabels[item.pageKey as keyof typeof menuLabels]
+          const icon = iconMap[item.pageKey as keyof typeof iconMap]
+          
+          if (label && icon) {
+            erpSubItems.push({
+              path: `/${item.pageKey}`,
+              label,
+              icon
+            })
+          }
+        }
+      })
+
+      if (erpSubItems.length > 0) {
+        items.push({
+          path: '/erp',
+          label: 'ERP',
+          icon: BarChart3,
+          subItems: erpSubItems
+        })
+      }
+    }
 
     // Páginas de Ajuda
     const ajudaPages = [
@@ -257,41 +327,6 @@ export const useDynamicMenuItems = () => {
       'tabelas-frete',
       'tracking'
     ]
-
-    // Verificar se tem permissão para pelo menos uma página do ERP
-    const hasErpPermission = erpPages.some(page => 
-      permissions.includes(`${page}.view` as any)
-    )
-
-    if (hasErpPermission) {
-      const erpSubItems: MenuItem[] = []
-      
-      erpPages.forEach(page => {
-        const pageViewPermission = `${page}.view`
-        
-        if (!permissions.includes(pageViewPermission as any)) return
-
-        const label = menuLabels[page as keyof typeof menuLabels]
-        const icon = iconMap[page as keyof typeof iconMap]
-        
-        if (label && icon) {
-          erpSubItems.push({
-            path: `/${page}`,
-            label,
-            icon
-          })
-        }
-      })
-
-      if (erpSubItems.length > 0) {
-        items.push({
-          path: '/erp',
-          label: 'ERP',
-          icon: BarChart3,
-          subItems: erpSubItems
-        })
-      }
-    }
 
     // Verificar se tem permissão para pelo menos uma página do WMS
     // Ocultar WMS se operador tiver "Todos os Depósitos" selecionado
