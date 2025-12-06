@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useUserRole } from "@/hooks/useUserRole"
+import { useDepositoFilter } from "@/hooks/useDepositoFilter"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -13,10 +14,11 @@ import { MapPin, Search, Building, Package, Boxes } from "lucide-react"
 
 const PosicionamentoEstoque = () => {
   const { isCliente } = useUserRole()
+  const { depositoId, shouldFilter } = useDepositoFilter()
   const [search, setSearch] = useState("")
 
   const { data: posicionamento, isLoading } = useQuery({
-    queryKey: ["posicionamento-estoque"],
+    queryKey: ["posicionamento-estoque", depositoId],
     queryFn: async () => {
       const { data: user } = await supabase.auth.getUser()
       if (!user.user) throw new Error("User not authenticated")
@@ -49,7 +51,14 @@ const PosicionamentoEstoque = () => {
         query = query.eq("entradas.user_id", user.user.id)
       }
 
+      // Filtro por depósito específico
+      if (shouldFilter && depositoId) {
+        query = query.eq("entradas.deposito_id", depositoId)
+      }
+
       const { data, error } = await query
+
+      if (error) throw error
 
       if (error) throw error
 
