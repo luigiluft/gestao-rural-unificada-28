@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2, Store } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2, Store, Warehouse, Truck, Info } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useConfiguracoesSistema, useUpdateConfiguracao } from "@/hooks/useConfiguracoesSistema"
@@ -18,9 +19,11 @@ import { useQuery } from "@tanstack/react-query"
 import { useUserRole } from "@/hooks/useUserRole"
 import { LojaConfiguracoes } from "@/components/Loja/LojaConfiguracoes"
 import { useLojaConfiguracao } from "@/hooks/useLojaConfiguracao"
+import { useClienteModulos } from "@/hooks/useClienteModulos"
 
 export default function Configuracoes() {
   const { isCliente, isOperador, isAdmin } = useUserRole()
+  const { wmsHabilitado, tmsHabilitado, updateModulos, isUpdating } = useClienteModulos()
   const { configuracao: lojaConfig } = useLojaConfiguracao()
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
   const updateConfiguracao = useUpdateConfiguracao()
@@ -599,6 +602,65 @@ export default function Configuracoes() {
                 <LojaConfiguracoes />
               </CardContent>
             </Card>
+          )}
+
+          {/* Módulos Operacionais - apenas para clientes */}
+          {isCliente && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Warehouse className="h-5 w-5" />
+                Módulos Operacionais
+              </CardTitle>
+              <CardDescription>
+                Habilite os módulos para operar por conta própria ou terceirize com um operador
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Ao habilitar um módulo, você assume a operação ao invés de terceirizar com o operador do depósito.
+                </AlertDescription>
+              </Alert>
+
+              {/* Toggle WMS */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-semibold">Habilitar WMS (Armazém)</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Faça você mesmo: recebimento, alocação de pallets, separação, inventário e expedição
+                  </p>
+                </div>
+                <Switch
+                  checked={wmsHabilitado}
+                  onCheckedChange={(checked) => updateModulos({ wms_habilitado: checked })}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              {/* Toggle TMS */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-semibold">Habilitar TMS (Transporte)</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Faça você mesmo: remessas, viagens, motoristas, veículos, tracking e prova de entrega
+                  </p>
+                </div>
+                <Switch
+                  checked={tmsHabilitado}
+                  onCheckedChange={(checked) => updateModulos({ tms_habilitado: checked })}
+                  disabled={isUpdating}
+                />
+              </div>
+            </CardContent>
+          </Card>
           )}
 
           {/* Botão para Limpar Cache - apenas para admins */}
