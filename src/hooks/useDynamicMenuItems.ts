@@ -95,6 +95,7 @@ const menuLabels = {
   'configuracoes': 'Configurações',
   'perfil': 'Perfil',
   'empresas': 'Empresas',
+  'fornecedores': 'Fornecedores',
   'subcontas': 'Subcontas',
   'perfis-funcionarios': 'Cargos',
   'funcionarios': 'Folha',
@@ -160,6 +161,7 @@ const iconMap = {
   'configuracoes': Settings,
   'perfil': UserCircle,
   'empresas': Building2,
+  'fornecedores': Truck,
   'subcontas': UserPlus,
   'perfis-funcionarios': Badge,
   'funcionarios': Users,
@@ -294,6 +296,7 @@ export const useDynamicMenuItems = () => {
     const cadastroPages = [
       'perfil',
       'empresas',
+      'fornecedores',
       'subcontas',
       'usuarios',
       'perfis-funcionarios',
