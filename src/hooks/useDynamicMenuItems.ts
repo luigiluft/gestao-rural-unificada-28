@@ -198,13 +198,17 @@ export const useDynamicMenuItems = () => {
         subPages: ['entradas']
       },
       { 
+        title: 'Estoque',
+        subPages: ['estoque']
+      },
+      { 
         title: 'Financeiro',
         subPages: ['receitas', 'faturas']
       }
     ]
 
     // Verificar se tem permissão para pelo menos uma página do ERP
-    const allErpPages = ['rastreio', 'saidas', 'entradas', 'receitas', 'faturas']
+    const allErpPages = ['rastreio', 'saidas', 'entradas', 'estoque', 'receitas', 'faturas']
     const hasErpPermission = allErpPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
@@ -237,7 +241,7 @@ export const useDynamicMenuItems = () => {
             erpSubItems.push({
               path: `/${item.title.toLowerCase()}`,
               label: item.title,
-              icon: item.title === 'Vendas' ? TrendingUp : item.title === 'Compras' ? ArrowDownToLine : DollarSign,
+              icon: item.title === 'Vendas' ? TrendingUp : item.title === 'Compras' ? ArrowDownToLine : item.title === 'Estoque' ? Archive : DollarSign,
               subItems: nestedSubItems
             })
           }
