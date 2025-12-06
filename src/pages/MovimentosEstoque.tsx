@@ -34,11 +34,10 @@ const MovimentosEstoque = () => {
         .from("movimentacoes")
         .select(`
           *,
-          produtos:produto_id(nome_produto),
-          entradas:entrada_id(numero_nfe, emitente_nome),
-          saidas:saida_id(numero_pedido)
+          produtos:produto_id(nome),
+          franquias:deposito_id(nome)
         `)
-        .order("created_at", { ascending: false })
+        .order("data_movimentacao", { ascending: false })
         .limit(500)
 
       // Filtro por cliente
@@ -53,10 +52,10 @@ const MovimentosEstoque = () => {
 
       // Filtro por data
       if (dateRange.from) {
-        query = query.gte("created_at", dateRange.from.toISOString())
+        query = query.gte("data_movimentacao", dateRange.from.toISOString())
       }
       if (dateRange.to) {
-        query = query.lte("created_at", dateRange.to.toISOString())
+        query = query.lte("data_movimentacao", dateRange.to.toISOString())
       }
 
       const { data, error } = await query
@@ -70,10 +69,10 @@ const MovimentosEstoque = () => {
     if (!search) return true
     const searchLower = search.toLowerCase()
     return (
-      mov.produtos?.nome_produto?.toLowerCase().includes(searchLower) ||
+      mov.produtos?.nome?.toLowerCase().includes(searchLower) ||
       mov.lote?.toLowerCase().includes(searchLower) ||
-      mov.entradas?.numero_nfe?.toLowerCase().includes(searchLower) ||
-      mov.saidas?.numero_pedido?.toLowerCase().includes(searchLower)
+      mov.franquias?.nome?.toLowerCase().includes(searchLower) ||
+      mov.referencia_tipo?.toLowerCase().includes(searchLower)
     )
   })
 
@@ -87,8 +86,10 @@ const MovimentosEstoque = () => {
         return <Badge variant="outline">Ajuste</Badge>
       case "transferencia":
         return <Badge variant="secondary">Transferência</Badge>
+      case "alocacao_automatica":
+        return <Badge variant="secondary">Alocação Auto</Badge>
       default:
-        return <Badge variant="outline">{tipo}</Badge>
+        return <Badge variant="outline">{tipo || "N/A"}</Badge>
     }
   }
 
@@ -156,27 +157,30 @@ const MovimentosEstoque = () => {
                     <TableHead>Produto</TableHead>
                     <TableHead>Lote</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead>Documento</TableHead>
+                    <TableHead>Depósito</TableHead>
+                    <TableHead>Referência</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredMovimentos.map((mov: any) => (
                     <TableRow key={mov.id}>
                       <TableCell className="whitespace-nowrap">
-                        {format(new Date(mov.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        {format(new Date(mov.data_movimentacao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </TableCell>
-                      <TableCell>{getTipoMovimentoBadge(mov.tipo)}</TableCell>
-                      <TableCell className="font-medium">{mov.produtos?.nome_produto || "-"}</TableCell>
+                      <TableCell>{getTipoMovimentoBadge(mov.tipo_movimentacao)}</TableCell>
+                      <TableCell className="font-medium">{mov.produtos?.nome || "-"}</TableCell>
                       <TableCell>{mov.lote || "-"}</TableCell>
                       <TableCell className="text-right font-mono">
-                        <span className={mov.tipo === "entrada" ? "text-green-600" : mov.tipo === "saida" ? "text-red-600" : ""}>
-                          {mov.tipo === "entrada" ? "+" : mov.tipo === "saida" ? "-" : ""}
-                          {mov.quantidade?.toLocaleString("pt-BR")}
+                        <span className={mov.quantidade > 0 ? "text-green-600" : "text-red-600"}>
+                          {mov.quantidade > 0 ? "+" : ""}
+                          {Math.abs(mov.quantidade)?.toLocaleString("pt-BR")}
                         </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {mov.entradas?.numero_nfe ? `NF-e ${mov.entradas.numero_nfe}` : 
-                         mov.saidas?.numero_pedido ? `Pedido ${mov.saidas.numero_pedido}` : "-"}
+                        {mov.franquias?.nome || "-"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {mov.referencia_tipo ? `${mov.referencia_tipo}` : "-"}
                       </TableCell>
                     </TableRow>
                   ))}
