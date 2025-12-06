@@ -59,6 +59,8 @@ const menuLabels = {
   'catalogo': 'Catálogo',
   'entradas': 'Entradas',
   'estoque': 'Estoque',
+  'movimentos-estoque': 'Movimentos (Kardex)',
+  'posicionamento-estoque': 'Posicionamento',
   'saidas': 'Saídas',
   'rastreio': 'Rastreamento Produtor',
   'nfe-entradas': 'NF-e Entradas',
@@ -122,6 +124,8 @@ const iconMap = {
   'catalogo': Package,
   'entradas': ArrowDownToLine,
   'estoque': Archive,
+  'movimentos-estoque': ClipboardList,
+  'posicionamento-estoque': MapPin,
   'saidas': ArrowUpFromLine,
   'rastreio': MapPin,
   'nfe-entradas': FileText,
@@ -199,7 +203,7 @@ export const useDynamicMenuItems = () => {
       },
       { 
         title: 'Estoque',
-        subPages: ['estoque']
+        subPages: ['estoque', 'movimentos-estoque', 'posicionamento-estoque']
       },
       { 
         title: 'Financeiro',
@@ -208,7 +212,7 @@ export const useDynamicMenuItems = () => {
     ]
 
     // Verificar se tem permissão para pelo menos uma página do ERP
-    const allErpPages = ['rastreio', 'saidas', 'entradas', 'estoque', 'receitas', 'faturas']
+    const allErpPages = ['rastreio', 'saidas', 'entradas', 'estoque', 'movimentos-estoque', 'posicionamento-estoque', 'receitas', 'faturas']
     const hasErpPermission = allErpPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
