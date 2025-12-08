@@ -227,10 +227,11 @@ export default function Clientes() {
   // Filtrar por busca
   const filteredClientes = empresaClientes?.filter(ec => {
     const cliente = ec.cliente
+    if (!cliente) return false
     const searchLower = searchTerm.toLowerCase()
     return (
-      cliente.razao_social.toLowerCase().includes(searchLower) ||
-      cliente.cpf_cnpj.includes(searchTerm) ||
+      cliente.razao_social?.toLowerCase().includes(searchLower) ||
+      cliente.cpf_cnpj?.includes(searchTerm) ||
       (cliente.nome_fantasia?.toLowerCase().includes(searchLower))
     )
   })
