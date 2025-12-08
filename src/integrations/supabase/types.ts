@@ -284,11 +284,13 @@ export type Database = {
           nome_fantasia: string | null
           numero_fiscal: string | null
           observacoes: string | null
+          operador_logistico_id: string | null
           razao_social: string
           regime_tributario: string | null
           telefone_comercial: string | null
           tipo_cliente: string
           tms_habilitado: boolean | null
+          transportadora_padrao_id: string | null
           updated_at: string
           wms_habilitado: boolean | null
         }
@@ -311,11 +313,13 @@ export type Database = {
           nome_fantasia?: string | null
           numero_fiscal?: string | null
           observacoes?: string | null
+          operador_logistico_id?: string | null
           razao_social: string
           regime_tributario?: string | null
           telefone_comercial?: string | null
           tipo_cliente: string
           tms_habilitado?: boolean | null
+          transportadora_padrao_id?: string | null
           updated_at?: string
           wms_habilitado?: boolean | null
         }
@@ -338,11 +342,13 @@ export type Database = {
           nome_fantasia?: string | null
           numero_fiscal?: string | null
           observacoes?: string | null
+          operador_logistico_id?: string | null
           razao_social?: string
           regime_tributario?: string | null
           telefone_comercial?: string | null
           tipo_cliente?: string
           tms_habilitado?: boolean | null
+          transportadora_padrao_id?: string | null
           updated_at?: string
           wms_habilitado?: boolean | null
         }
@@ -359,6 +365,20 @@ export type Database = {
             columns: ["empresa_matriz_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_operador_logistico_id_fkey"
+            columns: ["operador_logistico_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_transportadora_padrao_id_fkey"
+            columns: ["transportadora_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
             referencedColumns: ["id"]
           },
         ]
@@ -1574,6 +1594,120 @@ export type Database = {
           },
         ]
       }
+      documento_fluxo: {
+        Row: {
+          chave_nfe: string | null
+          cliente_destino_id: string
+          cliente_origem_id: string
+          confirmado_at: string | null
+          created_at: string | null
+          cte_id: string | null
+          entrada_id: string | null
+          id: string
+          operador_deposito_id: string | null
+          recebido_at: string | null
+          saida_id: string | null
+          status: string | null
+          tipo_fluxo: string
+          transportadora_id: string | null
+          updated_at: string | null
+          viagem_id: string | null
+        }
+        Insert: {
+          chave_nfe?: string | null
+          cliente_destino_id: string
+          cliente_origem_id: string
+          confirmado_at?: string | null
+          created_at?: string | null
+          cte_id?: string | null
+          entrada_id?: string | null
+          id?: string
+          operador_deposito_id?: string | null
+          recebido_at?: string | null
+          saida_id?: string | null
+          status?: string | null
+          tipo_fluxo: string
+          transportadora_id?: string | null
+          updated_at?: string | null
+          viagem_id?: string | null
+        }
+        Update: {
+          chave_nfe?: string | null
+          cliente_destino_id?: string
+          cliente_origem_id?: string
+          confirmado_at?: string | null
+          created_at?: string | null
+          cte_id?: string | null
+          entrada_id?: string | null
+          id?: string
+          operador_deposito_id?: string | null
+          recebido_at?: string | null
+          saida_id?: string | null
+          status?: string | null
+          tipo_fluxo?: string
+          transportadora_id?: string | null
+          updated_at?: string | null
+          viagem_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documento_fluxo_cliente_destino_id_fkey"
+            columns: ["cliente_destino_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_cliente_origem_id_fkey"
+            columns: ["cliente_origem_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_cte_id_fkey"
+            columns: ["cte_id"]
+            isOneToOne: false
+            referencedRelation: "ctes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_entrada_id_fkey"
+            columns: ["entrada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_operador_deposito_id_fkey"
+            columns: ["operador_deposito_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_saida_id_fkey"
+            columns: ["saida_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_transportadora_id_fkey"
+            columns: ["transportadora_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documento_fluxo_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entrada_itens: {
         Row: {
           cest: string | null
@@ -1863,6 +1997,7 @@ export type Database = {
           digest_value: string | null
           digito_verificador: string | null
           divergencias: Json | null
+          documento_fluxo_id: string | null
           emitente_bairro: string | null
           emitente_cep: string | null
           emitente_cnpj: string | null
@@ -1911,6 +2046,7 @@ export type Database = {
           peso_liquido: number | null
           processo_emissao: string | null
           quantidade_volumes: number | null
+          saida_origem_id: string | null
           serie: string | null
           status_aprovacao: Database["public"]["Enums"]["entrada_status"] | null
           tipo_ambiente: string | null
@@ -1919,6 +2055,7 @@ export type Database = {
           tipo_impressao: string | null
           tipo_nf: string | null
           tipo_pagamento: string | null
+          tipo_recebimento: string | null
           transportadora_cnpj: string | null
           transportadora_endereco: string | null
           transportadora_municipio: string | null
@@ -1996,6 +2133,7 @@ export type Database = {
           digest_value?: string | null
           digito_verificador?: string | null
           divergencias?: Json | null
+          documento_fluxo_id?: string | null
           emitente_bairro?: string | null
           emitente_cep?: string | null
           emitente_cnpj?: string | null
@@ -2044,6 +2182,7 @@ export type Database = {
           peso_liquido?: number | null
           processo_emissao?: string | null
           quantidade_volumes?: number | null
+          saida_origem_id?: string | null
           serie?: string | null
           status_aprovacao?:
             | Database["public"]["Enums"]["entrada_status"]
@@ -2054,6 +2193,7 @@ export type Database = {
           tipo_impressao?: string | null
           tipo_nf?: string | null
           tipo_pagamento?: string | null
+          tipo_recebimento?: string | null
           transportadora_cnpj?: string | null
           transportadora_endereco?: string | null
           transportadora_municipio?: string | null
@@ -2131,6 +2271,7 @@ export type Database = {
           digest_value?: string | null
           digito_verificador?: string | null
           divergencias?: Json | null
+          documento_fluxo_id?: string | null
           emitente_bairro?: string | null
           emitente_cep?: string | null
           emitente_cnpj?: string | null
@@ -2179,6 +2320,7 @@ export type Database = {
           peso_liquido?: number | null
           processo_emissao?: string | null
           quantidade_volumes?: number | null
+          saida_origem_id?: string | null
           serie?: string | null
           status_aprovacao?:
             | Database["public"]["Enums"]["entrada_status"]
@@ -2189,6 +2331,7 @@ export type Database = {
           tipo_impressao?: string | null
           tipo_nf?: string | null
           tipo_pagamento?: string | null
+          tipo_recebimento?: string | null
           transportadora_cnpj?: string | null
           transportadora_endereco?: string | null
           transportadora_municipio?: string | null
@@ -2234,6 +2377,20 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_documento_fluxo_id_fkey"
+            columns: ["documento_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "documento_fluxo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_saida_origem_id_fkey"
+            columns: ["saida_origem_id"]
+            isOneToOne: false
+            referencedRelation: "saidas"
             referencedColumns: ["id"]
           },
         ]
@@ -5200,6 +5357,44 @@ export type Database = {
           valor_minimo?: number | null
         }
         Relationships: []
+      }
+      transportadoras_usuarios: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          papel: string | null
+          transportadora_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          papel?: string | null
+          transportadora_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          papel?: string | null
+          transportadora_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportadoras_usuarios_transportadora_id_fkey"
+            columns: ["transportadora_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tutorial_entrada_itens: {
         Row: {

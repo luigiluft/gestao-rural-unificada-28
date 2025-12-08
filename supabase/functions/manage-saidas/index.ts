@@ -245,7 +245,19 @@ async function createSaida(supabase: any, userId: string, data: any) {
       }
     }
 
-    return { ...saida, itens: itensInseridos, cte }
+    // 🔗 INTEGRAÇÃO NATIVA: Detectar se destinatário está cadastrado no sistema
+    let documentoFluxo = null
+    try {
+      documentoFluxo = await processarFluxoDocumentoInterno(supabase, userId, saida, data)
+      if (documentoFluxo) {
+        console.log('✅ Fluxo de documento interno criado:', documentoFluxo.id)
+      }
+    } catch (fluxoError) {
+      console.error('⚠️ Erro ao processar fluxo interno (não crítico):', fluxoError)
+      // Don't fail the saida creation if flow processing fails
+    }
+
+    return { ...saida, itens: itensInseridos, cte, documento_fluxo: documentoFluxo }
   } catch (error) {
     // If any error occurs after saida creation, clean up
     console.error('Error creating saida, rolling back:', error)
@@ -698,5 +710,323 @@ async function createDevolucao(supabase: any, userId: string, data: any) {
     tipo_devolucao,
     itens_count: itensEntrada.length,
     status_saida_atualizado: novoStatusSaida
+  }
+}
+
+// ============================================================================
+// INTEGRAÇÃO NATIVA DE DOCUMENTOS FISCAIS (EDI INTERNO)
+// ============================================================================
+
+async function processarFluxoDocumentoInterno(supabase: any, userId: string, saida: any, data: any) {
+  console.log('🔗 Verificando fluxo de documento interno para saída:', saida.id)
+  
+  // Detectar destinatário interno
+  const destinatarioInterno = await detectarDestinatarioInterno(supabase, data)
+  
+  if (!destinatarioInterno) {
+    console.log('ℹ️ Destinatário não é cliente interno do sistema')
+    return null
+  }
+  
+  console.log('✅ Destinatário interno encontrado:', destinatarioInterno.razao_social)
+  
+  // Buscar cliente origem (quem está emitindo a saída)
+  const { data: clienteOrigem } = await supabase
+    .from('cliente_usuarios')
+    .select('cliente_id, clientes(id, razao_social, cpf_cnpj)')
+    .eq('user_id', userId)
+    .eq('ativo', true)
+    .limit(1)
+    .single()
+  
+  if (!clienteOrigem?.clientes) {
+    console.log('ℹ️ Usuário não tem cliente associado, pulando fluxo interno')
+    return null
+  }
+  
+  // Determinar tipo de fluxo
+  let tipoFluxo = 'venda'
+  if (data.finalidade_nfe === 'transferencia') {
+    tipoFluxo = 'transferencia'
+  } else if (data.finalidade_nfe === 'remessa') {
+    tipoFluxo = 'remessa'
+  } else if (data.finalidade_nfe === 'devolucao') {
+    tipoFluxo = 'devolucao'
+  }
+  
+  // Criar registro de fluxo
+  const { data: fluxo, error: fluxoError } = await supabase
+    .from('documento_fluxo')
+    .insert({
+      saida_id: saida.id,
+      cliente_origem_id: clienteOrigem.clientes.id,
+      cliente_destino_id: destinatarioInterno.id,
+      tipo_fluxo: tipoFluxo,
+      chave_nfe: data.chave_nfe || null,
+      operador_deposito_id: destinatarioInterno.operador_logistico_id || null,
+      transportadora_id: data.transportadora_id || null,
+      status: 'pendente'
+    })
+    .select()
+    .single()
+  
+  if (fluxoError) {
+    console.error('❌ Erro ao criar documento_fluxo:', fluxoError)
+    throw fluxoError
+  }
+  
+  console.log('✅ Documento fluxo criado:', fluxo.id)
+  
+  // Criar entrada automática para o destinatário
+  const entrada = await criarEntradaAutomatica(supabase, saida, destinatarioInterno, fluxo, data)
+  
+  // Se o destinatário usa operador logístico, notificar WMS
+  if (destinatarioInterno.operador_logistico_id) {
+    await notificarWMSOperador(supabase, entrada, destinatarioInterno.operador_logistico_id)
+  }
+  
+  // Se tem transportadora cadastrada no sistema, notificar TMS
+  if (data.transportadora_id) {
+    await notificarTMSTransportadora(supabase, saida, data.transportadora_id)
+  }
+  
+  return fluxo
+}
+
+async function detectarDestinatarioInterno(supabase: any, data: any) {
+  // Se é transferência, já temos o cliente destino
+  if (data.finalidade_nfe === 'transferencia' && data.destinatario_transferencia_id) {
+    const { data: clienteDestino } = await supabase
+      .from('clientes')
+      .select('*, cliente_depositos(*)')
+      .eq('id', data.destinatario_transferencia_id)
+      .single()
+    
+    return clienteDestino
+  }
+  
+  // Buscar pelo CPF/CNPJ do destinatário se existir
+  const cpfCnpjDestino = data.destinatario_cpf_cnpj || data.produtor_destinatario_cpf_cnpj
+  
+  if (!cpfCnpjDestino) {
+    // Tentar buscar pelo produtor_destinatario_id se for um profile com cpf_cnpj
+    if (data.produtor_destinatario_id) {
+      const { data: produtor } = await supabase
+        .from('profiles')
+        .select('cpf_cnpj')
+        .eq('user_id', data.produtor_destinatario_id)
+        .single()
+      
+      if (produtor?.cpf_cnpj) {
+        const { data: clienteDestino } = await supabase
+          .from('clientes')
+          .select('*, cliente_depositos(*)')
+          .eq('cpf_cnpj', produtor.cpf_cnpj)
+          .eq('ativo', true)
+          .maybeSingle()
+        
+        return clienteDestino
+      }
+    }
+    return null
+  }
+  
+  // Limpar CPF/CNPJ para comparação
+  const cpfCnpjLimpo = cpfCnpjDestino.replace(/\D/g, '')
+  
+  // Buscar cliente pelo CPF/CNPJ
+  const { data: clienteDestino } = await supabase
+    .from('clientes')
+    .select('*, cliente_depositos(*)')
+    .or(`cpf_cnpj.eq.${cpfCnpjLimpo},cpf_cnpj.eq.${cpfCnpjDestino}`)
+    .eq('ativo', true)
+    .maybeSingle()
+  
+  return clienteDestino
+}
+
+async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino: any, fluxo: any, data: any) {
+  console.log('📥 Criando entrada automática para cliente:', clienteDestino.razao_social)
+  
+  // Buscar itens da saída
+  const { data: saidaItens } = await supabase
+    .from('saida_itens')
+    .select('*, produtos(id, nome, codigo, unidade_medida)')
+    .eq('saida_id', saida.id)
+  
+  // Determinar depósito de destino
+  let depositoDestinoId = null
+  if (clienteDestino.operador_logistico_id) {
+    depositoDestinoId = clienteDestino.operador_logistico_id
+  } else if (clienteDestino.cliente_depositos?.length > 0) {
+    // Pegar primeiro depósito ativo
+    const depositoAtivo = clienteDestino.cliente_depositos.find((d: any) => d.ativo !== false)
+    depositoDestinoId = depositoAtivo?.franquia_id
+  }
+  
+  // Buscar um usuário do cliente destino para ser o user_id da entrada
+  const { data: usuarioDestino } = await supabase
+    .from('cliente_usuarios')
+    .select('user_id')
+    .eq('cliente_id', clienteDestino.id)
+    .eq('ativo', true)
+    .limit(1)
+    .single()
+  
+  const userIdDestino = usuarioDestino?.user_id
+  
+  if (!userIdDestino) {
+    console.log('⚠️ Cliente destino não tem usuário ativo, entrada será criada sem user_id específico')
+  }
+  
+  // Determinar natureza da operação baseado no tipo
+  let naturezaOperacao = 'Compra de mercadorias'
+  if (data.finalidade_nfe === 'transferencia') {
+    naturezaOperacao = 'Transferência entre estabelecimentos'
+  } else if (data.finalidade_nfe === 'remessa') {
+    naturezaOperacao = 'Recebimento de mercadoria em remessa'
+  } else if (data.finalidade_nfe === 'devolucao') {
+    naturezaOperacao = 'Recebimento de devolução'
+  }
+  
+  // Criar entrada
+  const { data: entrada, error: entradaError } = await supabase
+    .from('entradas')
+    .insert({
+      user_id: userIdDestino || saida.user_id,
+      deposito_id: depositoDestinoId,
+      cliente_id: clienteDestino.id,
+      data_entrada: new Date().toISOString().split('T')[0],
+      numero_nfe: saida.numero_nfe || `INT-${saida.id.substring(0, 8)}`,
+      chave_nfe: saida.chave_nfe || null,
+      emitente_cnpj: data.cliente_origem_cnpj || '',
+      emitente_nome: data.cliente_origem_nome || 'Fornecedor Interno',
+      destinatario_cpf_cnpj: clienteDestino.cpf_cnpj,
+      destinatario_nome: clienteDestino.razao_social,
+      valor_total: saida.valor_total || 0,
+      status_aprovacao: 'pendente',
+      tipo_recebimento: 'edi_interno',
+      saida_origem_id: saida.id,
+      documento_fluxo_id: fluxo.id,
+      natureza_operacao: naturezaOperacao,
+      observacoes: `Documento recebido automaticamente via EDI interno - Saída: ${saida.id}`
+    })
+    .select()
+    .single()
+  
+  if (entradaError) {
+    console.error('❌ Erro ao criar entrada automática:', entradaError)
+    throw entradaError
+  }
+  
+  console.log('✅ Entrada automática criada:', entrada.id)
+  
+  // Criar itens da entrada
+  if (saidaItens && saidaItens.length > 0) {
+    const itensEntrada = saidaItens.map((item: any) => ({
+      entrada_id: entrada.id,
+      user_id: userIdDestino || saida.user_id,
+      produto_id: item.produto_id,
+      nome_produto: item.produtos?.nome || 'Produto',
+      codigo_produto: item.produtos?.codigo || item.codigo_produto,
+      unidade_comercial: item.produtos?.unidade_medida || 'UN',
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario || 0,
+      lote: item.lote,
+      valor_total: (item.quantidade || 0) * (item.valor_unitario || 0)
+    }))
+    
+    const { error: itensError } = await supabase
+      .from('entrada_itens')
+      .insert(itensEntrada)
+    
+    if (itensError) {
+      console.error('❌ Erro ao criar itens da entrada:', itensError)
+      // Don't fail the flow, just log
+    } else {
+      console.log('✅ Itens da entrada criados:', itensEntrada.length)
+    }
+  }
+  
+  // Atualizar fluxo com entrada criada
+  await supabase
+    .from('documento_fluxo')
+    .update({ entrada_id: entrada.id })
+    .eq('id', fluxo.id)
+  
+  return entrada
+}
+
+async function notificarWMSOperador(supabase: any, entrada: any, operadorDepositoId: string) {
+  console.log('📦 Notificando WMS do operador logístico:', operadorDepositoId)
+  
+  // Buscar usuários do operador logístico
+  const { data: operadorUsuarios } = await supabase
+    .from('franquia_usuarios')
+    .select('user_id')
+    .eq('franquia_id', operadorDepositoId)
+    .eq('ativo', true)
+  
+  if (!operadorUsuarios || operadorUsuarios.length === 0) {
+    console.log('⚠️ Nenhum usuário encontrado para o operador logístico')
+    return
+  }
+  
+  // Criar notificação para cada usuário do operador
+  const notificacoes = operadorUsuarios.map((usuario: any) => ({
+    user_id: usuario.user_id,
+    titulo: '📦 Nova NF-e para Recebimento',
+    mensagem: `NF ${entrada.numero_nfe || entrada.id.substring(0, 8)} de ${entrada.emitente_nome} aguardando recebimento no WMS`,
+    tipo: 'wms_recebimento',
+    referencia_id: entrada.id,
+    referencia_tipo: 'entrada',
+    lida: false
+  }))
+  
+  const { error: notifError } = await supabase
+    .from('notifications')
+    .insert(notificacoes)
+  
+  if (notifError) {
+    console.error('⚠️ Erro ao criar notificações WMS:', notifError)
+  } else {
+    console.log('✅ Notificações WMS enviadas:', notificacoes.length)
+  }
+}
+
+async function notificarTMSTransportadora(supabase: any, saida: any, transportadoraId: string) {
+  console.log('🚚 Notificando TMS da transportadora:', transportadoraId)
+  
+  // Buscar usuários da transportadora
+  const { data: transportadoraUsuarios } = await supabase
+    .from('transportadoras_usuarios')
+    .select('user_id')
+    .eq('transportadora_id', transportadoraId)
+    .eq('ativo', true)
+  
+  if (!transportadoraUsuarios || transportadoraUsuarios.length === 0) {
+    console.log('ℹ️ Nenhum usuário TMS encontrado para a transportadora')
+    return
+  }
+  
+  // Criar notificação para cada usuário da transportadora
+  const notificacoes = transportadoraUsuarios.map((usuario: any) => ({
+    user_id: usuario.user_id,
+    titulo: '🚚 Nova Remessa para Coleta',
+    mensagem: `Remessa ${saida.id.substring(0, 8)} aguardando coleta`,
+    tipo: 'tms_coleta',
+    referencia_id: saida.id,
+    referencia_tipo: 'saida',
+    lida: false
+  }))
+  
+  const { error: notifError } = await supabase
+    .from('notifications')
+    .insert(notificacoes)
+  
+  if (notifError) {
+    console.error('⚠️ Erro ao criar notificações TMS:', notifError)
+  } else {
+    console.log('✅ Notificações TMS enviadas:', notificacoes.length)
   }
 }
