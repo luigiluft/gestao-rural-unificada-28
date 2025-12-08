@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast"
 interface ClienteModulos {
   wms_habilitado: boolean
   tms_habilitado: boolean
+  ecommerce_habilitado: boolean
+  atendimento_habilitado: boolean
 }
 
 export const useClienteModulos = () => {
@@ -17,12 +19,17 @@ export const useClienteModulos = () => {
     queryKey: ["cliente-modulos", selectedCliente?.id],
     queryFn: async (): Promise<ClienteModulos> => {
       if (!selectedCliente?.id) {
-        return { wms_habilitado: false, tms_habilitado: false }
+        return { 
+          wms_habilitado: false, 
+          tms_habilitado: false,
+          ecommerce_habilitado: false,
+          atendimento_habilitado: false
+        }
       }
 
       const { data, error } = await supabase
         .from("clientes")
-        .select("wms_habilitado, tms_habilitado")
+        .select("wms_habilitado, tms_habilitado, ecommerce_habilitado, atendimento_habilitado")
         .eq("id", selectedCliente.id)
         .single()
 
@@ -30,7 +37,9 @@ export const useClienteModulos = () => {
 
       return {
         wms_habilitado: data?.wms_habilitado ?? false,
-        tms_habilitado: data?.tms_habilitado ?? false
+        tms_habilitado: data?.tms_habilitado ?? false,
+        ecommerce_habilitado: data?.ecommerce_habilitado ?? false,
+        atendimento_habilitado: data?.atendimento_habilitado ?? false
       }
     },
     enabled: !!selectedCliente?.id,
@@ -68,6 +77,8 @@ export const useClienteModulos = () => {
   return {
     wmsHabilitado: modulos?.wms_habilitado ?? false,
     tmsHabilitado: modulos?.tms_habilitado ?? false,
+    ecommerceHabilitado: modulos?.ecommerce_habilitado ?? false,
+    atendimentoHabilitado: modulos?.atendimento_habilitado ?? false,
     isLoading,
     updateModulos: updateModulos.mutate,
     isUpdating: updateModulos.isPending
