@@ -1,9 +1,14 @@
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Info, AlertTriangle, FileText } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Button } from "@/components/ui/button"
+import { Info, AlertTriangle, FileText, Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { DadosSaida } from "../types/formulario.types"
 
 interface OperacaoFiscalProps {
@@ -44,12 +49,78 @@ const TIPOS_COMPLEMENTO = [
   { value: 'imposto', label: 'Imposto' }
 ]
 
+// CFOPs sugeridos por tipo de operação
+const CFOPS_POR_FINALIDADE: Record<string, Array<{ code: string; description: string }>> = {
+  normal: [
+    { code: '5102', description: 'Venda de mercadoria (dentro do estado)' },
+    { code: '6102', description: 'Venda de mercadoria (fora do estado)' },
+    { code: '5101', description: 'Venda de produção própria (dentro do estado)' },
+    { code: '6101', description: 'Venda de produção própria (fora do estado)' },
+    { code: '5405', description: 'Venda com ST já recolhido (dentro do estado)' },
+    { code: '6404', description: 'Venda com ST já recolhido (fora do estado)' },
+  ],
+  devolucao: [
+    { code: '5202', description: 'Devolução de compra (dentro do estado)' },
+    { code: '6202', description: 'Devolução de compra (fora do estado)' },
+    { code: '5411', description: 'Devolução com ST (dentro do estado)' },
+    { code: '6411', description: 'Devolução com ST (fora do estado)' },
+    { code: '5210', description: 'Devolução de industrialização (dentro do estado)' },
+    { code: '6210', description: 'Devolução de industrialização (fora do estado)' },
+  ],
+  remessa: [
+    { code: '5901', description: 'Remessa para industrialização (dentro do estado)' },
+    { code: '6901', description: 'Remessa para industrialização (fora do estado)' },
+    { code: '5902', description: 'Retorno de industrialização (dentro do estado)' },
+    { code: '6902', description: 'Retorno de industrialização (fora do estado)' },
+    { code: '5905', description: 'Remessa para depósito fechado (dentro do estado)' },
+    { code: '6905', description: 'Remessa para depósito fechado (fora do estado)' },
+    { code: '5906', description: 'Retorno de depósito fechado (dentro do estado)' },
+    { code: '6906', description: 'Retorno de depósito fechado (fora do estado)' },
+    { code: '5907', description: 'Retorno simbólico (dentro do estado)' },
+    { code: '6907', description: 'Retorno simbólico (fora do estado)' },
+    { code: '5908', description: 'Remessa de bem por conta de contrato (dentro do estado)' },
+    { code: '5910', description: 'Remessa em bonificação (dentro do estado)' },
+    { code: '6910', description: 'Remessa em bonificação (fora do estado)' },
+    { code: '5911', description: 'Remessa de amostra grátis (dentro do estado)' },
+    { code: '6911', description: 'Remessa de amostra grátis (fora do estado)' },
+    { code: '5912', description: 'Remessa de demonstração (dentro do estado)' },
+    { code: '6912', description: 'Remessa de demonstração (fora do estado)' },
+    { code: '5913', description: 'Retorno de demonstração (dentro do estado)' },
+    { code: '6913', description: 'Retorno de demonstração (fora do estado)' },
+    { code: '5914', description: 'Remessa para conserto (dentro do estado)' },
+    { code: '6914', description: 'Remessa para conserto (fora do estado)' },
+    { code: '5915', description: 'Retorno de conserto (dentro do estado)' },
+    { code: '6915', description: 'Retorno de conserto (fora do estado)' },
+    { code: '5923', description: 'Remessa de mercadoria para armazém geral (dentro do estado)' },
+    { code: '6923', description: 'Remessa de mercadoria para armazém geral (fora do estado)' },
+    { code: '5934', description: 'Remessa simbólica de mercadoria depositada em armazém geral (dentro do estado)' },
+    { code: '5949', description: 'Outra saída não especificada (dentro do estado)' },
+    { code: '6949', description: 'Outra saída não especificada (fora do estado)' },
+  ],
+  complementar: [
+    { code: '5102', description: 'Complemento de valor (dentro do estado)' },
+    { code: '6102', description: 'Complemento de valor (fora do estado)' },
+    { code: '5949', description: 'Complemento não especificado (dentro do estado)' },
+    { code: '6949', description: 'Complemento não especificado (fora do estado)' },
+  ]
+}
+
 export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalProps) {
+  const [cfopOpen, setCfopOpen] = useState(false)
+  const [cfopSearch, setCfopSearch] = useState('')
+  
   const finalidadeSelecionada = FINALIDADES.find(f => f.value === dados.finalidade_nfe)
   const requerNFeReferenciada = dados.finalidade_nfe === 'devolucao' || dados.finalidade_nfe === 'complementar'
+  
+  const cfopsSugeridos = CFOPS_POR_FINALIDADE[dados.finalidade_nfe || 'normal'] || []
+  
+  // Filter CFOPs based on search
+  const cfopsFiltrados = cfopsSugeridos.filter(cfop => 
+    cfop.code.includes(cfopSearch) || 
+    cfop.description.toLowerCase().includes(cfopSearch.toLowerCase())
+  )
 
   const handleFinalidadeChange = (value: string) => {
-    // Definir valores padrão baseados na finalidade
     let geraFinanceiro = true
     let movimentaEstoque: 'saida' | 'entrada' | 'nao_movimenta' = 'saida'
     
@@ -77,11 +148,17 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
       finalidade_nfe: value as DadosSaida['finalidade_nfe'],
       gera_financeiro: geraFinanceiro,
       movimenta_estoque: movimentaEstoque,
-      // Limpar campos de NF referenciada se não for necessário
       nfe_referenciada_chave: (value === 'devolucao' || value === 'complementar') ? dados.nfe_referenciada_chave : '',
       nfe_referenciada_data: (value === 'devolucao' || value === 'complementar') ? dados.nfe_referenciada_data : '',
-      tipo_complemento: value === 'complementar' ? dados.tipo_complemento : ''
+      tipo_complemento: value === 'complementar' ? dados.tipo_complemento : '',
+      cfop: '' // Reset CFOP when changing operation type
     })
+  }
+
+  const handleCfopSelect = (cfopCode: string) => {
+    onDadosChange({ ...dados, cfop: cfopCode })
+    setCfopOpen(false)
+    setCfopSearch('')
   }
 
   const getAlertVariant = () => {
@@ -96,6 +173,8 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
         return 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
     }
   }
+
+  const selectedCfopDescription = cfopsSugeridos.find(c => c.code === dados.cfop)?.description
 
   return (
     <Card>
@@ -200,18 +279,80 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
           </div>
         )}
 
-        {/* Campo CFOP */}
+        {/* Campo CFOP com Combobox */}
         <div className="space-y-2">
           <Label htmlFor="cfop">CFOP</Label>
-          <Input
-            id="cfop"
-            value={dados.cfop || ''}
-            onChange={(e) => onDadosChange({ ...dados, cfop: e.target.value })}
-            placeholder="Ex: 5102, 5202, 5901"
-            maxLength={4}
-          />
+          <Popover open={cfopOpen} onOpenChange={setCfopOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={cfopOpen}
+                className="w-full justify-between font-normal"
+              >
+                {dados.cfop ? (
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">{dados.cfop}</span>
+                    {selectedCfopDescription && (
+                      <span className="text-muted-foreground truncate">- {selectedCfopDescription}</span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Selecione ou digite um CFOP...</span>
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0 bg-popover" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Buscar ou digitar CFOP..." 
+                  value={cfopSearch}
+                  onValueChange={setCfopSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {cfopSearch.length > 0 && /^\d{4}$/.test(cfopSearch) ? (
+                      <div 
+                        className="py-3 px-4 text-sm cursor-pointer hover:bg-accent"
+                        onClick={() => handleCfopSelect(cfopSearch)}
+                      >
+                        Usar CFOP personalizado: <strong>{cfopSearch}</strong>
+                      </div>
+                    ) : (
+                      <div className="py-3 px-4 text-sm text-muted-foreground">
+                        {cfopSearch.length > 0 
+                          ? 'Digite 4 dígitos para usar um CFOP personalizado'
+                          : 'Nenhum CFOP encontrado'
+                        }
+                      </div>
+                    )}
+                  </CommandEmpty>
+                  <CommandGroup heading="CFOPs sugeridos para esta operação">
+                    {cfopsFiltrados.map(cfop => (
+                      <CommandItem
+                        key={cfop.code}
+                        value={`${cfop.code} ${cfop.description}`}
+                        onSelect={() => handleCfopSelect(cfop.code)}
+                        className="cursor-pointer"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            dados.cfop === cfop.code ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="font-medium mr-2">{cfop.code}</span>
+                        <span className="text-muted-foreground text-sm truncate">{cfop.description}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <p className="text-xs text-muted-foreground">
-            Código Fiscal de Operações e Prestações
+            Código Fiscal de Operações e Prestações - selecione da lista ou digite manualmente
           </p>
         </div>
       </CardContent>
