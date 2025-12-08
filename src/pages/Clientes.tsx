@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Plus, Building2, Users, Edit, Trash2, Search, UserPlus } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { Plus, Building2, Users, Edit, Trash2, Search, UserPlus, Loader2, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +26,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useClientes, useCreateCliente, Cliente } from "@/hooks/useClientes"
 import { useEmpresaClientes, useCreateEmpresaCliente, useRemoveEmpresaCliente, EmpresaCliente } from "@/hooks/useEmpresaClientes"
 import { useCliente } from "@/contexts/ClienteContext"
+import { useClienteByCpfCnpj } from "@/hooks/useClienteByCpfCnpj"
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function Clientes() {
   const { selectedCliente: empresaSelecionada } = useCliente()
@@ -50,6 +53,8 @@ export default function Clientes() {
   const [searchTerm, setSearchTerm] = useState("")
   const [clienteToRemove, setClienteToRemove] = useState<EmpresaCliente | null>(null)
   const [selectedExistingCliente, setSelectedExistingCliente] = useState<string>("")
+  const [cpfCnpjBusca, setCpfCnpjBusca] = useState<string>("")
+  const [clienteEncontrado, setClienteEncontrado] = useState<Cliente | null>(null)
 
   const [formData, setFormData] = useState({
     tipo_cliente: 'cnpj' as 'cpf' | 'cnpj',
@@ -74,9 +79,71 @@ export default function Clientes() {
   const [semNumero, setSemNumero] = useState(false)
   const [semComplemento, setSemComplemento] = useState(false)
 
+  // Hook para buscar cliente existente por CPF/CNPJ
+  const { data: clienteExistente, isLoading: buscandoCliente } = useClienteByCpfCnpj(cpfCnpjBusca)
+
+  // Efeito para quando encontrar um cliente existente
+  useEffect(() => {
+    if (clienteExistente && cpfCnpjBusca) {
+      setClienteEncontrado(clienteExistente)
+      // Preencher formulário com dados do cliente encontrado
+      setFormData({
+        tipo_cliente: clienteExistente.tipo_cliente as 'cpf' | 'cnpj',
+        razao_social: clienteExistente.razao_social || '',
+        nome_fantasia: clienteExistente.nome_fantasia || '',
+        cpf_cnpj: clienteExistente.cpf_cnpj || '',
+        inscricao_estadual: clienteExistente.inscricao_estadual || '',
+        endereco_fiscal: clienteExistente.endereco_fiscal || '',
+        numero_fiscal: clienteExistente.numero_fiscal || '',
+        complemento_fiscal: clienteExistente.complemento_fiscal || '',
+        bairro_fiscal: clienteExistente.bairro_fiscal || '',
+        cidade_fiscal: clienteExistente.cidade_fiscal || '',
+        estado_fiscal: clienteExistente.estado_fiscal || '',
+        cep_fiscal: clienteExistente.cep_fiscal || '',
+        telefone_comercial: clienteExistente.telefone_comercial || '',
+        email_comercial: clienteExistente.email_comercial || '',
+        atividade_principal: clienteExistente.atividade_principal || '',
+        regime_tributario: clienteExistente.regime_tributario || '',
+        observacoes: clienteExistente.observacoes || '',
+      })
+      setSemNumero(clienteExistente.numero_fiscal === 'S/N')
+      setSemComplemento(clienteExistente.complemento_fiscal === 'S/C')
+    }
+  }, [clienteExistente, cpfCnpjBusca])
+
+  // Debounce para busca de CPF/CNPJ
+  const handleCpfCnpjChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, cpf_cnpj: value }))
+    setClienteEncontrado(null)
+    
+    // Limpar formatação para busca
+    const cleanValue = value.replace(/[^\d]/g, '')
+    if (cleanValue.length >= 11) {
+      setCpfCnpjBusca(cleanValue)
+    } else {
+      setCpfCnpjBusca("")
+    }
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!empresaSelecionada) return
+
+    // Se encontrou um cliente existente, apenas vincular
+    if (clienteEncontrado) {
+      createEmpresaCliente.mutate({
+        empresa_id: empresaSelecionada.id,
+        cliente_id: clienteEncontrado.id,
+        tipo_relacionamento: 'cliente',
+      }, {
+        onSuccess: () => {
+          toast.success("Cliente vinculado com sucesso!")
+          setIsDialogOpen(false)
+          resetForm()
+        }
+      })
+      return
+    }
 
     // Criar o cliente e vincular à empresa
     createCliente.mutate(formData, {
@@ -130,6 +197,8 @@ export default function Clientes() {
     })
     setSemNumero(false)
     setSemComplemento(false)
+    setCpfCnpjBusca("")
+    setClienteEncontrado(null)
   }
 
   const handleRemoveCliente = () => {
@@ -298,14 +367,30 @@ export default function Clientes() {
                       <Label htmlFor="cpf_cnpj">
                         {formData.tipo_cliente === 'cpf' ? 'CPF *' : 'CNPJ *'}
                       </Label>
-                      <Input
-                        id="cpf_cnpj"
-                        value={formData.cpf_cnpj}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cpf_cnpj: e.target.value })
-                        }
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          id="cpf_cnpj"
+                          value={formData.cpf_cnpj}
+                          onChange={(e) => handleCpfCnpjChange(e.target.value)}
+                          required
+                          className={clienteEncontrado ? "border-green-500 pr-10" : ""}
+                        />
+                        {buscandoCliente && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                        {clienteEncontrado && !buscandoCliente && (
+                          <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                      {clienteEncontrado && (
+                        <Alert className="mt-2 border-green-500 bg-green-50 dark:bg-green-950">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <AlertDescription className="text-green-700 dark:text-green-300">
+                            Cliente já cadastrado na plataforma! Os dados foram preenchidos automaticamente.
+                            Ao salvar, ele será vinculado à sua empresa.
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
 
                     {formData.tipo_cliente === 'cnpj' && (
@@ -478,12 +563,23 @@ export default function Clientes() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      resetForm()
+                    }}
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={createCliente.isPending}>
-                    {createCliente.isPending ? 'Salvando...' : 'Salvar'}
+                  <Button 
+                    type="submit" 
+                    disabled={createCliente.isPending || createEmpresaCliente.isPending}
+                  >
+                    {(createCliente.isPending || createEmpresaCliente.isPending) 
+                      ? 'Salvando...' 
+                      : clienteEncontrado 
+                        ? 'Vincular Cliente' 
+                        : 'Salvar'
+                    }
                   </Button>
                 </div>
               </form>

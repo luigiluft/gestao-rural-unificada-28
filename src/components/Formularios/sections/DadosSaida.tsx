@@ -7,9 +7,10 @@ import { DadosSaida } from "../types/formulario.types"
 
 import { useProfile, useFazendas } from "@/hooks/useProfile"
 import { useClientesParaSaida } from "@/hooks/useClientesParaSaida"
+import { useClientesDestinatarios } from "@/hooks/useClientesDestinatarios"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import type { Coordinates } from "@/services/routingService"
 import { 
   getMinScheduleDateWithFreight, 
@@ -20,7 +21,6 @@ import { useDiasUteisExpedicao, useHorariosRetirada, useJanelaEntregaDias } from
 import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
-import { useMemo } from "react"
 
 interface DadosSaidaProps {
   dados: DadosSaida
@@ -33,6 +33,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const { user } = useAuth()
   const { data: profile } = useProfile()
   const { data: clientesParaSaida = [] } = useClientesParaSaida()
+  const { data: clientesDestinatarios = [] } = useClientesDestinatarios()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
   const janelaEntregaDias = useJanelaEntregaDias()
@@ -189,6 +190,33 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
               </SelectContent>
             </Select>
           </div>
+
+          {/* Seletor de cliente destinatário para clientes (venda B2B) */}
+          {isCliente && (
+            <div className="space-y-2">
+              <Label htmlFor="cliente_destinatario_id">Cliente Destinatário *</Label>
+              <Select 
+                value={dados.cliente_destinatario_id || ''} 
+                onValueChange={(value) => handleChange('cliente_destinatario_id', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientesDestinatarios.map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id}>
+                      {cliente.razao_social} ({cliente.cpf_cnpj})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {clientesDestinatarios.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Cadastre clientes na página "Clientes" para emitir NF de venda
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Só mostrar seleção de produtor para operadores */}
           {isOperador && (

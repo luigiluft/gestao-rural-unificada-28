@@ -102,6 +102,8 @@ export interface DadosSaida extends DadosGenericosBase {
   tipo_complemento?: 'valor' | 'quantidade' | 'imposto' | ''
   // Campos de transferência
   destinatario_transferencia_id?: string
+  // Campo para cliente destinatário (venda B2B)
+  cliente_destinatario_id?: string
 }
 
 export interface FormularioGenericoProps {
