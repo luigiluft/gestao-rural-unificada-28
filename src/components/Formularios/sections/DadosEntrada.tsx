@@ -87,7 +87,7 @@ export function DadosEntradaSection({ dados, onDadosChange, nfData, isTutorialAc
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="origem">Origem/Fornecedor</Label>
             <Input
@@ -95,6 +95,16 @@ export function DadosEntradaSection({ dados, onDadosChange, nfData, isTutorialAc
               value={dados.origem}
               onChange={(e) => handleChange('origem', e.target.value)}
               placeholder="Ex: Cooperativa ABC"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fornecedorCnpj">CNPJ do Fornecedor</Label>
+            <Input
+              id="fornecedorCnpj"
+              value={dados.fornecedorCnpj || ''}
+              onChange={(e) => handleChange('fornecedorCnpj', e.target.value)}
+              placeholder="Ex: 00.000.000/0001-00"
             />
           </div>
 

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useClientes } from "@/hooks/useClientes"
 
 interface DepositoDisponivel {
   deposito_id: string;
@@ -10,24 +11,18 @@ interface DepositoDisponivel {
 }
 
 export const useDepositosDisponiveis = (userId?: string) => {
+  const { data: clientes } = useClientes()
+  
   return useQuery<DepositoDisponivel[]>({
-    queryKey: ["depositos-disponiveis", userId],
+    queryKey: ["depositos-disponiveis", userId, clientes?.map(c => c.id)],
     queryFn: async () => {
       if (!userId) return []
       
-      // Buscar todas as empresas (clientes) que este usuário gerencia
-      const { data: clienteUsuarios, error: clienteError } = await supabase
-        .from("cliente_usuarios")
-        .select("cliente_id")
-        .eq("user_id", userId)
-        .eq("ativo", true)
-
-      if (clienteError) throw clienteError
-
-      const clienteIds = clienteUsuarios?.map(cu => cu.cliente_id) || []
+      // Pegar os IDs dos clientes que o usuário gerencia
+      const clienteIds = clientes?.map(c => c.id) || []
       if (clienteIds.length === 0) return []
 
-      // Buscar TODOS os depósitos do cliente (filiais e armazém geral)
+      // Buscar TODOS os depósitos dos clientes
       const { data: clienteDepositos, error: depositosError } = await supabase
         .from("cliente_depositos")
         .select(`
@@ -50,7 +45,7 @@ export const useDepositosDisponiveis = (userId?: string) => {
 
       clienteDepositos?.forEach(dep => {
         if (dep.franquias) {
-          depositosMap.set(dep.franquia_id, {
+          depositosMap.set(dep.id, {
             deposito_id: dep.franquia_id,
             deposito_nome: dep.nome || dep.franquias.nome,
             franqueado_id: null,
@@ -62,7 +57,7 @@ export const useDepositosDisponiveis = (userId?: string) => {
 
       return Array.from(depositosMap.values())
     },
-    enabled: !!userId,
+    enabled: !!userId && !!clientes && clientes.length > 0,
   })
 }
 
@@ -98,6 +93,3 @@ export const useTodasFranquias = () => {
     },
   })
 }
-
-// Função removida: useRelacionamentosProdutorFranqueado
-// Agora todos os produtores têm acesso automático a todas as franquias ativas
