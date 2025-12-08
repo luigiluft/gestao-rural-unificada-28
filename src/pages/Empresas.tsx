@@ -185,9 +185,9 @@ export default function Empresas() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Gerenciar Empresas</h1>
+          <h1 className="text-3xl font-bold">Minhas Empresas</h1>
           <p className="text-muted-foreground">
-            Entidades fiscais (pessoas físicas e jurídicas)
+            Gerencie suas empresas e filiais
           </p>
         </div>
         
