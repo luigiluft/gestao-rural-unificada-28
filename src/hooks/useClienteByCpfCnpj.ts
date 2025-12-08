@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Cliente } from "./useClientes"
 
 /**
- * Hook para buscar um cliente pelo CPF/CNPJ
+ * Hook para buscar um cliente pelo CPF/CNPJ usando RPC (sem restrição de RLS)
  * Retorna os dados completos se encontrar, null se não encontrar
  */
 export const useClienteByCpfCnpj = (cpfCnpj: string | undefined) => {
@@ -19,29 +19,27 @@ export const useClienteByCpfCnpj = (cpfCnpj: string | undefined) => {
     queryFn: async (): Promise<Cliente | null> => {
       if (!cleanCpfCnpj || !isValidLength) return null
       
-      console.log("Buscando cliente por CPF/CNPJ:", cleanCpfCnpj)
+      console.log("Buscando cliente por CPF/CNPJ via RPC:", cleanCpfCnpj)
       
-      // Buscar todos os clientes e filtrar no lado do cliente
-      // Isso é necessário porque o banco pode ter CPF/CNPJ com ou sem formatação
+      // Usar função RPC que bypassa RLS para buscar cliente por CPF/CNPJ
       const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
+        .rpc('buscar_cliente_por_cpf_cnpj', { p_cpf_cnpj: cleanCpfCnpj })
 
       if (error) {
         console.error("Erro ao buscar cliente por CPF/CNPJ:", error)
         return null
       }
       
-      // Filtrar localmente removendo formatação de ambos
-      const cliente = data?.find(c => {
-        const dbClean = c.cpf_cnpj?.replace(/[^\d]/g, '') || ''
-        return dbClean === cleanCpfCnpj
-      })
+      console.log("Resultado da busca RPC:", data)
       
-      console.log("Cliente encontrado:", cliente?.razao_social || "Não encontrado")
+      // A função retorna um array, pegamos o primeiro resultado
+      if (data && data.length > 0) {
+        console.log("Cliente encontrado:", data[0].razao_social)
+        return data[0] as Cliente
+      }
       
-      // IMPORTANTE: Sempre retornar null ao invés de undefined
-      return (cliente as Cliente) || null
+      console.log("Cliente não encontrado")
+      return null
     },
     enabled: !!cleanCpfCnpj && isValidLength,
     staleTime: 1000 * 60 * 5, // 5 minutos
