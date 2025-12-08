@@ -5870,6 +5870,29 @@ export type Database = {
       }
       alocar_produtos_orfaos: { Args: never; Returns: number }
       auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
+      buscar_cliente_por_cpf_cnpj: {
+        Args: { p_cpf_cnpj: string }
+        Returns: {
+          atividade_principal: string
+          bairro_fiscal: string
+          cep_fiscal: string
+          cidade_fiscal: string
+          complemento_fiscal: string
+          cpf_cnpj: string
+          email_comercial: string
+          endereco_fiscal: string
+          estado_fiscal: string
+          id: string
+          inscricao_estadual: string
+          nome_fantasia: string
+          numero_fiscal: string
+          observacoes: string
+          razao_social: string
+          regime_tributario: string
+          telefone_comercial: string
+          tipo_cliente: string
+        }[]
+      }
       calcular_performance_sla_produtor: {
         Args: { p_periodo_dias?: number; p_produtor_id: string }
         Returns: {
