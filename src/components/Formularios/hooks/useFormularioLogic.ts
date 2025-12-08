@@ -50,6 +50,7 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         dataEntrada: '',
         dataEmissao: '',
         origem: '',
+        fornecedorCnpj: '',
         observacoes: '',
         depositoId: ''
       } as DadosEntrada
@@ -296,6 +297,7 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         dataEntrada: nfData.dataEmissao,
         dataEmissao: nfData.dataEmissao,
         origem: nfData.emitente.nome,
+        fornecedorCnpj: nfData.emitente.cnpj || '',
         observacoes: `Importado da NFe ${nfData.numeroNF}/${nfData.serie}\nEmitente: ${nfData.emitente.nome}\nDestinatário: ${nfData.destinatario.nome}`,
         depositoId: deteccaoEntrada?.depositoId || franquiaData?.id || '',
         // Mapear todos os dados da NFe para submissão backend

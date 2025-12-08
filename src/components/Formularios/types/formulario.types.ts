@@ -57,6 +57,7 @@ export interface DadosEntrada extends DadosGenericosBase {
   dataEntrada: string
   dataEmissao: string
   origem: string
+  fornecedorCnpj: string
   // Dados completos da NFe para submissão backend
   nfeData?: {
     numero_nfe?: string
