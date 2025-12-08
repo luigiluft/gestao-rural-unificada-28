@@ -626,13 +626,13 @@ export default function Empresas() {
       {clientes?.length === 0 && (
         <Card className="p-12 text-center">
           <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum cliente cadastrado</h3>
+          <h3 className="text-lg font-semibold mb-2">Nenhuma empresa cadastrada</h3>
           <p className="text-muted-foreground mb-4">
-            Comece criando seu primeiro cliente (pessoa física ou jurídica)
+            Comece cadastrando sua primeira empresa (pessoa física ou jurídica)
           </p>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Criar Primeiro Cliente
+            Criar Primeira Empresa
           </Button>
         </Card>
       )}
