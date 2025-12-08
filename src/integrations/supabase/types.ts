@@ -5969,6 +5969,8 @@ export type Database = {
         | "royalties.manage"
         | "contratos.view"
         | "contratos.manage"
+        | "configurar-impostos.view"
+        | "configurar-impostos.manage"
       prioridade_ocorrencia: "alta" | "media" | "baixa"
       saida_status:
         | "separacao_pendente"
@@ -6212,6 +6214,8 @@ export const Constants = {
         "royalties.manage",
         "contratos.view",
         "contratos.manage",
+        "configurar-impostos.view",
+        "configurar-impostos.manage",
       ],
       prioridade_ocorrencia: ["alta", "media", "baixa"],
       saida_status: [
