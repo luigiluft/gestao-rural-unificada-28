@@ -323,7 +323,7 @@ export default function Clientes() {
                       <Select
                         value={formData.tipo_cliente}
                         onValueChange={(value: 'cpf' | 'cnpj') =>
-                          setFormData({ ...formData, tipo_cliente: value })
+                          setFormData({ ...formData, tipo_cliente: value, cpf_cnpj: '' })
                         }
                       >
                         <SelectTrigger>
@@ -337,33 +337,6 @@ export default function Clientes() {
                     </div>
 
                     <div>
-                      <Label htmlFor="razao_social">
-                        {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
-                      </Label>
-                      <Input
-                        id="razao_social"
-                        value={formData.razao_social}
-                        onChange={(e) =>
-                          setFormData({ ...formData, razao_social: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-
-                    {formData.tipo_cliente === 'cnpj' && (
-                      <div>
-                        <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                        <Input
-                          id="nome_fantasia"
-                          value={formData.nome_fantasia}
-                          onChange={(e) =>
-                            setFormData({ ...formData, nome_fantasia: e.target.value })
-                          }
-                        />
-                      </div>
-                    )}
-
-                    <div>
                       <Label htmlFor="cpf_cnpj">
                         {formData.tipo_cliente === 'cpf' ? 'CPF *' : 'CNPJ *'}
                       </Label>
@@ -372,6 +345,7 @@ export default function Clientes() {
                           id="cpf_cnpj"
                           value={formData.cpf_cnpj}
                           onChange={(e) => handleCpfCnpjChange(e.target.value)}
+                          placeholder={formData.tipo_cliente === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
                           required
                           className={clienteEncontrado ? "border-green-500 pr-10" : ""}
                         />
@@ -393,6 +367,35 @@ export default function Clientes() {
                       )}
                     </div>
 
+                    <div>
+                      <Label htmlFor="razao_social">
+                        {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
+                      </Label>
+                      <Input
+                        id="razao_social"
+                        value={formData.razao_social}
+                        onChange={(e) =>
+                          setFormData({ ...formData, razao_social: e.target.value })
+                        }
+                        required
+                        disabled={!!clienteEncontrado}
+                      />
+                    </div>
+
+                    {formData.tipo_cliente === 'cnpj' && (
+                      <div>
+                        <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                        <Input
+                          id="nome_fantasia"
+                          value={formData.nome_fantasia}
+                          onChange={(e) =>
+                            setFormData({ ...formData, nome_fantasia: e.target.value })
+                          }
+                          disabled={!!clienteEncontrado}
+                        />
+                      </div>
+                    )}
+
                     {formData.tipo_cliente === 'cnpj' && (
                       <div>
                         <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
@@ -402,6 +405,7 @@ export default function Clientes() {
                           onChange={(e) =>
                             setFormData({ ...formData, inscricao_estadual: e.target.value })
                           }
+                          disabled={!!clienteEncontrado}
                         />
                       </div>
                     )}
