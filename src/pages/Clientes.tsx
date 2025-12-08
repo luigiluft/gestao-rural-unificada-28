@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Building2, Users, Edit, Trash2, Search, UserPlus, Loader2, CheckCircle } from "lucide-react"
+import { Plus, Building2, Users, Edit, Trash2, Search, UserPlus, Loader2, CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -55,6 +55,7 @@ export default function Clientes() {
   const [selectedExistingCliente, setSelectedExistingCliente] = useState<string>("")
   const [cpfCnpjBusca, setCpfCnpjBusca] = useState<string>("")
   const [clienteEncontrado, setClienteEncontrado] = useState<Cliente | null>(null)
+  const [buscaRealizada, setBuscaRealizada] = useState(false)
 
   const [formData, setFormData] = useState({
     tipo_cliente: 'cnpj' as 'cpf' | 'cnpj',
@@ -80,44 +81,51 @@ export default function Clientes() {
   const [semComplemento, setSemComplemento] = useState(false)
 
   // Hook para buscar cliente existente por CPF/CNPJ
-  const { data: clienteExistente, isLoading: buscandoCliente } = useClienteByCpfCnpj(cpfCnpjBusca)
+  const { data: clienteExistente, isLoading: buscandoCliente, isFetched } = useClienteByCpfCnpj(cpfCnpjBusca)
 
   // Efeito para quando encontrar um cliente existente
   useEffect(() => {
-    if (clienteExistente && cpfCnpjBusca) {
-      setClienteEncontrado(clienteExistente)
-      // Preencher formulário com dados do cliente encontrado
-      setFormData({
-        tipo_cliente: clienteExistente.tipo_cliente as 'cpf' | 'cnpj',
-        razao_social: clienteExistente.razao_social || '',
-        nome_fantasia: clienteExistente.nome_fantasia || '',
-        cpf_cnpj: clienteExistente.cpf_cnpj || '',
-        inscricao_estadual: clienteExistente.inscricao_estadual || '',
-        endereco_fiscal: clienteExistente.endereco_fiscal || '',
-        numero_fiscal: clienteExistente.numero_fiscal || '',
-        complemento_fiscal: clienteExistente.complemento_fiscal || '',
-        bairro_fiscal: clienteExistente.bairro_fiscal || '',
-        cidade_fiscal: clienteExistente.cidade_fiscal || '',
-        estado_fiscal: clienteExistente.estado_fiscal || '',
-        cep_fiscal: clienteExistente.cep_fiscal || '',
-        telefone_comercial: clienteExistente.telefone_comercial || '',
-        email_comercial: clienteExistente.email_comercial || '',
-        atividade_principal: clienteExistente.atividade_principal || '',
-        regime_tributario: clienteExistente.regime_tributario || '',
-        observacoes: clienteExistente.observacoes || '',
-      })
-      setSemNumero(clienteExistente.numero_fiscal === 'S/N')
-      setSemComplemento(clienteExistente.complemento_fiscal === 'S/C')
+    if (isFetched && cpfCnpjBusca) {
+      setBuscaRealizada(true)
+      if (clienteExistente) {
+        setClienteEncontrado(clienteExistente)
+        // Preencher formulário com dados do cliente encontrado
+        setFormData({
+          tipo_cliente: clienteExistente.tipo_cliente as 'cpf' | 'cnpj',
+          razao_social: clienteExistente.razao_social || '',
+          nome_fantasia: clienteExistente.nome_fantasia || '',
+          cpf_cnpj: clienteExistente.cpf_cnpj || '',
+          inscricao_estadual: clienteExistente.inscricao_estadual || '',
+          endereco_fiscal: clienteExistente.endereco_fiscal || '',
+          numero_fiscal: clienteExistente.numero_fiscal || '',
+          complemento_fiscal: clienteExistente.complemento_fiscal || '',
+          bairro_fiscal: clienteExistente.bairro_fiscal || '',
+          cidade_fiscal: clienteExistente.cidade_fiscal || '',
+          estado_fiscal: clienteExistente.estado_fiscal || '',
+          cep_fiscal: clienteExistente.cep_fiscal || '',
+          telefone_comercial: clienteExistente.telefone_comercial || '',
+          email_comercial: clienteExistente.email_comercial || '',
+          atividade_principal: clienteExistente.atividade_principal || '',
+          regime_tributario: clienteExistente.regime_tributario || '',
+          observacoes: clienteExistente.observacoes || '',
+        })
+        setSemNumero(clienteExistente.numero_fiscal === 'S/N')
+        setSemComplemento(clienteExistente.complemento_fiscal === 'S/C')
+      } else {
+        setClienteEncontrado(null)
+      }
     }
-  }, [clienteExistente, cpfCnpjBusca])
+  }, [clienteExistente, cpfCnpjBusca, isFetched])
 
   // Debounce para busca de CPF/CNPJ
   const handleCpfCnpjChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, cpf_cnpj: value }))
     setClienteEncontrado(null)
+    setBuscaRealizada(false)
     
     // Limpar formatação para busca
     const cleanValue = value.replace(/[^\d]/g, '')
+    // CPF tem 11 dígitos, CNPJ tem 14
     if (cleanValue.length >= 11) {
       setCpfCnpjBusca(cleanValue)
     } else {
@@ -199,6 +207,7 @@ export default function Clientes() {
     setSemComplemento(false)
     setCpfCnpjBusca("")
     setClienteEncontrado(null)
+    setBuscaRealizada(false)
   }
 
   const handleRemoveCliente = () => {
@@ -322,9 +331,12 @@ export default function Clientes() {
                       <Label htmlFor="tipo_cliente">Tipo *</Label>
                       <Select
                         value={formData.tipo_cliente}
-                        onValueChange={(value: 'cpf' | 'cnpj') =>
+                        onValueChange={(value: 'cpf' | 'cnpj') => {
                           setFormData({ ...formData, tipo_cliente: value, cpf_cnpj: '' })
-                        }
+                          setCpfCnpjBusca("")
+                          setClienteEncontrado(null)
+                          setBuscaRealizada(false)
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -347,7 +359,13 @@ export default function Clientes() {
                           onChange={(e) => handleCpfCnpjChange(e.target.value)}
                           placeholder={formData.tipo_cliente === 'cpf' ? '000.000.000-00' : '00.000.000/0000-00'}
                           required
-                          className={clienteEncontrado ? "border-green-500 pr-10" : ""}
+                          className={
+                            clienteEncontrado 
+                              ? "border-green-500 pr-10" 
+                              : buscaRealizada && !buscandoCliente 
+                                ? "border-red-500 pr-10" 
+                                : ""
+                          }
                         />
                         {buscandoCliente && (
                           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -355,59 +373,72 @@ export default function Clientes() {
                         {clienteEncontrado && !buscandoCliente && (
                           <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                         )}
+                        {buscaRealizada && !clienteEncontrado && !buscandoCliente && (
+                          <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                        )}
                       </div>
                       {clienteEncontrado && (
                         <Alert className="mt-2 border-green-500 bg-green-50 dark:bg-green-950">
                           <CheckCircle className="h-4 w-4 text-green-500" />
                           <AlertDescription className="text-green-700 dark:text-green-300">
-                            Cliente já cadastrado na plataforma! Os dados foram preenchidos automaticamente.
+                            <strong>{clienteEncontrado.razao_social}</strong> já está cadastrado na plataforma!
                             Ao salvar, ele será vinculado à sua empresa.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      {buscaRealizada && !clienteEncontrado && !buscandoCliente && (
+                        <Alert className="mt-2 border-red-500 bg-red-50 dark:bg-red-950">
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          <AlertDescription className="text-red-700 dark:text-red-300">
+                            Cliente não encontrado na plataforma. Preencha os dados abaixo para cadastrar.
                           </AlertDescription>
                         </Alert>
                       )}
                     </div>
 
-                    <div>
-                      <Label htmlFor="razao_social">
-                        {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
-                      </Label>
-                      <Input
-                        id="razao_social"
-                        value={formData.razao_social}
-                        onChange={(e) =>
-                          setFormData({ ...formData, razao_social: e.target.value })
-                        }
-                        required
-                        disabled={!!clienteEncontrado}
-                      />
-                    </div>
+                    {/* Mostrar campos de cadastro apenas quando cliente NÃO for encontrado */}
+                    {!clienteEncontrado && (
+                      <>
+                        <div>
+                          <Label htmlFor="razao_social">
+                            {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
+                          </Label>
+                          <Input
+                            id="razao_social"
+                            value={formData.razao_social}
+                            onChange={(e) =>
+                              setFormData({ ...formData, razao_social: e.target.value })
+                            }
+                            required={!clienteEncontrado}
+                          />
+                        </div>
 
-                    {formData.tipo_cliente === 'cnpj' && (
-                      <div>
-                        <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                        <Input
-                          id="nome_fantasia"
-                          value={formData.nome_fantasia}
-                          onChange={(e) =>
-                            setFormData({ ...formData, nome_fantasia: e.target.value })
-                          }
-                          disabled={!!clienteEncontrado}
-                        />
-                      </div>
-                    )}
+                        {formData.tipo_cliente === 'cnpj' && (
+                          <div>
+                            <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                            <Input
+                              id="nome_fantasia"
+                              value={formData.nome_fantasia}
+                              onChange={(e) =>
+                                setFormData({ ...formData, nome_fantasia: e.target.value })
+                              }
+                            />
+                          </div>
+                        )}
 
-                    {formData.tipo_cliente === 'cnpj' && (
-                      <div>
-                        <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                        <Input
-                          id="inscricao_estadual"
-                          value={formData.inscricao_estadual}
-                          onChange={(e) =>
-                            setFormData({ ...formData, inscricao_estadual: e.target.value })
-                          }
-                          disabled={!!clienteEncontrado}
-                        />
-                      </div>
+                        {formData.tipo_cliente === 'cnpj' && (
+                          <div>
+                            <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                            <Input
+                              id="inscricao_estadual"
+                              value={formData.inscricao_estadual}
+                              onChange={(e) =>
+                                setFormData({ ...formData, inscricao_estadual: e.target.value })
+                              }
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </TabsContent>
 
