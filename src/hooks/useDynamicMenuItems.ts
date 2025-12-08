@@ -109,6 +109,11 @@ const menuLabels = {
   'despesas': 'Despesas',
   'caixa': 'Caixa',
   'royalties': 'Royalties',
+  'contas-correntes': 'Contas Correntes',
+  'movimentacoes-contas': 'Movimentações',
+  'integracoes-bancos': 'Integrações Bancárias',
+  'aprovacao-pagamentos': 'Aprovação de Pagamentos',
+  'descontos-duplicatas': 'Descontos em Duplicatas',
   'instrucoes': 'Instruções',
   'suporte': 'Suporte',
   'tutorial': 'Tutorial',
@@ -176,6 +181,11 @@ const iconMap = {
   'despesas': Receipt,
   'caixa': DollarSign,
   'royalties': TrendingUp,
+  'contas-correntes': Building,
+  'movimentacoes-contas': ArrowUpFromLine,
+  'integracoes-bancos': Building2,
+  'aprovacao-pagamentos': FileCheck,
+  'descontos-duplicatas': Receipt,
   'instrucoes': BookOpen,
   'suporte': HelpCircle,
   'tutorial': BookOpen,
@@ -213,12 +223,12 @@ export const useDynamicMenuItems = () => {
       },
       { 
         title: 'Financeiro',
-        subPages: ['receitas', 'faturas']
+        subPages: ['receitas', 'despesas', 'contas-correntes', 'movimentacoes-contas', 'integracoes-bancos', 'aprovacao-pagamentos', 'descontos-duplicatas']
       }
     ]
 
     // Verificar se tem permissão para pelo menos uma página do ERP
-    const allErpPages = ['rastreio', 'saidas', 'entradas', 'estoque', 'movimentos-estoque', 'posicionamento-estoque', 'receitas', 'faturas']
+    const allErpPages = ['rastreio', 'saidas', 'entradas', 'estoque', 'movimentos-estoque', 'posicionamento-estoque', 'receitas', 'despesas', 'contas-correntes', 'movimentacoes-contas', 'integracoes-bancos', 'aprovacao-pagamentos', 'descontos-duplicatas']
     const hasErpPermission = allErpPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )

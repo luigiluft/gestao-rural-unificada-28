@@ -73,6 +73,11 @@ import Receitas from "./pages/Receitas";
 import Despesas from "./pages/Despesas";
 import Caixa from "./pages/Caixa";
 import Royalties from "./pages/Royalties";
+import ContasCorrentes from "./pages/ContasCorrentes";
+import MovimentacoesContas from "./pages/MovimentacoesContas";
+import IntegracoesBancos from "./pages/IntegracoesBancos";
+import AprovacaoPagamentos from "./pages/AprovacaoPagamentos";
+import DescontosDuplicatas from "./pages/DescontosDuplicatas";
 import Contratos from "./pages/Contratos";
 import ContratoDetalhes from "./pages/ContratoDetalhes";
 import ContratosFranquias from "./pages/ContratosFranquias";
@@ -255,6 +260,11 @@ const App = () => {
               <Route path="despesas" element={<RequirePageAccess pageKey="despesas"><Despesas /></RequirePageAccess>} />
               <Route path="caixa" element={<RequirePageAccess pageKey="caixa"><Caixa /></RequirePageAccess>} />
               <Route path="royalties" element={<RequirePageAccess pageKey="royalties"><Royalties /></RequirePageAccess>} />
+              <Route path="contas-correntes" element={<RequirePageAccess pageKey="contas-correntes"><ContasCorrentes /></RequirePageAccess>} />
+              <Route path="movimentacoes-contas" element={<RequirePageAccess pageKey="movimentacoes-contas"><MovimentacoesContas /></RequirePageAccess>} />
+              <Route path="integracoes-bancos" element={<RequirePageAccess pageKey="integracoes-bancos"><IntegracoesBancos /></RequirePageAccess>} />
+              <Route path="aprovacao-pagamentos" element={<RequirePageAccess pageKey="aprovacao-pagamentos"><AprovacaoPagamentos /></RequirePageAccess>} />
+              <Route path="descontos-duplicatas" element={<RequirePageAccess pageKey="descontos-duplicatas"><DescontosDuplicatas /></RequirePageAccess>} />
               
               {/* Legacy route redirect */}
               <Route path="ondas-alocacao" element={<RequirePageAccess pageKey="alocacao-pallets"><AlocacaoPallets /></RequirePageAccess>} />
