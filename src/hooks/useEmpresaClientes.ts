@@ -37,28 +37,43 @@ export const useEmpresaClientes = (empresaId?: string) => {
   return useQuery({
     queryKey: ["empresa-clientes", empresaId, user?.id],
     queryFn: async () => {
-      if (!user?.id) return []
+      if (!user?.id || !empresaId) return []
 
-      let query = supabase
-        .from("empresa_clientes")
-        .select(`
-          *,
-          cliente:clientes!inner(id, razao_social, nome_fantasia, cpf_cnpj, tipo_cliente, email_comercial, telefone_comercial, cidade_fiscal, estado_fiscal),
-          empresa:clientes!empresa_clientes_empresa_id_fkey(id, razao_social, nome_fantasia)
-        `)
-        .eq("ativo", true)
-        .order("created_at", { ascending: false })
+      // Usar função RPC que bypassa RLS para buscar clientes vinculados
+      const { data, error } = await supabase
+        .rpc('buscar_empresa_clientes', { p_empresa_id: empresaId })
 
-      if (empresaId) {
-        query = query.eq("empresa_id", empresaId)
+      if (error) {
+        console.error("Erro ao buscar empresa clientes:", error)
+        throw error
       }
 
-      const { data, error } = await query
-
-      if (error) throw error
-      return (data || []) as unknown as EmpresaCliente[]
+      // Transformar o resultado da RPC para o formato esperado
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        empresa_id: row.empresa_id,
+        cliente_id: row.cliente_id,
+        tipo_relacionamento: row.tipo_relacionamento,
+        observacoes: row.observacoes,
+        ativo: row.ativo,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        created_by: row.created_by,
+        cliente: {
+          id: row.cliente_id,
+          razao_social: row.cliente_razao_social,
+          nome_fantasia: row.cliente_nome_fantasia,
+          cpf_cnpj: row.cliente_cpf_cnpj,
+          tipo_cliente: row.cliente_tipo,
+          email_comercial: row.cliente_email,
+          telefone_comercial: row.cliente_telefone,
+          cidade_fiscal: row.cliente_cidade,
+          estado_fiscal: row.cliente_estado,
+        },
+        empresa: null, // Não retornado pela RPC, mas não é usado na listagem
+      })) as EmpresaCliente[]
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!empresaId,
   })
 }
 

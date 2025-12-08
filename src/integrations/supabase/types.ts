@@ -5893,6 +5893,28 @@ export type Database = {
           tipo_cliente: string
         }[]
       }
+      buscar_empresa_clientes: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          ativo: boolean
+          cliente_cidade: string
+          cliente_cpf_cnpj: string
+          cliente_email: string
+          cliente_estado: string
+          cliente_id: string
+          cliente_nome_fantasia: string
+          cliente_razao_social: string
+          cliente_telefone: string
+          cliente_tipo: string
+          created_at: string
+          created_by: string
+          empresa_id: string
+          id: string
+          observacoes: string
+          tipo_relacionamento: string
+          updated_at: string
+        }[]
+      }
       calcular_performance_sla_produtor: {
         Args: { p_periodo_dias?: number; p_produtor_id: string }
         Returns: {
