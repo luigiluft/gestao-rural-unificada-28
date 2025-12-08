@@ -64,7 +64,15 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         telefone_motorista: "",
         cpf_motorista: "",
         mopp_motorista: "",
-        janela_horario: ""
+        janela_horario: "",
+        // Campos de operação fiscal
+        finalidade_nfe: 'normal',
+        nfe_referenciada_chave: '',
+        nfe_referenciada_data: '',
+        cfop: '',
+        gera_financeiro: true,
+        movimenta_estoque: 'saida',
+        tipo_complemento: ''
       } as DadosSaida
     }
   }
