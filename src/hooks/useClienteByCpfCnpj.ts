@@ -15,20 +15,24 @@ export const useClienteByCpfCnpj = (cpfCnpj: string | undefined) => {
     queryFn: async (): Promise<Cliente | null> => {
       if (!cleanCpfCnpj || cleanCpfCnpj.length < 11) return null
       
-      // Buscar cliente que tenha o CPF/CNPJ (com ou sem formatação)
+      // Buscar todos os clientes e filtrar no lado do cliente
+      // Isso é necessário porque o banco pode ter CPF/CNPJ com ou sem formatação
       const { data, error } = await supabase
         .from("clientes")
         .select("*")
-        .or(`cpf_cnpj.eq.${cleanCpfCnpj},cpf_cnpj.like.%${cleanCpfCnpj}%`)
-        .limit(1)
-        .maybeSingle()
 
       if (error) {
         console.error("Erro ao buscar cliente por CPF/CNPJ:", error)
         return null
       }
       
-      return data as Cliente | null
+      // Filtrar localmente removendo formatação de ambos
+      const cliente = data?.find(c => {
+        const dbClean = c.cpf_cnpj?.replace(/[^\d]/g, '') || ''
+        return dbClean === cleanCpfCnpj
+      })
+      
+      return cliente as Cliente | null
     },
     enabled: !!cleanCpfCnpj && cleanCpfCnpj.length >= 11,
     staleTime: 1000 * 60 * 5, // 5 minutos
