@@ -266,6 +266,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          atendimento_habilitado: boolean | null
           atividade_principal: string | null
           ativo: boolean
           bairro_fiscal: string | null
@@ -275,6 +276,7 @@ export type Database = {
           cpf_cnpj: string
           created_at: string
           created_by: string | null
+          ecommerce_habilitado: boolean | null
           email_comercial: string | null
           empresa_matriz_id: string | null
           endereco_fiscal: string | null
@@ -295,6 +297,7 @@ export type Database = {
           wms_habilitado: boolean | null
         }
         Insert: {
+          atendimento_habilitado?: boolean | null
           atividade_principal?: string | null
           ativo?: boolean
           bairro_fiscal?: string | null
@@ -304,6 +307,7 @@ export type Database = {
           cpf_cnpj: string
           created_at?: string
           created_by?: string | null
+          ecommerce_habilitado?: boolean | null
           email_comercial?: string | null
           empresa_matriz_id?: string | null
           endereco_fiscal?: string | null
@@ -324,6 +328,7 @@ export type Database = {
           wms_habilitado?: boolean | null
         }
         Update: {
+          atendimento_habilitado?: boolean | null
           atividade_principal?: string | null
           ativo?: boolean
           bairro_fiscal?: string | null
@@ -333,6 +338,7 @@ export type Database = {
           cpf_cnpj?: string
           created_at?: string
           created_by?: string | null
+          ecommerce_habilitado?: boolean | null
           email_comercial?: string | null
           empresa_matriz_id?: string | null
           endereco_fiscal?: string | null

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2, Store, Warehouse, Truck, Info } from "lucide-react"
+import { Trash2, Plus, RefreshCw, Package, ListOrdered, Settings2, Store, Warehouse, Truck, Info, ShoppingCart, Headphones } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useConfiguracoesSistema, useUpdateConfiguracao } from "@/hooks/useConfiguracoesSistema"
@@ -23,7 +23,7 @@ import { useClienteModulos } from "@/hooks/useClienteModulos"
 
 export default function Configuracoes() {
   const { isCliente, isOperador, isAdmin } = useUserRole()
-  const { wmsHabilitado, tmsHabilitado, updateModulos, isUpdating } = useClienteModulos()
+  const { wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado, updateModulos, isUpdating } = useClienteModulos()
   const { configuracao: lojaConfig } = useLojaConfiguracao()
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
   const updateConfiguracao = useUpdateConfiguracao()
@@ -656,6 +656,42 @@ export default function Configuracoes() {
                 <Switch
                   checked={tmsHabilitado}
                   onCheckedChange={(checked) => updateModulos({ tms_habilitado: checked })}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              {/* Toggle E-commerce */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-semibold">Habilitar E-commerce</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Venda online: minha loja, editor de página, catálogo de produtos e pedidos
+                  </p>
+                </div>
+                <Switch
+                  checked={ecommerceHabilitado}
+                  onCheckedChange={(checked) => updateModulos({ ecommerce_habilitado: checked })}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              {/* Toggle Atendimento */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Headphones className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-base font-semibold">Habilitar Atendimento</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Suporte ao cliente: chat, chamados, cotações e negociações com consumidores
+                  </p>
+                </div>
+                <Switch
+                  checked={atendimentoHabilitado}
+                  onCheckedChange={(checked) => updateModulos({ atendimento_habilitado: checked })}
                   disabled={isUpdating}
                 />
               </div>

@@ -201,7 +201,7 @@ export const useDynamicMenuItems = () => {
   const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
   const { selectedFranquia } = useFranquia()
   const { isOperador, isAdmin, isCliente } = useUserRole()
-  const { wmsHabilitado, tmsHabilitado, isLoading: isLoadingModulos } = useClienteModulos()
+  const { wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado, isLoading: isLoadingModulos } = useClienteModulos()
 
   const menuItems = useMemo(() => {
     if (isLoading || isLoadingModulos || !permissions?.length) return []
@@ -533,28 +533,37 @@ export const useDynamicMenuItems = () => {
       }
     }
 
-    // Adicionar Atendimento como item separado (se tiver permissão)
-    if (permissions.includes('atendimento.view' as any)) {
+    // Adicionar E-commerce como submenu (se cliente tiver habilitado)
+    const shouldShowEcommerce = isCliente && ecommerceHabilitado
+    if (shouldShowEcommerce && permissions.includes('minha-loja.view' as any)) {
+      const ecommerceSubItems: MenuItem[] = [
+        {
+          path: '/minha-loja',
+          label: menuLabels['minha-loja'],
+          icon: iconMap['minha-loja']
+        },
+        {
+          path: '/editor-loja',
+          label: menuLabels['editor-loja'],
+          icon: iconMap['editor-loja']
+        }
+      ]
+      
+      items.push({
+        path: '/ecommerce',
+        label: 'E-commerce',
+        icon: Store,
+        subItems: ecommerceSubItems
+      })
+    }
+
+    // Adicionar Atendimento como item separado (se cliente tiver habilitado)
+    const shouldShowAtendimento = isCliente && atendimentoHabilitado
+    if (shouldShowAtendimento && permissions.includes('atendimento.view' as any)) {
       items.push({
         path: '/atendimento',
         label: menuLabels['atendimento'],
         icon: iconMap['atendimento']
-      })
-    }
-
-    // Adicionar Minha Loja como item separado (se tiver permissão - clientes)
-    if (permissions.includes('minha-loja.view' as any)) {
-      items.push({
-        path: '/minha-loja',
-        label: menuLabels['minha-loja'],
-        icon: iconMap['minha-loja']
-      })
-      
-      // Adicionar Editor da Loja junto com Minha Loja
-      items.push({
-        path: '/editor-loja',
-        label: menuLabels['editor-loja'],
-        icon: iconMap['editor-loja']
       })
     }
 
@@ -585,7 +594,7 @@ export const useDynamicMenuItems = () => {
     }
 
     return items
-  }, [permissions, isLoading, isLoadingModulos, selectedFranquia, isOperador, isAdmin, isCliente, wmsHabilitado, tmsHabilitado])
+  }, [permissions, isLoading, isLoadingModulos, selectedFranquia, isOperador, isAdmin, isCliente, wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado])
 
   return { menuItems, isLoading: isLoading || isLoadingModulos }
 }
