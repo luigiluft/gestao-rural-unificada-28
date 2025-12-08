@@ -36,6 +36,12 @@ const FINALIDADES = [
     description: 'Remessa sem receita - apenas transfere fisicamente o produto'
   },
   { 
+    value: 'transferencia', 
+    label: 'Transferência entre Estabelecimentos',
+    finNFe: 1,
+    description: 'Transferência interna (matriz/filiais) - NÃO gera financeiro'
+  },
+  { 
     value: 'complementar', 
     label: 'NF-e Complementar ou de Ajuste',
     finNFe: 2,
@@ -97,6 +103,12 @@ const CFOPS_POR_FINALIDADE: Record<string, Array<{ code: string; description: st
     { code: '5949', description: 'Outra saída não especificada (dentro do estado)' },
     { code: '6949', description: 'Outra saída não especificada (fora do estado)' },
   ],
+  transferencia: [
+    { code: '5151', description: 'Transferência de produção própria (dentro do estado)' },
+    { code: '6151', description: 'Transferência de produção própria (fora do estado)' },
+    { code: '5152', description: 'Transferência de mercadoria adquirida (dentro do estado)' },
+    { code: '6152', description: 'Transferência de mercadoria adquirida (fora do estado)' },
+  ],
   complementar: [
     { code: '5102', description: 'Complemento de valor (dentro do estado)' },
     { code: '6102', description: 'Complemento de valor (fora do estado)' },
@@ -137,6 +149,10 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
         geraFinanceiro = false
         movimentaEstoque = 'saida'
         break
+      case 'transferencia':
+        geraFinanceiro = false
+        movimentaEstoque = 'saida'
+        break
       case 'complementar':
         geraFinanceiro = true
         movimentaEstoque = 'nao_movimenta'
@@ -151,6 +167,7 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
       nfe_referenciada_chave: (value === 'devolucao' || value === 'complementar') ? dados.nfe_referenciada_chave : '',
       nfe_referenciada_data: (value === 'devolucao' || value === 'complementar') ? dados.nfe_referenciada_data : '',
       tipo_complemento: value === 'complementar' ? dados.tipo_complemento : '',
+      destinatario_transferencia_id: value === 'transferencia' ? dados.destinatario_transferencia_id : undefined,
       cfop: '' // Reset CFOP when changing operation type
     })
   }
@@ -167,6 +184,8 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
         return 'bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800'
       case 'remessa':
         return 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
+      case 'transferencia':
+        return 'bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800'
       case 'complementar':
         return 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
       default:
