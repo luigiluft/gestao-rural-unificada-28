@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Plus, Building2, Users, Edit, Building, Tractor } from "lucide-react"
+import { useState } from "react"
+import { Plus, Building2, Users, Edit, Trash2, Search, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,23 +22,35 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useClientes, useCreateCliente, useUpdateCliente, Cliente } from "@/hooks/useClientes"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
-import { GerenciarFazendas } from "@/components/Clientes/GerenciarFazendas"
+import { useClientes, useCreateCliente, Cliente } from "@/hooks/useClientes"
+import { useEmpresaClientes, useCreateEmpresaCliente, useRemoveEmpresaCliente, EmpresaCliente } from "@/hooks/useEmpresaClientes"
 import { useCliente } from "@/contexts/ClienteContext"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function Clientes() {
-  const { data: clientes, isLoading } = useClientes()
+  const { selectedCliente: empresaSelecionada } = useCliente()
+  const { data: minhasEmpresas, isLoading: loadingEmpresas } = useClientes()
+  const { data: empresaClientes, isLoading: loadingClientes } = useEmpresaClientes(empresaSelecionada?.id)
   const createCliente = useCreateCliente()
-  const updateCliente = useUpdateCliente()
-  const { setAvailableClientes } = useCliente()
-  
+  const createEmpresaCliente = useCreateEmpresaCliente()
+  const removeEmpresaCliente = useRemoveEmpresaCliente()
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null)
-  const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null)
-  const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
-  
+  const [isVincularDialogOpen, setIsVincularDialogOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [clienteToRemove, setClienteToRemove] = useState<EmpresaCliente | null>(null)
+  const [selectedExistingCliente, setSelectedExistingCliente] = useState<string>("")
+
   const [formData, setFormData] = useState({
     tipo_cliente: 'cnpj' as 'cpf' | 'cnpj',
     razao_social: '',
@@ -62,35 +74,38 @@ export default function Clientes() {
   const [semNumero, setSemNumero] = useState(false)
   const [semComplemento, setSemComplemento] = useState(false)
 
-  // Atualizar lista de clientes disponíveis no contexto
-  useEffect(() => {
-    if (clientes) {
-      setAvailableClientes(clientes)
-    }
-  }, [clientes, setAvailableClientes])
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (editingCliente) {
-      updateCliente.mutate(
-        { id: editingCliente.id, ...formData },
-        {
-          onSuccess: () => {
-            setIsDialogOpen(false)
-            setEditingCliente(null)
-            resetForm()
-          }
-        }
-      )
-    } else {
-      createCliente.mutate(formData, {
-        onSuccess: () => {
-          setIsDialogOpen(false)
-          resetForm()
-        }
-      })
-    }
+    if (!empresaSelecionada) return
+
+    // Criar o cliente e vincular à empresa
+    createCliente.mutate(formData, {
+      onSuccess: (novoCliente) => {
+        // Vincular à empresa selecionada
+        createEmpresaCliente.mutate({
+          empresa_id: empresaSelecionada.id,
+          cliente_id: novoCliente.id,
+          tipo_relacionamento: 'cliente',
+        })
+        setIsDialogOpen(false)
+        resetForm()
+      }
+    })
+  }
+
+  const handleVincularExistente = () => {
+    if (!empresaSelecionada || !selectedExistingCliente) return
+
+    createEmpresaCliente.mutate({
+      empresa_id: empresaSelecionada.id,
+      cliente_id: selectedExistingCliente,
+      tipo_relacionamento: 'cliente',
+    }, {
+      onSuccess: () => {
+        setIsVincularDialogOpen(false)
+        setSelectedExistingCliente("")
+      }
+    })
   }
 
   const resetForm = () => {
@@ -117,511 +132,462 @@ export default function Clientes() {
     setSemComplemento(false)
   }
 
-  const handleEdit = (cliente: Cliente) => {
-    setEditingCliente(cliente)
-    setFormData({
-      tipo_cliente: cliente.tipo_cliente,
-      razao_social: cliente.razao_social,
-      nome_fantasia: cliente.nome_fantasia || '',
-      cpf_cnpj: cliente.cpf_cnpj,
-      inscricao_estadual: cliente.inscricao_estadual || '',
-      endereco_fiscal: cliente.endereco_fiscal || '',
-      numero_fiscal: cliente.numero_fiscal || '',
-      complemento_fiscal: cliente.complemento_fiscal || '',
-      bairro_fiscal: cliente.bairro_fiscal || '',
-      cidade_fiscal: cliente.cidade_fiscal || '',
-      estado_fiscal: cliente.estado_fiscal || '',
-      cep_fiscal: cliente.cep_fiscal || '',
-      telefone_comercial: cliente.telefone_comercial || '',
-      email_comercial: cliente.email_comercial || '',
-      atividade_principal: cliente.atividade_principal || '',
-      regime_tributario: cliente.regime_tributario || '',
-      observacoes: cliente.observacoes || '',
-    })
-    setSemNumero(cliente.numero_fiscal === 'S/N')
-    setSemComplemento(cliente.complemento_fiscal === 'S/C')
-    setIsDialogOpen(true)
+  const handleRemoveCliente = () => {
+    if (clienteToRemove) {
+      removeEmpresaCliente.mutate(clienteToRemove.id)
+      setClienteToRemove(null)
+    }
   }
 
-  if (isLoading) {
-    return <div className="p-8">Carregando clientes...</div>
+  // Filtrar clientes já vinculados para não mostrar no select
+  const clientesVinculadosIds = empresaClientes?.map(ec => ec.cliente_id) || []
+  const clientesDisponiveis = minhasEmpresas?.filter(c => 
+    !clientesVinculadosIds.includes(c.id) && 
+    c.id !== empresaSelecionada?.id
+  ) || []
+
+  // Filtrar por busca
+  const filteredClientes = empresaClientes?.filter(ec => {
+    const cliente = ec.cliente
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      cliente.razao_social.toLowerCase().includes(searchLower) ||
+      cliente.cpf_cnpj.includes(searchTerm) ||
+      (cliente.nome_fantasia?.toLowerCase().includes(searchLower))
+    )
+  })
+
+  if (loadingEmpresas || loadingClientes) {
+    return <div className="p-8">Carregando...</div>
+  }
+
+  if (!empresaSelecionada) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="p-12 text-center">
+          <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Selecione uma Empresa</h2>
+          <p className="text-muted-foreground">
+            Para gerenciar clientes, primeiro selecione uma empresa no seletor do cabeçalho.
+          </p>
+        </Card>
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Gerenciar Clientes</h1>
+          <h1 className="text-3xl font-bold">Clientes</h1>
           <p className="text-muted-foreground">
-            Entidades fiscais (pessoas físicas e jurídicas)
+            Clientes da empresa: <span className="font-medium">{empresaSelecionada.razao_social}</span>
           </p>
         </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingCliente(null); resetForm(); }}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Cliente
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingCliente ? 'Editar Cliente' : 'Novo Cliente'}
-              </DialogTitle>
-              <DialogDescription>
-                Cadastre uma nova entidade fiscal (pessoa física ou jurídica)
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Tabs defaultValue="basico" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basico">Básico</TabsTrigger>
-                  <TabsTrigger value="endereco">Endereço</TabsTrigger>
-                  <TabsTrigger value="adicional">Adicional</TabsTrigger>
-                </TabsList>
 
-                <TabsContent value="basico" className="space-y-4">
-                  <div>
-                    <Label htmlFor="tipo_cliente">Tipo de Cliente *</Label>
-                    <Select
-                      value={formData.tipo_cliente}
-                      onValueChange={(value: 'cpf' | 'cnpj') =>
-                        setFormData({ ...formData, tipo_cliente: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
-                        <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+        <div className="flex gap-2">
+          <Dialog open={isVincularDialogOpen} onOpenChange={setIsVincularDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Vincular Existente
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Vincular Cliente Existente</DialogTitle>
+                <DialogDescription>
+                  Selecione um cliente já cadastrado para vincular a esta empresa
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Select value={selectedExistingCliente} onValueChange={setSelectedExistingCliente}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientesDisponiveis.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        {cliente.razao_social} ({cliente.cpf_cnpj})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsVincularDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleVincularExistente} disabled={!selectedExistingCliente}>
+                    Vincular
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
-                  <div>
-                    <Label htmlFor="razao_social">
-                      {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
-                    </Label>
-                    <Input
-                      id="razao_social"
-                      value={formData.razao_social}
-                      onChange={(e) =>
-                        setFormData({ ...formData, razao_social: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => resetForm()}>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Cliente
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Novo Cliente</DialogTitle>
+                <DialogDescription>
+                  Cadastre um novo cliente para {empresaSelecionada.razao_social}
+                </DialogDescription>
+              </DialogHeader>
 
-                  {formData.tipo_cliente === 'cnpj' && (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <Tabs defaultValue="basico" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="basico">Básico</TabsTrigger>
+                    <TabsTrigger value="endereco">Endereço</TabsTrigger>
+                    <TabsTrigger value="adicional">Adicional</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="basico" className="space-y-4">
                     <div>
-                      <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                      <Input
-                        id="nome_fantasia"
-                        value={formData.nome_fantasia}
-                        onChange={(e) =>
-                          setFormData({ ...formData, nome_fantasia: e.target.value })
+                      <Label htmlFor="tipo_cliente">Tipo *</Label>
+                      <Select
+                        value={formData.tipo_cliente}
+                        onValueChange={(value: 'cpf' | 'cnpj') =>
+                          setFormData({ ...formData, tipo_cliente: value })
                         }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cpf">CPF (Pessoa Física)</SelectItem>
+                          <SelectItem value="cnpj">CNPJ (Pessoa Jurídica)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="razao_social">
+                        {formData.tipo_cliente === 'cpf' ? 'Nome Completo *' : 'Razão Social *'}
+                      </Label>
+                      <Input
+                        id="razao_social"
+                        value={formData.razao_social}
+                        onChange={(e) =>
+                          setFormData({ ...formData, razao_social: e.target.value })
+                        }
+                        required
                       />
                     </div>
-                  )}
 
-                  <div>
-                    <Label htmlFor="cpf_cnpj">
-                      {formData.tipo_cliente === 'cpf' ? 'CPF *' : 'CNPJ *'}
-                    </Label>
-                    <Input
-                      id="cpf_cnpj"
-                      value={formData.cpf_cnpj}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cpf_cnpj: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  {formData.tipo_cliente === 'cnpj' && (
-                    <div>
-                      <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                      <Input
-                        id="inscricao_estadual"
-                        value={formData.inscricao_estadual}
-                        onChange={(e) =>
-                          setFormData({ ...formData, inscricao_estadual: e.target.value })
-                        }
-                      />
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="endereco" className="space-y-4">
-                  <div>
-                    <Label htmlFor="cep_fiscal">CEP</Label>
-                    <Input
-                      id="cep_fiscal"
-                      value={formData.cep_fiscal}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cep_fiscal: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="endereco_fiscal">Endereço</Label>
-                    <Input
-                      id="endereco_fiscal"
-                      value={formData.endereco_fiscal}
-                      onChange={(e) =>
-                        setFormData({ ...formData, endereco_fiscal: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <Label htmlFor="numero_fiscal">Número</Label>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="sem-numero"
-                            checked={semNumero}
-                            onCheckedChange={(checked) => {
-                              setSemNumero(checked)
-                              if (checked) {
-                                setFormData({ ...formData, numero_fiscal: 'S/N' })
-                              } else {
-                                setFormData({ ...formData, numero_fiscal: '' })
-                              }
-                            }}
-                          />
-                          <Label htmlFor="sem-numero" className="text-sm text-muted-foreground cursor-pointer">
-                            Sem número
-                          </Label>
-                        </div>
-                      </div>
-                      <Input
-                        id="numero_fiscal"
-                        value={semNumero ? 'S/N' : formData.numero_fiscal}
-                        onChange={(e) =>
-                          setFormData({ ...formData, numero_fiscal: e.target.value })
-                        }
-                        disabled={semNumero}
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <Label htmlFor="complemento_fiscal">Complemento</Label>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="sem-complemento"
-                            checked={semComplemento}
-                            onCheckedChange={(checked) => {
-                              setSemComplemento(checked)
-                              if (checked) {
-                                setFormData({ ...formData, complemento_fiscal: 'S/C' })
-                              } else {
-                                setFormData({ ...formData, complemento_fiscal: '' })
-                              }
-                            }}
-                          />
-                          <Label htmlFor="sem-complemento" className="text-sm text-muted-foreground cursor-pointer">
-                            Sem complemento
-                          </Label>
-                        </div>
-                      </div>
-                      <Input
-                        id="complemento_fiscal"
-                        value={semComplemento ? 'S/C' : formData.complemento_fiscal}
-                        onChange={(e) =>
-                          setFormData({ ...formData, complemento_fiscal: e.target.value })
-                        }
-                        disabled={semComplemento}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="bairro_fiscal">Bairro</Label>
-                    <Input
-                      id="bairro_fiscal"
-                      value={formData.bairro_fiscal}
-                      onChange={(e) =>
-                        setFormData({ ...formData, bairro_fiscal: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="cidade_fiscal">Cidade</Label>
-                      <Input
-                        id="cidade_fiscal"
-                        value={formData.cidade_fiscal}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cidade_fiscal: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="estado_fiscal">Estado</Label>
-                      <Input
-                        id="estado_fiscal"
-                        value={formData.estado_fiscal}
-                        onChange={(e) =>
-                          setFormData({ ...formData, estado_fiscal: e.target.value })
-                        }
-                        maxLength={2}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="adicional" className="space-y-4">
-                  <div>
-                    <Label htmlFor="telefone_comercial">Telefone Comercial</Label>
-                    <Input
-                      id="telefone_comercial"
-                      value={formData.telefone_comercial}
-                      onChange={(e) =>
-                        setFormData({ ...formData, telefone_comercial: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email_comercial">Email Comercial</Label>
-                    <Input
-                      id="email_comercial"
-                      type="email"
-                      value={formData.email_comercial}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email_comercial: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  {formData.tipo_cliente === 'cnpj' && (
-                    <>
+                    {formData.tipo_cliente === 'cnpj' && (
                       <div>
-                        <Label htmlFor="atividade_principal">Atividade Principal</Label>
+                        <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
                         <Input
-                          id="atividade_principal"
-                          value={formData.atividade_principal}
+                          id="nome_fantasia"
+                          value={formData.nome_fantasia}
                           onChange={(e) =>
-                            setFormData({ ...formData, atividade_principal: e.target.value })
+                            setFormData({ ...formData, nome_fantasia: e.target.value })
                           }
                         />
                       </div>
-
-                      <div>
-                        <Label htmlFor="regime_tributario">Regime Tributário</Label>
-                        <Select
-                          value={formData.regime_tributario}
-                          onValueChange={(value) =>
-                            setFormData({ ...formData, regime_tributario: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
-                            <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
-                            <SelectItem value="lucro_real">Lucro Real</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-
-                  <div>
-                    <Label htmlFor="observacoes">Observações</Label>
-                    <Textarea
-                      id="observacoes"
-                      value={formData.observacoes}
-                      onChange={(e) =>
-                        setFormData({ ...formData, observacoes: e.target.value })
-                      }
-                      rows={4}
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsDialogOpen(false)
-                    setEditingCliente(null)
-                    resetForm()
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={createCliente.isPending || updateCliente.isPending}>
-                  {editingCliente ? 'Salvar Alterações' : 'Criar Cliente'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {clientes?.map((cliente) => (
-          <Card key={cliente.id} className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <h3 className="font-semibold">{cliente.razao_social}</h3>
-                    {cliente.nome_fantasia && (
-                      <p className="text-sm text-muted-foreground">
-                        {cliente.nome_fantasia}
-                      </p>
                     )}
-                  </div>
+
+                    <div>
+                      <Label htmlFor="cpf_cnpj">
+                        {formData.tipo_cliente === 'cpf' ? 'CPF *' : 'CNPJ *'}
+                      </Label>
+                      <Input
+                        id="cpf_cnpj"
+                        value={formData.cpf_cnpj}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cpf_cnpj: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+
+                    {formData.tipo_cliente === 'cnpj' && (
+                      <div>
+                        <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                        <Input
+                          id="inscricao_estadual"
+                          value={formData.inscricao_estadual}
+                          onChange={(e) =>
+                            setFormData({ ...formData, inscricao_estadual: e.target.value })
+                          }
+                        />
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="endereco" className="space-y-4">
+                    <div>
+                      <Label htmlFor="cep_fiscal">CEP</Label>
+                      <Input
+                        id="cep_fiscal"
+                        value={formData.cep_fiscal}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cep_fiscal: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="endereco_fiscal">Endereço</Label>
+                      <Input
+                        id="endereco_fiscal"
+                        value={formData.endereco_fiscal}
+                        onChange={(e) =>
+                          setFormData({ ...formData, endereco_fiscal: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label htmlFor="numero_fiscal">Número</Label>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="sem-numero"
+                              checked={semNumero}
+                              onCheckedChange={(checked) => {
+                                setSemNumero(checked)
+                                setFormData({ ...formData, numero_fiscal: checked ? 'S/N' : '' })
+                              }}
+                            />
+                            <Label htmlFor="sem-numero" className="text-sm text-muted-foreground cursor-pointer">
+                              S/N
+                            </Label>
+                          </div>
+                        </div>
+                        <Input
+                          id="numero_fiscal"
+                          value={semNumero ? 'S/N' : formData.numero_fiscal}
+                          onChange={(e) =>
+                            setFormData({ ...formData, numero_fiscal: e.target.value })
+                          }
+                          disabled={semNumero}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label htmlFor="complemento_fiscal">Complemento</Label>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="sem-complemento"
+                              checked={semComplemento}
+                              onCheckedChange={(checked) => {
+                                setSemComplemento(checked)
+                                setFormData({ ...formData, complemento_fiscal: checked ? 'S/C' : '' })
+                              }}
+                            />
+                            <Label htmlFor="sem-complemento" className="text-sm text-muted-foreground cursor-pointer">
+                              S/C
+                            </Label>
+                          </div>
+                        </div>
+                        <Input
+                          id="complemento_fiscal"
+                          value={semComplemento ? 'S/C' : formData.complemento_fiscal}
+                          onChange={(e) =>
+                            setFormData({ ...formData, complemento_fiscal: e.target.value })
+                          }
+                          disabled={semComplemento}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="bairro_fiscal">Bairro</Label>
+                      <Input
+                        id="bairro_fiscal"
+                        value={formData.bairro_fiscal}
+                        onChange={(e) =>
+                          setFormData({ ...formData, bairro_fiscal: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="cidade_fiscal">Cidade</Label>
+                        <Input
+                          id="cidade_fiscal"
+                          value={formData.cidade_fiscal}
+                          onChange={(e) =>
+                            setFormData({ ...formData, cidade_fiscal: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="estado_fiscal">Estado</Label>
+                        <Input
+                          id="estado_fiscal"
+                          value={formData.estado_fiscal}
+                          onChange={(e) =>
+                            setFormData({ ...formData, estado_fiscal: e.target.value })
+                          }
+                          maxLength={2}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="adicional" className="space-y-4">
+                    <div>
+                      <Label htmlFor="telefone_comercial">Telefone</Label>
+                      <Input
+                        id="telefone_comercial"
+                        value={formData.telefone_comercial}
+                        onChange={(e) =>
+                          setFormData({ ...formData, telefone_comercial: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="email_comercial">Email</Label>
+                      <Input
+                        id="email_comercial"
+                        type="email"
+                        value={formData.email_comercial}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email_comercial: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="observacoes">Observações</Label>
+                      <Textarea
+                        id="observacoes"
+                        value={formData.observacoes}
+                        onChange={(e) =>
+                          setFormData({ ...formData, observacoes: e.target.value })
+                        }
+                        rows={4}
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createCliente.isPending}>
+                    {createCliente.isPending ? 'Salvando...' : 'Salvar'}
+                  </Button>
                 </div>
-                <Badge variant={cliente.tipo_cliente === 'cnpj' ? 'default' : 'secondary'}>
-                  {cliente.tipo_cliente === 'cnpj' ? 'CNPJ' : 'CPF'}
-                </Badge>
-              </div>
-
-              <div className="space-y-1 text-sm">
-                <p>
-                  <span className="font-medium">
-                    {cliente.tipo_cliente === 'cnpj' ? 'CNPJ:' : 'CPF:'}
-                  </span>{' '}
-                  {cliente.cpf_cnpj}
-                </p>
-                {cliente.inscricao_estadual && (
-                  <p>
-                    <span className="font-medium">IE:</span> {cliente.inscricao_estadual}
-                  </p>
-                )}
-                {cliente.telefone_comercial && (
-                  <p>
-                    <span className="font-medium">Tel:</span> {cliente.telefone_comercial}
-                  </p>
-                )}
-                {cliente.email_comercial && (
-                  <p>
-                    <span className="font-medium">Email:</span> {cliente.email_comercial}
-                  </p>
-                )}
-              </div>
-
-              {cliente.papel && (
-                <Badge variant="outline">
-                  {cliente.papel === 'administrador' ? 'Admin' : 
-                   cliente.papel === 'gestor' ? 'Gestor' :
-                   cliente.papel === 'operador' ? 'Operador' : 'Visualizador'}
-                </Badge>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEdit(cliente)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedCliente(cliente)}
-                >
-                  {cliente.tipo_cliente === 'cnpj' ? (
-                    <>
-                      <Building className="h-4 w-4 mr-1" />
-                      Depósitos
-                    </>
-                  ) : (
-                    <>
-                      <Tractor className="h-4 w-4 mr-1" />
-                      Fazendas
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedClienteId(cliente.id)}
-                >
-                  <Users className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {clientes?.length === 0 && (
+      {/* Search */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, CNPJ/CPF..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Lista de Clientes */}
+      {!filteredClientes || filteredClientes.length === 0 ? (
         <Card className="p-12 text-center">
-          <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum cliente cadastrado</h3>
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Nenhum cliente cadastrado</h2>
           <p className="text-muted-foreground mb-4">
-            Comece criando seu primeiro cliente (pessoa física ou jurídica)
+            Comece cadastrando os clientes de {empresaSelecionada.razao_social}
           </p>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
             <Plus className="mr-2 h-4 w-4" />
             Criar Primeiro Cliente
           </Button>
         </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredClientes.map((ec) => {
+            const cliente = ec.cliente
+            return (
+              <Card key={ec.id} className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      {cliente.tipo_cliente === 'cpf' ? (
+                        <Users className="h-5 w-5 text-primary" />
+                      ) : (
+                        <Building2 className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-semibold line-clamp-1">
+                        {cliente.nome_fantasia || cliente.razao_social}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {cliente.cpf_cnpj}
+                      </p>
+                      {cliente.cidade_fiscal && cliente.estado_fiscal && (
+                        <p className="text-xs text-muted-foreground">
+                          {cliente.cidade_fiscal}/{cliente.estado_fiscal}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Badge variant={cliente.tipo_cliente === 'cnpj' ? 'default' : 'secondary'}>
+                      {cliente.tipo_cliente.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setClienteToRemove(ec)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Remover
+                  </Button>
+                </div>
+              </Card>
+            )
+          })}
+        </div>
       )}
 
-      <Dialog 
-        open={!!selectedCliente} 
-        onOpenChange={(open) => !open && setSelectedCliente(null)}
-      >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedCliente?.tipo_cliente === 'cnpj' ? 'Gerenciar Depósitos' : 'Gerenciar Fazendas'}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedCliente?.tipo_cliente === 'cnpj' 
-                ? 'Gerencie os depósitos desta empresa' 
-                : 'Gerencie as fazendas e depósitos deste produtor rural'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          {selectedCliente && (
-            selectedCliente.tipo_cliente === 'cnpj' ? (
-              <GerenciarDepositos clienteId={selectedCliente.id} />
-            ) : (
-              <GerenciarFazendas clienteId={selectedCliente.id} produtorId={selectedCliente.created_by || ''} />
-            )
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog 
-        open={!!selectedClienteId} 
-        onOpenChange={(open) => !open && setSelectedClienteId(null)}
-      >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Gerenciar Usuários do Cliente</DialogTitle>
-            <DialogDescription>
-              Adicione ou remova usuários deste cliente
-            </DialogDescription>
-          </DialogHeader>
-          {selectedClienteId && (
-            <div className="p-4">
-              <p className="text-muted-foreground">
-                Funcionalidade de gerenciar usuários em desenvolvimento
-              </p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Alert Dialog para remover cliente */}
+      <AlertDialog open={!!clienteToRemove} onOpenChange={() => setClienteToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover {clienteToRemove?.cliente.razao_social} da lista de clientes de {empresaSelecionada?.razao_social}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveCliente}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

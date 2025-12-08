@@ -1714,6 +1714,64 @@ export type Database = {
           },
         ]
       }
+      empresa_clientes: {
+        Row: {
+          ativo: boolean | null
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          observacoes: string | null
+          tipo_relacionamento: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          observacoes?: string | null
+          tipo_relacionamento?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          observacoes?: string | null
+          tipo_relacionamento?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_clientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empresa_clientes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "empresa_clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entrada_itens: {
         Row: {
           cest: string | null
