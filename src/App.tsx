@@ -111,6 +111,7 @@ import Checkout from "./pages/Checkout";
 import MinhaLoja from "./pages/MinhaLoja";
 import LojaEditor from "./pages/LojaEditor";
 import LojaCotacao from "./pages/LojaCotacao";
+import ConfigurarImpostos from "./pages/ConfigurarImpostos";
 import EncontreDeposito from "./pages/Public/EncontreDeposito";
 import Parceiros from "./pages/Public/Parceiros";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
