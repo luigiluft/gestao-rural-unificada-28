@@ -93,13 +93,15 @@ export interface DadosSaida extends DadosGenericosBase {
   valor_frete_calculado?: number
   prazo_entrega_calculado?: number
   // Campos de operação fiscal
-  finalidade_nfe?: 'normal' | 'devolucao' | 'remessa' | 'complementar'
+  finalidade_nfe?: 'normal' | 'devolucao' | 'remessa' | 'transferencia' | 'complementar'
   nfe_referenciada_chave?: string
   nfe_referenciada_data?: string
   cfop?: string
   gera_financeiro?: boolean
   movimenta_estoque?: 'saida' | 'entrada' | 'nao_movimenta'
   tipo_complemento?: 'valor' | 'quantidade' | 'imposto' | ''
+  // Campos de transferência
+  destinatario_transferencia_id?: string
 }
 
 export interface FormularioGenericoProps {

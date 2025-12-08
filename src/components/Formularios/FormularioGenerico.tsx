@@ -5,6 +5,7 @@ import { useFormularioValidation } from "./hooks/useFormularioValidation"
 import { DadosEntradaSection } from "./sections/DadosEntrada"
 import { DadosSaidaSection } from "./sections/DadosSaida"
 import { OperacaoFiscalSection } from "./sections/OperacaoFiscal"
+import { DestinatarioTransferenciaSection } from "./sections/DestinatarioTransferencia"
 import { ItensComunsSection } from "./sections/ItensComuns"
 import { SimuladorFrete } from "./sections/SimuladorFrete"
 import { AgendamentoSection } from "./sections/AgendamentoSection"
@@ -255,6 +256,8 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           gera_financeiro: dadosSaida.gera_financeiro ?? true,
           movimenta_estoque: dadosSaida.movimenta_estoque || 'saida',
           tipo_complemento: dadosSaida.tipo_complemento || null,
+          // Campo de transferência
+          destinatario_transferencia_id: dadosSaida.destinatario_transferencia_id || null,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
@@ -326,6 +329,12 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             dados={dados as DadosSaida}
             onDadosChange={setDados}
           />
+          {(dados as DadosSaida).finalidade_nfe === 'transferencia' && (
+            <DestinatarioTransferenciaSection
+              dados={dados as DadosSaida}
+              onDadosChange={setDados}
+            />
+          )}
           <DadosSaidaSection
             dados={dados as DadosSaida}
             onDadosChange={setDados}

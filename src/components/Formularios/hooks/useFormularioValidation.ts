@@ -86,6 +86,12 @@ export function useFormularioValidation({ tipo, dados, itens }: UseFormularioVal
       return false
     }
 
+    // Validar destinatário para transferência
+    if (dadosSaida.finalidade_nfe === 'transferencia' && !dadosSaida.destinatario_transferencia_id) {
+      toast({ title: "Erro", description: "Selecione o estabelecimento destino da transferência", variant: "destructive" })
+      return false
+    }
+
     // Validar data de saída após o período total (configuração + frete)
     const dataSaida = new Date(dadosSaida.data_saida + 'T00:00:00')
     const prazoFrete = dadosSaida.prazo_entrega_calculado || 0
