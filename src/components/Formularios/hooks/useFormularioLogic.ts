@@ -12,6 +12,7 @@ import { useEstoquePorProdutoFEFO } from "@/hooks/useEstoquePorProdutoFEFO"
 import { getMinScheduleDate } from "@/lib/business-days"
 import { useDiasUteisExpedicao } from "@/hooks/useConfiguracoesSistema"
 import { supabase } from "@/integrations/supabase/client"
+import { useClienteProdutos } from "@/hooks/useClienteProdutos"
 
 export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
   const { toast } = useToast()
@@ -22,6 +23,7 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
   // Hooks condicionais baseados no tipo
   const { data: estoque = [] } = useEstoque()
   const { data: produtosFallback = [] } = useProdutosFallback()
+  const { produtos: clienteProdutos = [] } = useClienteProdutos()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   
   // Para entrada - detectar automaticamente tipo e depósito
@@ -437,6 +439,7 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
     handleNovoItemChange,
     estoque,
     produtosFallback,
+    clienteProdutos,
     estoqueFEFO,
     franquiaData,
     profile,

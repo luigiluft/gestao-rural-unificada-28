@@ -33,6 +33,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
     handleNovoItemChange,
     estoque,
     produtosFallback,
+    clienteProdutos,
     estoqueFEFO,
     profile,
     isTutorialActive
@@ -355,6 +356,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         calcularValorTotal={calcularValorTotal}
         estoque={estoque}
         produtosFallback={produtosFallback}
+        clienteProdutos={clienteProdutos}
         estoqueFEFO={estoqueFEFO}
         isTutorialActive={isTutorialActive}
         depositoId={dados.depositoId}

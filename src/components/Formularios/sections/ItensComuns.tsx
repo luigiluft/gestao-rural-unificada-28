@@ -21,6 +21,7 @@ interface ItensComunsProps {
   // Props específicas por tipo
   estoque?: any[]
   produtosFallback?: any[]
+  clienteProdutos?: any[]
   estoqueFEFO?: any[]
   isTutorialActive?: boolean
   depositoId?: string
@@ -36,6 +37,7 @@ export function ItensComunsSection({
   calcularValorTotal,
   estoque = [],
   produtosFallback = [],
+  clienteProdutos = [],
   estoqueFEFO = [],
   isTutorialActive,
   depositoId
@@ -130,8 +132,18 @@ export function ItensComunsSection({
         containers_per_package: produto.containers_per_package || 1
       }))
     } else {
-      // Para entrada, usar produtos fallback ou permitir entrada manual
-      console.log('Produtos disponíveis para entrada:', produtosFallback)
+      // Para entrada, usar produtos do cliente ou fallback
+      if (clienteProdutos && clienteProdutos.length > 0) {
+        console.log('Produtos do cliente disponíveis para entrada:', clienteProdutos)
+        return clienteProdutos.map(produto => ({
+          id: produto.id,
+          nome: produto.nome_produto,
+          codigo: produto.codigo_produto,
+          unidade_medida: produto.unidade_medida || 'UN',
+          ncm: produto.ncm
+        }))
+      }
+      console.log('Produtos disponíveis para entrada (fallback):', produtosFallback)
       return produtosFallback
     }
   })()
@@ -259,10 +271,9 @@ export function ItensComunsSection({
           {/* Layout melhorado para manter todos os campos na mesma linha */}
           <div className="space-y-3">
             <div className="grid grid-cols-12 gap-3 items-end">
-              {/* Produto - 3 colunas */}
               <div className="col-span-12 md:col-span-3 space-y-1">
                 <Label className="text-xs font-medium">Produto</Label>
-                {tipo === 'saida' ? (
+                {tipo === 'saida' || (tipo === 'entrada' && produtosDisponiveis.length > 0) ? (
                   <Select 
                     value={novoItem.produto_id || ''} 
                     onValueChange={handleProdutoChange}
