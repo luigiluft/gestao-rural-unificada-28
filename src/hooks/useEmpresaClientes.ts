@@ -43,8 +43,8 @@ export const useEmpresaClientes = (empresaId?: string) => {
         .from("empresa_clientes")
         .select(`
           *,
-          cliente:cliente_id(id, razao_social, nome_fantasia, cpf_cnpj, tipo_cliente, email_comercial, telefone_comercial, cidade_fiscal, estado_fiscal),
-          empresa:empresa_id(id, razao_social, nome_fantasia)
+          cliente:clientes!inner(id, razao_social, nome_fantasia, cpf_cnpj, tipo_cliente, email_comercial, telefone_comercial, cidade_fiscal, estado_fiscal),
+          empresa:clientes!empresa_clientes_empresa_id_fkey(id, razao_social, nome_fantasia)
         `)
         .eq("ativo", true)
         .order("created_at", { ascending: false })
