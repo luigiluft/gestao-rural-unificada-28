@@ -39,12 +39,12 @@ export function SeletorDeposito({ value, onValueChange, disabled }: SeletorDepos
                   {item.tipo_deposito === 'filial' && (
                     <Badge variant="secondary" className="text-xs">Filial</Badge>
                   )}
+                  {item.tipo_deposito === 'armazem_geral' && (
+                    <Badge variant="outline" className="text-xs">Armazém Geral</Badge>
+                  )}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {item.tipo_deposito === 'franquia' 
-                    ? `Franqueado: ${item.franqueado_nome}`
-                    : 'Operado pela Matriz'
-                  }
+                  {item.franqueado_nome}
                 </span>
               </div>
             </SelectItem>
