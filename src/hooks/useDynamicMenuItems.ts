@@ -120,7 +120,8 @@ const menuLabels = {
   'empresa-matriz': 'Empresa Matriz',
   'atendimento': 'Atendimento',
   'minha-loja': 'Minha Loja',
-  'editor-loja': 'Editor da Loja'
+  'editor-loja': 'Editor da Loja',
+  'configurar-impostos': 'Configurar Impostos'
 }
 
 const iconMap = {
@@ -192,7 +193,8 @@ const iconMap = {
   'empresa-matriz': Building2,
   'atendimento': Headphones,
   'minha-loja': Store,
-  'editor-loja': LayoutTemplate
+  'editor-loja': LayoutTemplate,
+  'configurar-impostos': Calculator
 }
 
 export const useDynamicMenuItems = () => {
@@ -323,7 +325,8 @@ export const useDynamicMenuItems = () => {
       'produtores',
       'contratos',
       'contratos-franquias',
-      'tabelas-frete'
+      'tabelas-frete',
+      'configurar-impostos'
     ]
 
     // Páginas do WMS
