@@ -4,6 +4,7 @@ import { useFormularioLogic } from "./hooks/useFormularioLogic"
 import { useFormularioValidation } from "./hooks/useFormularioValidation"
 import { DadosEntradaSection } from "./sections/DadosEntrada"
 import { DadosSaidaSection } from "./sections/DadosSaida"
+import { OperacaoFiscalSection } from "./sections/OperacaoFiscal"
 import { ItensComunsSection } from "./sections/ItensComuns"
 import { SimuladorFrete } from "./sections/SimuladorFrete"
 import { AgendamentoSection } from "./sections/AgendamentoSection"
@@ -246,6 +247,14 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           data_inicio_janela: dataInicioJanela ? dataInicioJanela.toISOString().split('T')[0] : null,
           data_fim_janela: dataFimJanela ? dataFimJanela.toISOString().split('T')[0] : null,
           janela_entrega_dias: janelaEntregaDias,
+          // Campos de operação fiscal
+          finalidade_nfe: dadosSaida.finalidade_nfe || 'normal',
+          nfe_referenciada_chave: dadosSaida.nfe_referenciada_chave || null,
+          nfe_referenciada_data: dadosSaida.nfe_referenciada_data || null,
+          cfop: dadosSaida.cfop || null,
+          gera_financeiro: dadosSaida.gera_financeiro ?? true,
+          movimenta_estoque: dadosSaida.movimenta_estoque || 'saida',
+          tipo_complemento: dadosSaida.tipo_complemento || null,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
@@ -312,12 +321,18 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           isTutorialActive={isTutorialActive}
         />
       ) : (
-        <DadosSaidaSection
-          dados={dados as DadosSaida}
-          onDadosChange={setDados}
-          pesoTotal={calcularPesoTotal()}
-          pesoMinimoMopp={pesoMinimoMopp}
-        />
+        <>
+          <OperacaoFiscalSection
+            dados={dados as DadosSaida}
+            onDadosChange={setDados}
+          />
+          <DadosSaidaSection
+            dados={dados as DadosSaida}
+            onDadosChange={setDados}
+            pesoTotal={calcularPesoTotal()}
+            pesoMinimoMopp={pesoMinimoMopp}
+          />
+        </>
       )}
 
       {/* Seção de itens comum */}

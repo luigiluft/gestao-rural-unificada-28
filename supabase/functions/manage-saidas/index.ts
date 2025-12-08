@@ -93,6 +93,16 @@ async function createSaida(supabase: any, userId: string, data: any) {
     janela_entrega_dias: data.janela_entrega_dias
   })
 
+  // Log fiscal operation fields
+  console.log('📋 Fiscal operation fields:', {
+    finalidade_nfe: data.finalidade_nfe,
+    nfe_referenciada_chave: data.nfe_referenciada_chave,
+    cfop: data.cfop,
+    gera_financeiro: data.gera_financeiro,
+    movimenta_estoque: data.movimenta_estoque,
+    tipo_complemento: data.tipo_complemento
+  })
+
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
 
@@ -130,7 +140,11 @@ async function createSaida(supabase: any, userId: string, data: any) {
       }
     }
 
-    // Insert items with FEFO allocation
+    // Determine if stock should be allocated based on finalidade_nfe
+    const shouldAllocateStock = data.movimenta_estoque !== 'nao_movimenta'
+    const isStockEntry = data.movimenta_estoque === 'entrada' // For devolução
+
+    // Insert items with FEFO allocation (unless movimenta_estoque is 'nao_movimenta')
     const itensInseridos = []
     
     for (const item of data.itens) {
@@ -150,60 +164,69 @@ async function createSaida(supabase: any, userId: string, data: any) {
         throw new Error(`Erro ao criar item: ${itemError.message}`)
       }
 
-      // Allocate stock using FEFO
-      console.log(`Calling FEFO allocation for product ${item.produto_id}, quantity: ${item.quantidade}`)
-      const { data: alocacaoResult, error: alocacaoError } = await supabase
-        .rpc('validar_e_alocar_estoque_fefo', {
-          p_produto_id: item.produto_id,
-          p_deposito_id: data.deposito_id,
-          p_quantidade_necessaria: item.quantidade,
-          p_saida_item_id: saidaItem.id
-        })
-
-      if (alocacaoError) {
-        throw new Error(`Erro ao alocar estoque FEFO: ${alocacaoError.message}`)
-      }
-
-      console.log(`FEFO allocation result for product ${item.produto_id}:`, alocacaoResult)
-      
-      // Buscar os lotes das referências criadas pela alocação FEFO
-      const { data: referencias, error: referenciasError } = await supabase
-        .from('saida_item_referencias')
-        .select('lote, quantidade')
-        .eq('saida_item_id', saidaItem.id)
-        .order('created_at', { ascending: true })
-      
-      if (referenciasError) {
-        console.error('Error fetching saida_item_referencias:', referenciasError)
-      }
-      
-      // Atualizar o saida_item com o lote apropriado
-      let loteToUpdate = null
-      if (referencias && referencias.length > 0) {
-        if (referencias.length === 1) {
-          // Alocação de um único lote
-          loteToUpdate = referencias[0].lote
-          console.log(`Single batch allocation - updating saida_item ${saidaItem.id} with lote: ${loteToUpdate}`)
+      // Only allocate stock if not 'nao_movimenta' (complementar)
+      if (shouldAllocateStock) {
+        if (isStockEntry) {
+          // For devolução: This would typically create stock entry, not allocation
+          // For now, we log and skip FEFO allocation since it's an entry operation
+          console.log(`📥 Devolução: skipping FEFO allocation for product ${item.produto_id} - stock entry will be handled separately`)
         } else {
-          // Alocação de múltiplos lotes
-          loteToUpdate = 'MULTI'
-          console.log(`Multiple batch allocation (${referencias.length} batches) - updating saida_item ${saidaItem.id} with lote: MULTI`)
-          console.log('Allocated batches:', referencias.map(r => `${r.lote} (${r.quantidade})`).join(', '))
-        }
-        
-        const { error: updateError } = await supabase
-          .from('saida_itens')
-          .update({ lote: loteToUpdate })
-          .eq('id', saidaItem.id)
-        
-        if (updateError) {
-          console.error('Error updating saida_item lote:', updateError)
-        } else {
-          saidaItem.lote = loteToUpdate
-          console.log(`Successfully updated saida_item ${saidaItem.id} with lote: ${loteToUpdate}`)
+          // Normal stock exit - use FEFO allocation
+          console.log(`Calling FEFO allocation for product ${item.produto_id}, quantity: ${item.quantidade}`)
+          const { data: alocacaoResult, error: alocacaoError } = await supabase
+            .rpc('validar_e_alocar_estoque_fefo', {
+              p_produto_id: item.produto_id,
+              p_deposito_id: data.deposito_id,
+              p_quantidade_necessaria: item.quantidade,
+              p_saida_item_id: saidaItem.id
+            })
+
+          if (alocacaoError) {
+            throw new Error(`Erro ao alocar estoque FEFO: ${alocacaoError.message}`)
+          }
+
+          console.log(`FEFO allocation result for product ${item.produto_id}:`, alocacaoResult)
+          
+          // Buscar os lotes das referências criadas pela alocação FEFO
+          const { data: referencias, error: referenciasError } = await supabase
+            .from('saida_item_referencias')
+            .select('lote, quantidade')
+            .eq('saida_item_id', saidaItem.id)
+            .order('created_at', { ascending: true })
+          
+          if (referenciasError) {
+            console.error('Error fetching saida_item_referencias:', referenciasError)
+          }
+          
+          // Atualizar o saida_item com o lote apropriado
+          let loteToUpdate = null
+          if (referencias && referencias.length > 0) {
+            if (referencias.length === 1) {
+              loteToUpdate = referencias[0].lote
+              console.log(`Single batch allocation - updating saida_item ${saidaItem.id} with lote: ${loteToUpdate}`)
+            } else {
+              loteToUpdate = 'MULTI'
+              console.log(`Multiple batch allocation (${referencias.length} batches) - updating saida_item ${saidaItem.id} with lote: MULTI`)
+              console.log('Allocated batches:', referencias.map(r => `${r.lote} (${r.quantidade})`).join(', '))
+            }
+            
+            const { error: updateError } = await supabase
+              .from('saida_itens')
+              .update({ lote: loteToUpdate })
+              .eq('id', saidaItem.id)
+            
+            if (updateError) {
+              console.error('Error updating saida_item lote:', updateError)
+            } else {
+              saidaItem.lote = loteToUpdate
+              console.log(`Successfully updated saida_item ${saidaItem.id} with lote: ${loteToUpdate}`)
+            }
+          } else {
+            console.warn(`No allocation references found for saida_item ${saidaItem.id}`)
+          }
         }
       } else {
-        console.warn(`No allocation references found for saida_item ${saidaItem.id}`)
+        console.log(`📋 Complementar: skipping stock allocation for product ${item.produto_id}`)
       }
       
       itensInseridos.push(saidaItem)

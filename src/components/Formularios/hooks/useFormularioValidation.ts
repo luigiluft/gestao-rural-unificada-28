@@ -62,6 +62,30 @@ export function useFormularioValidation({ tipo, dados, itens }: UseFormularioVal
       return false
     }
 
+    // Validar finalidade fiscal
+    if (!dadosSaida.finalidade_nfe) {
+      toast({ title: "Erro", description: "Selecione o tipo de operação fiscal", variant: "destructive" })
+      return false
+    }
+
+    // Validar NF-e referenciada para devolução e complementar
+    if (dadosSaida.finalidade_nfe === 'devolucao' || dadosSaida.finalidade_nfe === 'complementar') {
+      if (!dadosSaida.nfe_referenciada_chave) {
+        toast({ title: "Erro", description: "Informe a chave da NF-e referenciada", variant: "destructive" })
+        return false
+      }
+      if (dadosSaida.nfe_referenciada_chave.length !== 44) {
+        toast({ title: "Erro", description: "A chave da NF-e deve ter exatamente 44 dígitos", variant: "destructive" })
+        return false
+      }
+    }
+
+    // Validar tipo de complemento para NF complementar
+    if (dadosSaida.finalidade_nfe === 'complementar' && !dadosSaida.tipo_complemento) {
+      toast({ title: "Erro", description: "Selecione o tipo de complemento", variant: "destructive" })
+      return false
+    }
+
     // Validar data de saída após o período total (configuração + frete)
     const dataSaida = new Date(dadosSaida.data_saida + 'T00:00:00')
     const prazoFrete = dadosSaida.prazo_entrega_calculado || 0
