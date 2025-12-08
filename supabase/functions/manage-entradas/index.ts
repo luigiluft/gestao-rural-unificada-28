@@ -461,13 +461,14 @@ async function getFranquiaCoords(supabase: any, userId: string) {
     .select('id, nome, latitude, longitude')
     .eq('master_franqueado_id', userId)
     .eq('ativo', true)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error getting franquia coords:', error);
     throw error;
   }
 
+  // Return null if no franchise found (user may not be a franchise owner)
   return franquia;
 }
 
@@ -478,12 +479,13 @@ async function getFazendaCoords(supabase: any, fazendaId: string) {
     .from('fazendas')
     .select('id, nome, latitude, longitude')
     .eq('id', fazendaId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error getting fazenda coords:', error);
     throw error;
   }
 
+  // Return null if no fazenda found
   return fazenda;
 }
