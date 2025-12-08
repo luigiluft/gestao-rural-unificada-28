@@ -319,6 +319,9 @@ const App = () => {
               <Route path="minha-loja" element={<RequirePageAccess pageKey="minha-loja"><MinhaLoja /></RequirePageAccess>} />
               <Route path="editor-loja" element={<RequirePageAccess pageKey="minha-loja"><LojaEditor /></RequirePageAccess>} />
               
+              {/* Configurar Impostos */}
+              <Route path="configurar-impostos" element={<RequirePageAccess pageKey="configurar-impostos"><ConfigurarImpostos /></RequirePageAccess>} />
+              
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
