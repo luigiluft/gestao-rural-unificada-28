@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
-import { useClientes } from "@/hooks/useClientes"
 
 interface DepositoDisponivel {
   deposito_id: string;
@@ -11,15 +10,21 @@ interface DepositoDisponivel {
 }
 
 export const useDepositosDisponiveis = (userId?: string) => {
-  const { data: clientes } = useClientes()
-  
   return useQuery<DepositoDisponivel[]>({
-    queryKey: ["depositos-disponiveis", userId, clientes?.map(c => c.id)],
+    queryKey: ["depositos-disponiveis", userId],
     queryFn: async () => {
       if (!userId) return []
       
-      // Pegar os IDs dos clientes que o usuário gerencia
-      const clienteIds = clientes?.map(c => c.id) || []
+      // Buscar clientes do usuário diretamente
+      const { data: clienteUsuarios, error: clienteError } = await supabase
+        .from("cliente_usuarios")
+        .select("cliente_id")
+        .eq("user_id", userId)
+        .eq("ativo", true)
+
+      if (clienteError) throw clienteError
+
+      const clienteIds = clienteUsuarios?.map(cu => cu.cliente_id) || []
       if (clienteIds.length === 0) return []
 
       // Buscar TODOS os depósitos dos clientes
@@ -41,11 +46,11 @@ export const useDepositosDisponiveis = (userId?: string) => {
       if (depositosError) throw depositosError
 
       // Mapear depósitos para o formato esperado
-      const depositosMap = new Map<string, DepositoDisponivel>()
+      const depositos: DepositoDisponivel[] = []
 
       clienteDepositos?.forEach(dep => {
         if (dep.franquias) {
-          depositosMap.set(dep.id, {
+          depositos.push({
             deposito_id: dep.franquia_id,
             deposito_nome: dep.nome || dep.franquias.nome,
             franqueado_id: null,
@@ -55,9 +60,9 @@ export const useDepositosDisponiveis = (userId?: string) => {
         }
       })
 
-      return Array.from(depositosMap.values())
+      return depositos
     },
-    enabled: !!userId && !!clientes && clientes.length > 0,
+    enabled: !!userId,
   })
 }
 
