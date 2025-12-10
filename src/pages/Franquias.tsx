@@ -19,6 +19,8 @@ import { useCreateStoragePosition, useBulkCreateStoragePositions } from "@/hooks
 import { GerenciarUsuariosFranquia } from "@/components/Franquias/GerenciarUsuariosFranquia";
 import { WarehouseMapViewer } from "@/components/WMS/WarehouseMapViewer";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 
 interface Franquia {
   id: string;
@@ -56,6 +58,8 @@ interface FranqueadoMaster {
 
 const Franquias = () => {
   const { user } = useAuth();
+  const { isCliente, isAdmin, isOperador } = useUserRole();
+  const { selectedCliente } = useCliente();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingFranquia, setEditingFranquia] = useState<Franquia | null>(null);
@@ -69,7 +73,7 @@ const Franquias = () => {
   
   const [formData, setFormData] = useState({
     nome: "",
-    tipo_deposito: "franquia" as 'franquia' | 'filial',
+    tipo_deposito: isCliente ? "filial" as const : "franquia" as const,
     codigo_interno: "",
     descricao: "",
     endereco: "",
@@ -92,17 +96,44 @@ const Franquias = () => {
 
   // Set page title and meta description
   useEffect(() => {
-    document.title = "Franquias - AgroHub";
+    document.title = isCliente ? "Meus Depósitos - AgroHub" : "Depósitos - AgroHub";
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Gerencie franquias e seus franqueados masters no sistema de gestão.');
+      metaDescription.setAttribute('content', isCliente 
+        ? 'Gerencie os depósitos da sua empresa no sistema de gestão.'
+        : 'Gerencie franquias e seus franqueados masters no sistema de gestão.');
     }
-  }, []);
+  }, [isCliente]);
 
-  // Load franquias (only those with master franqueados, not subaccounts)
+  // Load franquias - filtrado por cliente se for role cliente
   const { data: franquias = [], isLoading } = useQuery({
-    queryKey: ["franquias"],
+    queryKey: ["franquias", isCliente, selectedCliente?.id],
     queryFn: async () => {
+      // Se for cliente, buscar apenas depósitos vinculados via cliente_depositos
+      if (isCliente && selectedCliente?.id) {
+        const { data: clienteDepositos, error: cdError } = await supabase
+          .from("cliente_depositos")
+          .select(`
+            franquia_id,
+            franquias (*)
+          `)
+          .eq("cliente_id", selectedCliente.id)
+          .eq("ativo", true);
+        
+        if (cdError) throw cdError;
+        
+        // Extrair e formatar as franquias
+        const franquiasFromDepositos = (clienteDepositos || [])
+          .filter(cd => cd.franquias)
+          .map(cd => ({
+            ...(cd.franquias as any),
+            master_franqueado: null // Clientes não precisam ver o master
+          }));
+        
+        return franquiasFromDepositos as Franquia[];
+      }
+      
+      // Para admin/operador, buscar todas as franquias
       const { data: franquiasData, error } = await supabase
         .from("franquias")
         .select("*")
@@ -228,7 +259,7 @@ const Franquias = () => {
         if (error) throw error;
         franquiaId = result.id;
 
-        // Inserir registro em franquia_usuarios se for franquia com master
+        // Inserir registro em franquia_usuarios se for franquia com master (admin/operador)
         if (data.formData.tipo_deposito === 'franquia' && data.formData.master_franqueado_id) {
           const { error: franquiaUsuarioError } = await supabase
             .from("franquia_usuarios")
@@ -242,6 +273,25 @@ const Franquias = () => {
           if (franquiaUsuarioError) {
             console.error("Error creating franquia_usuarios record:", franquiaUsuarioError);
             throw franquiaUsuarioError;
+          }
+        }
+
+        // AUTO-VINCULAR ao cliente se for cliente criando seu próprio depósito
+        if (isCliente && selectedCliente?.id) {
+          const { error: clienteDepositoError } = await supabase
+            .from("cliente_depositos")
+            .insert({
+              cliente_id: selectedCliente.id,
+              franquia_id: franquiaId,
+              nome: data.formData.nome,
+              tipo_regime: 'filial', // Depósito próprio do cliente
+              ativo: true,
+              created_by: user?.id,
+            });
+
+          if (clienteDepositoError) {
+            console.error("Error creating cliente_depositos record:", clienteDepositoError);
+            throw clienteDepositoError;
           }
         }
 
@@ -263,19 +313,22 @@ const Franquias = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["franquias"] });
       queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
+      queryClient.invalidateQueries({ queryKey: ["cliente-depositos"] });
       setDialogOpen(false);
       resetForm();
       toast({
-        title: editingFranquia ? "Franquia atualizada" : "Franquia criada",
+        title: editingFranquia 
+          ? (isCliente ? "Depósito atualizado" : "Franquia atualizada")
+          : (isCliente ? "Depósito criado" : "Franquia criada"),
         description: editingFranquia 
-          ? "A franquia foi atualizada com sucesso." 
-          : "A nova franquia foi criada com sucesso.",
+          ? (isCliente ? "O depósito foi atualizado com sucesso." : "A franquia foi atualizada com sucesso.")
+          : (isCliente ? "O novo depósito foi criado com sucesso." : "A nova franquia foi criada com sucesso."),
       });
     },
     onError: (error) => {
       toast({
         title: "Erro",
-        description: `Erro ao ${editingFranquia ? 'atualizar' : 'criar'} franquia: ${error.message}`,
+        description: `Erro ao ${editingFranquia ? 'atualizar' : 'criar'} ${isCliente ? 'depósito' : 'franquia'}: ${error.message}`,
         variant: "destructive",
       });
     },
@@ -377,19 +430,25 @@ const Franquias = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Depósitos</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            {isCliente ? "Meus Depósitos" : "Depósitos"}
+          </h1>
           <p className="text-muted-foreground">
-            Gerencie as franquias e filiais
+            {isCliente 
+              ? "Gerencie os depósitos da sua empresa" 
+              : "Gerencie as franquias e filiais"}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setMassModeOpen(true)}>
-            <Users className="mr-2 h-4 w-4" />
-            Gestão em Massa
-          </Button>
+          {!isCliente && (
+            <Button variant="outline" onClick={() => setMassModeOpen(true)}>
+              <Users className="mr-2 h-4 w-4" />
+              Gestão em Massa
+            </Button>
+          )}
           <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
             <Building2 className="mr-2 h-4 w-4" />
-            Novo Depósito
+            {isCliente ? "Novo Depósito" : "Novo Depósito"}
           </Button>
         </div>
       </div>
@@ -420,11 +479,11 @@ const Franquias = () => {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Gestor</TableHead>
+                  {!isCliente && <TableHead>Gestor</TableHead>}
                   <TableHead>Localização</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>CNPJ</TableHead>
-                  <TableHead className="text-center">Usuários</TableHead>
+                  {!isCliente && <TableHead className="text-center">Usuários</TableHead>}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -441,15 +500,20 @@ const Franquias = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant={franquia.tipo_deposito === 'filial' ? 'secondary' : 'default'}>
-                        {franquia.tipo_deposito === 'filial' ? 'Filial' : 'Franquia'}
+                        {isCliente 
+                          ? (franquia.tipo_deposito === 'filial' ? 'Filial' : 'Matriz')
+                          : (franquia.tipo_deposito === 'filial' ? 'Filial' : 'Franquia')
+                        }
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {franquia.tipo_deposito === 'filial' 
-                        ? 'Gestão Matriz' 
-                        : (franquia.master_franqueado?.nome || franquia.master_franqueado?.email || '—')
-                      }
-                    </TableCell>
+                    {!isCliente && (
+                      <TableCell>
+                        {franquia.tipo_deposito === 'filial' 
+                          ? 'Gestão Matriz' 
+                          : (franquia.master_franqueado?.nome || franquia.master_franqueado?.email || '—')
+                        }
+                      </TableCell>
+                    )}
                     <TableCell>
                       {(franquia.cidade || franquia.estado) ? (
                         <div className="flex items-center gap-2">
@@ -464,25 +528,27 @@ const Franquias = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant={franquia.ativo ? "default" : "secondary"}>
-                        {franquia.ativo ? "Ativa" : "Inativa"}
+                        {franquia.ativo ? "Ativo" : "Inativo"}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {franquia.cnpj || '—'}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedFranquiaId(franquia.id)
-                          setUsuariosDialogOpen(true)
-                        }}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Gerenciar
-                      </Button>
-                    </TableCell>
+                    {!isCliente && (
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFranquiaId(franquia.id)
+                            setUsuariosDialogOpen(true)
+                          }}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          Gerenciar
+                        </Button>
+                      </TableCell>
+                    )}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button
@@ -535,6 +601,7 @@ const Franquias = () => {
         editingFranquia={editingFranquia}
         franqueadosMasters={franqueadosMasters}
         isLoading={saveFranquia.isPending}
+        isClienteMode={isCliente}
       />
 
       {/* Dialog para visualizar layout */}

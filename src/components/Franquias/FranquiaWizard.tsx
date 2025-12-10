@@ -9,6 +9,7 @@ import { BasicInfoStep } from "./WizardSteps/BasicInfoStep";
 import { AddressStep } from "./WizardSteps/AddressStep";
 import { LegalInfoStep } from "./WizardSteps/LegalInfoStep";
 import { PositionsStep } from "./WizardSteps/PositionsStep";
+import { useUserRole } from "@/hooks/useUserRole";
 
 import { WarehouseLayout } from "./WarehouseLayoutDesigner";
 
@@ -50,6 +51,7 @@ interface FranquiaWizardProps {
   editingFranquia?: any;
   franqueadosMasters: any[];
   isLoading?: boolean;
+  isClienteMode?: boolean;
 }
 
 const STEPS = [
@@ -65,12 +67,17 @@ export function FranquiaWizard({
   onSubmit,
   editingFranquia,
   franqueadosMasters,
-  isLoading = false
+  isLoading = false,
+  isClienteMode: isClienteModeProp
 }: FranquiaWizardProps) {
+  const { isCliente } = useUserRole();
+  // Use prop if provided, otherwise detect from role
+  const isClienteMode = isClienteModeProp ?? isCliente;
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FranquiaFormData>({
     nome: "",
-    tipo_deposito: "franquia",
+    tipo_deposito: isClienteMode ? "filial" : "franquia", // Default para clientes é 'filial'
     codigo_interno: "",
     descricao: "",
     endereco: "",
@@ -103,7 +110,7 @@ export function FranquiaWizard({
     if (editingFranquia && open) {
       setFormData({
         nome: editingFranquia.nome,
-        tipo_deposito: editingFranquia.tipo_deposito || "franquia",
+        tipo_deposito: editingFranquia.tipo_deposito || (isClienteMode ? "filial" : "franquia"),
         codigo_interno: editingFranquia.codigo_interno || "",
         descricao: editingFranquia.descricao || "",
         endereco: editingFranquia.endereco || "",
@@ -127,7 +134,7 @@ export function FranquiaWizard({
     } else if (!editingFranquia && open) {
       setFormData({
         nome: "",
-        tipo_deposito: "franquia",
+        tipo_deposito: isClienteMode ? "filial" : "franquia",
         codigo_interno: "",
         descricao: "",
         endereco: "",
@@ -146,15 +153,19 @@ export function FranquiaWizard({
         master_franqueado_id: "",
       });
     }
-  }, [open, editingFranquia]);
+  }, [open, editingFranquia, isClienteMode]);
 
   const progress = (currentStep / STEPS.length) * 100;
 
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
+        // Para clientes, não exigir master_franqueado_id
+        if (isClienteMode) {
+          return !!formData.nome;
+        }
+        // Para admin/operador criando franquia, exigir master
         if (formData.tipo_deposito === 'franquia') {
-          // Para franquias, exigir nome E master_franqueado_id (não vazio)
           return !!(formData.nome && formData.master_franqueado_id && formData.master_franqueado_id.trim() !== '');
         } else {
           return !!formData.nome; // Filiais só precisam de nome
