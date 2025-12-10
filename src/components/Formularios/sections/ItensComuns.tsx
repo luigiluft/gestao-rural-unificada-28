@@ -358,22 +358,6 @@ export function ItensComunsSection({
                 )}
               </div>
 
-              {/* Depósito - 2 colunas (apenas para entrada) */}
-              {tipo === 'entrada' && (
-                <div className="col-span-12 md:col-span-2 space-y-1">
-                  <Label className="text-xs font-medium">Depósito</Label>
-                  <Select value={novoItem.deposito || ''} onValueChange={(value) => onNovoItemChange('deposito', value)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Depósito" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Armazém A">Armazém A</SelectItem>
-                      <SelectItem value="Armazém B">Armazém B</SelectItem>
-                      <SelectItem value="Depósito Campo">Depósito Campo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
               {/* Valor Unit. - 2 colunas (apenas para entrada) */}
               {tipo === 'entrada' && (
@@ -414,7 +398,7 @@ export function ItensComunsSection({
                 <TableHead>Produto</TableHead>
                 {tipo === 'entrada' && <TableHead>Lote</TableHead>}
                 <TableHead>Quantidade</TableHead>
-                {tipo === 'entrada' && <TableHead>Depósito</TableHead>}
+                
                 {tipo === 'entrada' && <TableHead>Valor Unit.</TableHead>}
                 {tipo === 'entrada' && <TableHead>Valor Total</TableHead>}
                 <TableHead className="w-[50px]">Ação</TableHead>
@@ -430,7 +414,7 @@ export function ItensComunsSection({
                   </TableCell>
                   {tipo === 'entrada' && <TableCell>{item.lote}</TableCell>}
                   <TableCell>{item.quantidade} {item.unidade}</TableCell>
-                  {tipo === 'entrada' && <TableCell>{item.deposito}</TableCell>}
+                  
                   {tipo === 'entrada' && <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>}
                   {tipo === 'entrada' && <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>}
                   <TableCell>

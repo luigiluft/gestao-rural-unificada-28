@@ -11,7 +11,6 @@ export interface ItemGenerico {
   unidade: string
   valorUnitario: number
   valorTotal: number
-  deposito?: string
   observacoes?: string
   
   // Campos específicos de entrada
