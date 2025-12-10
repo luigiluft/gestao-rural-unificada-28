@@ -116,18 +116,18 @@ export default function Inventario() {
         franqueado_id: f.master_franqueado_id,
         franqueado_nome: 'Admin - Todas as Franquias'
       }))
-    : profile?.role === 'operador'
+    : depositosFranqueado && depositosFranqueado.length > 0
     ? depositosFranqueado?.map(f => ({
         deposito_id: f.id,
         deposito_nome: f.nome,
         franqueado_id: f.master_franqueado_id,
-        operador_nome: 'Operador'
+        operador_nome: 'Depósito'
       }))
     : depositosProdutor
     
   const loadingDepositos = profile?.role === 'admin' 
     ? loadingTodasFranquias
-    : profile?.role === 'operador' 
+    : depositosFranqueado && depositosFranqueado.length > 0
     ? loadingDepositosFranqueado 
     : loadingDepositosProdutor
   

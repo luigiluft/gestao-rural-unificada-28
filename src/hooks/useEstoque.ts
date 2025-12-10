@@ -73,24 +73,32 @@ export const useEstoque = () => {
 
         const parentRole = parentProfile?.role
         
-        if (parentRole === 'operador') {
-          // Para subcontas de franqueados: buscar franquias onde o pai é master
-          const { data: franquias } = await supabase
-            .from("franquias")
-            .select("id")
-            .eq("master_franqueado_id", hierarchy.parent_user_id)
-          
-          allowedDepositos = (franquias || []).map((f) => f.id)
+        // Check if parent has franchise access
+        const { data: franquiaUsuarios } = await supabase
+          .from("franquia_usuarios")
+          .select("franquia_id")
+          .eq("user_id", hierarchy.parent_user_id)
+          .eq("ativo", true)
+        
+        if (franquiaUsuarios && franquiaUsuarios.length > 0) {
+          allowedDepositos = franquiaUsuarios.map((f) => f.franquia_id)
         } else if (parentRole === 'cliente') {
-          // Para subcontas de produtores: buscar franquia do produtor pai
-          const { data: produtor } = await supabase
-            .from("produtores")
-            .select("franquia_id")
+          // For client subaccounts: check cliente_depositos
+          const { data: clienteUsuario } = await supabase
+            .from("cliente_usuarios")
+            .select("cliente_id")
             .eq("user_id", hierarchy.parent_user_id)
+            .eq("ativo", true)
             .maybeSingle()
           
-          if (produtor?.franquia_id) {
-            allowedDepositos = [produtor.franquia_id]
+          if (clienteUsuario?.cliente_id) {
+            const { data: depositos } = await supabase
+              .from("cliente_depositos")
+              .select("franquia_id")
+              .eq("cliente_id", clienteUsuario.cliente_id)
+              .eq("ativo", true)
+            
+            allowedDepositos = (depositos || []).map((d) => d.franquia_id)
           }
         }
       } else {
@@ -101,22 +109,32 @@ export const useEstoque = () => {
           .eq("user_id", uid)
           .single()
 
-        if (userProfile?.role === 'operador') {
-          const { data: franquias } = await supabase
-            .from("franquias")
-            .select("id")
-            .eq("master_franqueado_id", uid)
-          
-          allowedDepositos = (franquias || []).map((f) => f.id)
+        // Check if user has franchise access via franquia_usuarios
+        const { data: franquiaUsuarios } = await supabase
+          .from("franquia_usuarios")
+          .select("franquia_id")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+        
+        if (franquiaUsuarios && franquiaUsuarios.length > 0) {
+          allowedDepositos = franquiaUsuarios.map((f) => f.franquia_id)
         } else if (userProfile?.role === 'cliente') {
-          const { data: produtor } = await supabase
-            .from("produtores")
-            .select("franquia_id")
+          // For clients: check cliente_depositos
+          const { data: clienteUsuario } = await supabase
+            .from("cliente_usuarios")
+            .select("cliente_id")
             .eq("user_id", uid)
+            .eq("ativo", true)
             .maybeSingle()
           
-          if (produtor?.franquia_id) {
-            allowedDepositos = [produtor.franquia_id]
+          if (clienteUsuario?.cliente_id) {
+            const { data: depositos } = await supabase
+              .from("cliente_depositos")
+              .select("franquia_id")
+              .eq("cliente_id", clienteUsuario.cliente_id)
+              .eq("ativo", true)
+            
+            allowedDepositos = (depositos || []).map((d) => d.franquia_id)
           }
         }
       }
