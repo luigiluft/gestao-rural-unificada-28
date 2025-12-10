@@ -99,11 +99,15 @@ async function createEntrada(supabase: any, userId: string, data: any) {
   }
 
   // Extract itens from data to save separately and remove unsupported fields
-  const { itens, tipo: _ignoredTipo, xml_content: _xmlContent, ...entradaDataRaw } = data
+  const { itens, tipo: _ignoredTipo, xml_content: _xmlContent, status_aprovacao: rawStatus, ...entradaDataRaw } = data
   
   // Sanitize date fields - convert empty strings to null
   const dateFields = ['data_entrada', 'data_emissao', 'data_aprovacao']
   const entradaData = sanitizeDateFields(entradaDataRaw, dateFields)
+  
+  // Validate and set status_aprovacao - only allow valid enum values
+  const validStatuses = ['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'planejamento', 'confirmado', 'rejeitado', 'cancelado']
+  const status_aprovacao = validStatuses.includes(rawStatus) ? rawStatus : 'aguardando_transporte'
 
   // Start transaction
   const { data: entrada, error: entradaError } = await supabase
@@ -111,6 +115,7 @@ async function createEntrada(supabase: any, userId: string, data: any) {
     .insert({
       user_id: userId,
       ...entradaData,
+      status_aprovacao,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
