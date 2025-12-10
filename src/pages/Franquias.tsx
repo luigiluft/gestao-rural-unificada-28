@@ -211,6 +211,8 @@ const Franquias = () => {
         ...data.formData,
         capacidade_total: data.formData.capacidade_total ? parseFloat(data.formData.capacidade_total) : null,
         layout_armazem: data.layout ? JSON.stringify(data.layout) : null,
+        // Para clientes, converter 'franquia' (usado como marker de matriz) para 'filial' no banco
+        tipo_deposito: isCliente ? 'filial' : data.formData.tipo_deposito,
         // Converter string vazia para null, ou usar o valor se existir
         master_franqueado_id: data.formData.master_franqueado_id && data.formData.master_franqueado_id.trim() !== '' 
           ? data.formData.master_franqueado_id 

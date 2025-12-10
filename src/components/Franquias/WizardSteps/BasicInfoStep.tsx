@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Building2, Building, Info, Home } from "lucide-react";
 import { FranquiaFormData } from "../FranquiaWizard";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 
 interface BasicInfoStepProps {
   formData: FranquiaFormData;
@@ -16,10 +17,61 @@ interface BasicInfoStepProps {
 
 export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: BasicInfoStepProps) {
   const { isCliente, isAdmin, isOperador } = useUserRole();
+  const { selectedCliente } = useCliente();
 
-  // Para clientes: Matriz e Filial
+  // Para clientes: Matriz e Filial (usamos 'franquia' como marker interno para matriz)
   // Para admin/operador: Franquia e Filial
   const isClienteMode = isCliente;
+
+  // Determinar o valor exibido no select para clientes
+  // 'franquia' no formData = Matriz para clientes
+  // 'filial' no formData = Filial para clientes
+  const getClienteSelectValue = () => {
+    return formData.tipo_deposito === 'franquia' ? 'matriz' : 'filial';
+  };
+
+  // Auto-preencher dados quando selecionar Matriz
+  const handleTipoChange = (value: string) => {
+    if (isClienteMode) {
+      const isMatriz = value === 'matriz';
+      
+      if (isMatriz && selectedCliente) {
+        // Auto-preencher com dados da empresa cadastrada
+        setFormData(prev => ({
+          ...prev,
+          tipo_deposito: 'franquia', // Usamos 'franquia' como marker interno para matriz
+          master_franqueado_id: '',
+          // Auto-preencher nome se vazio
+          nome: prev.nome || `${selectedCliente.nome_fantasia || selectedCliente.razao_social} - Matriz`,
+          // Auto-preencher endereço
+          endereco: selectedCliente.endereco_fiscal || prev.endereco,
+          numero: selectedCliente.numero_fiscal || prev.numero,
+          complemento: selectedCliente.complemento_fiscal || prev.complemento,
+          bairro: selectedCliente.bairro_fiscal || prev.bairro,
+          cidade: selectedCliente.cidade_fiscal || prev.cidade,
+          estado: selectedCliente.estado_fiscal || prev.estado,
+          cep: selectedCliente.cep_fiscal || prev.cep,
+          // Auto-preencher informações legais
+          cnpj: selectedCliente.cpf_cnpj || prev.cnpj,
+          telefone: selectedCliente.telefone_comercial || prev.telefone,
+          email: selectedCliente.email_comercial || prev.email,
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          tipo_deposito: 'filial',
+          master_franqueado_id: '',
+        }));
+      }
+    } else {
+      // Admin/Operador - comportamento original
+      setFormData(prev => ({
+        ...prev,
+        tipo_deposito: value as 'franquia' | 'filial',
+        master_franqueado_id: value === 'filial' ? '' : prev.master_franqueado_id
+      }));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -33,20 +85,13 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
         {isClienteMode ? (
           // Opções para CLIENTES: Matriz e Filial
           <Select
-            value={formData.tipo_deposito === 'franquia' ? 'matriz' : 'filial'}
-            onValueChange={(value) => {
-              // Ambos são 'filial' no banco, mas diferenciamos no UI
-              setFormData({
-                ...formData,
-                tipo_deposito: 'filial', // Clientes sempre criam como 'filial' no banco
-                master_franqueado_id: '' // Clientes não precisam de master
-              });
-            }}
+            value={getClienteSelectValue()}
+            onValueChange={handleTipoChange}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               <SelectItem value="matriz">
                 <div className="flex items-center gap-2">
                   <Home className="w-4 h-4" />
@@ -75,18 +120,12 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
           // Opções para ADMIN/OPERADOR: Franquia e Filial
           <Select
             value={formData.tipo_deposito}
-            onValueChange={(value) => {
-              setFormData({
-                ...formData,
-                tipo_deposito: value as 'franquia' | 'filial',
-                master_franqueado_id: value === 'filial' ? '' : formData.master_franqueado_id
-              });
-            }}
+            onValueChange={handleTipoChange}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover z-50">
               <SelectItem value="franquia">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4" />
@@ -157,7 +196,7 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o franqueado master" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover z-50">
                   {franqueadosMasters.map((master) => (
                     <SelectItem key={master.user_id} value={master.user_id}>
                       {master.nome || master.email}
@@ -185,12 +224,22 @@ export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: Bas
         </Alert>
       )}
 
-      {/* Alerta informativo para clientes */}
-      {isClienteMode && (
+      {/* Alerta informativo para clientes - Matriz */}
+      {isClienteMode && formData.tipo_deposito === 'franquia' && (
         <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
           <Info className="h-4 w-4 text-green-600 dark:text-green-400" />
           <AlertDescription className="text-green-900 dark:text-green-100">
-            Este depósito será operado pela sua empresa. Você terá acesso completo aos módulos WMS e TMS (se habilitados) para gerenciar suas operações de armazenagem e transporte.
+            Este é o depósito matriz (sede principal) da sua empresa. Os dados de endereço e informações legais foram preenchidos automaticamente com base no cadastro da empresa.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Alerta informativo para clientes - Filial */}
+      {isClienteMode && formData.tipo_deposito === 'filial' && (
+        <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-blue-900 dark:text-blue-100">
+            Este depósito será uma filial da sua empresa. Você terá acesso completo aos módulos WMS e TMS (se habilitados) para gerenciar suas operações de armazenagem e transporte.
           </AlertDescription>
         </Alert>
       )}
