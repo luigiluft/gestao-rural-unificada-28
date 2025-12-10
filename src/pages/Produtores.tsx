@@ -71,14 +71,29 @@ export default function Produtores() {
   const { data: franqueados } = useQuery({
     queryKey: ["franqueados-for-invite"],
     queryFn: async () => {
-      // Get users with franqueado role directly from profiles
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, nome")
-        .eq("role", "operador");
+      // Get users who have franchise associations (masters)
+      const { data: franquiaUsers, error } = await supabase
+        .from("franquia_usuarios")
+        .select("user_id")
+        .eq("papel", "master")
+        .eq("ativo", true);
       
       if (error) throw error;
-      return (data ?? []) as FranqueadoOption[];
+      
+      // Get unique user IDs
+      const uniqueUserIds = [...new Set((franquiaUsers || []).map(fu => fu.user_id))];
+      
+      if (uniqueUserIds.length === 0) return [];
+      
+      // Fetch profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, nome")
+        .in("user_id", uniqueUserIds);
+      
+      if (profilesError) throw profilesError;
+      
+      return (profiles ?? []) as FranqueadoOption[];
     },
   });
 

@@ -37,7 +37,7 @@ const pageInfo = {
   "perfis-funcionarios": { name: "Perfis de Funcionários", description: "Gerenciamento de perfis de acesso para funcionários" }
 }
 
-const roles = ["admin", "operador", "cliente"] as const
+const roles = ["admin", "cliente"] as const
 
 export default function ControleAcesso() {
   const { data: permissions = [], isLoading } = useAllPagePermissions()
@@ -49,7 +49,7 @@ export default function ControleAcesso() {
 
   const getPermissionKey = (pageKey: string, role: string) => `${pageKey}-${role}`
   
-  const getPermission = (pageKey: string, role: "admin" | "operador" | "cliente") => {
+  const getPermission = (pageKey: string, role: "admin" | "cliente") => {
     const key = getPermissionKey(pageKey, role)
     if (changes[key]) return changes[key]
     
@@ -61,7 +61,7 @@ export default function ControleAcesso() {
     }
   }
 
-  const updatePermission = (pageKey: string, role: "admin" | "operador" | "cliente", field: "can_access" | "visible_in_menu", value: boolean) => {
+  const updatePermission = (pageKey: string, role: "admin" | "cliente", field: "can_access" | "visible_in_menu", value: boolean) => {
     const key = getPermissionKey(pageKey, role)
     const current = getPermission(pageKey, role)
     
@@ -156,7 +156,7 @@ export default function ControleAcesso() {
                       <TableHead className="w-[300px]">Descrição</TableHead>
                       {roles.map(role => (
                         <TableHead key={role} className="text-center min-w-[120px]">
-                          <Badge variant={role === "admin" ? "default" : role === "operador" ? "secondary" : "outline"}>
+                          <Badge variant={role === "admin" ? "default" : "secondary"}>
                             {getRoleLabel(role)}
                           </Badge>
                         </TableHead>
@@ -225,7 +225,7 @@ export default function ControleAcesso() {
             <Card key={role}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Badge variant={role === "admin" ? "default" : role === "operador" ? "secondary" : "outline"}>
+                  <Badge variant={role === "admin" ? "default" : "secondary"}>
                     {getRoleLabel(role)}
                   </Badge>
                   - Páginas Acessíveis

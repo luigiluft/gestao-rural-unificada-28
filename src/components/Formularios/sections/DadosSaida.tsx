@@ -56,7 +56,8 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         deposito_nome: franquia.nome,
         franqueado_nome: 'Admin'
       }))
-    } else if (profile?.role === 'operador') {
+    } else if (franquiasFranqueado && franquiasFranqueado.length > 0) {
+      // User has franchise access
       return franquiasFranqueado.map(franquia => ({
         deposito_id: franquia.id,
         deposito_nome: franquia.nome,
@@ -69,7 +70,7 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   }, [profile?.role, todasFranquias, franquiasFranqueado, depositosProdutor])
 
   const isCliente = profile?.role === 'cliente'
-  const isOperador = profile?.role === 'operador'
+  const hasFranchiseAccess = franquiasFranqueado && franquiasFranqueado.length > 0
   const requiredMopp = dados.tipo_saida === 'retirada_deposito' && pesoTotal >= pesoMinimoMopp
 
   // Get the target producer ID for farms
@@ -218,8 +219,8 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
             </div>
           )}
 
-          {/* Só mostrar seleção de produtor para operadores */}
-          {isOperador && (
+          {/* Só mostrar seleção de produtor para usuários com acesso a franquias */}
+          {hasFranchiseAccess && (
             <div className="space-y-2">
               <Label htmlFor="produtor_destinatario">Produtor Destinatário *</Label>
               <Select value={dados.produtor_destinatario} onValueChange={(value) => handleChange('produtor_destinatario', value)}>

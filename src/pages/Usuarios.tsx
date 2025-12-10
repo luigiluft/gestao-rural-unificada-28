@@ -130,14 +130,10 @@ export default function Usuarios() {
       // Check roles via security-definer RPC to avoid RLS recursion
       const results = await Promise.all(
         profiles.map(async (p) => {
-          const [adminRes, opRes] = await Promise.all([
-            supabase.rpc('has_role', { _user_id: p.user_id, _role: 'admin' }),
-            supabase.rpc('has_role', { _user_id: p.user_id, _role: 'operador' }),
-          ])
+          const adminRes = await supabase.rpc('has_role', { _user_id: p.user_id, _role: 'admin' })
           const isAdmin = adminRes.data === true
-          const isOperador = opRes.data === true
           
-          const role = isAdmin ? 'admin' : isOperador ? 'operador' : 'cliente'
+          const role = isAdmin ? 'admin' : 'cliente'
           const label = getRoleLabel(role, false, true)
           return [p.user_id, label] as const
         })

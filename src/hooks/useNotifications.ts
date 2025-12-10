@@ -35,8 +35,42 @@ export const useNotifications = () => {
         .single()
 
       const isAdmin = profile?.role === 'admin'
-      const isOperador = profile?.role === 'operador'
       const isCliente = profile?.role === 'cliente'
+
+      // Get client modules if cliente
+      let wmsHabilitado = false
+      let tmsHabilitado = false
+      
+      if (isCliente) {
+        const { data: clienteUsuario } = await supabase
+          .from("cliente_usuarios")
+          .select("cliente_id")
+          .eq("user_id", user.id)
+          .eq("ativo", true)
+          .maybeSingle()
+        
+        if (clienteUsuario?.cliente_id) {
+          const { data: cliente } = await supabase
+            .from("clientes")
+            .select("wms_habilitado, tms_habilitado")
+            .eq("id", clienteUsuario.cliente_id)
+            .single()
+          
+          wmsHabilitado = cliente?.wms_habilitado || false
+          tmsHabilitado = cliente?.tms_habilitado || false
+        }
+      }
+
+      // Check if user has franchise associations (for deposit-based operations)
+      const { data: franquiaUsuarios } = await supabase
+        .from("franquia_usuarios")
+        .select("franquia_id")
+        .eq("user_id", user.id)
+        .eq("ativo", true)
+      
+      const hasFranchiseAccess = isAdmin || (franquiaUsuarios && franquiaUsuarios.length > 0)
+      const canAccessWMS = isAdmin || wmsHabilitado || hasFranchiseAccess
+      const canAccessTMS = isAdmin || tmsHabilitado || hasFranchiseAccess
 
       let recebimento = 0
       let estoque = 0
@@ -52,8 +86,8 @@ export const useNotifications = () => {
       let ocorrencias = 0
 
       try {
-        // RECEBIMENTO: For operadores - entradas nos 4 status da página recebimento
-        if (isOperador || isAdmin) {
+        // RECEBIMENTO: For users with WMS access - entradas nos 4 status da página recebimento
+        if (canAccessWMS) {
           let entradasQuery = supabase
             .from("entradas")
             .select("id", { count: "exact" })
@@ -62,17 +96,9 @@ export const useNotifications = () => {
           // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             entradasQuery = entradasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              entradasQuery = entradasQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            entradasQuery = entradasQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: entradasCount } = await entradasQuery
@@ -80,7 +106,6 @@ export const useNotifications = () => {
         }
 
         // ESTOQUE: For all users - completed allocation waves since last view
-        // Get user's last view time for estoque notifications
         const { data: lastView } = await supabase
           .from("user_notification_views")
           .select("last_viewed_at")
@@ -90,7 +115,6 @@ export const useNotifications = () => {
 
         const lastViewTime = lastView?.last_viewed_at || '1970-01-01T00:00:00Z'
 
-        // Count allocated pallets since last view as estoque indicator
         const { count: estoqueCount } = await supabase
           .from("pallet_positions")
           .select("id", { count: "exact" })
@@ -99,8 +123,8 @@ export const useNotifications = () => {
 
         estoque = estoqueCount || 0
 
-        // POSIÇÕES: For operadores and admins - pallets alocados since last view
-        if (isOperador || isAdmin) {
+        // POSIÇÕES: For users with WMS access - pallets alocados since last view
+        if (canAccessWMS) {
           const { data: lastViewPosicoes } = await supabase
             .from("user_notification_views")
             .select("last_viewed_at")
@@ -116,7 +140,6 @@ export const useNotifications = () => {
             .eq("status", "alocado")
             .gte("alocado_em", lastViewTimePosicoes)
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             const { data: positions } = await supabase
               .from("storage_positions")
@@ -127,25 +150,16 @@ export const useNotifications = () => {
             if (positionIds.length > 0) {
               posicoesQuery = posicoesQuery.in("posicao_id", positionIds)
             }
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            const { data: positions } = await supabase
+              .from("storage_positions")
               .select("id")
-              .eq("master_franqueado_id", user.id)
+              .in("deposito_id", franquiaIds)
             
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              // Need to join with storage_positions to filter by deposito
-              const { data: positions } = await supabase
-                .from("storage_positions")
-                .select("id")
-                .in("deposito_id", franquiaIds)
-              
-              const positionIds = positions?.map(p => p.id) || []
-              if (positionIds.length > 0) {
-                posicoesQuery = posicoesQuery.in("posicao_id", positionIds)
-              }
+            const positionIds = positions?.map(p => p.id) || []
+            if (positionIds.length > 0) {
+              posicoesQuery = posicoesQuery.in("posicao_id", positionIds)
             }
           }
 
@@ -153,9 +167,8 @@ export const useNotifications = () => {
           posicoes = posicoesCount || 0
         }
 
-        // ALOCAÇÕES: For operadores - pending pallets for allocation
-        if (isOperador || isAdmin) {
-          // Count pallets pending allocation
+        // ALOCAÇÕES: For users with WMS access - pending pallets for allocation
+        if (canAccessWMS) {
           let pendingPalletsQuery = supabase
             .from("entrada_pallets")
             .select(`
@@ -167,23 +180,13 @@ export const useNotifications = () => {
             `, { count: "exact" })
             .eq("entradas.status_aprovacao", "confirmado")
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             pendingPalletsQuery = pendingPalletsQuery.eq("entradas.deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              pendingPalletsQuery = pendingPalletsQuery.in("entradas.deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            pendingPalletsQuery = pendingPalletsQuery.in("entradas.deposito_id", franquiaIds)
           }
 
-          // Filter out already allocated pallets
           const { data: allPallets } = await pendingPalletsQuery
           const { data: allocatedPalletIds } = await supabase
             .from("pallet_positions")
@@ -195,109 +198,73 @@ export const useNotifications = () => {
           alocacoes = pendingPallets.length
         }
 
-        // SEPARAÇÃO: For operadores - saídas pending separation only
-        if (isOperador || isAdmin) {
+        // SEPARAÇÃO: For users with WMS access - saídas pending separation only
+        if (canAccessWMS) {
           let separacaoQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
             .eq("status", "separacao_pendente")
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             separacaoQuery = separacaoQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              separacaoQuery = separacaoQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            separacaoQuery = separacaoQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: separacaoCount } = await separacaoQuery
           separacao = separacaoCount || 0
         }
 
-        // EXPEDIÇÃO: For operadores - saídas pending expedition (only separated items)
-        if (isOperador || isAdmin) {
+        // EXPEDIÇÃO: For users with WMS access - saídas pending expedition
+        if (canAccessWMS) {
           let saidasQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
             .eq("status", "separado")
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             saidasQuery = saidasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              saidasQuery = saidasQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            saidasQuery = saidasQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: saidasCount } = await saidasQuery
           expedicao = saidasCount || 0
         }
 
-        // REMESSAS: For operadores - saidas expedidas pending trip planning
-        if (isOperador || isAdmin) {
+        // REMESSAS: For users with TMS access - saidas expedidas pending trip planning
+        if (canAccessTMS) {
           let remessasQuery = supabase
             .from("saidas")
             .select("id", { count: "exact" })
             .eq("status", "expedido")
-            .is("viagem_id", null) // Only saídas that are not allocated to trips
+            .is("viagem_id", null)
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             remessasQuery = remessasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              remessasQuery = remessasQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            remessasQuery = remessasQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: remessasCount } = await remessasQuery
           remessas = remessasCount || 0
         }
 
-        // VIAGENS: For operadores - planned/pending trips in their deposits
-        if (isOperador || isAdmin) {
+        // VIAGENS: For users with TMS access - planned/pending trips
+        if (canAccessTMS) {
           let viagensQuery = supabase
             .from("viagens")
             .select("id", { count: "exact" })
             .in("status", ["planejada", "pendente"])
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             viagensQuery = viagensQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              viagensQuery = viagensQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            viagensQuery = viagensQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: viagensCount } = await viagensQuery
@@ -313,15 +280,15 @@ export const useNotifications = () => {
 
         suporte = suporteCount || 0
 
-        // SUBCONTAS: For admins and operadores - recent pending invites (last 30 days)
-        if (isAdmin || isOperador) {
+        // SUBCONTAS: For admins and users with franchise access - recent pending invites
+        if (isAdmin || hasFranchiseAccess) {
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
           
           let subcountQuery = supabase
             .from("pending_invites")
             .select("id", { count: "exact" })
             .is("used_at", null)
-            .gte("created_at", thirtyDaysAgo) // Only count recent invites
+            .gte("created_at", thirtyDaysAgo)
 
           if (!isAdmin) {
             subcountQuery = subcountQuery.eq("inviter_user_id", user.id)
@@ -331,54 +298,36 @@ export const useNotifications = () => {
           subcontas = subcountasCount || 0
         }
 
-        // DIVERGÊNCIAS: For operadores and admins - divergencias not in final status (resolvida/cancelada)
-        if (isOperador || isAdmin) {
+        // DIVERGÊNCIAS: For users with WMS access - divergencias not in final status
+        if (canAccessWMS) {
           let divergenciasQuery = supabase
             .from("divergencias")
             .select("id, deposito_id", { count: "exact" })
             .not("status", "in", '("resolvida","cancelada")')
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             divergenciasQuery = divergenciasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              divergenciasQuery = divergenciasQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            divergenciasQuery = divergenciasQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: divergenciasCount } = await divergenciasQuery
           divergencias = divergenciasCount || 0
         }
 
-        // OCORRÊNCIAS: For operadores and admins - ocorrencias not in final status (resolvida/cancelada)
-        if (isOperador || isAdmin) {
+        // OCORRÊNCIAS: For users with TMS access - ocorrencias not in final status
+        if (canAccessTMS) {
           let ocorrenciasQuery = supabase
             .from("ocorrencias")
             .select("id, deposito_id", { count: "exact" })
             .not("status", "in", '("resolvida","cancelada")')
 
-          // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             ocorrenciasQuery = ocorrenciasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin) {
-            // Filter by franquias owned by this franqueado
-            const { data: franquias } = await supabase
-              .from("franquias")
-              .select("id")
-              .eq("master_franqueado_id", user.id)
-            
-            const franquiaIds = franquias?.map(f => f.id) || []
-            if (franquiaIds.length > 0) {
-              ocorrenciasQuery = ocorrenciasQuery.in("deposito_id", franquiaIds)
-            }
+          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
+            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+            ocorrenciasQuery = ocorrenciasQuery.in("deposito_id", franquiaIds)
           }
 
           const { count: ocorrenciasCount } = await ocorrenciasQuery
@@ -398,14 +347,14 @@ export const useNotifications = () => {
         remessas,
         suporte,
         subcontas,
-        viagens: viagens + motoristaNotifications, // Combine franqueado trips + motorista trips
+        viagens: viagens + motoristaNotifications,
         posicoes,
         divergencias,
         ocorrencias,
       }
     },
     enabled: !!user?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
     refetchOnWindowFocus: true,
   })
 }
