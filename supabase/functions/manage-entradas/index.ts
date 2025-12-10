@@ -88,6 +88,9 @@ function sanitizeDateFields(obj: any, dateFields: string[]): any {
 }
 
 async function createEntrada(supabase: any, userId: string, data: any) {
+  console.log('📥 createEntrada received data keys:', Object.keys(data))
+  console.log('📥 status_aprovacao value:', data.status_aprovacao)
+  
   // Normalize input
   if (!data.data_entrada && data.dataEntrada) {
     data.data_entrada = data.dataEntrada
@@ -98,16 +101,29 @@ async function createEntrada(supabase: any, userId: string, data: any) {
     throw new Error('Missing required fields')
   }
 
-  // Extract itens from data to save separately and remove unsupported fields
-  const { itens, tipo: _ignoredTipo, xml_content: _xmlContent, status_aprovacao: rawStatus, ...entradaDataRaw } = data
+  // Extract itens from data to save separately and remove ALL status-related fields
+  const { 
+    itens, 
+    tipo: _ignoredTipo, 
+    xml_content: _xmlContent, 
+    status_aprovacao: _ignoredStatus,
+    status: _ignoredStatus2,
+    ...entradaDataRaw 
+  } = data
   
   // Sanitize date fields - convert empty strings to null
   const dateFields = ['data_entrada', 'data_emissao', 'data_aprovacao']
   const entradaData = sanitizeDateFields(entradaDataRaw, dateFields)
   
-  // Validate and set status_aprovacao - only allow valid enum values
-  const validStatuses = ['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'planejamento', 'confirmado', 'rejeitado', 'cancelado']
-  const status_aprovacao = validStatuses.includes(rawStatus) ? rawStatus : 'aguardando_transporte'
+  // Remove any remaining status fields from entradaData (extra safety)
+  delete entradaData.status_aprovacao
+  delete entradaData.status
+  
+  // Always set valid status_aprovacao
+  const status_aprovacao = 'aguardando_transporte'
+  
+  console.log('📤 Final status_aprovacao:', status_aprovacao)
+  console.log('📤 entradaData keys:', Object.keys(entradaData))
 
   // Start transaction
   const { data: entrada, error: entradaError } = await supabase
