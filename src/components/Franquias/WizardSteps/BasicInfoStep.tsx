@@ -16,7 +16,7 @@ interface BasicInfoStepProps {
 }
 
 export function BasicInfoStep({ formData, setFormData, franqueadosMasters }: BasicInfoStepProps) {
-  const { isCliente, isAdmin, isOperador } = useUserRole();
+  const { isCliente, isAdmin } = useUserRole();
   const { selectedCliente } = useCliente();
 
   // Para clientes: Matriz e Filial (usamos 'franquia' como marker interno para matriz)

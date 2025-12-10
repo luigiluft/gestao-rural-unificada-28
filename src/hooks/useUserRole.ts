@@ -27,8 +27,8 @@ export const useUserRole = () => {
     userRole: userRoleQuery.data,
     isLoading: userRoleQuery.isLoading,
     isAdmin: userRoleQuery.data === 'admin',
-    isOperador: userRoleQuery.data === 'operador',
     isCliente: userRoleQuery.data === 'cliente',
-    isConsumidor: userRoleQuery.data === 'consumidor'
+    isConsumidor: userRoleQuery.data === 'consumidor',
+    isMotorista: userRoleQuery.data === 'motorista'
   }
 }

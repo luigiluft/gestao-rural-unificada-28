@@ -40,7 +40,7 @@ const PERMISSIONS: Array<{ code: PermissionCode; label: string }> = [
 export default function Produtores() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { isAdmin, isOperador } = useUserRole();
+  const { isAdmin, isCliente } = useUserRole();
   const { franquias: currentUserFranquias = [] } = useCurrentUserFranquias();
   const qc = useQueryClient();
 
@@ -84,7 +84,7 @@ export default function Produtores() {
 
   // Fetch produtores with profiles (excluding subaccounts)
   const { data: produtores, isLoading, error } = useQuery({
-    queryKey: ["produtores-list", isAdmin, isOperador, currentUserFranquias.map(f => f.id)],
+    queryKey: ["produtores-list", isAdmin, isCliente, currentUserFranquias.map(f => f.id)],
     queryFn: async () => {
       try {
         // First get produtores
@@ -105,8 +105,8 @@ export default function Produtores() {
         // Filter out subaccounts - only keep master producers
         let masterProdutores = produtoresData.filter(p => !subaccountIds.has(p.user_id));
 
-        // Se for operador, filtrar apenas clientes associados às suas franquias
-        if (isOperador && currentUserFranquias.length > 0) {
+        // Se for cliente, filtrar apenas clientes associados às suas franquias
+        if (isCliente && currentUserFranquias.length > 0) {
           const franquiaIds = currentUserFranquias.map(f => f.id);
           
           // Buscar user_hierarchy para encontrar clientes associados às franquias do operador

@@ -58,7 +58,7 @@ interface FranqueadoMaster {
 
 const Franquias = () => {
   const { user } = useAuth();
-  const { isCliente, isAdmin, isOperador } = useUserRole();
+  const { isCliente, isAdmin } = useUserRole();
   const { selectedCliente } = useCliente();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);

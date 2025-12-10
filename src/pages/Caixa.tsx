@@ -34,7 +34,7 @@ export default function Caixa() {
   // Buscar faturas
   const { data: faturas = [] } = useFaturas({ 
     franquia_id: franquia?.id,
-    incluir_rascunho: userRole === 'operador' || userRole === 'admin'
+    incluir_rascunho: userRole === 'cliente' || userRole === 'admin'
   })
   const { data: stats } = useFaturaStats()
   

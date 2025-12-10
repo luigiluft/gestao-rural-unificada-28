@@ -200,7 +200,7 @@ const iconMap = {
 export const useDynamicMenuItems = () => {
   const { permissions, isSubaccount, isLoading } = useSimplifiedPermissions()
   const { selectedFranquia } = useFranquia()
-  const { isOperador, isAdmin, isCliente } = useUserRole()
+  const { isAdmin, isCliente } = useUserRole()
   const { wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado, isLoading: isLoadingModulos } = useClienteModulos()
 
   const menuItems = useMemo(() => {
@@ -358,9 +358,8 @@ export const useDynamicMenuItems = () => {
     ]
 
     // Verificar se tem permissão para pelo menos uma página do WMS
-    // Ocultar WMS se operador tiver "Todos os Depósitos" selecionado
-    // Ocultar WMS para clientes que não habilitaram o módulo
-    const shouldShowWms = !(isOperador && selectedFranquia?.id === "ALL") && 
+    // Ocultar WMS se cliente tiver "Todos os Depósitos" selecionado ou não habilitou o módulo
+    const shouldShowWms = !(isCliente && selectedFranquia?.id === "ALL") && 
                           !(isCliente && !wmsHabilitado)
     const hasWmsPermission = wmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
@@ -401,9 +400,8 @@ export const useDynamicMenuItems = () => {
     }
 
     // Verificar se tem permissão para pelo menos uma página do TMS
-    // Ocultar TMS se operador tiver "Todos os Depósitos" selecionado
-    // Ocultar TMS para clientes que não habilitaram o módulo
-    const shouldShowTms = !(isOperador && selectedFranquia?.id === "ALL") &&
+    // Ocultar TMS se cliente tiver "Todos os Depósitos" selecionado ou não habilitou o módulo
+    const shouldShowTms = !(isCliente && selectedFranquia?.id === "ALL") &&
                           !(isCliente && !tmsHabilitado)
     const hasTmsPermission = tmsPages.some(page => 
       permissions.includes(`${page}.view` as any)
@@ -594,7 +592,7 @@ export const useDynamicMenuItems = () => {
     }
 
     return items
-  }, [permissions, isLoading, isLoadingModulos, selectedFranquia, isOperador, isAdmin, isCliente, wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado])
+  }, [permissions, isLoading, isLoadingModulos, selectedFranquia, isAdmin, isCliente, wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado])
 
   return { menuItems, isLoading: isLoading || isLoadingModulos }
 }

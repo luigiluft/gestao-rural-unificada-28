@@ -93,8 +93,8 @@ const AVAILABLE_PERMISSIONS = {
 
 export default function PerfisFuncionarios() {
   const { data: profile } = useProfile()
-  const userRole = profile?.role as 'operador' | 'cliente'
-  const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole, true)
+  const userRole = profile?.role as UserRole
+  const { profiles, isLoading, createProfile, updateProfile, deleteProfile, isCreating, isUpdating, isDeleting } = useEmployeeProfiles(userRole === 'cliente' ? 'cliente' : userRole, true)
   
   const [editingProfile, setEditingProfile] = useState<PermissionTemplate | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -130,7 +130,7 @@ export default function PerfisFuncionarios() {
       nome: formData.nome,
       descricao: formData.descricao,
       permissions: formData.permissions,
-      target_role: userRole,
+      target_role: 'cliente' as UserRole,
       is_template: true,
       default_route: formData.default_route || null,
     }
@@ -153,8 +153,8 @@ export default function PerfisFuncionarios() {
     }))
   }
 
-  const availablePermissions = AVAILABLE_PERMISSIONS[userRole] || []
-  const roleLabel = userRole === 'operador' ? 'Operador' : 'Cliente'
+  const availablePermissions = AVAILABLE_PERMISSIONS['cliente'] || []
+  const roleLabel = 'Cliente'
 
   if (isLoading) {
     return (
@@ -173,8 +173,8 @@ export default function PerfisFuncionarios() {
   }
 
   // Separate profiles by role for better organization
-  const myProfiles = profiles.filter(p => p.target_role === userRole)
-  const clientProfiles = userRole === 'operador' ? profiles.filter(p => p.target_role === 'cliente') : []
+  const myProfiles = profiles.filter(p => p.target_role === 'cliente')
+  const clientProfiles: PermissionTemplate[] = []
 
   return (
     <div className="space-y-6">
@@ -182,7 +182,7 @@ export default function PerfisFuncionarios() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Cargos</h1>
           <p className="text-muted-foreground">
-            Gerencie os perfis de acesso para funcionários {userRole === 'operador' ? 'da franquia' : 'do cliente'}
+            Gerencie os perfis de acesso para funcionários do cliente
           </p>
         </div>
         

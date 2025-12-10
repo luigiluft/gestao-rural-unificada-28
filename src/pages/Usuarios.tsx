@@ -26,12 +26,12 @@ interface ProfileRow {
 export default function Usuarios() {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const { isOperador } = useUserRole();
+  const { isAdmin } = useUserRole();
   const { franquias: currentUserFranquias = [] } = useCurrentUserFranquias();
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<'admin' | 'operador' | 'cliente'>('cliente');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'cliente'>('cliente');
   const [sendingInvite, setSendingInvite] = useState(false);
   
   const sendInvite = async () => {
@@ -89,7 +89,7 @@ export default function Usuarios() {
   }, []);
 
   const { data: profiles, isLoading: loadingProfiles } = useQuery({
-    queryKey: ["profiles-all", isOperador, currentUserFranquias.map(f => f.id)],
+    queryKey: ["profiles-all", isAdmin, currentUserFranquias.map(f => f.id)],
     queryFn: async () => {
       const { data: response, error } = await supabase.functions.invoke('manage-usuarios', {
         body: { action: 'list_profiles' }
@@ -103,8 +103,8 @@ export default function Usuarios() {
 
       let allProfiles = (response.data ?? []) as ProfileRow[];
       
-      // Se for operador, filtrar apenas usuários de suas franquias
-      if (isOperador && currentUserFranquias.length > 0) {
+      // Se não for admin, filtrar apenas usuários de suas franquias
+      if (!isAdmin && currentUserFranquias.length > 0) {
         const franquiaIds = currentUserFranquias.map(f => f.id);
         
         // Buscar usuários associados às franquias do operador
@@ -371,7 +371,6 @@ export default function Usuarios() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cliente">{ROLE_LABELS.cliente}</SelectItem>
-                    <SelectItem value="operador">{ROLE_LABELS.operador}</SelectItem>
                     <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                   </SelectContent>
                 </Select>

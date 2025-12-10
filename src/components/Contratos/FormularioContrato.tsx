@@ -40,7 +40,7 @@ interface FormularioContratoProps {
 
 export function FormularioContrato({ contratoId, onSuccess }: FormularioContratoProps) {
   const { user } = useAuth()
-  const { isAdmin, isOperador } = useUserRole()
+  const { isAdmin, isCliente } = useUserRole()
   const { data: contratoData } = useContratoDetalhes(contratoId)
 
   // Buscar franquias (apenas para admin)

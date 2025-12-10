@@ -25,12 +25,12 @@ export const useEmployeeProfiles = (userRole?: UserRole, includeHierarchy?: bool
         query = query.eq("target_role", userRole)
       }
 
-      // Se incluir hierarquia e for operador, incluir templates de clientes também
-      if (includeHierarchy && userRole === 'operador') {
+      // Se incluir hierarquia, incluir templates de clientes
+      if (includeHierarchy && userRole === 'cliente') {
         query = supabase
           .from("permission_templates")
           .select("*")
-          .in("target_role", ['operador', 'cliente'])
+          .eq("target_role", 'cliente')
           .order("nome", { ascending: true })
       }
 
