@@ -69,6 +69,24 @@ serve(async (req) => {
   }
 })
 
+// Helper to convert empty strings to null (for date fields)
+function emptyToNull(value: any): any {
+  if (value === '' || value === undefined) return null
+  if (typeof value === 'object' && value !== null && value._type === 'undefined') return null
+  return value
+}
+
+// Helper to sanitize date fields
+function sanitizeDateFields(obj: any, dateFields: string[]): any {
+  const result = { ...obj }
+  for (const field of dateFields) {
+    if (field in result) {
+      result[field] = emptyToNull(result[field])
+    }
+  }
+  return result
+}
+
 async function createEntrada(supabase: any, userId: string, data: any) {
   // Normalize input
   if (!data.data_entrada && data.dataEntrada) {
@@ -81,7 +99,11 @@ async function createEntrada(supabase: any, userId: string, data: any) {
   }
 
   // Extract itens from data to save separately and remove unsupported fields
-  const { itens, tipo: _ignoredTipo, ...entradaData } = data
+  const { itens, tipo: _ignoredTipo, xml_content: _xmlContent, ...entradaDataRaw } = data
+  
+  // Sanitize date fields - convert empty strings to null
+  const dateFields = ['data_entrada', 'data_emissao', 'data_aprovacao']
+  const entradaData = sanitizeDateFields(entradaDataRaw, dateFields)
 
   // Start transaction
   const { data: entrada, error: entradaError } = await supabase
@@ -119,31 +141,32 @@ async function createEntrada(supabase: any, userId: string, data: any) {
           created_at: new Date().toISOString(),
           // Campos básicos
           nome_produto: item.produto || item.nome_produto,
-          codigo_produto: item.codigo || item.codigo_produto,
-          codigo_ean: item.codigoEAN || item.codigo_ean,
+          produto_id: emptyToNull(item.produto_id),
+          codigo_produto: emptyToNull(item.codigo || item.codigo_produto),
+          codigo_ean: emptyToNull(item.codigoEAN || item.codigo_ean),
           quantidade: item.quantidade,
           unidade_comercial: item.unidade || item.unidade_comercial,
           valor_unitario: item.valorUnitario || item.valor_unitario,
           valor_total: item.valorTotal || item.valor_total,
-          lote: item.lote,
-          data_validade: item.dataValidade || item.data_validade,
-          data_fabricacao: item.dataFabricacao || item.data_fabricacao,
+          lote: item.lote || null,
+          data_validade: emptyToNull(item.dataValidade || item.data_validade),
+          data_fabricacao: emptyToNull(item.dataFabricacao || item.data_fabricacao),
           // Campos tributários
           descricao_produto: item.descricao_produto || item.produto,
-          ncm: item.ncm,
-          cest: item.cest,
-          cfop: item.cfop,
-          quantidade_comercial: item.quantidade_comercial,
-          valor_unitario_comercial: item.valor_unitario_comercial,
-          codigo_ean_tributavel: item.codigo_ean_tributavel,
-          unidade_tributavel: item.unidade_tributavel,
-          quantidade_tributavel: item.quantidade_tributavel,
-          valor_unitario_tributavel: item.valor_unitario_tributavel,
-          indicador_total: item.indicador_total,
-          impostos_icms: item.impostos_icms,
+          ncm: emptyToNull(item.ncm),
+          cest: emptyToNull(item.cest),
+          cfop: emptyToNull(item.cfop),
+          quantidade_comercial: emptyToNull(item.quantidade_comercial),
+          valor_unitario_comercial: emptyToNull(item.valor_unitario_comercial),
+          codigo_ean_tributavel: emptyToNull(item.codigo_ean_tributavel),
+          unidade_tributavel: emptyToNull(item.unidade_tributavel),
+          quantidade_tributavel: emptyToNull(item.quantidade_tributavel),
+          valor_unitario_tributavel: emptyToNull(item.valor_unitario_tributavel),
+          indicador_total: emptyToNull(item.indicador_total),
+          impostos_icms: emptyToNull(item.impostos_icms),
           impostos_ipi: impostosIpi,
-          impostos_pis: item.impostos_pis,
-          impostos_cofins: item.impostos_cofins,
+          impostos_pis: emptyToNull(item.impostos_pis),
+          impostos_cofins: emptyToNull(item.impostos_cofins),
           valor_total_tributos_item: valorTotalTributosItem ?? 0,
         };
       })
