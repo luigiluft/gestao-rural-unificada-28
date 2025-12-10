@@ -3,13 +3,13 @@
  * 
  * Backend e Frontend agora usam os mesmos nomes:
  * - 'admin' - Administrador
- * - 'operador' - Operador (ex-franqueado)
- * - 'cliente' - Cliente (ex-produtor)
+ * - 'cliente' - Cliente (todas as empresas)
  * - 'motorista' - Motorista
+ * - 'consumidor' - Consumidor (marketplace)
  * 
  * Use getRoleLabel() de @/utils/roleTranslations para exibição na UI
  */
-export type UserRole = 'admin' | 'operador' | 'cliente' | 'motorista' | 'consumidor';
+export type UserRole = 'admin' | 'cliente' | 'motorista' | 'consumidor';
 // All possible permissions for pages and actions
 export type PermissionCode = 
   | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 

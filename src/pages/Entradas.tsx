@@ -138,7 +138,6 @@ export default function Entradas() {
   const queryClient = useQueryClient();
   const {
     isAdmin,
-    isOperador,
     isCliente
   } = useUserRole();
   
@@ -705,7 +704,7 @@ export default function Entradas() {
               <Eye className="h-3 w-3" />
             </Button>
             {/* Ações disponíveis baseadas no papel do usuário */}
-            {(isAdmin || isOperador) && <DropdownMenu>
+            {isAdmin && <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                     <MoreHorizontal className="h-3 w-3" />
@@ -837,40 +836,6 @@ export default function Entradas() {
         return value || "N/A";
     }
   };
-
-
-  // Operadores devem usar WMS > Recebimento
-  if (isOperador) {
-    return (
-      <div className="min-h-screen flex flex-col overflow-x-hidden">
-        <div className="flex-shrink-0 border-b bg-background">
-          <div className="p-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Entradas</h1>
-              <p className="text-muted-foreground">
-                Gerencie e registre as entradas de produtos no estoque
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6">
-          <Card className="shadow-card">
-            <CardContent className="pt-12 pb-12">
-              <EmptyState 
-                icon={<PackageCheck className="w-12 h-12 text-muted-foreground" />} 
-                title="Acesse o Recebimento" 
-                description="Para processar entradas de clientes, acesse WMS → Recebimento. Esta página mostra apenas as entradas dos clientes."
-                action={{
-                  label: "Ir para Recebimento",
-                  onClick: () => navigate('/recebimento')
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Title Section */}

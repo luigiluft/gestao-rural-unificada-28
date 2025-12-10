@@ -20,7 +20,7 @@ import AvariasTab from "@/components/Estoque/AvariasTab";
 
 export default function Estoque() {
   const navigate = useNavigate();
-  const { isOperador } = useUserRole();
+  const { isCliente } = useUserRole();
   const {
     data: estoque,
     isLoading
@@ -90,35 +90,6 @@ export default function Estoque() {
     };
   };
   const stats = getStockStats();
-
-  // Operadores devem usar WMS > Rastreamento WMS
-  if (isOperador) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Estoque</h1>
-            <p className="text-muted-foreground">
-              Controle e monitore os produtos em estoque
-            </p>
-          </div>
-        </div>
-        <Card className="shadow-card">
-          <CardContent className="pt-12 pb-12">
-            <EmptyState 
-              icon={<Warehouse className="w-12 h-12 text-muted-foreground" />} 
-              title="Acesse o Rastreamento WMS" 
-              description="Para visualizar o estoque dos depósitos, acesse WMS → Rastreamento WMS. Esta página mostra apenas o estoque dos clientes."
-              action={{
-                label: "Ir para Rastreamento WMS",
-                onClick: () => navigate('/rastreamento-wms')
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return <div className="space-y-6">
       {/* Page Header */}

@@ -177,7 +177,7 @@ const SortableTableHead = ({
 };
 const Saidas = () => {
   const navigate = useNavigate();
-  const { isOperador } = useUserRole();
+  const { isCliente } = useUserRole();
   const {
     user
   } = useAuth();
@@ -612,39 +612,6 @@ const Saidas = () => {
       });
     }
   };
-
-  // Operadores devem usar WMS > Separação ou TMS
-  if (isOperador) {
-    return (
-      <div className="min-h-screen flex flex-col overflow-x-hidden">
-        <div className="flex-shrink-0 border-b bg-background">
-          <div className="p-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Saídas</h1>
-              <p className="text-muted-foreground">
-                Gerencie e registre as saídas de produtos do estoque
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6">
-          <Card className="shadow-card">
-            <CardContent className="pt-12 pb-12">
-              <EmptyState 
-                icon={<PackageOpen className="w-12 h-12 text-muted-foreground" />} 
-                title="Acesse a Separação ou TMS" 
-                description="Para processar saídas, acesse WMS → Separação ou TMS → Viagens. Esta página mostra apenas as saídas dos clientes."
-                action={{
-                  label: "Ir para Separação",
-                  onClick: () => navigate('/separacao')
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Title Section */}

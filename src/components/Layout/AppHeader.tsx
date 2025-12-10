@@ -25,7 +25,7 @@ export function AppHeader() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [displayName, setDisplayName] = useState<string>("")
-  const { userRole, isAdmin, isOperador, isCliente } = useUserRole()
+  const { userRole, isAdmin, isCliente } = useUserRole()
   const { selectedCliente, setSelectedCliente, availableClientes } = useCliente()
   const { data: clientes } = useClientes()
   const { selectedFranquia, setSelectedFranquia, availableFranquias } = useFranquia()
@@ -123,8 +123,8 @@ export function AppHeader() {
           </>
         )}
 
-        {/* Depósito selector - for operador/cliente roles */}
-        {(isOperador || isCliente) && availableFranquias.length > 0 && (
+        {/* Depósito selector - for cliente roles */}
+        {isCliente && availableFranquias.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -166,8 +166,8 @@ export function AppHeader() {
               )}
             </div>
             
-            {/* Info badge quando "Todos" está selecionado para operadores */}
-            {isOperador && selectedFranquia?.id === 'ALL' && (
+            {/* Info badge quando "Todos" está selecionado */}
+            {selectedFranquia?.id === 'ALL' && (
               <Badge variant="secondary" className="text-xs">
                 WMS/TMS ocultos (visão consolidada)
               </Badge>

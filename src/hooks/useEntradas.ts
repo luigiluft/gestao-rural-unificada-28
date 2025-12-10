@@ -1,21 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDepositoFilter } from "./useDepositoFilter"
-import { useUserRole } from "./useUserRole"
 
 export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
   const { depositoId, shouldFilter } = useDepositoFilter()
-  const { isOperador } = useUserRole()
   
   return useQuery({
-    queryKey: ["entradas", dateRange, depositoId, isOperador],
+    queryKey: ["entradas", dateRange, depositoId],
     queryFn: async () => {
       console.log('[useEntradas] Starting query with dateRange:', dateRange);
-      
-      // Operadores não veem entradas nessa página - eles usam WMS > Recebimento
-      if (isOperador) {
-        return []
-      }
       
       // Check auth status
       const { data: { user } } = await supabase.auth.getUser();

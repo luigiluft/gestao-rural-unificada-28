@@ -40,7 +40,7 @@ export default function Receitas() {
   // Produtores veem apenas faturas fechadas
   const { data: faturas = [], isLoading } = useFaturas({ 
     franquia_id: franquia?.id,
-    incluir_rascunho: userRole === 'operador' || userRole === 'admin'
+    incluir_rascunho: userRole === 'cliente' || userRole === 'admin'
   })
   const { data: stats } = useFaturaStats()
   
@@ -145,7 +145,7 @@ export default function Receitas() {
                       <TableHead>Vencimento</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
-                      {(userRole === 'operador' || userRole === 'admin') && (
+                      {(userRole === 'cliente' || userRole === 'admin') && (
                         <TableHead>Ações</TableHead>
                       )}
                     </TableRow>
@@ -163,7 +163,7 @@ export default function Receitas() {
                         <TableCell>{format(new Date(fatura.data_vencimento), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(fatura.valor_total)}</TableCell>
                         <TableCell>{getStatusBadge(fatura.status)}</TableCell>
-                        {(userRole === 'operador' || userRole === 'admin') && (
+                        {(userRole === 'cliente' || userRole === 'admin') && (
                           <TableCell>
                             {fatura.status === 'rascunho' && (
                               <Button

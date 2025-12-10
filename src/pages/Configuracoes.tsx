@@ -22,7 +22,7 @@ import { useLojaConfiguracao } from "@/hooks/useLojaConfiguracao"
 import { useClienteModulos } from "@/hooks/useClienteModulos"
 
 export default function Configuracoes() {
-  const { isCliente, isOperador, isAdmin } = useUserRole()
+  const { isCliente, isAdmin } = useUserRole()
   const { wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado, updateModulos, isUpdating } = useClienteModulos()
   const { configuracao: lojaConfig } = useLojaConfiguracao()
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
@@ -342,8 +342,8 @@ export default function Configuracoes() {
           </Card>
           )}
 
-          {/* Configuração de Peso Mínimo MOPP - apenas para operadores */}
-          {isOperador && (
+          {/* Configuração de Peso Mínimo MOPP - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle>Peso Mínimo MOPP</CardTitle>
@@ -374,8 +374,8 @@ export default function Configuracoes() {
           </Card>
           )}
 
-          {/* Configuração de Horários de Retirada - apenas para operadores */}
-          {isOperador && (
+          {/* Configuração de Horários de Retirada - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle>Horários de Retirada</CardTitle>
@@ -435,8 +435,8 @@ export default function Configuracoes() {
           </Card>
           )}
 
-          {/* Configuração de Dias Úteis de Expedição - apenas para operadores */}
-          {isOperador && (
+          {/* Configuração de Dias Úteis de Expedição - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle>Dias Úteis de Expedição</CardTitle>
@@ -472,8 +472,8 @@ export default function Configuracoes() {
           </Card>
           )}
 
-          {/* Configuração de Janela de Entrega - apenas para operadores */}
-          {isOperador && (
+          {/* Configuração de Janela de Entrega - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle>Janela de Entrega</CardTitle>
@@ -511,8 +511,8 @@ export default function Configuracoes() {
           </Card>
           )}
 
-          {/* Configuração de Peso Bruto Máximo por Pallet - apenas para operadores */}
-          {isOperador && (
+          {/* Configuração de Peso Bruto Máximo por Pallet - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle>Peso Bruto Máximo por Pallet</CardTitle>
@@ -549,8 +549,8 @@ export default function Configuracoes() {
           </Card>
           )}
 
-          {/* Configuração de Período de Análise do SLA - apenas para operadores */}
-          {isOperador && (
+          {/* Configuração de Período de Análise do SLA - apenas para clientes */}
+          {isCliente && (
           <Card>
             <CardHeader>
               <CardTitle>Período de Análise do SLA</CardTitle>

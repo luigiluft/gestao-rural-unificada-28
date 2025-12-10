@@ -23,15 +23,10 @@ export interface EstoqueItem {
 
 export const useEstoque = () => {
   const { depositoId, shouldFilter } = useDepositoFilter()
-  const { isOperador } = useUserRole()
   
   return useQuery({
-    queryKey: ["estoque", depositoId, isOperador],
+    queryKey: ["estoque", depositoId],
     queryFn: async (): Promise<EstoqueItem[]> => {
-      // Operadores não veem estoque nessa página - eles usam WMS > Rastreamento WMS
-      if (isOperador) {
-        return []
-      }
       // Identificar usuário atual e possível franqueado master (para herdar visibilidade)
       const { data: authData } = await supabase.auth.getUser()
       const uid = authData.user?.id
