@@ -15,10 +15,13 @@ export const useClienteModulos = () => {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const { data: modulos, isLoading } = useQuery({
-    queryKey: ["cliente-modulos", selectedCliente?.id],
+  const clienteId = selectedCliente?.id
+
+  const { data: modulos, isLoading, refetch } = useQuery({
+    queryKey: ["cliente-modulos", clienteId],
     queryFn: async (): Promise<ClienteModulos> => {
-      if (!selectedCliente?.id) {
+      if (!clienteId) {
+        console.log('[useClienteModulos] No clienteId, returning defaults')
         return { 
           wms_habilitado: false, 
           tms_habilitado: false,
@@ -27,13 +30,20 @@ export const useClienteModulos = () => {
         }
       }
 
+      console.log('[useClienteModulos] Fetching modules for clienteId:', clienteId)
+      
       const { data, error } = await supabase
         .from("clientes")
         .select("wms_habilitado, tms_habilitado, ecommerce_habilitado, atendimento_habilitado")
-        .eq("id", selectedCliente.id)
+        .eq("id", clienteId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('[useClienteModulos] Error fetching modules:', error)
+        throw error
+      }
+
+      console.log('[useClienteModulos] Fetched modules:', data)
 
       return {
         wms_habilitado: data?.wms_habilitado ?? false,
@@ -42,23 +52,48 @@ export const useClienteModulos = () => {
         atendimento_habilitado: data?.atendimento_habilitado ?? false
       }
     },
-    enabled: !!selectedCliente?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    enabled: !!clienteId,
+    staleTime: 0, // Always refetch
+    refetchOnWindowFocus: true,
   })
 
   const updateModulos = useMutation({
     mutationFn: async (updates: Partial<ClienteModulos>) => {
-      if (!selectedCliente?.id) throw new Error("Nenhum cliente selecionado")
+      if (!clienteId) throw new Error("Nenhum cliente selecionado")
 
-      const { error } = await supabase
+      console.log('[useClienteModulos] Updating modules for clienteId:', clienteId, 'updates:', updates)
+
+      const { data, error } = await supabase
         .from("clientes")
         .update(updates)
-        .eq("id", selectedCliente.id)
+        .eq("id", clienteId)
+        .select("id, wms_habilitado, tms_habilitado, ecommerce_habilitado, atendimento_habilitado")
 
-      if (error) throw error
+      if (error) {
+        console.error('[useClienteModulos] Update error:', error)
+        throw error
+      }
+
+      if (!data || data.length === 0) {
+        console.error('[useClienteModulos] No rows updated - RLS might be blocking')
+        throw new Error("Não foi possível atualizar. Verifique suas permissões.")
+      }
+
+      console.log('[useClienteModulos] Update successful:', data)
+      return data[0]
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cliente-modulos", selectedCliente?.id] })
+    onSuccess: (data) => {
+      // Update cache with returned data
+      queryClient.setQueryData(["cliente-modulos", clienteId], {
+        wms_habilitado: data.wms_habilitado,
+        tms_habilitado: data.tms_habilitado,
+        ecommerce_habilitado: data.ecommerce_habilitado,
+        atendimento_habilitado: data.atendimento_habilitado,
+      })
+      
+      // Also invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["cliente-modulos", clienteId] })
+      
       toast({
         title: "Módulos atualizados",
         description: "As configurações de módulos foram salvas com sucesso.",
@@ -68,9 +103,11 @@ export const useClienteModulos = () => {
       console.error("Erro ao atualizar módulos:", error)
       toast({
         title: "Erro ao atualizar",
-        description: "Não foi possível salvar as configurações.",
+        description: error instanceof Error ? error.message : "Não foi possível salvar as configurações.",
         variant: "destructive",
       })
+      // Refetch to get current state
+      refetch()
     }
   })
 
@@ -81,6 +118,7 @@ export const useClienteModulos = () => {
     atendimentoHabilitado: modulos?.atendimento_habilitado ?? false,
     isLoading,
     updateModulos: updateModulos.mutate,
-    isUpdating: updateModulos.isPending
+    isUpdating: updateModulos.isPending,
+    refetch
   }
 }
