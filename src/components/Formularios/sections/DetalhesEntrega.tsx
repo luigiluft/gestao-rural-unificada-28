@@ -30,7 +30,7 @@ export function DetalhesEntregaSection({ dados, onDadosChange }: DetalhesEntrega
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="retirada_deposito">Retirada no Depósito</SelectItem>
-              <SelectItem value="entrega_fazenda">Entrega na Fazenda</SelectItem>
+              <SelectItem value="entrega_fazenda">Entrega no Destinatário</SelectItem>
             </SelectContent>
           </Select>
         </div>
