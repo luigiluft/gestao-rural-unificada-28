@@ -32,42 +32,36 @@ export const useClientesDestinatarios = () => {
     queryFn: async (): Promise<ClienteDestinatario[]> => {
       if (!empresaSelecionada?.id) return []
       
-      // Buscar clientes vinculados à empresa via empresa_clientes
+      // Usar RPC que bypassa RLS para buscar clientes vinculados
       const { data, error } = await supabase
-        .from("empresa_clientes")
-        .select(`
-          cliente:clientes!empresa_clientes_cliente_id_fkey (
-            id,
-            razao_social,
-            nome_fantasia,
-            cpf_cnpj,
-            tipo_cliente,
-            endereco_fiscal,
-            numero_fiscal,
-            complemento_fiscal,
-            bairro_fiscal,
-            cidade_fiscal,
-            estado_fiscal,
-            cep_fiscal,
-            inscricao_estadual,
-            telefone_comercial,
-            email_comercial
-          )
-        `)
-        .eq("empresa_id", empresaSelecionada.id)
-        .eq("ativo", true)
+        .rpc('buscar_empresa_clientes', { p_empresa_id: empresaSelecionada.id })
 
       if (error) {
         console.error("Erro ao buscar clientes destinatários:", error)
         throw error
       }
       
-      // Extrair clientes do resultado
-      return (data || [])
-        .map(ec => ec.cliente as unknown as ClienteDestinatario)
-        .filter(c => c !== null)
+      // Mapear os campos da RPC para a interface esperada
+      // A RPC retorna: cliente_id, cliente_razao_social, cliente_nome_fantasia, cliente_cpf_cnpj, cliente_email, cliente_telefone, cliente_cidade, cliente_estado
+      return (data || []).map(item => ({
+        id: item.cliente_id,
+        razao_social: item.cliente_razao_social,
+        nome_fantasia: item.cliente_nome_fantasia,
+        cpf_cnpj: item.cliente_cpf_cnpj,
+        tipo_cliente: item.tipo_relacionamento || 'cliente',
+        endereco_fiscal: null,
+        numero_fiscal: null,
+        complemento_fiscal: null,
+        bairro_fiscal: null,
+        cidade_fiscal: item.cliente_cidade,
+        estado_fiscal: item.cliente_estado,
+        cep_fiscal: null,
+        inscricao_estadual: null,
+        telefone_comercial: item.cliente_telefone,
+        email_comercial: item.cliente_email,
+      })) as ClienteDestinatario[]
     },
     enabled: !!empresaSelecionada?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 0, // Sempre buscar dados frescos
   })
 }
