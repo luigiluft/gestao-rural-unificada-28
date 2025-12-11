@@ -49,6 +49,9 @@ export function ClienteDestinatarioSelector({ value, onChange }: ClienteDestinat
   const isValidLength = cleanCpfCnpj.length === 11 || cleanCpfCnpj.length === 14
   const isCnpj = cleanCpfCnpj.length === 14
 
+  // Check if found client is already linked
+  const clienteJaVinculado = clienteEncontrado && clientesDestinatarios.some(c => c.id === clienteEncontrado.id)
+
   const handleSelectChange = (selectedValue: string) => {
     if (selectedValue === '__new__') {
       setMode('search')
@@ -60,6 +63,15 @@ export function ClienteDestinatarioSelector({ value, onChange }: ClienteDestinat
 
   const handleLinkCliente = async () => {
     if (!clienteEncontrado || !selectedCliente?.id) return
+    
+    // If already linked, just select it
+    if (clienteJaVinculado) {
+      onChange(clienteEncontrado.id)
+      setMode('select')
+      setCpfCnpj('')
+      toast.success('Cliente selecionado!')
+      return
+    }
     
     setIsLinking(true)
     try {
@@ -209,12 +221,11 @@ export function ClienteDestinatarioSelector({ value, onChange }: ClienteDestinat
           </div>
         </div>
 
-        {/* Found client */}
         {isValidLength && clienteEncontrado && (
-          <Card className="border-green-500/50 bg-green-500/5">
+          <Card className={clienteJaVinculado ? "border-blue-500/50 bg-blue-500/5" : "border-green-500/50 bg-green-500/5"}>
             <CardContent className="p-3">
-              <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                Cliente encontrado na plataforma
+              <p className={`text-sm font-medium ${clienteJaVinculado ? "text-blue-700 dark:text-blue-400" : "text-green-700 dark:text-green-400"}`}>
+                {clienteJaVinculado ? "Cliente já vinculado à sua empresa" : "Cliente encontrado na plataforma"}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {clienteEncontrado.razao_social}
@@ -230,7 +241,7 @@ export function ClienteDestinatarioSelector({ value, onChange }: ClienteDestinat
                 ) : (
                   <Check className="h-4 w-4 mr-2" />
                 )}
-                Usar este cliente
+                {clienteJaVinculado ? "Selecionar" : "Usar este cliente"}
               </Button>
             </CardContent>
           </Card>
