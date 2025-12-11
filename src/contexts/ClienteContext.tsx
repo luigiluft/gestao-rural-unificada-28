@@ -40,6 +40,18 @@ export function ClienteProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Validar que o cliente selecionado está na lista de clientes disponíveis
+  // Se não estiver, limpar a seleção (o usuário atual não tem acesso a esse cliente)
+  useEffect(() => {
+    if (selectedCliente && availableClientes.length > 0) {
+      const clienteExists = availableClientes.some(c => c.id === selectedCliente.id)
+      if (!clienteExists) {
+        console.log('[ClienteContext] Cliente selecionado não está na lista de disponíveis, limpando seleção')
+        setSelectedCliente(availableClientes[0])
+      }
+    }
+  }, [availableClientes, selectedCliente?.id])
+
   // Atualizar localStorage quando cliente selecionado mudar
   const setSelectedCliente = (cliente: Cliente | null) => {
     setSelectedClienteState(cliente)
