@@ -274,10 +274,12 @@ export const useAllocatePallet = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["warehouse-map"] });
+      queryClient.invalidateQueries({ queryKey: ["pallet-positions"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes-items"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["warehouse-map"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["estoque"], refetchType: 'all' });
       toast({
         title: "Sucesso",
         description: "Pallet alocado com sucesso!",
@@ -426,10 +428,12 @@ export const useRemovePalletAllocation = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-      queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
-      queryClient.invalidateQueries({ queryKey: ["warehouse-map"] });
+      queryClient.invalidateQueries({ queryKey: ["pallet-positions"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["pallets-pendentes-items"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["storage-positions"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["warehouse-map"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["estoque"], refetchType: 'all' });
       toast({
         title: "Sucesso",
         description: "Alocação removida com sucesso!",
@@ -598,12 +602,13 @@ export const useConfirmPalletAllocation = (options?: { invalidateOnSuccess?: boo
     },
     onSuccess: () => {
       if (shouldInvalidate) {
-        queryClient.invalidateQueries({ queryKey: ["pallet-positions"] });
-        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"] });
-        queryClient.invalidateQueries({ queryKey: ["estoque"] });
-        queryClient.invalidateQueries({ queryKey: ["storage-positions"] });
-        // Invalidar notificações imediatamente após alocação
-        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["pallet-positions"], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes"], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ["pallets-pendentes-items"], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ["estoque"], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ["storage-positions"], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ["warehouse-map"], refetchType: 'all' });
+        queryClient.invalidateQueries({ queryKey: ["notifications"], refetchType: 'all' });
       }
       toast({
         title: "Sucesso",
