@@ -10,6 +10,7 @@ import { useClienteByCpfCnpj } from "@/hooks/useClienteByCpfCnpj"
 import { useCreateCliente } from "@/hooks/useClientes"
 import { useCreateEmpresaCliente } from "@/hooks/useEmpresaClientes"
 import { useCliente } from "@/contexts/ClienteContext"
+import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
 interface ClienteDestinatarioSelectorProps {
@@ -64,17 +65,26 @@ export function ClienteDestinatarioSelector({ value, onChange }: ClienteDestinat
   const handleLinkCliente = async () => {
     if (!clienteEncontrado || !selectedCliente?.id) return
     
-    // If already linked, just select it
-    if (clienteJaVinculado) {
-      onChange(clienteEncontrado.id)
-      setMode('select')
-      setCpfCnpj('')
-      toast.success('Cliente selecionado!')
-      return
-    }
-    
     setIsLinking(true)
     try {
+      // Verificar diretamente no banco se já existe vínculo (segurança extra)
+      const { data: jaExiste } = await supabase
+        .from("empresa_clientes")
+        .select("id")
+        .eq("empresa_id", selectedCliente.id)
+        .eq("cliente_id", clienteEncontrado.id)
+        .maybeSingle()
+
+      if (jaExiste || clienteJaVinculado) {
+        // Já existe vínculo, apenas selecionar
+        onChange(clienteEncontrado.id)
+        setMode('select')
+        setCpfCnpj('')
+        toast.success('Cliente selecionado!')
+        return
+      }
+      
+      // Não existe, criar vínculo
       await createEmpresaCliente.mutateAsync({
         empresa_id: selectedCliente.id,
         cliente_id: clienteEncontrado.id,
