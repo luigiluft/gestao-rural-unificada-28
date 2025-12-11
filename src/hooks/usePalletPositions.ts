@@ -21,23 +21,24 @@ export const usePalletPositions = (depositoId?: string) => {
   return useQuery({
     queryKey: ["pallet-positions", depositoId],
     queryFn: async () => {
+      // First, get pallet_positions with storage_positions filter
       let query = supabase
         .from("pallet_positions")
         .select(`
           *,
-          entrada_pallets!inner (
+          entrada_pallets (
             id,
             numero_pallet,
             descricao,
             peso_total,
             entrada_id,
-            entradas!inner (
+            entradas (
               id,
               deposito_id,
               numero_nfe,
               user_id
             ),
-            entrada_pallet_itens!inner (
+            entrada_pallet_itens (
               id,
               quantidade,
               is_avaria,
@@ -78,10 +79,17 @@ export const usePalletPositions = (depositoId?: string) => {
         throw error;
       }
       
-      // Retornar todas as posições encontradas para o depósito
-      return data || [];
+      // Filter out any results that don't have the required nested data
+      const validData = (data || []).filter(item => 
+        item.entrada_pallets && 
+        item.entrada_pallets.entradas &&
+        item.entrada_pallets.entrada_pallet_itens?.length > 0
+      );
+      
+      return validData;
     },
     enabled: true,
+    staleTime: 0,
   });
 };
 
@@ -246,6 +254,7 @@ export const usePalletsPendentes = () => {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 0, // Always refetch for fresh data
   });
 };
 
