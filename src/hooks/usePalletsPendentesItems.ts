@@ -109,6 +109,6 @@ export const usePalletsPendentesItems = () => {
     },
     enabled: !!user?.id,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always refetch for fresh data
   });
 };
