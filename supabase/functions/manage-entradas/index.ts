@@ -618,6 +618,19 @@ async function getFranquiaCoords(supabase: any, userId: string) {
 async function getFazendaCoords(supabase: any, fazendaId: string) {
   console.log('🗺️ Getting fazenda coords for:', fazendaId);
   
+  // Check if this is the special "endereço avulso" marker - return null for custom addresses
+  if (!fazendaId || fazendaId === '__endereco_avulso__') {
+    console.log('🗺️ Custom address selected, skipping fazenda lookup');
+    return null;
+  }
+  
+  // Validate that fazendaId is a valid UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(fazendaId)) {
+    console.log('🗺️ Invalid UUID format for fazendaId:', fazendaId);
+    return null;
+  }
+  
   const { data: fazenda, error } = await supabase
     .from('fazendas')
     .select('id, nome, latitude, longitude')
