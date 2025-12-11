@@ -87,6 +87,26 @@ function sanitizeDateFields(obj: any, dateFields: string[]): any {
   return result
 }
 
+// Valid entrada_status enum values
+const VALID_ENTRADA_STATUS = [
+  'aguardando_transporte',
+  'em_transferencia',
+  'aguardando_conferencia',
+  'conferencia_completa',
+  'confirmado',
+  'rejeitado',
+  'planejamento'
+]
+
+// Helper to validate and sanitize status
+function sanitizeStatus(status: any): string {
+  if (!status || !VALID_ENTRADA_STATUS.includes(status)) {
+    console.log(`⚠️ Invalid status "${status}", defaulting to "aguardando_transporte"`)
+    return 'aguardando_transporte'
+  }
+  return status
+}
+
 async function createEntrada(supabase: any, userId: string, data: any) {
   console.log('📥 createEntrada received data keys:', Object.keys(data))
   console.log('📥 status_aprovacao value:', data.status_aprovacao)
@@ -220,7 +240,13 @@ async function createEntrada(supabase: any, userId: string, data: any) {
 }
 
 async function updateEntrada(supabase: any, userId: string, data: any) {
-  const { id, ...updateData } = data
+  const { id, status_aprovacao, status, ...restData } = data
+  
+  // Sanitize status if provided
+  const updateData: any = { ...restData }
+  if (status_aprovacao !== undefined) {
+    updateData.status_aprovacao = sanitizeStatus(status_aprovacao)
+  }
   
   const { data: entrada, error } = await supabase
     .from('entradas')
@@ -297,7 +323,11 @@ async function deleteEntrada(supabase: any, userId: string, entradaId: string) {
 }
 
 async function updateEntradaStatus(supabase: any, userId: string, data: any) {
-  const { id, status_aprovacao, observacoes_franqueado, divergencias } = data
+  const { id, status_aprovacao: rawStatus, observacoes_franqueado, divergencias } = data
+  
+  // Validate status
+  const status_aprovacao = sanitizeStatus(rawStatus)
+  console.log(`📝 updateEntradaStatus: raw="${rawStatus}" -> sanitized="${status_aprovacao}"`)
   
   const updateData: any = {
     status_aprovacao,
