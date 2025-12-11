@@ -12,15 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    console.log('Supabase URL:', supabaseUrl)
+    console.log('Service key exists:', !!supabaseKey)
+    
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      supabaseUrl ?? '',
+      supabaseKey ?? '',
       {
         db: {
           schema: 'public'
         }
       }
     )
+    
+    // Test connection with simple query
+    const { data: testData, error: testError } = await supabaseClient
+      .from('inventarios')
+      .select('id')
+      .limit(1)
+    
+    console.log('Test query result:', testData, 'Error:', testError)
 
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
