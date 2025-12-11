@@ -15,11 +15,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Package } from "lucide-react";
+import { CheckCircle, Clock, Truck, Eye, AlertTriangle, Plus, Trash2, Scan, Calculator, X, Package, Info } from "lucide-react";
 import { useEntradasPendentes, useAtualizarStatusEntrada } from "@/hooks/useEntradasPendentes";
 import { format } from "date-fns";
 import { DateRangeFilter, type DateRange } from "@/components/ui/date-range-filter";
 import { PlanejamentoPallets } from "@/components/Entradas/PlanejamentoPallets";
+import { useEstoqueMode } from "@/hooks/useEstoqueMode";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 interface Divergencia {
   produto: string;
   lote: string;
@@ -40,6 +42,7 @@ interface LeituraBarra {
 }
 export default function AprovacaoEntradas() {
   const isMobile = useIsMobile();
+  const { isWmsMode, shouldShowPallets, modeLabel } = useEstoqueMode();
   const {
     data: entradas,
     isLoading
@@ -98,6 +101,17 @@ export default function AprovacaoEntradas() {
       </Badge>;
   };
   const getNextStatus = (currentStatus: string) => {
+    // Se WMS está desabilitado, pular planejamento e ir direto para confirmado
+    if (!isWmsMode) {
+      const statusFlowSimple = {
+        'aguardando_transporte': 'em_transferencia',
+        'em_transferencia': 'aguardando_conferencia',
+        'aguardando_conferencia': 'confirmado'  // Pula planejamento
+      };
+      return statusFlowSimple[currentStatus as keyof typeof statusFlowSimple];
+    }
+    
+    // Fluxo normal com WMS (inclui planejamento de pallets)
     const statusFlow = {
       'aguardando_transporte': 'em_transferencia',
       'em_transferencia': 'aguardando_conferencia',
@@ -106,7 +120,19 @@ export default function AprovacaoEntradas() {
     };
     return statusFlow[currentStatus as keyof typeof statusFlow];
   };
+  
   const getNextStatusLabel = (currentStatus: string) => {
+    // Labels simplificados quando WMS está desabilitado
+    if (!isWmsMode) {
+      const statusLabelsSimple = {
+        'aguardando_transporte': 'Marcar como Em Transferência',
+        'em_transferencia': 'Marcar como Aguardando Conferência',
+        'aguardando_conferencia': 'Realizar Conferência e Confirmar Entrada'
+      };
+      return statusLabelsSimple[currentStatus as keyof typeof statusLabelsSimple] || null;
+    }
+    
+    // Labels normais com WMS
     const statusLabels = {
       'aguardando_transporte': 'Marcar como Em Transferência',
       'em_transferencia': 'Marcar como Aguardando Conferência',
@@ -406,9 +432,18 @@ export default function AprovacaoEntradas() {
         </p>
       </div>
 
+      {/* Alerta informativo sobre o modo de estoque */}
+      {!isWmsMode && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <span className="font-medium">Modo Simplificado:</span> Ao confirmar entradas, os produtos serão adicionados diretamente ao estoque sem planejamento de pallets.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Tabs defaultValue="aguardando_transporte" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${isWmsMode ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="aguardando_transporte" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Aguardando Transporte ({entradasPorStatus.aguardando_transporte?.length || 0})
@@ -421,13 +456,16 @@ export default function AprovacaoEntradas() {
             <Eye className="h-4 w-4" />
             Aguardando Conferência ({entradasPorStatus.aguardando_conferencia?.length || 0})
           </TabsTrigger>
-          <TabsTrigger value="planejamento" className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Planejamento ({entradasPorStatus.planejamento?.length || 0})
-          </TabsTrigger>
+          {/* Aba de Planejamento só aparece quando WMS está habilitado */}
+          {isWmsMode && (
+            <TabsTrigger value="planejamento" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Planejamento ({entradasPorStatus.planejamento?.length || 0})
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', 'planejamento'].map(status => {
+        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', ...(isWmsMode ? ['planejamento'] : [])].map(status => {
         const statusEntradas = entradasPorStatus[status] || [];
         return <TabsContent key={status} value={status} className="space-y-4">
               {statusEntradas.length === 0 ? <EmptyState title="Nenhum pedido de recebimento" description={getEmptyStateDescription(status)} /> : <div className="grid gap-4">
@@ -454,10 +492,11 @@ export default function AprovacaoEntradas() {
                                  Conferência Manual
                                </Button>
                              </>}
-                             {entrada.status_aprovacao === 'planejamento' ? <Button onClick={() => handleIniciarPlanejamento(entrada)} className="ml-2" size="sm" disabled={atualizarStatus.isPending}>
+                             {/* Botão de planejamento só aparece quando WMS está habilitado */}
+                             {isWmsMode && entrada.status_aprovacao === 'planejamento' ? <Button onClick={() => handleIniciarPlanejamento(entrada)} className="ml-2" size="sm" disabled={atualizarStatus.isPending}>
                                 <Package className="h-4 w-4 mr-2" />
                                 Planejar Pallets
-                              </Button> : entrada.status_aprovacao !== 'aguardando_conferencia' && getNextStatusLabel(entrada.status_aprovacao) && <Button onClick={() => handleAction(entrada, 'status')} size="sm" disabled={atualizarStatus.isPending}>
+                              </Button> : entrada.status_aprovacao !== 'aguardando_conferencia' && entrada.status_aprovacao !== 'planejamento' && getNextStatusLabel(entrada.status_aprovacao) && <Button onClick={() => handleAction(entrada, 'status')} size="sm" disabled={atualizarStatus.isPending}>
                                   {getNextStatusLabel(entrada.status_aprovacao)}
                                 </Button>}
                          </div>
