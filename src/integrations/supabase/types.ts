@@ -3178,6 +3178,7 @@ export type Database = {
           created_at: string
           created_by: string
           data_conclusao: string | null
+          data_finalizacao: string | null
           data_inicio: string
           deposito_id: string
           id: string
@@ -3193,6 +3194,7 @@ export type Database = {
           created_at?: string
           created_by: string
           data_conclusao?: string | null
+          data_finalizacao?: string | null
           data_inicio?: string
           deposito_id: string
           id?: string
@@ -3208,6 +3210,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           data_conclusao?: string | null
+          data_finalizacao?: string | null
           data_inicio?: string
           deposito_id?: string
           id?: string
