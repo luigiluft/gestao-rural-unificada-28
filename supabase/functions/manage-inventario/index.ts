@@ -35,19 +35,6 @@ serve(async (req) => {
       throw new Error('Invalid authentication')
     }
 
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Missing authorization header')
-    }
-
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-
-    if (authError || !user) {
-      throw new Error('Invalid authentication')
-    }
-
     const { action, data } = await req.json()
 
     let result
