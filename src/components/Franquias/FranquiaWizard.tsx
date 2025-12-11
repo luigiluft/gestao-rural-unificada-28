@@ -10,6 +10,7 @@ import { AddressStep } from "./WizardSteps/AddressStep";
 import { LegalInfoStep } from "./WizardSteps/LegalInfoStep";
 import { PositionsStep } from "./WizardSteps/PositionsStep";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
 
 import { WarehouseLayout } from "./WarehouseLayoutDesigner";
 
@@ -98,6 +99,42 @@ export function FranquiaWizard({
   
   const [positions, setPositions] = useState<StoragePosition[]>([]);
   const [warehouseLayout, setWarehouseLayout] = useState<WarehouseLayout | null>(null);
+  const [existingPositionsCount, setExistingPositionsCount] = useState<number>(0);
+  const [loadingExistingPositions, setLoadingExistingPositions] = useState(false);
+
+  // Fetch existing positions when editing
+  useEffect(() => {
+    const fetchExistingPositions = async () => {
+      if (editingFranquia?.id && open) {
+        setLoadingExistingPositions(true);
+        try {
+          const { data, error, count } = await supabase
+            .from('storage_positions')
+            .select('codigo, descricao, capacidade_maxima', { count: 'exact' })
+            .eq('deposito_id', editingFranquia.id)
+            .eq('ativo', true)
+            .limit(1000);
+          
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            setPositions(data.map(p => ({
+              codigo: p.codigo,
+              descricao: p.descricao || '',
+              capacidade_maxima: p.capacidade_maxima || undefined
+            })));
+            setExistingPositionsCount(count || data.length);
+          }
+        } catch (error) {
+          console.error('Error fetching existing positions:', error);
+        } finally {
+          setLoadingExistingPositions(false);
+        }
+      }
+    };
+    
+    fetchExistingPositions();
+  }, [editingFranquia?.id, open]);
 
   // Reset form when dialog opens/closes or editing changes
   useEffect(() => {
@@ -105,6 +142,7 @@ export function FranquiaWizard({
       setCurrentStep(1);
       setPositions([]);
       setWarehouseLayout(null);
+      setExistingPositionsCount(0);
     }
     
     if (editingFranquia && open) {
@@ -175,8 +213,8 @@ export function FranquiaWizard({
       case 3:
         return true; // Legal info is optional
       case 4:
-        // Validar que as posições foram geradas
-        return positions.length > 0 && !!warehouseLayout;
+        // Validar que as posições existem (do banco ou geradas localmente)
+        return positions.length > 0 || existingPositionsCount > 0;
       default:
         return false;
     }
@@ -237,6 +275,9 @@ export function FranquiaWizard({
             setWarehouseLayout={setWarehouseLayout}
             formData={formData}
             setFormData={setFormData}
+            existingPositionsCount={existingPositionsCount}
+            isEditing={!!editingFranquia}
+            loadingExisting={loadingExistingPositions}
           />
         );
       default:

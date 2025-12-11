@@ -5860,14 +5860,19 @@ export type Database = {
       }
     }
     Functions: {
-      allocate_pallet_to_position: {
-        Args: {
-          p_observacoes?: string
-          p_pallet_id: string
-          p_posicao_id: string
-        }
-        Returns: boolean
-      }
+      allocate_pallet_to_position:
+        | {
+            Args: {
+              p_observacoes?: string
+              p_pallet_id: string
+              p_posicao_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: { p_pallet_id: string; p_position_id: string }
+            Returns: string
+          }
       alocar_produtos_orfaos: { Args: never; Returns: number }
       auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
       buscar_cliente_por_cpf_cnpj: {

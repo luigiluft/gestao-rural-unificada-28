@@ -18,6 +18,9 @@ interface PositionsStepProps {
   setWarehouseLayout: React.Dispatch<React.SetStateAction<WarehouseLayout | null>>;
   formData: FranquiaFormData;
   setFormData: React.Dispatch<React.SetStateAction<FranquiaFormData>>;
+  existingPositionsCount?: number;
+  isEditing?: boolean;
+  loadingExisting?: boolean;
 }
 
 
@@ -27,7 +30,10 @@ export function PositionsStep({
   warehouseLayout, 
   setWarehouseLayout, 
   formData, 
-  setFormData 
+  setFormData,
+  existingPositionsCount = 0,
+  isEditing = false,
+  loadingExisting = false
 }: PositionsStepProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,14 +130,40 @@ export function PositionsStep({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
-            Gerar Posições de Estoque
+            Posições de Estoque
           </CardTitle>
           <CardDescription>
-            Clique no botão abaixo para gerar as posições baseadas no layout configurado
+            {isEditing && existingPositionsCount > 0 
+              ? "Este depósito já possui posições cadastradas no banco de dados"
+              : "Clique no botão abaixo para gerar as posições baseadas no layout configurado"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!warehouseLayout ? (
+          {loadingExisting ? (
+            <div className="text-center py-4 text-muted-foreground">
+              Carregando posições existentes...
+            </div>
+          ) : isEditing && existingPositionsCount > 0 ? (
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Calculator className="w-5 h-5" />
+                    <h4 className="font-medium">Posições Existentes no Banco</h4>
+                  </div>
+                  <p className="text-2xl font-bold text-green-600 mt-1">
+                    {existingPositionsCount.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Posições já cadastradas para este depósito
+                  </p>
+                </div>
+                <Badge variant="secondary" className="text-lg px-4 py-2 bg-green-500/20 text-green-700">
+                  ✓ Existente
+                </Badge>
+              </div>
+            </div>
+          ) : !warehouseLayout ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
