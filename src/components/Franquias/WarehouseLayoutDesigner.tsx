@@ -42,6 +42,19 @@ export function WarehouseLayoutDesigner({
 }: WarehouseLayoutDesignerProps) {
   const [currentLayout, setCurrentLayout] = useState<WarehouseLayout>(layout || DEFAULT_LAYOUT);
 
+  // Notificar o pai com o layout padrão se nenhum foi fornecido
+  useEffect(() => {
+    if (!layout) {
+      const defaultWithCapacity = {
+        ...DEFAULT_LAYOUT,
+        capacidade_total_calculada: DEFAULT_LAYOUT.ruas * DEFAULT_LAYOUT.modulos * DEFAULT_LAYOUT.andares * DEFAULT_LAYOUT.capacidade_por_posicao
+      };
+      onLayoutChange(defaultWithCapacity);
+      onCapacityChange(defaultWithCapacity.capacidade_total_calculada);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Calcular capacidade total
   const calculateCapacity = (layout: WarehouseLayout) => {
     const totalPositions = layout.ruas * layout.modulos * layout.andares;
