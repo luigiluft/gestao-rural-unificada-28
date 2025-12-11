@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History, Warehouse } from "lucide-react";
+import { Search, Package, AlertTriangle, CheckCircle, Clock, BarChart3, Eye, History, Warehouse, Grid3X3, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEstoque, useMovimentacoes } from "@/hooks/useEstoque";
 import { useUpdateNotificationView } from "@/hooks/useNotificationViews";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useEstoqueMode } from "@/hooks/useEstoqueMode";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,6 +22,7 @@ import AvariasTab from "@/components/Estoque/AvariasTab";
 export default function Estoque() {
   const navigate = useNavigate();
   const { isCliente } = useUserRole();
+  const { isWmsMode, shouldShowPallets, modeLabel, modeDescription } = useEstoqueMode();
   const {
     data: estoque,
     isLoading
@@ -97,11 +99,28 @@ export default function Estoque() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Estoque</h1>
           <p className="text-muted-foreground">
-            Controle e monitore os produtos em estoque
+            {modeDescription}
           </p>
+          {!isWmsMode && (
+            <Badge variant="secondary" className="mt-2">
+              {modeLabel}
+            </Badge>
+          )}
         </div>
         
         <div className="flex gap-3">
+          {shouldShowPallets && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => navigate('/posicionamento-estoque')}>
+                <MapPin className="w-4 h-4 mr-2" />
+                Posicionamento
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/alocacao-pallets')}>
+                <Grid3X3 className="w-4 h-4 mr-2" />
+                Alocação de Pallets
+              </Button>
+            </>
+          )}
           <Button variant="outline" size="sm">
             <BarChart3 className="w-4 h-4 mr-2" />
             Relatório
@@ -148,7 +167,9 @@ export default function Estoque() {
                         <CheckCircle className="w-5 h-5 text-success" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total de Pallets</p>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {shouldShowPallets ? 'Total de Pallets' : 'Produtos Ativos'}
+                        </p>
                         <p className="text-2xl font-bold text-success">{stats.normal}</p>
                       </div>
                     </div>

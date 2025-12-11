@@ -351,7 +351,10 @@ async function updateEntradaStatus(supabase: any, userId: string, data: any) {
     .from('entradas')
     .update(updateData)
     .eq('id', id)
-    .select()
+    .select(`
+      *,
+      entrada_itens(*)
+    `)
     .single()
 
   if (error) throw error
@@ -361,7 +364,73 @@ async function updateEntradaStatus(supabase: any, userId: string, data: any) {
     await createDivergenciasRecords(supabase, entrada, divergencias, userId)
   }
 
+  // Quando entrada é confirmada, verificar se WMS está habilitado para decidir o fluxo
+  if (status_aprovacao === 'confirmado') {
+    await handleEntradaConfirmada(supabase, entrada, userId)
+  }
+
   return entrada
+}
+
+// Função para lidar com entrada confirmada - criar movimentações diretas se WMS desabilitado
+async function handleEntradaConfirmada(supabase: any, entrada: any, userId: string) {
+  try {
+    console.log('📦 handleEntradaConfirmada - entrada:', entrada.id)
+    
+    // Buscar cliente associado ao depósito para verificar se WMS está habilitado
+    const { data: clienteDeposito } = await supabase
+      .from('cliente_depositos')
+      .select('cliente_id, clientes(wms_habilitado)')
+      .eq('franquia_id', entrada.deposito_id)
+      .limit(1)
+      .maybeSingle()
+    
+    const wmsHabilitado = clienteDeposito?.clientes?.wms_habilitado ?? false
+    console.log('📦 WMS habilitado:', wmsHabilitado)
+    
+    // Se WMS está habilitado, não criar movimentações diretas (serão criadas via pallets)
+    if (wmsHabilitado) {
+      console.log('📦 WMS habilitado - movimentações serão criadas via pallets')
+      return
+    }
+    
+    // WMS desabilitado - criar movimentações diretas para cada item
+    console.log('📦 WMS desabilitado - criando movimentações diretas')
+    
+    if (!entrada.entrada_itens || entrada.entrada_itens.length === 0) {
+      console.log('⚠️ Entrada sem itens para criar movimentações')
+      return
+    }
+    
+    const movimentacoes = entrada.entrada_itens.map((item: any) => ({
+      user_id: entrada.user_id,
+      produto_id: item.produto_id,
+      deposito_id: entrada.deposito_id,
+      tipo_movimentacao: 'entrada',
+      quantidade: item.quantidade,
+      valor_unitario: item.valor_unitario || 0,
+      lote: item.lote,
+      referencia_id: entrada.id,
+      referencia_tipo: 'entrada',
+      observacoes: `Entrada automática - NF ${entrada.numero_nfe || 'S/N'}`,
+      data_movimentacao: new Date().toISOString(),
+      cliente_id: clienteDeposito?.cliente_id || null
+    }))
+    
+    const { error: movError } = await supabase
+      .from('movimentacoes')
+      .insert(movimentacoes)
+    
+    if (movError) {
+      console.error('❌ Erro ao criar movimentações:', movError)
+      // Não falha a operação principal, apenas loga o erro
+    } else {
+      console.log(`✅ ${movimentacoes.length} movimentações criadas com sucesso`)
+    }
+  } catch (error) {
+    console.error('❌ Erro em handleEntradaConfirmada:', error)
+    // Não falha a operação principal
+  }
 }
 
 async function createDivergenciasRecords(supabase: any, entrada: any, divergencias: any[], userId: string) {
