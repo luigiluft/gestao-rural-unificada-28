@@ -71,6 +71,13 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const hasFranchiseAccess = franquiasFranqueado && franquiasFranqueado.length > 0
   const requiredMopp = dados.tipo_saida === 'retirada_deposito' && pesoTotal >= pesoMinimoMopp
 
+  // Auto-select deposit if only one available
+  useEffect(() => {
+    if (depositos.length === 1 && !dados.depositoId) {
+      handleChange('depositoId', depositos[0].deposito_id)
+    }
+  }, [depositos, dados.depositoId])
+
   // Get the target producer ID for farms
   const targetClienteId = isCliente ? user?.id : dados.produtor_destinatario
   const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetClienteId)
@@ -176,18 +183,24 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
 
           <div className="space-y-2">
             <Label htmlFor="deposito_id">Depósito *</Label>
-            <Select value={dados.depositoId} onValueChange={(value) => handleChange('depositoId', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o depósito" />
-              </SelectTrigger>
-              <SelectContent>
-                {depositos.map((deposito) => (
-                  <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
-                    {deposito.deposito_nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {depositos.length === 1 ? (
+              <div className="flex items-center h-10 px-3 border rounded-md bg-muted">
+                <span>{depositos[0].deposito_nome}</span>
+              </div>
+            ) : (
+              <Select value={dados.depositoId} onValueChange={(value) => handleChange('depositoId', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o depósito" />
+                </SelectTrigger>
+                <SelectContent>
+                  {depositos.map((deposito) => (
+                    <SelectItem key={deposito.deposito_id} value={deposito.deposito_id}>
+                      {deposito.deposito_nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Seletor de cliente destinatário para clientes (venda B2B) */}

@@ -36,7 +36,7 @@ export const useClientesDestinatarios = () => {
       const { data, error } = await supabase
         .from("empresa_clientes")
         .select(`
-          cliente:clientes (
+          cliente:clientes!empresa_clientes_cliente_id_fkey (
             id,
             razao_social,
             nome_fantasia,
