@@ -63,11 +63,10 @@ export const usePalletsPendentesItems = () => {
         throw palletsError;
       }
 
-      // Filtrar apenas pallets que não estão alocados
+      // Filter out pallets that already have ANY record in pallet_positions (unique constraint)
       const { data: allocatedPalletIds, error: allocatedError } = await supabase
         .from("pallet_positions")
-        .select("pallet_id")
-        .eq("status", "alocado");
+        .select("pallet_id");
 
       if (allocatedError) {
         throw allocatedError;
