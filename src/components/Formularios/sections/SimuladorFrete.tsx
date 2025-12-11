@@ -4,9 +4,10 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCalcularFreteMultiplasTabelas } from "@/hooks/useCalcularFreteMultiplasTabelas"
-import { useProfile, useFazendas } from "@/hooks/useProfile"
+import { useProfile } from "@/hooks/useProfile"
+import { useLocaisEntregaUnificados } from "@/hooks/useLocaisEntregaUnificados"
 import { useAuth } from "@/contexts/AuthContext"
-import { Loader2, Calculator, MapPin } from "lucide-react"
+import { Loader2, Calculator, MapPin, Building2, Tractor, MapPinned, PenLine } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import type { Coordinates } from "@/services/routingService"
@@ -22,7 +23,16 @@ interface SimuladorFreteProps {
   fazendaId?: string
   onFazendaChange?: (fazendaId: string) => void
   produtorDestinatarioId?: string
+  enderecoAvulso?: {
+    endereco: string
+    cidade: string
+    estado: string
+    cep: string
+  }
+  onEnderecoAvulsoChange?: (endereco: { endereco: string; cidade: string; estado: string; cep: string } | null) => void
 }
+
+const ENDERECO_AVULSO_ID = "__endereco_avulso__"
 
 export function SimuladorFrete({ 
   pesoTotal, 
@@ -33,15 +43,17 @@ export function SimuladorFrete({
   fazendaNome,
   fazendaId,
   onFazendaChange,
-  produtorDestinatarioId
+  produtorDestinatarioId,
+  enderecoAvulso,
+  onEnderecoAvulsoChange
 }: SimuladorFreteProps) {
   const { user } = useAuth()
   const { data: profile } = useProfile()
   
-  // Buscar fazendas do produtor
+  // Buscar locais de entrega unificados do cliente
   const isCliente = profile?.role === 'cliente'
   const targetClienteId = isCliente ? user?.id : produtorDestinatarioId
-  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetClienteId)
+  const { data: locaisEntrega = [], isLoading: loadingLocais } = useLocaisEntregaUnificados(targetClienteId)
 
   const { calcularFreteTodasTabelas, calculando } = useCalcularFreteMultiplasTabelas()
   
@@ -49,6 +61,48 @@ export function SimuladorFrete({
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false)
   const [resultados, setResultados] = useState<any[]>([])
   const [tabelaSelecionada, setTabelaSelecionada] = useState<string | null>(null)
+  const [showEnderecoAvulso, setShowEnderecoAvulso] = useState(fazendaId === ENDERECO_AVULSO_ID)
+  const [enderecoAvulsoLocal, setEnderecoAvulsoLocal] = useState(enderecoAvulso || {
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: ''
+  })
+
+  const handleLocalChange = (value: string) => {
+    if (value === ENDERECO_AVULSO_ID) {
+      setShowEnderecoAvulso(true)
+      onFazendaChange?.(value)
+    } else {
+      setShowEnderecoAvulso(false)
+      onEnderecoAvulsoChange?.(null)
+      onFazendaChange?.(value)
+    }
+  }
+
+  const handleEnderecoAvulsoFieldChange = (field: string, value: string) => {
+    const updated = { ...enderecoAvulsoLocal, [field]: value }
+    setEnderecoAvulsoLocal(updated)
+    onEnderecoAvulsoChange?.(updated)
+  }
+
+  const getTipoIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'fazenda': return <Tractor className="h-4 w-4 text-green-600" />
+      case 'deposito': return <Building2 className="h-4 w-4 text-blue-600" />
+      case 'local_entrega': return <MapPinned className="h-4 w-4 text-orange-600" />
+      default: return <MapPin className="h-4 w-4" />
+    }
+  }
+
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'fazenda': return 'Fazenda'
+      case 'deposito': return 'Depósito'
+      case 'local_entrega': return 'Local'
+      default: return ''
+    }
+  }
 
   const handleCalcularDistancia = async () => {
     if (!franquiaCoords || !fazendaCoords) {
@@ -130,34 +184,80 @@ export function SimuladorFrete({
           Simulador de Frete
         </CardTitle>
         <CardDescription>
-          Calcule o frete para entrega na fazenda. Origem: {franquiaNome || 'Franquia'} → Destino: {fazendaNome || 'Fazenda'}
+          Calcule o frete para entrega. Origem: {franquiaNome || 'Depósito'} → Destino: {fazendaNome || 'Local de Entrega'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Campo de Local de Entrega */}
         <div className="space-y-2">
-          <Label htmlFor="fazenda_id">Local de Entrega *</Label>
-          <Select value={fazendaId} onValueChange={onFazendaChange}>
+          <Label htmlFor="local_entrega_id">Local de Entrega *</Label>
+          <Select value={fazendaId} onValueChange={handleLocalChange}>
             <SelectTrigger>
               <SelectValue 
                 placeholder={
-                  loadingFazendas 
-                    ? "Carregando fazendas..." 
-                    : fazendas.length === 0 && targetClienteId
-                      ? "Nenhuma fazenda cadastrada"
-                      : "Selecione a fazenda"
+                  loadingLocais 
+                    ? "Carregando locais..." 
+                    : locaisEntrega.length === 0 && targetClienteId
+                      ? "Nenhum local cadastrado"
+                      : "Selecione o local de entrega"
                 } 
               />
             </SelectTrigger>
             <SelectContent>
-              {fazendas?.map((fazenda) => (
-                <SelectItem key={fazenda.id} value={fazenda.id}>
-                  {fazenda.nome}
+              {locaisEntrega?.map((local) => (
+                <SelectItem key={local.id} value={local.id}>
+                  <div className="flex items-center gap-2">
+                    {getTipoIcon(local.tipo)}
+                    <span>{local.nome}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({getTipoLabel(local.tipo)}{local.cidade ? ` - ${local.cidade}/${local.estado}` : ''})
+                    </span>
+                  </div>
                 </SelectItem>
               ))}
+              <SelectItem value={ENDERECO_AVULSO_ID}>
+                <div className="flex items-center gap-2">
+                  <PenLine className="h-4 w-4 text-purple-600" />
+                  <span>Informar endereço diferente</span>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {/* Campos de endereço avulso */}
+        {showEnderecoAvulso && (
+          <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
+            <Label className="text-sm font-medium">Endereço de Entrega (não será salvo)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2">
+                <Input
+                  placeholder="Endereço completo"
+                  value={enderecoAvulsoLocal.endereco}
+                  onChange={(e) => handleEnderecoAvulsoFieldChange('endereco', e.target.value)}
+                />
+              </div>
+              <Input
+                placeholder="Cidade"
+                value={enderecoAvulsoLocal.cidade}
+                onChange={(e) => handleEnderecoAvulsoFieldChange('cidade', e.target.value)}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="UF"
+                  maxLength={2}
+                  value={enderecoAvulsoLocal.estado}
+                  onChange={(e) => handleEnderecoAvulsoFieldChange('estado', e.target.value.toUpperCase())}
+                />
+                <Input
+                  placeholder="CEP"
+                  value={enderecoAvulsoLocal.cep}
+                  onChange={(e) => handleEnderecoAvulsoFieldChange('cep', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
