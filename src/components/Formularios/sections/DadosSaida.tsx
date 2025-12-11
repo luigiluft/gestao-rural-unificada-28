@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -7,7 +6,7 @@ import { DadosSaida } from "../types/formulario.types"
 
 import { useProfile, useFazendas } from "@/hooks/useProfile"
 import { useClientesParaSaida } from "@/hooks/useClientesParaSaida"
-import { useClientesDestinatarios } from "@/hooks/useClientesDestinatarios"
+import { ClienteDestinatarioSelector } from "../components/ClienteDestinatarioSelector"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
 import { useState, useEffect, useMemo } from "react"
@@ -33,7 +32,6 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const { user } = useAuth()
   const { data: profile } = useProfile()
   const { data: clientesParaSaida = [] } = useClientesParaSaida()
-  const { data: clientesDestinatarios = [] } = useClientesDestinatarios()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
   const janelaEntregaDias = useJanelaEntregaDias()
@@ -194,29 +192,10 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
 
           {/* Seletor de cliente destinatário para clientes (venda B2B) */}
           {isCliente && (
-            <div className="space-y-2">
-              <Label htmlFor="cliente_destinatario_id">Cliente Destinatário *</Label>
-              <Select 
-                value={dados.cliente_destinatario_id || ''} 
-                onValueChange={(value) => handleChange('cliente_destinatario_id', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientesDestinatarios.map((cliente) => (
-                    <SelectItem key={cliente.id} value={cliente.id}>
-                      {cliente.razao_social} ({cliente.cpf_cnpj})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {clientesDestinatarios.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Cadastre clientes na página "Clientes" para emitir NF de venda
-                </p>
-              )}
-            </div>
+            <ClienteDestinatarioSelector
+              value={dados.cliente_destinatario_id}
+              onChange={(clienteId) => handleChange('cliente_destinatario_id', clienteId)}
+            />
           )}
 
           {/* Só mostrar seleção de produtor para usuários com acesso a franquias */}
