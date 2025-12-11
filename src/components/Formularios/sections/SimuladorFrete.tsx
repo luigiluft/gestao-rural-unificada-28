@@ -134,9 +134,9 @@ export function SimuladorFrete({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Campo de Fazenda de Destino */}
+        {/* Campo de Local de Entrega */}
         <div className="space-y-2">
-          <Label htmlFor="fazenda_id">Fazenda de Destino *</Label>
+          <Label htmlFor="fazenda_id">Local de Entrega *</Label>
           <Select value={fazendaId} onValueChange={onFazendaChange}>
             <SelectTrigger>
               <SelectValue 
