@@ -50,9 +50,8 @@ export function SimuladorFrete({
   const { user } = useAuth()
   const { data: profile } = useProfile()
   
-  // Buscar locais de entrega unificados do cliente
-  const isCliente = profile?.role === 'cliente'
-  const targetClienteId = isCliente ? user?.id : produtorDestinatarioId
+  // Buscar locais de entrega unificados do cliente destinatário
+  const targetClienteId = produtorDestinatarioId
   const { data: locaisEntrega = [], isLoading: loadingLocais } = useLocaisEntregaUnificados(targetClienteId)
 
   const { calcularFreteTodasTabelas, calculando } = useCalcularFreteMultiplasTabelas()
