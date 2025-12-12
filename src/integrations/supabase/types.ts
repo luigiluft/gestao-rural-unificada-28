@@ -3182,6 +3182,80 @@ export type Database = {
           },
         ]
       }
+      frete_financeiro: {
+        Row: {
+          beneficiario_cpf_cnpj: string | null
+          beneficiario_dados_bancarios: Json | null
+          beneficiario_id: string | null
+          beneficiario_nome: string | null
+          beneficiario_tipo: string | null
+          conta_pagar_id: string | null
+          conta_receber_id: string | null
+          created_at: string | null
+          created_by: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
+          descricao: string | null
+          frete_id: string
+          id: string
+          observacoes: string | null
+          status: string
+          tipo: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          beneficiario_cpf_cnpj?: string | null
+          beneficiario_dados_bancarios?: Json | null
+          beneficiario_id?: string | null
+          beneficiario_nome?: string | null
+          beneficiario_tipo?: string | null
+          conta_pagar_id?: string | null
+          conta_receber_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          frete_id: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Update: {
+          beneficiario_cpf_cnpj?: string | null
+          beneficiario_dados_bancarios?: Json | null
+          beneficiario_id?: string | null
+          beneficiario_nome?: string | null
+          beneficiario_tipo?: string | null
+          conta_pagar_id?: string | null
+          conta_receber_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          descricao?: string | null
+          frete_id?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frete_financeiro_frete_id_fkey"
+            columns: ["frete_id"]
+            isOneToOne: false
+            referencedRelation: "fretes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fretes: {
         Row: {
           cliente_id: string
