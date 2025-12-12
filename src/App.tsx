@@ -44,6 +44,7 @@ import GerenciarPosicoes from "./pages/GerenciarPosicoes";
 import Inventario from "./pages/Inventario";
 
 import Remessas from "./pages/Remessas";
+import Embarques from "./pages/Embarques";
 import CTes from "./pages/CTes";
 
 import Viagens from "./pages/Viagens";
@@ -280,6 +281,7 @@ const App = () => {
               
               <Route path="planejamento" element={<RequirePageAccess pageKey="viagens"><Planejamento /></RequirePageAccess>} />
               <Route path="viagens" element={<RequirePageAccess pageKey="viagens"><Viagens /></RequirePageAccess>} />
+              <Route path="embarques" element={<RequirePageAccess pageKey="embarques"><Embarques /></RequirePageAccess>} />
               <Route path="veiculos" element={<RequirePageAccess pageKey="veiculos"><Veiculos /></RequirePageAccess>} />
               <Route path="motoristas" element={<RequirePageAccess pageKey="motoristas"><Motoristas /></RequirePageAccess>} />
               <Route path="tracking" element={<RequirePageAccess pageKey="tracking"><Tracking /></RequirePageAccess>} />

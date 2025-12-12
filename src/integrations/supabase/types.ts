@@ -270,6 +270,8 @@ export type Database = {
           atividade_principal: string | null
           ativo: boolean
           bairro_fiscal: string | null
+          can_aggregate: boolean | null
+          can_collect: boolean | null
           cep_fiscal: string | null
           cidade_fiscal: string | null
           complemento_fiscal: string | null
@@ -281,6 +283,7 @@ export type Database = {
           empresa_matriz_id: string | null
           endereco_fiscal: string | null
           estado_fiscal: string | null
+          has_own_fleet: boolean | null
           id: string
           inscricao_estadual: string | null
           latitude: number | null
@@ -303,6 +306,8 @@ export type Database = {
           atividade_principal?: string | null
           ativo?: boolean
           bairro_fiscal?: string | null
+          can_aggregate?: boolean | null
+          can_collect?: boolean | null
           cep_fiscal?: string | null
           cidade_fiscal?: string | null
           complemento_fiscal?: string | null
@@ -314,6 +319,7 @@ export type Database = {
           empresa_matriz_id?: string | null
           endereco_fiscal?: string | null
           estado_fiscal?: string | null
+          has_own_fleet?: boolean | null
           id?: string
           inscricao_estadual?: string | null
           latitude?: number | null
@@ -336,6 +342,8 @@ export type Database = {
           atividade_principal?: string | null
           ativo?: boolean
           bairro_fiscal?: string | null
+          can_aggregate?: boolean | null
+          can_collect?: boolean | null
           cep_fiscal?: string | null
           cidade_fiscal?: string | null
           complemento_fiscal?: string | null
@@ -347,6 +355,7 @@ export type Database = {
           empresa_matriz_id?: string | null
           endereco_fiscal?: string | null
           estado_fiscal?: string | null
+          has_own_fleet?: boolean | null
           id?: string
           inscricao_estadual?: string | null
           latitude?: number | null
@@ -1716,6 +1725,84 @@ export type Database = {
             columns: ["viagem_id"]
             isOneToOne: false
             referencedRelation: "viagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      embarques: {
+        Row: {
+          cliente_id: string
+          created_at: string | null
+          created_by: string | null
+          destinos: Json
+          id: string
+          numero: string
+          observacoes: string | null
+          origem_deposito_id: string | null
+          origem_endereco: Json | null
+          origem_janela_fim: string | null
+          origem_janela_inicio: string | null
+          peso_total: number | null
+          quantidade_volumes: number | null
+          saidas_ids: Json | null
+          status: string
+          tipo_origem: string
+          updated_at: string | null
+          volume_total: number | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string | null
+          created_by?: string | null
+          destinos?: Json
+          id?: string
+          numero: string
+          observacoes?: string | null
+          origem_deposito_id?: string | null
+          origem_endereco?: Json | null
+          origem_janela_fim?: string | null
+          origem_janela_inicio?: string | null
+          peso_total?: number | null
+          quantidade_volumes?: number | null
+          saidas_ids?: Json | null
+          status?: string
+          tipo_origem?: string
+          updated_at?: string | null
+          volume_total?: number | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          destinos?: Json
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          origem_deposito_id?: string | null
+          origem_endereco?: Json | null
+          origem_janela_fim?: string | null
+          origem_janela_inicio?: string | null
+          peso_total?: number | null
+          quantidade_volumes?: number | null
+          saidas_ids?: Json | null
+          status?: string
+          tipo_origem?: string
+          updated_at?: string | null
+          volume_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embarques_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "embarques_origem_deposito_id_fkey"
+            columns: ["origem_deposito_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_depositos"
             referencedColumns: ["id"]
           },
         ]
@@ -6124,6 +6211,7 @@ export type Database = {
         Args: { p_franquia_id: string }
         Returns: string
       }
+      gerar_numero_embarque: { Args: { p_cliente_id: string }; Returns: string }
       gerar_numero_fatura: { Args: { p_franquia_id: string }; Returns: string }
       gerar_numero_pedido: { Args: never; Returns: string }
       get_current_user_role: {
