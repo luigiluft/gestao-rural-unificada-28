@@ -20,10 +20,13 @@ import { useUserRole } from "@/hooks/useUserRole"
 import { LojaConfiguracoes } from "@/components/Loja/LojaConfiguracoes"
 import { useLojaConfiguracao } from "@/hooks/useLojaConfiguracao"
 import { useClienteModulos } from "@/hooks/useClienteModulos"
+import { useClienteCapacidadesTransporte, useUpdateClienteCapacidadesTransporte } from "@/hooks/useClienteCapacidadesTransporte"
 
 export default function Configuracoes() {
   const { isCliente, isAdmin } = useUserRole()
   const { wmsHabilitado, tmsHabilitado, ecommerceHabilitado, atendimentoHabilitado, updateModulos, isUpdating } = useClienteModulos()
+  const { data: capacidadesTransporte } = useClienteCapacidadesTransporte()
+  const updateCapacidadesTransporte = useUpdateClienteCapacidadesTransporte()
   const { configuracao: lojaConfig } = useLojaConfiguracao()
   const { data: configuracoes = [], isLoading } = useConfiguracoesSistema()
   const updateConfiguracao = useUpdateConfiguracao()
@@ -693,6 +696,73 @@ export default function Configuracoes() {
                   checked={atendimentoHabilitado}
                   onCheckedChange={(checked) => updateModulos({ atendimento_habilitado: checked })}
                   disabled={isUpdating}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          )}
+
+          {/* Capacidades de Transporte - apenas para clientes com TMS habilitado */}
+          {isCliente && tmsHabilitado && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Truck className="h-5 w-5" />
+                Capacidades de Transporte
+              </CardTitle>
+              <CardDescription>
+                Defina como sua empresa opera no transporte de mercadorias
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Possui Frota Própria</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Veículos e motoristas próprios para realizar entregas
+                  </p>
+                </div>
+                <Switch
+                  checked={capacidadesTransporte?.has_own_fleet ?? false}
+                  onCheckedChange={(checked) => updateCapacidadesTransporte.mutate({
+                    ...capacidadesTransporte!,
+                    has_own_fleet: checked
+                  })}
+                  disabled={updateCapacidadesTransporte.isPending}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Pode Agregar Terceiros</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Contratar autônomos ou transportadoras parceiras
+                  </p>
+                </div>
+                <Switch
+                  checked={capacidadesTransporte?.can_aggregate ?? false}
+                  onCheckedChange={(checked) => updateCapacidadesTransporte.mutate({
+                    ...capacidadesTransporte!,
+                    can_aggregate: checked
+                  })}
+                  disabled={updateCapacidadesTransporte.isPending}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Realiza Coletas</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Buscar mercadorias no cliente/fornecedor além de entregas
+                  </p>
+                </div>
+                <Switch
+                  checked={capacidadesTransporte?.can_collect ?? false}
+                  onCheckedChange={(checked) => updateCapacidadesTransporte.mutate({
+                    ...capacidadesTransporte!,
+                    can_collect: checked
+                  })}
+                  disabled={updateCapacidadesTransporte.isPending}
                 />
               </div>
             </CardContent>
