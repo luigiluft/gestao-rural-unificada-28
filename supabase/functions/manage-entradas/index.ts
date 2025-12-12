@@ -48,7 +48,7 @@ serve(async (req) => {
         result = await updateEntradaStatus(supabaseClient, user.id, data)
         break
       case 'get_franquia_coords':
-        result = await getFranquiaCoords(supabaseClient, data.user_id)
+        result = await getFranquiaCoords(supabaseClient, data.user_id, data.deposito_id)
         break
       case 'get_fazenda_coords':
         result = await getFazendaCoords(supabaseClient, data.fazenda_id)
@@ -596,9 +596,25 @@ function mapTipoDivergencia(tipo: string): string {
   return 'quantidade_incorreta'
 }
 
-async function getFranquiaCoords(supabase: any, userId: string) {
-  console.log('🗺️ Getting franquia coords for user:', userId);
+async function getFranquiaCoords(supabase: any, userId: string, depositoId?: string) {
+  console.log('🗺️ Getting franquia coords for user:', userId, 'deposito:', depositoId);
   
+  // Se depositoId foi passado, buscar coordenadas diretamente da franquia
+  if (depositoId) {
+    const { data: franquia, error } = await supabase
+      .from('franquias')
+      .select('id, nome, latitude, longitude')
+      .eq('id', depositoId)
+      .eq('ativo', true)
+      .maybeSingle();
+
+    if (!error && franquia && franquia.latitude && franquia.longitude) {
+      console.log('🗺️ Found franquia coords by deposito_id:', franquia);
+      return franquia;
+    }
+  }
+  
+  // Fallback: buscar pelo usuário (master_franqueado_id)
   const { data: franquia, error } = await supabase
     .from('franquias')
     .select('id, nome, latitude, longitude')
@@ -611,37 +627,81 @@ async function getFranquiaCoords(supabase: any, userId: string) {
     throw error;
   }
 
-  // Return null if no franchise found (user may not be a franchise owner)
   return franquia;
 }
 
 async function getFazendaCoords(supabase: any, fazendaId: string) {
-  console.log('🗺️ Getting fazenda coords for:', fazendaId);
+  console.log('🗺️ Getting coords for local:', fazendaId);
   
-  // Check if this is the special "endereço avulso" marker - return null for custom addresses
+  // Check if this is the special "endereço avulso" marker
   if (!fazendaId || fazendaId === '__endereco_avulso__') {
-    console.log('🗺️ Custom address selected, skipping fazenda lookup');
+    console.log('🗺️ Custom address selected, skipping lookup');
     return null;
   }
   
-  // Validate that fazendaId is a valid UUID format
+  // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(fazendaId)) {
-    console.log('🗺️ Invalid UUID format for fazendaId:', fazendaId);
+    console.log('🗺️ Invalid UUID format:', fazendaId);
     return null;
   }
   
-  const { data: fazenda, error } = await supabase
+  // 1. Tentar buscar em fazendas
+  let { data, error } = await supabase
     .from('fazendas')
     .select('id, nome, latitude, longitude')
     .eq('id', fazendaId)
     .maybeSingle();
 
-  if (error) {
-    console.error('Error getting fazenda coords:', error);
-    throw error;
+  if (data && data.latitude && data.longitude) {
+    console.log('🗺️ Found in fazendas:', data);
+    return data;
   }
 
-  // Return null if no fazenda found
-  return fazenda;
+  // 2. Tentar buscar em locais_entrega
+  ({ data, error } = await supabase
+    .from('locais_entrega')
+    .select('id, nome, latitude, longitude')
+    .eq('id', fazendaId)
+    .maybeSingle());
+
+  if (data && data.latitude && data.longitude) {
+    console.log('🗺️ Found in locais_entrega:', data);
+    return data;
+  }
+
+  // 3. Tentar buscar em franquias (para depósitos que são locais de entrega)
+  ({ data, error } = await supabase
+    .from('franquias')
+    .select('id, nome, latitude, longitude')
+    .eq('id', fazendaId)
+    .maybeSingle());
+
+  if (data && data.latitude && data.longitude) {
+    console.log('🗺️ Found in franquias:', data);
+    return data;
+  }
+
+  // 4. Tentar buscar via cliente_depositos -> franquias
+  const { data: clienteDeposito } = await supabase
+    .from('cliente_depositos')
+    .select('id, nome, franquia_id, franquias(id, nome, latitude, longitude)')
+    .eq('id', fazendaId)
+    .maybeSingle();
+
+  if (clienteDeposito?.franquias) {
+    const franquia = clienteDeposito.franquias as any;
+    if (franquia.latitude && franquia.longitude) {
+      console.log('🗺️ Found via cliente_depositos:', franquia);
+      return {
+        id: clienteDeposito.id,
+        nome: clienteDeposito.nome,
+        latitude: franquia.latitude,
+        longitude: franquia.longitude
+      };
+    }
+  }
+
+  console.log('🗺️ No coords found for:', fazendaId);
+  return null;
 }
