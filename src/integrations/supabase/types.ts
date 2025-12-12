@@ -283,6 +283,8 @@ export type Database = {
           estado_fiscal: string | null
           id: string
           inscricao_estadual: string | null
+          latitude: number | null
+          longitude: number | null
           nome_fantasia: string | null
           numero_fiscal: string | null
           observacoes: string | null
@@ -314,6 +316,8 @@ export type Database = {
           estado_fiscal?: string | null
           id?: string
           inscricao_estadual?: string | null
+          latitude?: number | null
+          longitude?: number | null
           nome_fantasia?: string | null
           numero_fiscal?: string | null
           observacoes?: string | null
@@ -345,6 +349,8 @@ export type Database = {
           estado_fiscal?: string | null
           id?: string
           inscricao_estadual?: string | null
+          latitude?: number | null
+          longitude?: number | null
           nome_fantasia?: string | null
           numero_fiscal?: string | null
           observacoes?: string | null

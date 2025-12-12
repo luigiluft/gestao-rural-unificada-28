@@ -135,6 +135,8 @@ export function ClienteDestinatarioSelector({ value, onChange }: ClienteDestinat
         atividade_principal: null,
         regime_tributario: null,
         observacoes: null,
+        latitude: null,
+        longitude: null,
       })
 
       // Link to current empresa

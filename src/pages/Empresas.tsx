@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Plus, Building2, Users, Edit, Building, Tractor } from "lucide-react"
+import { Plus, Building2, Users, Edit, Building, Tractor, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +28,8 @@ import { GerenciarDepositos } from "@/components/Clientes/GerenciarDepositos"
 import { GerenciarLocaisEntrega } from "@/components/Clientes/GerenciarLocaisEntrega"
 import { useCliente } from "@/contexts/ClienteContext"
 import { SolicitarFilialDialog } from "@/components/Empresas/SolicitarFilialDialog"
+import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 
 export default function Empresas() {
   const { data: clientes, isLoading } = useClientes()
@@ -61,7 +63,11 @@ export default function Empresas() {
     regime_tributario: '',
     observacoes: '',
     empresa_matriz_id: undefined as string | undefined,
+    latitude: null as number | null,
+    longitude: null as number | null,
   })
+
+  const [isGeocodingLoading, setIsGeocodingLoading] = useState(false)
 
   const [semNumero, setSemNumero] = useState(false)
   const [semComplemento, setSemComplemento] = useState(false)
@@ -117,10 +123,51 @@ export default function Empresas() {
       regime_tributario: '',
       observacoes: '',
       empresa_matriz_id: undefined,
+      latitude: null,
+      longitude: null,
     })
     setSemNumero(false)
     setSemComplemento(false)
     setEmpresaMatriz(null)
+  }
+
+  const handleBuscarCoordenadas = async () => {
+    if (!formData.endereco_fiscal && !formData.cidade_fiscal) {
+      toast.error('Preencha pelo menos o endereço e a cidade para buscar as coordenadas')
+      return
+    }
+
+    setIsGeocodingLoading(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: {
+          endereco: formData.endereco_fiscal,
+          numero: formData.numero_fiscal,
+          bairro: formData.bairro_fiscal,
+          cidade: formData.cidade_fiscal,
+          estado: formData.estado_fiscal,
+          cep: formData.cep_fiscal,
+        },
+      })
+
+      if (error) throw error
+
+      if (data?.lat && data?.lng) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: data.lat,
+          longitude: data.lng,
+        }))
+        toast.success(`Coordenadas encontradas: ${data.formatted_address}`)
+      } else {
+        toast.error('Não foi possível encontrar as coordenadas para este endereço')
+      }
+    } catch (error) {
+      console.error('Erro ao buscar coordenadas:', error)
+      toast.error('Erro ao buscar coordenadas')
+    } finally {
+      setIsGeocodingLoading(false)
+    }
   }
 
   const handleEdit = (cliente: Cliente) => {
@@ -144,6 +191,8 @@ export default function Empresas() {
       regime_tributario: cliente.regime_tributario || '',
       observacoes: cliente.observacoes || '',
       empresa_matriz_id: undefined,
+      latitude: cliente.latitude || null,
+      longitude: cliente.longitude || null,
     })
     setSemNumero(cliente.numero_fiscal === 'S/N')
     setSemComplemento(cliente.complemento_fiscal === 'S/C')
@@ -171,6 +220,8 @@ export default function Empresas() {
       regime_tributario: '',
       observacoes: '',
       empresa_matriz_id: matriz.id,
+      latitude: null,
+      longitude: null,
     })
     setSemNumero(false)
     setSemComplemento(false)
@@ -423,6 +474,69 @@ export default function Empresas() {
                         maxLength={2}
                       />
                     </div>
+                  </div>
+
+                  {/* Latitude e Longitude */}
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-base font-medium">Coordenadas Geográficas</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBuscarCoordenadas}
+                        disabled={isGeocodingLoading}
+                      >
+                        {isGeocodingLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Buscando...
+                          </>
+                        ) : (
+                          <>
+                            <MapPin className="h-4 w-4 mr-2" />
+                            Buscar Coordenadas
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="latitude">Latitude</Label>
+                        <Input
+                          id="latitude"
+                          type="number"
+                          step="0.0000001"
+                          placeholder="-23.5505199"
+                          value={formData.latitude ?? ''}
+                          onChange={(e) =>
+                            setFormData({ 
+                              ...formData, 
+                              latitude: e.target.value ? parseFloat(e.target.value) : null 
+                            })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="longitude">Longitude</Label>
+                        <Input
+                          id="longitude"
+                          type="number"
+                          step="0.0000001"
+                          placeholder="-46.6333094"
+                          value={formData.longitude ?? ''}
+                          onChange={(e) =>
+                            setFormData({ 
+                              ...formData, 
+                              longitude: e.target.value ? parseFloat(e.target.value) : null 
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Preencha o endereço acima e clique em "Buscar Coordenadas" para preencher automaticamente, ou informe manualmente.
+                    </p>
                   </div>
                 </TabsContent>
 

@@ -75,6 +75,8 @@ export default function Clientes() {
     atividade_principal: '',
     regime_tributario: '',
     observacoes: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
   })
 
   const [semNumero, setSemNumero] = useState(false)
@@ -108,6 +110,8 @@ export default function Clientes() {
           atividade_principal: clienteExistente.atividade_principal || '',
           regime_tributario: clienteExistente.regime_tributario || '',
           observacoes: clienteExistente.observacoes || '',
+          latitude: clienteExistente.latitude || null,
+          longitude: clienteExistente.longitude || null,
         })
         setSemNumero(clienteExistente.numero_fiscal === 'S/N')
         setSemComplemento(clienteExistente.complemento_fiscal === 'S/C')
@@ -202,6 +206,8 @@ export default function Clientes() {
       atividade_principal: '',
       regime_tributario: '',
       observacoes: '',
+      latitude: null,
+      longitude: null,
     })
     setSemNumero(false)
     setSemComplemento(false)
