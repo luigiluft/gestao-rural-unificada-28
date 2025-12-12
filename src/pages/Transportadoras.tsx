@@ -23,9 +23,10 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTransportadoras, useCreateTransportadora, useUpdateTransportadora, useDeleteTransportadora } from "@/hooks/useTransportadoras"
 import { LoadingState } from "@/components/ui/loading-state"
-import { EmptyState } from "@/components/ui/empty-state"
+import { useCliente } from "@/contexts/ClienteContext"
 
 export default function Transportadoras() {
+  const { selectedCliente } = useCliente()
   const [searchTerm, setSearchTerm] = useState("")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -42,7 +43,7 @@ export default function Transportadoras() {
     is_propria: false
   })
 
-  const { data: transportadoras, isLoading } = useTransportadoras()
+  const { data: transportadoras, isLoading } = useTransportadoras(selectedCliente?.id)
   const createMutation = useCreateTransportadora()
   const updateMutation = useUpdateTransportadora()
   const deleteMutation = useDeleteTransportadora()
@@ -65,7 +66,8 @@ export default function Transportadoras() {
       valor_km: formData.valor_km ? parseFloat(formData.valor_km) : null,
       valor_minimo: formData.valor_minimo ? parseFloat(formData.valor_minimo) : null,
       ativo: formData.ativo,
-      is_propria: formData.is_propria
+      is_propria: formData.is_propria,
+      cliente_id: selectedCliente?.id
     }
 
     if (editingId) {
