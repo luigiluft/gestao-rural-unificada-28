@@ -55,7 +55,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
     itens 
   })
 
-  // Buscar coordenadas da franquia do usuário logado
+  // Buscar coordenadas do depósito de origem (franquia selecionada)
   useEffect(() => {
     const fetchFranquiaCoords = async () => {
       if (!user?.id || tipo !== 'saida') return
@@ -64,7 +64,10 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         const { data: response, error } = await supabase.functions.invoke('manage-entradas', {
           body: { 
             action: 'get_franquia_coords', 
-            data: { user_id: user.id } 
+            data: { 
+              user_id: user.id,
+              deposito_id: dadosSaida.depositoId 
+            } 
           }
         })
 
@@ -72,19 +75,26 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
 
         if (response?.success && response.data) {
           const franquia = response.data
-          setFranquiaCoords({
-            latitude: Number(franquia.latitude),
-            longitude: Number(franquia.longitude)
-          })
-          setFranquiaNome(franquia.nome)
+          if (franquia.latitude && franquia.longitude) {
+            setFranquiaCoords({
+              latitude: Number(franquia.latitude),
+              longitude: Number(franquia.longitude)
+            })
+            setFranquiaNome(franquia.nome)
+          } else {
+            setFranquiaCoords(null)
+          }
+        } else {
+          setFranquiaCoords(null)
         }
       } catch (error) {
         console.error('Erro ao buscar coordenadas da franquia:', error)
+        setFranquiaCoords(null)
       }
     }
 
     fetchFranquiaCoords()
-  }, [user?.id, tipo])
+  }, [user?.id, tipo, dadosSaida.depositoId])
 
   // Buscar coordenadas da fazenda quando selecionada
   useEffect(() => {
