@@ -380,7 +380,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           fazendaNome={fazendas.find(f => f.id === dadosSaida.fazenda_id)?.nome}
           fazendaId={dadosSaida.fazenda_id}
           onFazendaChange={(fazendaId) => setDados({ ...dadosSaida, fazenda_id: fazendaId })}
-          produtorDestinatarioId={dadosSaida.produtor_destinatario}
+          produtorDestinatarioId={dadosSaida.cliente_destinatario_id || dadosSaida.produtor_destinatario}
           onFreteCalculado={handleFreteCalculado}
         />
       )}
