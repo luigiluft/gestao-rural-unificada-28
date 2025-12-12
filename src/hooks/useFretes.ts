@@ -45,6 +45,7 @@ export interface CreateFreteData {
   custo_frete: number
   sla_prazo_horas?: number | null
   sla_prazo_data?: string | null
+  status?: string
   observacoes?: string | null
 }
 
