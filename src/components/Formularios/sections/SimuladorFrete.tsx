@@ -8,7 +8,7 @@ import { useProfile } from "@/hooks/useProfile"
 import { useLocaisEntregaUnificados } from "@/hooks/useLocaisEntregaUnificados"
 import { useAuth } from "@/contexts/AuthContext"
 import { Loader2, Calculator, MapPin, Building2, Tractor, MapPinned, PenLine } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import type { Coordinates } from "@/services/routingService"
 import { calculateDistance } from "@/services/routingService"
@@ -67,15 +67,42 @@ export function SimuladorFrete({
     estado: '',
     cep: ''
   })
+  const [coordenadasLocal, setCoordenadasLocal] = useState<Coordinates | null>(null)
+
+  // Inicializar coordenadas quando fazendaId já vem preenchido ou locaisEntrega carrega
+  useEffect(() => {
+    if (fazendaId && fazendaId !== ENDERECO_AVULSO_ID && locaisEntrega.length > 0) {
+      const local = locaisEntrega.find(l => l.id === fazendaId)
+      if (local?.latitude && local?.longitude) {
+        setCoordenadasLocal({ latitude: local.latitude, longitude: local.longitude })
+      } else {
+        setCoordenadasLocal(null)
+      }
+    } else if (fazendaId === ENDERECO_AVULSO_ID) {
+      setCoordenadasLocal(null)
+    }
+  }, [fazendaId, locaisEntrega])
 
   const handleLocalChange = (value: string) => {
     if (value === ENDERECO_AVULSO_ID) {
       setShowEnderecoAvulso(true)
+      setCoordenadasLocal(null)
       onFazendaChange?.(value)
     } else {
       setShowEnderecoAvulso(false)
       onEnderecoAvulsoChange?.(null)
       onFazendaChange?.(value)
+      
+      // Buscar coordenadas do local selecionado
+      const localSelecionado = locaisEntrega.find(l => l.id === value)
+      if (localSelecionado?.latitude && localSelecionado?.longitude) {
+        setCoordenadasLocal({
+          latitude: localSelecionado.latitude,
+          longitude: localSelecionado.longitude
+        })
+      } else {
+        setCoordenadasLocal(null)
+      }
     }
   }
 
@@ -103,15 +130,18 @@ export function SimuladorFrete({
     }
   }
 
+  // Usar coordenadas locais (do local selecionado) ou as props como fallback
+  const coordenadasDestino = coordenadasLocal || fazendaCoords
+
   const handleCalcularDistancia = async () => {
-    if (!franquiaCoords || !fazendaCoords) {
+    if (!franquiaCoords || !coordenadasDestino) {
       toast.error("Coordenadas não disponíveis para calcular distância")
       return
     }
 
     setIsCalculatingDistance(true)
     try {
-      const distanciaCalculada = await calculateDistance(franquiaCoords, fazendaCoords)
+      const distanciaCalculada = await calculateDistance(franquiaCoords, coordenadasDestino)
       setDistancia(distanciaCalculada.toString())
       toast.success("Distância calculada automaticamente!")
     } catch (error: any) {
@@ -269,7 +299,7 @@ export function SimuladorFrete({
                 value={distancia}
                 onChange={(e) => setDistancia(e.target.value)}
               />
-              {franquiaCoords && fazendaCoords && (
+              {franquiaCoords && coordenadasDestino && (
                 <Button
                   type="button"
                   variant="outline"
