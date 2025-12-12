@@ -3182,6 +3182,134 @@ export type Database = {
           },
         ]
       }
+      fretes: {
+        Row: {
+          cliente_id: string
+          created_at: string | null
+          created_by: string | null
+          cte_id: string | null
+          custo_frete: number
+          embarque_id: string
+          executor_type: string
+          id: string
+          margem_calculada: number | null
+          motorista_agregado_cpf: string | null
+          motorista_agregado_dados_bancarios: Json | null
+          motorista_agregado_nome: string | null
+          motorista_id: string | null
+          observacoes: string | null
+          origin_type: string
+          preco_cobrado: number
+          sla_prazo_data: string | null
+          sla_prazo_horas: number | null
+          status: string
+          tabela_frete_id: string | null
+          transportadora_parceira_id: string | null
+          updated_at: string | null
+          veiculo_id: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string | null
+          created_by?: string | null
+          cte_id?: string | null
+          custo_frete?: number
+          embarque_id: string
+          executor_type: string
+          id?: string
+          margem_calculada?: number | null
+          motorista_agregado_cpf?: string | null
+          motorista_agregado_dados_bancarios?: Json | null
+          motorista_agregado_nome?: string | null
+          motorista_id?: string | null
+          observacoes?: string | null
+          origin_type?: string
+          preco_cobrado?: number
+          sla_prazo_data?: string | null
+          sla_prazo_horas?: number | null
+          status?: string
+          tabela_frete_id?: string | null
+          transportadora_parceira_id?: string | null
+          updated_at?: string | null
+          veiculo_id?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          cte_id?: string | null
+          custo_frete?: number
+          embarque_id?: string
+          executor_type?: string
+          id?: string
+          margem_calculada?: number | null
+          motorista_agregado_cpf?: string | null
+          motorista_agregado_dados_bancarios?: Json | null
+          motorista_agregado_nome?: string | null
+          motorista_id?: string | null
+          observacoes?: string | null
+          origin_type?: string
+          preco_cobrado?: number
+          sla_prazo_data?: string | null
+          sla_prazo_horas?: number | null
+          status?: string
+          tabela_frete_id?: string | null
+          transportadora_parceira_id?: string | null
+          updated_at?: string | null
+          veiculo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fretes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretes_cte_id_fkey"
+            columns: ["cte_id"]
+            isOneToOne: false
+            referencedRelation: "ctes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretes_embarque_id_fkey"
+            columns: ["embarque_id"]
+            isOneToOne: false
+            referencedRelation: "embarques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretes_motorista_id_fkey"
+            columns: ["motorista_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretes_tabela_frete_id_fkey"
+            columns: ["tabela_frete_id"]
+            isOneToOne: false
+            referencedRelation: "tabelas_frete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretes_transportadora_parceira_id_fkey"
+            columns: ["transportadora_parceira_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fretes_veiculo_id_fkey"
+            columns: ["veiculo_id"]
+            isOneToOne: false
+            referencedRelation: "veiculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventario_itens: {
         Row: {
           codigo_barras: string | null
@@ -3777,48 +3905,71 @@ export type Database = {
           ativo: boolean
           auth_user_id: string | null
           categoria_cnh: string | null
+          cliente_id: string | null
           cnh: string
           cpf: string
+          cpf_cnpj: string | null
           created_at: string
+          dados_bancarios: Json | null
           data_vencimento_cnh: string | null
           email: string | null
           id: string
           nome: string
           telefone: string | null
+          tipo: string | null
           updated_at: string
           user_id: string
+          valor_repasse_padrao: number | null
         }
         Insert: {
           ativo?: boolean
           auth_user_id?: string | null
           categoria_cnh?: string | null
+          cliente_id?: string | null
           cnh: string
           cpf: string
+          cpf_cnpj?: string | null
           created_at?: string
+          dados_bancarios?: Json | null
           data_vencimento_cnh?: string | null
           email?: string | null
           id?: string
           nome: string
           telefone?: string | null
+          tipo?: string | null
           updated_at?: string
           user_id: string
+          valor_repasse_padrao?: number | null
         }
         Update: {
           ativo?: boolean
           auth_user_id?: string | null
           categoria_cnh?: string | null
+          cliente_id?: string | null
           cnh?: string
           cpf?: string
+          cpf_cnpj?: string | null
           created_at?: string
+          dados_bancarios?: Json | null
           data_vencimento_cnh?: string | null
           email?: string | null
           id?: string
           nome?: string
           telefone?: string | null
+          tipo?: string | null
           updated_at?: string
           user_id?: string
+          valor_repasse_padrao?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "motoristas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movimentacoes: {
         Row: {
@@ -5842,10 +5993,12 @@ export type Database = {
           ativo: boolean
           capacidade_peso: number | null
           capacidade_volume: number | null
+          cliente_id: string | null
           created_at: string
           id: string
           marca: string | null
           modelo: string | null
+          motorista_padrao_id: string | null
           placa: string
           tipo: string | null
           updated_at: string
@@ -5856,10 +6009,12 @@ export type Database = {
           ativo?: boolean
           capacidade_peso?: number | null
           capacidade_volume?: number | null
+          cliente_id?: string | null
           created_at?: string
           id?: string
           marca?: string | null
           modelo?: string | null
+          motorista_padrao_id?: string | null
           placa: string
           tipo?: string | null
           updated_at?: string
@@ -5870,16 +6025,33 @@ export type Database = {
           ativo?: boolean
           capacidade_peso?: number | null
           capacidade_volume?: number | null
+          cliente_id?: string | null
           created_at?: string
           id?: string
           marca?: string | null
           modelo?: string | null
+          motorista_padrao_id?: string | null
           placa?: string
           tipo?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "veiculos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "veiculos_motorista_padrao_id_fkey"
+            columns: ["motorista_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "motoristas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       viagens: {
         Row: {
@@ -5891,16 +6063,21 @@ export type Database = {
           deposito_id: string
           distancia_percorrida: number
           distancia_total: number
+          frete_id: string | null
           hodometro_fim: number | null
           hodometro_inicio: number | null
           id: string
           motorista_id: string | null
           numero: string
           observacoes: string | null
+          ocorrencias_viagem: Json | null
+          paradas: Json | null
           peso_total: number | null
+          pod: Json | null
           previsao_inicio: string | null
           remessas_entregues: number
           status: string
+          tipo_execucao: string | null
           total_remessas: number
           updated_at: string
           user_id: string
@@ -5915,16 +6092,21 @@ export type Database = {
           deposito_id: string
           distancia_percorrida?: number
           distancia_total?: number
+          frete_id?: string | null
           hodometro_fim?: number | null
           hodometro_inicio?: number | null
           id?: string
           motorista_id?: string | null
           numero: string
           observacoes?: string | null
+          ocorrencias_viagem?: Json | null
+          paradas?: Json | null
           peso_total?: number | null
+          pod?: Json | null
           previsao_inicio?: string | null
           remessas_entregues?: number
           status?: string
+          tipo_execucao?: string | null
           total_remessas?: number
           updated_at?: string
           user_id: string
@@ -5939,22 +6121,35 @@ export type Database = {
           deposito_id?: string
           distancia_percorrida?: number
           distancia_total?: number
+          frete_id?: string | null
           hodometro_fim?: number | null
           hodometro_inicio?: number | null
           id?: string
           motorista_id?: string | null
           numero?: string
           observacoes?: string | null
+          ocorrencias_viagem?: Json | null
+          paradas?: Json | null
           peso_total?: number | null
+          pod?: Json | null
           previsao_inicio?: string | null
           remessas_entregues?: number
           status?: string
+          tipo_execucao?: string | null
           total_remessas?: number
           updated_at?: string
           user_id?: string
           veiculo_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "viagens_frete_id_fkey"
+            columns: ["frete_id"]
+            isOneToOne: false
+            referencedRelation: "fretes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
