@@ -599,35 +599,78 @@ function mapTipoDivergencia(tipo: string): string {
 async function getFranquiaCoords(supabase: any, userId: string, depositoId?: string) {
   console.log('🗺️ Getting franquia coords for user:', userId, 'deposito:', depositoId);
   
-  // Se depositoId foi passado, buscar coordenadas diretamente da franquia
+  // Se depositoId foi passado, buscar coordenadas via cliente_depositos -> clientes
   if (depositoId) {
-    const { data: franquia, error } = await supabase
-      .from('franquias')
-      .select('id, nome, latitude, longitude')
-      .eq('id', depositoId)
-      .eq('ativo', true)
+    // Primeiro tentar buscar o cliente associado ao depósito
+    const { data: clienteDeposito, error: cdError } = await supabase
+      .from('cliente_depositos')
+      .select('id, nome, cliente_id, clientes(id, razao_social, latitude, longitude)')
+      .eq('franquia_id', depositoId)
       .maybeSingle();
 
-    if (!error && franquia && franquia.latitude && franquia.longitude) {
-      console.log('🗺️ Found franquia coords by deposito_id:', franquia);
-      return franquia;
+    if (!cdError && clienteDeposito?.clientes) {
+      const cliente = clienteDeposito.clientes as any;
+      if (cliente.latitude && cliente.longitude) {
+        console.log('🗺️ Found coords via cliente_depositos -> clientes:', cliente);
+        return {
+          id: cliente.id,
+          nome: cliente.razao_social,
+          latitude: cliente.latitude,
+          longitude: cliente.longitude
+        };
+      }
+    }
+    
+    // Fallback: buscar diretamente em clientes vinculados ao usuário
+    const { data: clienteUsuario } = await supabase
+      .from('cliente_usuarios')
+      .select('cliente_id, clientes(id, razao_social, latitude, longitude)')
+      .eq('user_id', userId)
+      .eq('ativo', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (clienteUsuario?.clientes) {
+      const cliente = clienteUsuario.clientes as any;
+      if (cliente.latitude && cliente.longitude) {
+        console.log('🗺️ Found coords via cliente_usuarios -> clientes:', cliente);
+        return {
+          id: cliente.id,
+          nome: cliente.razao_social,
+          latitude: cliente.latitude,
+          longitude: cliente.longitude
+        };
+      }
     }
   }
   
-  // Fallback: buscar pelo usuário (master_franqueado_id)
-  const { data: franquia, error } = await supabase
-    .from('franquias')
-    .select('id, nome, latitude, longitude')
-    .eq('master_franqueado_id', userId)
+  // Fallback final: buscar primeiro cliente do usuário
+  const { data: clienteUsuario, error } = await supabase
+    .from('cliente_usuarios')
+    .select('cliente_id, clientes(id, razao_social, latitude, longitude)')
+    .eq('user_id', userId)
     .eq('ativo', true)
+    .limit(1)
     .maybeSingle();
 
   if (error) {
-    console.error('Error getting franquia coords:', error);
+    console.error('Error getting cliente coords:', error);
     throw error;
   }
 
-  return franquia;
+  if (clienteUsuario?.clientes) {
+    const cliente = clienteUsuario.clientes as any;
+    if (cliente.latitude && cliente.longitude) {
+      return {
+        id: cliente.id,
+        nome: cliente.razao_social,
+        latitude: cliente.latitude,
+        longitude: cliente.longitude
+      };
+    }
+  }
+
+  return null;
 }
 
 async function getFazendaCoords(supabase: any, fazendaId: string) {
@@ -646,19 +689,36 @@ async function getFazendaCoords(supabase: any, fazendaId: string) {
     return null;
   }
   
-  // 1. Tentar buscar em fazendas
+  // 1. Tentar buscar diretamente em clientes (para cliente destinatário)
   let { data, error } = await supabase
+    .from('clientes')
+    .select('id, razao_social, latitude, longitude')
+    .eq('id', fazendaId)
+    .maybeSingle();
+
+  if (data && data.latitude && data.longitude) {
+    console.log('🗺️ Found in clientes:', data);
+    return {
+      id: data.id,
+      nome: data.razao_social,
+      latitude: data.latitude,
+      longitude: data.longitude
+    };
+  }
+  
+  // 2. Tentar buscar em fazendas
+  ({ data, error } = await supabase
     .from('fazendas')
     .select('id, nome, latitude, longitude')
     .eq('id', fazendaId)
-    .maybeSingle();
+    .maybeSingle());
 
   if (data && data.latitude && data.longitude) {
     console.log('🗺️ Found in fazendas:', data);
     return data;
   }
 
-  // 2. Tentar buscar em locais_entrega
+  // 3. Tentar buscar em locais_entrega
   ({ data, error } = await supabase
     .from('locais_entrega')
     .select('id, nome, latitude, longitude')
@@ -670,34 +730,22 @@ async function getFazendaCoords(supabase: any, fazendaId: string) {
     return data;
   }
 
-  // 3. Tentar buscar em franquias (para depósitos que são locais de entrega)
-  ({ data, error } = await supabase
-    .from('franquias')
-    .select('id, nome, latitude, longitude')
-    .eq('id', fazendaId)
-    .maybeSingle());
-
-  if (data && data.latitude && data.longitude) {
-    console.log('🗺️ Found in franquias:', data);
-    return data;
-  }
-
-  // 4. Tentar buscar via cliente_depositos -> franquias
+  // 4. Tentar buscar via cliente_depositos -> clientes
   const { data: clienteDeposito } = await supabase
     .from('cliente_depositos')
-    .select('id, nome, franquia_id, franquias(id, nome, latitude, longitude)')
+    .select('id, nome, cliente_id, clientes(id, razao_social, latitude, longitude)')
     .eq('id', fazendaId)
     .maybeSingle();
 
-  if (clienteDeposito?.franquias) {
-    const franquia = clienteDeposito.franquias as any;
-    if (franquia.latitude && franquia.longitude) {
-      console.log('🗺️ Found via cliente_depositos:', franquia);
+  if (clienteDeposito?.clientes) {
+    const cliente = clienteDeposito.clientes as any;
+    if (cliente.latitude && cliente.longitude) {
+      console.log('🗺️ Found via cliente_depositos -> clientes:', cliente);
       return {
         id: clienteDeposito.id,
         nome: clienteDeposito.nome,
-        latitude: franquia.latitude,
-        longitude: franquia.longitude
+        latitude: cliente.latitude,
+        longitude: cliente.longitude
       };
     }
   }
