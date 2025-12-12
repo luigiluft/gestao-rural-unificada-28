@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useCreateEmbarque } from "@/hooks/useEmbarques"
 import { useClienteDepositos } from "@/hooks/useClienteDepositos"
 import { useCliente } from "@/contexts/ClienteContext"
+import { useSaidasPendentes } from "@/hooks/useSaidasPendentes"
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -20,8 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Building2, MapPin, Plus, Trash2 } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Building2, MapPin, Plus, Trash2, FileText, Clock } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface NovoEmbarqueDialogProps {
   open: boolean
@@ -38,15 +42,20 @@ interface Destino {
   cep: string
   contato?: string
   telefone?: string
+  janela_inicio?: string
+  janela_fim?: string
 }
 
 export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: NovoEmbarqueDialogProps) {
   const { selectedCliente } = useCliente()
   const { data: depositos } = useClienteDepositos(selectedCliente?.id)
+  const { data: saidasPendentes } = useSaidasPendentes()
   const createEmbarque = useCreateEmbarque()
 
   const [tipoOrigem, setTipoOrigem] = useState<'BASE_PROPRIA' | 'COLETA'>('BASE_PROPRIA')
   const [origemDepositoId, setOrigemDepositoId] = useState<string>("")
+  const [origemJanelaInicio, setOrigemJanelaInicio] = useState("")
+  const [origemJanelaFim, setOrigemJanelaFim] = useState("")
   const [origemEndereco, setOrigemEndereco] = useState({
     logradouro: "",
     numero: "",
@@ -66,10 +75,13 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
     cep: "",
     contato: "",
     telefone: "",
+    janela_inicio: "",
+    janela_fim: "",
   }])
   const [pesoTotal, setPesoTotal] = useState("")
   const [quantidadeVolumes, setQuantidadeVolumes] = useState("")
   const [observacoes, setObservacoes] = useState("")
+  const [saidasSelecionadas, setSaidasSelecionadas] = useState<string[]>([])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +90,8 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
       tipo_origem: tipoOrigem,
       origem_deposito_id: tipoOrigem === 'BASE_PROPRIA' ? origemDepositoId || null : null,
       origem_endereco: tipoOrigem === 'COLETA' ? origemEndereco : null,
+      origem_janela_inicio: origemJanelaInicio || null,
+      origem_janela_fim: origemJanelaFim || null,
       destinos: destinos.map((d, index) => ({
         endereco: {
           logradouro: d.logradouro,
@@ -90,25 +104,31 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
         contato: d.contato,
         telefone: d.telefone,
         ordem: index + 1,
+        janela_inicio: d.janela_inicio,
+        janela_fim: d.janela_fim,
       })),
       peso_total: pesoTotal ? parseFloat(pesoTotal) : null,
       quantidade_volumes: quantidadeVolumes ? parseInt(quantidadeVolumes) : null,
       observacoes: observacoes || null,
+      saidas_ids: saidasSelecionadas.length > 0 ? saidasSelecionadas : null,
     })
 
     // Reset form
     setTipoOrigem('BASE_PROPRIA')
     setOrigemDepositoId("")
+    setOrigemJanelaInicio("")
+    setOrigemJanelaFim("")
     setOrigemEndereco({ logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "", contato: "", telefone: "" })
-    setDestinos([{ logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "", contato: "", telefone: "" }])
+    setDestinos([{ logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "", contato: "", telefone: "", janela_inicio: "", janela_fim: "" }])
     setPesoTotal("")
     setQuantidadeVolumes("")
     setObservacoes("")
+    setSaidasSelecionadas([])
     onOpenChange(false)
   }
 
   const addDestino = () => {
-    setDestinos([...destinos, { logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "", contato: "", telefone: "" }])
+    setDestinos([...destinos, { logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "", contato: "", telefone: "", janela_inicio: "", janela_fim: "" }])
   }
 
   const removeDestino = (index: number) => {
@@ -123,14 +143,91 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
     setDestinos(updated)
   }
 
+  const toggleSaida = (saidaId: string) => {
+    setSaidasSelecionadas(prev => 
+      prev.includes(saidaId) 
+        ? prev.filter(id => id !== saidaId)
+        : [...prev, saidaId]
+    )
+  }
+
+  // Calcular peso e volumes automaticamente das saídas selecionadas
+  const calcularTotaisSaidas = () => {
+    if (!saidasPendentes || saidasSelecionadas.length === 0) return
+    
+    const saidasSel = saidasPendentes.filter(s => saidasSelecionadas.includes(s.id))
+    const pesoCalc = saidasSel.reduce((acc, s) => acc + (s.peso_total || 0), 0)
+    // Calcular total de itens somando quantidades dos saida_itens
+    const volumesCalc = saidasSel.reduce((acc, s) => {
+      const totalItens = s.saida_itens?.reduce((sum, item) => sum + (item.quantidade || 0), 0) || 0
+      return acc + totalItens
+    }, 0)
+    
+    if (pesoCalc > 0) setPesoTotal(pesoCalc.toFixed(2))
+    if (volumesCalc > 0) setQuantidadeVolumes(volumesCalc.toString())
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Embarque</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Vincular Saídas/NFs */}
+          {saidasPendentes && saidasPendentes.length > 0 && (
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Vincular Saídas/NFs
+                  {saidasSelecionadas.length > 0 && (
+                    <Badge variant="secondary">{saidasSelecionadas.length} selecionada(s)</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ScrollArea className="h-32 border rounded-md p-2">
+                  <div className="space-y-2">
+                    {saidasPendentes.map((saida) => {
+                      const totalItens = saida.saida_itens?.reduce((sum, item) => sum + (item.quantidade || 0), 0) || 0
+                      return (
+                        <div key={saida.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`saida-${saida.id}`}
+                            checked={saidasSelecionadas.includes(saida.id)}
+                            onCheckedChange={() => toggleSaida(saida.id)}
+                          />
+                          <label
+                            htmlFor={`saida-${saida.id}`}
+                            className="text-sm flex-1 cursor-pointer flex items-center justify-between"
+                          >
+                            <span className="font-medium">{saida.id.slice(0, 8)}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {saida.peso_total?.toFixed(2) || 0} kg • {totalItens} itens
+                            </span>
+                          </label>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+                {saidasSelecionadas.length > 0 && (
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    size="sm" 
+                    className="mt-2 p-0 h-auto"
+                    onClick={calcularTotaisSaidas}
+                  >
+                    Calcular peso/volumes das saídas selecionadas
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Tipo de Origem */}
           <div className="space-y-3">
             <Label>Tipo de Origem</Label>
@@ -160,20 +257,22 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
 
           {/* Origem - Base Própria */}
           {tipoOrigem === 'BASE_PROPRIA' && (
-            <div className="space-y-2">
-              <Label>Depósito de Origem</Label>
-              <Select value={origemDepositoId} onValueChange={setOrigemDepositoId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o depósito" />
-                </SelectTrigger>
-                <SelectContent>
-                  {depositos?.map((dep) => (
-                    <SelectItem key={dep.id} value={dep.id}>
-                      {dep.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Depósito de Origem</Label>
+                <Select value={origemDepositoId} onValueChange={setOrigemDepositoId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o depósito" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {depositos?.map((dep) => (
+                      <SelectItem key={dep.id} value={dep.id}>
+                        {dep.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
@@ -233,6 +332,32 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
                       value={origemEndereco.telefone}
                       onChange={(e) => setOrigemEndereco({ ...origemEndereco, telefone: e.target.value })}
                     />
+                  </div>
+                </div>
+                
+                {/* Janela de Coleta */}
+                <div className="pt-2 border-t">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Label className="font-medium">Janela de Coleta</Label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Início</Label>
+                      <Input
+                        type="datetime-local"
+                        value={origemJanelaInicio}
+                        onChange={(e) => setOrigemJanelaInicio(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Fim</Label>
+                      <Input
+                        type="datetime-local"
+                        value={origemJanelaFim}
+                        onChange={(e) => setOrigemJanelaFim(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -297,6 +422,32 @@ export default function NovoEmbarqueDialog({ open, onOpenChange, canCollect }: N
                         onChange={(e) => updateDestino(index, 'estado', e.target.value)}
                         maxLength={2}
                       />
+                    </div>
+                  </div>
+                  
+                  {/* Janela de Entrega */}
+                  <div className="pt-2 border-t">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <Label className="text-xs font-medium">Janela de Entrega</Label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Início</Label>
+                        <Input
+                          type="datetime-local"
+                          value={destino.janela_inicio || ""}
+                          onChange={(e) => updateDestino(index, 'janela_inicio', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Fim</Label>
+                        <Input
+                          type="datetime-local"
+                          value={destino.janela_fim || ""}
+                          onChange={(e) => updateDestino(index, 'janela_fim', e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>
