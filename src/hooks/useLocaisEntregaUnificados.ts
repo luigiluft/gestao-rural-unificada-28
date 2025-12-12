@@ -53,24 +53,43 @@ export const useLocaisEntregaUnificados = (clienteId?: string) => {
       }
 
       // 2. Buscar depósitos do cliente
-      const { data: depositos } = await supabase
+      const { data: depositos, error: depositosError } = await supabase
         .from("cliente_depositos")
         .select(`
           id,
           nome,
-          franquia:franquias(cidade, estado, cep, latitude, longitude)
+          franquias (
+            cidade, 
+            estado, 
+            cep, 
+            latitude, 
+            longitude,
+            endereco,
+            numero,
+            bairro
+          )
         `)
         .eq("cliente_id", clienteId)
         .eq("ativo", true)
         .order("nome")
 
+      console.log('[useLocaisEntregaUnificados] clienteId:', clienteId)
+      console.log('[useLocaisEntregaUnificados] depositos:', depositos, 'error:', depositosError)
+
       if (depositos) {
         depositos.forEach(d => {
-          const franquia = d.franquia as any
+          const franquia = d.franquias as any
+          // Construir endereço completo a partir dos dados da franquia
+          const enderecoCompleto = franquia ? 
+            [franquia.endereco, franquia.numero, franquia.bairro, franquia.cidade, franquia.estado, franquia.cep]
+              .filter(Boolean)
+              .join(', ') : undefined
+          
           locaisUnificados.push({
             id: d.id,
             nome: d.nome,
             tipo: 'deposito',
+            endereco: enderecoCompleto,
             cidade: franquia?.cidade,
             estado: franquia?.estado,
             cep: franquia?.cep,
