@@ -5221,6 +5221,7 @@ export type Database = {
       tabelas_frete: {
         Row: {
           ativo: boolean
+          cliente_id: string | null
           created_at: string
           data_vencimento: string | null
           data_vigencia: string
@@ -5228,6 +5229,7 @@ export type Database = {
           id: string
           nome: string
           origem: string | null
+          publica: boolean | null
           tipo: string | null
           transportadora_id: string | null
           unidade: string
@@ -5237,6 +5239,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          cliente_id?: string | null
           created_at?: string
           data_vencimento?: string | null
           data_vigencia: string
@@ -5244,6 +5247,7 @@ export type Database = {
           id?: string
           nome: string
           origem?: string | null
+          publica?: boolean | null
           tipo?: string | null
           transportadora_id?: string | null
           unidade?: string
@@ -5253,6 +5257,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          cliente_id?: string | null
           created_at?: string
           data_vencimento?: string | null
           data_vigencia?: string
@@ -5260,6 +5265,7 @@ export type Database = {
           id?: string
           nome?: string
           origem?: string | null
+          publica?: boolean | null
           tipo?: string | null
           transportadora_id?: string | null
           unidade?: string
@@ -5268,6 +5274,13 @@ export type Database = {
           valor_base?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "tabelas_frete_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tabelas_frete_transportadora_id_fkey"
             columns: ["transportadora_id"]
@@ -5386,6 +5399,7 @@ export type Database = {
       transportadoras: {
         Row: {
           ativo: boolean
+          cliente_id: string | null
           cnpj: string
           contato: string | null
           created_at: string
@@ -5401,6 +5415,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          cliente_id?: string | null
           cnpj: string
           contato?: string | null
           created_at?: string
@@ -5416,6 +5431,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          cliente_id?: string | null
           cnpj?: string
           contato?: string | null
           created_at?: string
@@ -5429,7 +5445,15 @@ export type Database = {
           valor_km?: number | null
           valor_minimo?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transportadoras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transportadoras_usuarios: {
         Row: {
@@ -5927,6 +5951,42 @@ export type Database = {
           observacoes: string
           tipo_relacionamento: string
           updated_at: string
+        }[]
+      }
+      buscar_tabelas_transportadora: {
+        Args: { p_cliente_id: string }
+        Returns: {
+          ativo: boolean
+          cliente_id: string | null
+          created_at: string
+          data_vencimento: string | null
+          data_vigencia: string
+          franqueado_id: string | null
+          id: string
+          nome: string
+          origem: string | null
+          publica: boolean | null
+          tipo: string | null
+          transportadora_id: string | null
+          unidade: string
+          updated_at: string
+          user_id: string
+          valor_base: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tabelas_frete"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      buscar_transportadora_plataforma: {
+        Args: { p_cnpj: string }
+        Returns: {
+          cliente_id: string
+          cnpj: string
+          razao_social: string
+          tem_tabelas_frete: boolean
         }[]
       }
       calcular_performance_sla_produtor: {

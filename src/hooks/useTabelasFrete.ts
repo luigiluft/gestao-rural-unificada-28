@@ -5,9 +5,11 @@ import { useToast } from "@/hooks/use-toast"
 export interface TabelaFrete {
   id: string
   franqueado_id: string
+  cliente_id?: string | null
   nome: string
   tipo: string
   ativo: boolean
+  publica?: boolean
   transportadora_id?: string | null
   created_at: string
   updated_at: string
@@ -15,6 +17,10 @@ export interface TabelaFrete {
   transportadoras?: {
     id: string
     nome: string
+  }
+  clientes?: {
+    id: string
+    razao_social: string
   }
 }
 
@@ -29,13 +35,11 @@ export interface FreteFaixa {
   prazo_dias: number
 }
 
-export const useTabelasFrete = () => {
-  const { toast } = useToast()
-
+export const useTabelasFrete = (clienteId?: string) => {
   return useQuery({
-    queryKey: ["tabelas-frete"],
+    queryKey: ["tabelas-frete", clienteId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("tabelas_frete")
         .select(`
           *,
@@ -43,9 +47,20 @@ export const useTabelasFrete = () => {
           transportadoras (
             id,
             nome
+          ),
+          clientes (
+            id,
+            razao_social
           )
         `)
         .order("created_at", { ascending: false })
+
+      // If clienteId provided, filter by it
+      if (clienteId) {
+        query = query.eq("cliente_id", clienteId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       return data as TabelaFrete[]
@@ -59,21 +74,28 @@ export const useCreateTabelaFrete = () => {
 
   return useMutation({
     mutationFn: async (data: {
-      franqueado_id: string
+      cliente_id?: string
+      franqueado_id?: string
       nome: string
       tipo?: string
       transportadora_id?: string | null
+      publica?: boolean
       faixas: Omit<FreteFaixa, 'id' | 'tabela_frete_id'>[]
     }) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Usuário não autenticado")
+
       // Create table
       const { data: tabela, error: tabelaError } = await supabase
         .from("tabelas_frete")
         .insert({
-          user_id: data.franqueado_id,
-          franqueado_id: data.franqueado_id,
+          user_id: user.id,
+          cliente_id: data.cliente_id || null,
+          franqueado_id: data.franqueado_id || null,
           nome: data.nome,
           tipo: data.tipo || null,
           transportadora_id: data.transportadora_id || null,
+          publica: data.publica || false,
           origem: '',
           data_vigencia: new Date().toISOString().split('T')[0],
           valor_base: 0

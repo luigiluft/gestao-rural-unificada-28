@@ -17,13 +17,14 @@ import { exportToCSV } from '@/utils/csvExport';
 import { importFromCSV } from '@/utils/csvImport';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCliente } from '@/contexts/ClienteContext';
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
-  franqueado_id: z.string().uuid(),
   tipo: z.enum(["propria", "terceira"]),
   transportadora_id: z.string().uuid().optional().nullable(),
   ativo: z.boolean().default(true),
+  publica: z.boolean().default(false),
   faixas: z.array(z.object({
     distancia_min: z.number().min(0),
     distancia_max: z.number().min(0),
@@ -65,7 +66,8 @@ const faixasPadrao: Array<{
 const NovaTabelaFrete = () => {
   const navigate = useNavigate();
   const createTabelaMutation = useCreateTabelaFrete();
-  const { data: transportadoras = [] } = useTransportadoras();
+  const { selectedCliente } = useCliente();
+  const { data: transportadoras = [] } = useTransportadoras(selectedCliente?.id);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -76,10 +78,10 @@ const NovaTabelaFrete = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: "",
-      franqueado_id: "a695e2b8-a539-4374-ba04-8c2055c485ea",
       tipo: "propria",
       transportadora_id: null,
       ativo: true,
+      publica: false,
       faixas: faixasPadrao as Array<{
         distancia_min: number;
         distancia_max: number;
@@ -94,6 +96,15 @@ const NovaTabelaFrete = () => {
   const tipoTabela = form.watch("tipo");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!selectedCliente) {
+      toast({
+        title: "Empresa não selecionada",
+        description: "Selecione uma empresa no menu superior.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validar se tem transportadora própria cadastrada para tabelas próprias
     if (values.tipo === "propria" && !transportadoraPropria) {
       toast({
@@ -106,10 +117,11 @@ const NovaTabelaFrete = () => {
 
     try {
       await createTabelaMutation.mutateAsync({
-        franqueado_id: values.franqueado_id,
+        cliente_id: selectedCliente.id,
         nome: values.nome,
         tipo: values.tipo,
         transportadora_id: values.tipo === "propria" ? transportadoraPropria?.id : values.transportadora_id,
+        publica: values.publica,
         faixas: values.faixas as Array<{
           distancia_min: number;
           distancia_max: number;
@@ -328,6 +340,27 @@ const NovaTabelaFrete = () => {
                       <FormLabel className="text-base">Tabela Ativa</FormLabel>
                       <FormDescription>
                         Ative esta tabela para que ela possa ser utilizada nos cálculos
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="publica"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Tornar Pública</FormLabel>
+                      <FormDescription>
+                        Permite que outras empresas vejam e usem esta tabela de frete
                       </FormDescription>
                     </div>
                     <FormControl>
