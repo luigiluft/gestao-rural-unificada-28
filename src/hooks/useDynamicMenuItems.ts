@@ -328,7 +328,7 @@ export const useDynamicMenuItems = () => {
       // Submenu WMS
       wmsPages: ['franquias'],
       // Submenu TMS
-      tmsPages: ['tabelas-frete', 'transportadoras', 'motoristas', 'veiculos', 'locais-entrega', 'autonomos'],
+      tmsPages: ['transportadoras', 'tabelas-frete', 'motoristas', 'veiculos', 'locais-entrega', 'autonomos'],
       // Submenu ERP
       erpPages: ['configurar-impostos', 'catalogo', 'perfis-funcionarios', 'subcontas', 'fornecedores', 'clientes']
     }

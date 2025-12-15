@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,7 @@ import { useCliente } from '@/contexts/ClienteContext';
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
-  tipo: z.enum(["propria", "terceira"]),
-  transportadora_id: z.string().uuid().optional().nullable(),
+  transportadora_id: z.string().uuid("Selecione uma transportadora"),
   ativo: z.boolean().default(true),
   publica: z.boolean().default(false),
   faixas: z.array(z.object({
@@ -33,14 +32,6 @@ const formSchema = z.object({
     pedagio_por_ton: z.number().min(0, "Valor deve ser positivo"),
     prazo_dias: z.number().min(1, "Prazo mínimo é 1 dia")
   })).length(10, "Devem ser cadastradas 10 faixas")
-}).refine((data) => {
-  if (data.tipo === "terceira" && !data.transportadora_id) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Selecione uma transportadora para tabelas terceiras",
-  path: ["transportadora_id"]
 });
 
 const faixasPadrao: Array<{
@@ -73,12 +64,14 @@ const NovaTabelaFrete = () => {
 
   const transportadorasAtivas = transportadoras.filter(t => t.ativo);
 
+  // Normaliza CNPJ removendo pontuação para comparação
+  const normalizeCnpj = (cnpj: string) => cnpj?.replace(/[^\d]/g, "") || "";
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: "",
-      tipo: "propria",
-      transportadora_id: null,
+      transportadora_id: "",
       ativo: true,
       publica: false,
       faixas: faixasPadrao as Array<{
@@ -92,7 +85,25 @@ const NovaTabelaFrete = () => {
     }
   });
 
-  const tipoTabela = form.watch("tipo");
+  // Auto-selecionar se tiver apenas 1 transportadora
+  useEffect(() => {
+    if (transportadorasAtivas.length === 1 && !form.getValues("transportadora_id")) {
+      form.setValue("transportadora_id", transportadorasAtivas[0].id);
+    }
+  }, [transportadorasAtivas, form]);
+
+  // Verificar se transportadora selecionada é própria (CNPJ igual ao da empresa)
+  const transportadoraId = form.watch("transportadora_id");
+  const transportadoraSelecionada = transportadorasAtivas.find(t => t.id === transportadoraId);
+  const isPropria = transportadoraSelecionada && 
+    normalizeCnpj(transportadoraSelecionada.cnpj) === normalizeCnpj(selectedCliente?.cpf_cnpj || "");
+
+  // Reset publica quando trocar para transportadora terceira
+  useEffect(() => {
+    if (!isPropria) {
+      form.setValue("publica", false);
+    }
+  }, [isPropria, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!selectedCliente) {
@@ -118,7 +129,7 @@ const NovaTabelaFrete = () => {
       await createTabelaMutation.mutateAsync({
         cliente_id: selectedCliente.id,
         nome: values.nome,
-        tipo: values.tipo,
+        tipo: isPropria ? "propria" : "terceira",
         transportadora_id: values.transportadora_id,
         publica: values.publica,
         faixas: values.faixas as Array<{
@@ -242,31 +253,6 @@ const NovaTabelaFrete = () => {
               <CardTitle>Informações Básicas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="tipo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Tabela *</FormLabel>
-                    <FormDescription>
-                      Selecione se esta é uma tabela própria ou de transportadora terceira
-                    </FormDescription>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="propria">Própria</SelectItem>
-                        <SelectItem value="terceira">Terceira</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {transportadorasAtivas.length === 0 && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -283,35 +269,33 @@ const NovaTabelaFrete = () => {
                 </Alert>
               )}
 
-              {tipoTabela === "terceira" && (
-                <FormField
-                  control={form.control}
-                  name="transportadora_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transportadora *</FormLabel>
-                      <FormDescription>
-                        Selecione a transportadora terceira para esta tabela
-                      </FormDescription>
-                      <Select onValueChange={field.onChange} value={field.value || undefined}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a transportadora" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {transportadorasAtivas.map(t => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name="transportadora_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Transportadora *</FormLabel>
+                    <FormDescription>
+                      Selecione a transportadora para esta tabela de frete
+                    </FormDescription>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a transportadora" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {transportadorasAtivas.map(t => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.nome} - {t.cnpj}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -351,26 +335,28 @@ const NovaTabelaFrete = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="publica"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Tornar Pública</FormLabel>
-                      <FormDescription>
-                        Permite que outras empresas vejam e usem esta tabela de frete
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              {isPropria && (
+                <FormField
+                  control={form.control}
+                  name="publica"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Tornar Pública</FormLabel>
+                        <FormDescription>
+                          Permite que outras empresas vejam e usem esta tabela de frete
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -447,10 +433,9 @@ const NovaTabelaFrete = () => {
                                     step="0.01"
                                     className="w-32"
                                     {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                                   />
                                 </FormControl>
-                                <FormMessage />
                               </FormItem>
                             )}
                           />
@@ -467,10 +452,9 @@ const NovaTabelaFrete = () => {
                                     step="0.01"
                                     className="w-32"
                                     {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                                   />
                                 </FormControl>
-                                <FormMessage />
                               </FormItem>
                             )}
                           />
@@ -485,12 +469,11 @@ const NovaTabelaFrete = () => {
                                   <Input
                                     type="number"
                                     step="0.01"
-                                    className="w-28"
+                                    className="w-32"
                                     {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                                   />
                                 </FormControl>
-                                <FormMessage />
                               </FormItem>
                             )}
                           />
@@ -506,10 +489,9 @@ const NovaTabelaFrete = () => {
                                     type="number"
                                     className="w-20"
                                     {...field}
-                                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                    onChange={e => field.onChange(parseInt(e.target.value) || 1)}
                                   />
                                 </FormControl>
-                                <FormMessage />
                               </FormItem>
                             )}
                           />
@@ -522,7 +504,7 @@ const NovaTabelaFrete = () => {
             </CardContent>
           </Card>
 
-          {/* Actions */}
+          {/* Botões de Ação */}
           <div className="flex justify-end gap-4">
             <Button
               type="button"
@@ -531,7 +513,10 @@ const NovaTabelaFrete = () => {
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={createTabelaMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={createTabelaMutation.isPending || transportadorasAtivas.length === 0}
+            >
               <Save className="h-4 w-4 mr-2" />
               {createTabelaMutation.isPending ? 'Salvando...' : 'Salvar Tabela'}
             </Button>
