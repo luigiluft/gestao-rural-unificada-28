@@ -6263,6 +6263,7 @@ export type Database = {
             Returns: string
           }
       alocar_produtos_orfaos: { Args: never; Returns: number }
+      auth_uid_cached: { Args: never; Returns: string }
       auto_allocate_positions: { Args: { p_wave_id: string }; Returns: boolean }
       buscar_cliente_por_cpf_cnpj: {
         Args: { p_cpf_cnpj: string }
@@ -6542,6 +6543,13 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role_cached: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
         }
         Returns: boolean
       }
