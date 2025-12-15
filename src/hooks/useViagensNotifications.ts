@@ -39,7 +39,8 @@ export const useViagensNotifications = () => {
       return data?.length || 0
     },
     enabled: !!user?.id,
-    staleTime: 30000,
-    refetchInterval: 60000, // Refetch every minute to keep notifications updated
+    staleTime: 60000, // 1 minute
+    gcTime: 300000, // 5 minutes
+    refetchInterval: 120000, // 2 minutes instead of 1 minute
   })
 }

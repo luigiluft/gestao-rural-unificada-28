@@ -6599,6 +6599,10 @@ export type Database = {
         Args: { p_saida_item_id: string }
         Returns: boolean
       }
+      user_can_view_pallet_position_by_posicao: {
+        Args: { p_posicao_id: string }
+        Returns: boolean
+      }
       user_has_access_to_cliente: {
         Args: { p_cliente_id: string }
         Returns: boolean

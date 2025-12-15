@@ -354,7 +354,9 @@ export const useNotifications = () => {
       }
     },
     enabled: !!user?.id,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    staleTime: 60000, // 1 minute - prevents refetching if data is fresh
+    gcTime: 300000, // 5 minutes - keep in cache longer
+    refetchInterval: 120000, // 2 minutes instead of 30s to reduce DB load
+    refetchOnWindowFocus: false, // Disable to prevent unnecessary refetches
   })
 }
