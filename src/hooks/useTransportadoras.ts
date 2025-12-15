@@ -10,12 +10,7 @@ export interface Transportadora {
   cnpj: string
   contato?: string | null
   email?: string | null
-  especialidade?: string | null
-  regiao_atendimento?: string | null
-  valor_km?: number | null
-  valor_minimo?: number | null
   ativo: boolean
-  is_propria?: boolean
   created_at: string
   updated_at: string
 }

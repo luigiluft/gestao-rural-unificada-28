@@ -71,8 +71,7 @@ const NovaTabelaFrete = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const transportadoraPropria = transportadoras.find(t => t.is_propria && t.ativo);
-  const transportadorasTerceiras = transportadoras.filter(t => !t.is_propria && t.ativo);
+  const transportadorasAtivas = transportadoras.filter(t => t.ativo);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -105,11 +104,11 @@ const NovaTabelaFrete = () => {
       return;
     }
 
-    // Validar se tem transportadora própria cadastrada para tabelas próprias
-    if (values.tipo === "propria" && !transportadoraPropria) {
+    // Validar se tem transportadora cadastrada
+    if (transportadorasAtivas.length === 0) {
       toast({
-        title: "Transportadora própria não cadastrada",
-        description: "Cadastre uma transportadora própria antes de criar tabelas próprias.",
+        title: "Nenhuma transportadora cadastrada",
+        description: "Cadastre uma transportadora antes de criar tabelas de frete.",
         variant: "destructive"
       });
       return;
@@ -120,7 +119,7 @@ const NovaTabelaFrete = () => {
         cliente_id: selectedCliente.id,
         nome: values.nome,
         tipo: values.tipo,
-        transportadora_id: values.tipo === "propria" ? transportadoraPropria?.id : values.transportadora_id,
+        transportadora_id: values.transportadora_id,
         publica: values.publica,
         faixas: values.faixas as Array<{
           distancia_min: number;
@@ -268,11 +267,11 @@ const NovaTabelaFrete = () => {
                 )}
               />
 
-              {tipoTabela === "propria" && !transportadoraPropria && (
+              {transportadorasAtivas.length === 0 && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Você precisa cadastrar uma transportadora própria antes de criar tabelas próprias.
+                    Você precisa cadastrar uma transportadora antes de criar tabelas de frete.
                     <Button 
                       variant="link" 
                       className="h-auto p-0 ml-1"
@@ -301,7 +300,7 @@ const NovaTabelaFrete = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {transportadorasTerceiras.map(t => (
+                          {transportadorasAtivas.map(t => (
                             <SelectItem key={t.id} value={t.id}>
                               {t.nome}
                             </SelectItem>
