@@ -115,6 +115,9 @@ import LojaCotacao from "./pages/LojaCotacao";
 import ConfigurarImpostos from "./pages/ConfigurarImpostos";
 import EncontreDeposito from "./pages/Public/EncontreDeposito";
 import Parceiros from "./pages/Public/Parceiros";
+import FretesPublicos from "./pages/Public/FretesPublicos";
+import Autonomos from "./pages/Autonomos";
+import OfertaFretes from "./pages/OfertaFretes";
 import { RequireAuth } from "@/components/Auth/RequireAuth";
 import { RequireAdmin } from "@/components/Auth/RequireAdmin";
 import { RequireAdminOrFranqueado } from "@/components/Auth/RequireAdminOrFranqueado";
@@ -171,6 +174,7 @@ const App = () => {
                 <Route path="parceiros" element={<Parceiros />} />
                 <Route path="seja-franqueado" element={<SejaFranqueadoPublic />} />
                 <Route path="contato" element={<PublicContato />} />
+                <Route path="fretes" element={<FretesPublicos />} />
               </Route>
               <Route path="/seja-franqueado" element={<SejaFranqueado />} />
             </Routes>
@@ -199,6 +203,7 @@ const App = () => {
               <Route path="parceiros" element={<Parceiros />} />
               <Route path="seja-franqueado" element={<SejaFranqueadoPublic />} />
               <Route path="contato" element={<PublicContato />} />
+              <Route path="fretes" element={<FretesPublicos />} />
             </Route>
             
             {/* Rotas Públicas */}
@@ -292,6 +297,8 @@ const App = () => {
               <Route path="tabelas-frete/nova" element={<RequirePageAccess pageKey="tabelas-frete"><NovaTabelaFrete /></RequirePageAccess>} />
               <Route path="tabelas-frete/editar/:id" element={<RequirePageAccess pageKey="tabelas-frete"><EditarTabelaFrete /></RequirePageAccess>} />
               <Route path="transportadoras" element={<RequirePageAccess pageKey="transportadoras"><Transportadoras /></RequirePageAccess>} />
+              <Route path="autonomos" element={<RequirePageAccess pageKey="autonomos"><Autonomos /></RequirePageAccess>} />
+              <Route path="oferta-fretes" element={<RequirePageAccess pageKey="oferta-fretes"><OfertaFretes /></RequirePageAccess>} />
               <Route path="tabela-frete" element={<RequirePageAccess pageKey="tabela-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="tabela-frete/:id" element={<RequirePageAccess pageKey="tabela-frete"><TabelaFrete /></RequirePageAccess>} />
               <Route path="planejamento-pallets/:entradaId" element={<RequirePageAccess pageKey="recebimento"><PlanejamentoPalletsPage /></RequirePageAccess>} />
