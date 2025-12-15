@@ -22,6 +22,7 @@ const navItems = [
   { label: "Benefícios", path: "/site/beneficios" },
   { label: "Depósitos", path: "/site/encontre-deposito" },
   { label: "Parceiros", path: "/site/parceiros" },
+  { label: "Fretes", path: "/site/fretes" },
   { label: "Marketplace", path: "/marketplace" },
   { label: "Franqueado", path: "/site/seja-franqueado" },
   { label: "Contato", path: "/site/contato" },

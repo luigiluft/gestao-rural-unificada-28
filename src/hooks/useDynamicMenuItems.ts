@@ -121,7 +121,9 @@ const menuLabels = {
   'atendimento': 'Atendimento',
   'minha-loja': 'Minha Loja',
   'editor-loja': 'Editor da Loja',
-  'configurar-impostos': 'Configurar Impostos'
+  'configurar-impostos': 'Configurar Impostos',
+  'autonomos': 'Autônomos',
+  'oferta-fretes': 'Oferta de Fretes'
 }
 
 const iconMap = {
@@ -194,7 +196,9 @@ const iconMap = {
   'atendimento': Headphones,
   'minha-loja': Store,
   'editor-loja': LayoutTemplate,
-  'configurar-impostos': Calculator
+  'configurar-impostos': Calculator,
+  'autonomos': User,
+  'oferta-fretes': Truck
 }
 
 export const useDynamicMenuItems = () => {
@@ -324,7 +328,7 @@ export const useDynamicMenuItems = () => {
       // Submenu WMS
       wmsPages: ['franquias'],
       // Submenu TMS
-      tmsPages: ['tabelas-frete', 'transportadoras', 'motoristas', 'veiculos', 'locais-entrega'],
+      tmsPages: ['tabelas-frete', 'transportadoras', 'motoristas', 'veiculos', 'locais-entrega', 'autonomos'],
       // Submenu ERP
       erpPages: ['configurar-impostos', 'catalogo', 'perfis-funcionarios', 'subcontas', 'fornecedores', 'clientes']
     }
@@ -352,6 +356,7 @@ export const useDynamicMenuItems = () => {
     // Páginas do TMS (tracking no topo)
     const tmsPages = [
       'tracking',
+      'oferta-fretes',
       'remessas',
       'ctes',
       'planejamento',
