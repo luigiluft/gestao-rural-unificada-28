@@ -308,25 +308,33 @@ export const useDynamicMenuItems = () => {
       'nfe-saidas'
     ]
 
-    // Páginas de Cadastro
-    const cadastroPages = [
-      'perfil',
-      'empresas',
-      'clientes',
-      'fornecedores',
-      'subcontas',
-      'usuarios',
-      'perfis-funcionarios',
-      'funcionarios',
-      'catalogo',
-      'locais-entrega',
-      'franquias',
-      'franqueados',
-      'produtores',
-      'contratos',
-      'contratos-franquias',
-      'tabelas-frete',
-      'configurar-impostos'
+    // Páginas de Cadastro - estruturadas com submenus
+    const cadastroStructure = {
+      // Páginas diretas
+      directPages: [
+        'perfil',
+        'empresas',
+        'usuarios',
+        'funcionarios',
+        'locais-entrega',
+        'franqueados',
+        'produtores',
+        'contratos',
+        'contratos-franquias'
+      ],
+      // Submenu WMS
+      wmsPages: ['franquias'],
+      // Submenu TMS
+      tmsPages: ['tabelas-frete', 'transportadoras', 'motoristas', 'veiculos'],
+      // Submenu ERP
+      erpPages: ['configurar-impostos', 'catalogo', 'perfis-funcionarios', 'subcontas', 'fornecedores', 'clientes']
+    }
+    
+    const allCadastroPages = [
+      ...cadastroStructure.directPages,
+      ...cadastroStructure.wmsPages,
+      ...cadastroStructure.tmsPages,
+      ...cadastroStructure.erpPages
     ]
 
     // Páginas do WMS
@@ -482,29 +490,83 @@ export const useDynamicMenuItems = () => {
     }
 
     // Verificar se tem permissão para pelo menos uma página de Cadastro
-    const hasCadastroPermission = cadastroPages.some(page => 
+    const hasCadastroPermission = allCadastroPages.some(page => 
       permissions.includes(`${page}.view` as any)
     )
 
     if (hasCadastroPermission) {
       const cadastroSubItems: MenuItem[] = []
       
-      cadastroPages.forEach(page => {
+      // Adicionar páginas diretas
+      cadastroStructure.directPages.forEach(page => {
         const pageViewPermission = `${page}.view`
-        
         if (!permissions.includes(pageViewPermission as any)) return
-
         const label = menuLabels[page as keyof typeof menuLabels]
         const icon = iconMap[page as keyof typeof iconMap]
-        
         if (label && icon) {
-          cadastroSubItems.push({
-            path: `/${page}`,
-            label,
-            icon
-          })
+          cadastroSubItems.push({ path: `/${page}`, label, icon })
         }
       })
+
+      // Submenu WMS dentro de Cadastro
+      const wmsNestedItems: MenuItem[] = []
+      cadastroStructure.wmsPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        if (!permissions.includes(pageViewPermission as any)) return
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        if (label && icon) {
+          wmsNestedItems.push({ path: `/${page}`, label, icon })
+        }
+      })
+      if (wmsNestedItems.length > 0) {
+        cadastroSubItems.push({
+          path: '/cadastro-wms',
+          label: 'WMS',
+          icon: Package,
+          subItems: wmsNestedItems
+        })
+      }
+
+      // Submenu TMS dentro de Cadastro
+      const tmsNestedItems: MenuItem[] = []
+      cadastroStructure.tmsPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        if (!permissions.includes(pageViewPermission as any)) return
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        if (label && icon) {
+          tmsNestedItems.push({ path: `/${page}`, label, icon })
+        }
+      })
+      if (tmsNestedItems.length > 0) {
+        cadastroSubItems.push({
+          path: '/cadastro-tms',
+          label: 'TMS',
+          icon: Truck,
+          subItems: tmsNestedItems
+        })
+      }
+
+      // Submenu ERP dentro de Cadastro
+      const erpNestedItems: MenuItem[] = []
+      cadastroStructure.erpPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        if (!permissions.includes(pageViewPermission as any)) return
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        if (label && icon) {
+          erpNestedItems.push({ path: `/${page}`, label, icon })
+        }
+      })
+      if (erpNestedItems.length > 0) {
+        cadastroSubItems.push({
+          path: '/cadastro-erp',
+          label: 'ERP',
+          icon: BarChart3,
+          subItems: erpNestedItems
+        })
+      }
 
       // Adicionar Empresa Matriz especificamente para admins (não depende de page_permissions)
       if (isAdmin) {
