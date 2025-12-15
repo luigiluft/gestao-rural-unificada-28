@@ -337,28 +337,28 @@ export const useDynamicMenuItems = () => {
       ...cadastroStructure.erpPages
     ]
 
-    // Páginas do WMS
+    // Páginas do WMS (rastreamento-wms no topo)
     const wmsPages = [
+      'rastreamento-wms',
       'recebimento',
       'alocacao-pallets',
       'gerenciar-posicoes',
       'inventario',
       'separacao',
       'expedicao',
-      'divergencias',
-      'rastreamento-wms'
+      'divergencias'
     ]
 
-    // Páginas do TMS (sem veiculos, motoristas, transportadoras, tabelas-frete - ficam só em Cadastro)
+    // Páginas do TMS (tracking no topo)
     const tmsPages = [
+      'tracking',
       'remessas',
       'ctes',
       'planejamento',
       'viagens',
       'proof-of-delivery',
       'comprovantes',
-      'ocorrencias',
-      'tracking'
+      'ocorrencias'
     ]
 
     // Verificar se tem permissão para pelo menos uma página do WMS
@@ -524,6 +524,26 @@ export const useDynamicMenuItems = () => {
         })
       }
 
+      // Submenu ERP dentro de Cadastro
+      const erpNestedItems: MenuItem[] = []
+      cadastroStructure.erpPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        if (!permissions.includes(pageViewPermission as any)) return
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        if (label && icon) {
+          erpNestedItems.push({ path: `/${page}`, label, icon })
+        }
+      })
+      if (erpNestedItems.length > 0) {
+        cadastroSubItems.push({
+          path: '/cadastro-erp',
+          label: 'ERP',
+          icon: BarChart3,
+          subItems: erpNestedItems
+        })
+      }
+
       // Submenu WMS dentro de Cadastro
       const wmsNestedItems: MenuItem[] = []
       cadastroStructure.wmsPages.forEach(page => {
@@ -561,26 +581,6 @@ export const useDynamicMenuItems = () => {
           label: 'TMS',
           icon: Truck,
           subItems: tmsNestedItems
-        })
-      }
-
-      // Submenu ERP dentro de Cadastro
-      const erpNestedItems: MenuItem[] = []
-      cadastroStructure.erpPages.forEach(page => {
-        const pageViewPermission = `${page}.view`
-        if (!permissions.includes(pageViewPermission as any)) return
-        const label = menuLabels[page as keyof typeof menuLabels]
-        const icon = iconMap[page as keyof typeof iconMap]
-        if (label && icon) {
-          erpNestedItems.push({ path: `/${page}`, label, icon })
-        }
-      })
-      if (erpNestedItems.length > 0) {
-        cadastroSubItems.push({
-          path: '/cadastro-erp',
-          label: 'ERP',
-          icon: BarChart3,
-          subItems: erpNestedItems
         })
       }
 
