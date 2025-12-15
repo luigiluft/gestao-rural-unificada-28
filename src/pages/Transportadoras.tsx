@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Search, Truck, Edit, Trash2 } from "lucide-react"
+import { Plus, Search, Truck, Edit, Trash2, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { useTransportadoras, useCreateTransportadora, useUpdateTransportadora, useDeleteTransportadora } from "@/hooks/useTransportadoras"
+import { useBuscarTransportadoraPlataforma } from "@/hooks/useBuscarTransportadoraPlataforma"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useCliente } from "@/contexts/ClienteContext"
 
@@ -40,6 +41,10 @@ export default function Transportadoras() {
     is_propria: false, // Local UI only - not saved to database
     usarMesmoCnpj: false
   })
+  
+  // Estado para busca de transportadora por CNPJ
+  const [cnpjBusca, setCnpjBusca] = useState("")
+  const { buscarPorCnpj, limpar: limparBusca, buscando, resultado: transportadoraEncontrada } = useBuscarTransportadoraPlataforma()
 
   const { data: transportadoras, isLoading } = useTransportadoras(selectedCliente?.id)
   const createMutation = useCreateTransportadora()
@@ -115,6 +120,24 @@ export default function Transportadoras() {
       is_propria: false,
       usarMesmoCnpj: false
     })
+    setCnpjBusca("")
+    limparBusca()
+  }
+
+  const handleBuscarTransportadora = async () => {
+    if (!cnpjBusca.trim()) return
+    await buscarPorCnpj(cnpjBusca)
+  }
+
+  const handleUsarDadosEncontrados = () => {
+    if (!transportadoraEncontrada) return
+    setFormData({
+      ...formData,
+      nome: transportadoraEncontrada.razao_social || "",
+      cnpj: transportadoraEncontrada.cnpj || ""
+    })
+    limparBusca()
+    setCnpjBusca("")
   }
 
   if (isLoading) {
@@ -127,7 +150,7 @@ export default function Transportadoras() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Transportadoras</h1>
-          <p className="text-muted-foreground">Gerencie transportadoras terceiras</p>
+          <p className="text-muted-foreground">Gerencie transportadoras próprias e terceiras</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -206,7 +229,7 @@ export default function Transportadoras() {
             <Truck className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma transportadora cadastrada</h3>
             <p className="text-muted-foreground mb-4">
-              Comece cadastrando sua primeira transportadora terceira
+              Comece cadastrando sua primeira transportadora
             </p>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -239,6 +262,9 @@ export default function Transportadoras() {
                       usarMesmoCnpj: isPropria ? formData.usarMesmoCnpj : false,
                       cnpj: !isPropria && formData.usarMesmoCnpj ? "" : formData.cnpj
                     })
+                    // Limpa busca quando mudar tipo
+                    limparBusca()
+                    setCnpjBusca("")
                   }}
                 >
                   <SelectTrigger id="tipo">
@@ -271,6 +297,66 @@ export default function Transportadoras() {
                     }}
                   />
                 </div>
+              )}
+
+              {/* Busca por CNPJ - apenas para terceiras */}
+              {!formData.is_propria && !editingId && (
+                <Card className="col-span-2 p-4 space-y-3 border-dashed">
+                  <Label>Buscar Transportadora na Plataforma</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Pesquise por CNPJ para encontrar transportadoras cadastradas e suas tabelas de frete públicas
+                  </p>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Digite o CNPJ..." 
+                      value={cnpjBusca}
+                      onChange={(e) => setCnpjBusca(e.target.value)}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={handleBuscarTransportadora} 
+                      disabled={buscando || !cnpjBusca.trim()}
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      {buscando ? 'Buscando...' : 'Buscar'}
+                    </Button>
+                  </div>
+                  
+                  {transportadoraEncontrada && (
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span className="font-semibold text-green-800 dark:text-green-400">Encontrada!</span>
+                      </div>
+                      <p className="text-sm">{transportadoraEncontrada.razao_social}</p>
+                      <p className="text-sm text-muted-foreground">CNPJ: {transportadoraEncontrada.cnpj}</p>
+                      {transportadoraEncontrada.tem_tabelas_frete && (
+                        <p className="text-sm text-green-600 mt-1">✓ Possui tabelas de frete públicas</p>
+                      )}
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        className="mt-2"
+                        onClick={handleUsarDadosEncontrados}
+                      >
+                        Usar dados
+                      </Button>
+                    </div>
+                  )}
+
+                  {cnpjBusca && !buscando && !transportadoraEncontrada && (
+                    <div className="p-3 bg-muted rounded border">
+                      <div className="flex items-center gap-2">
+                        <X className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Nenhuma transportadora encontrada. Preencha os dados manualmente.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </Card>
               )}
 
               <div className="col-span-2">

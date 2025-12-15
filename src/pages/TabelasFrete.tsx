@@ -7,22 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, MapPin, Truck, DollarSign, Plus, Edit, Trash2, Route, Eye, Building2, Search, Globe, Check, X } from 'lucide-react';
+import { Calculator, Truck, Plus, Edit, Trash2, Eye, Building2, Globe } from 'lucide-react';
 import { useTabelasFrete, useDeleteTabelaFrete } from '@/hooks/useTabelasFrete';
 import { useTransportadoras } from '@/hooks/useTransportadoras';
 import { useSimuladorFrete } from '@/hooks/useSimuladorFrete';
-import { useBuscarTransportadoraPlataforma } from '@/hooks/useBuscarTransportadoraPlataforma';
 import { useNavigate } from 'react-router-dom';
 import { useCliente } from '@/contexts/ClienteContext';
-import { useToast } from '@/hooks/use-toast';
 
 const TabelasFrete = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { selectedCliente } = useCliente();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'todas' | 'proprias' | 'terceiras' | 'publicas'>('todas');
-  const [cnpjBusca, setCnpjBusca] = useState('');
 
   const {
     data: tabelasFrete = [],
@@ -35,13 +31,6 @@ const TabelasFrete = () => {
     setSimulacao,
     calcularFrete
   } = useSimuladorFrete();
-  const {
-    buscarPorCnpj,
-    limpar: limparBusca,
-    buscando,
-    resultado: transportadoraEncontrada,
-    tabelas: tabelasTransportadora
-  } = useBuscarTransportadoraPlataforma();
 
   const filteredTabelas = tabelasFrete.filter(tabela => {
     const matchesSearch = tabela.nome.toLowerCase().includes(searchTerm.toLowerCase());
@@ -59,33 +48,6 @@ const TabelasFrete = () => {
       await calcularFrete();
     } catch (error) {
       console.error('Erro ao calcular frete:', error);
-    }
-  };
-
-  const handleBuscarTransportadora = async () => {
-    if (!cnpjBusca.trim()) {
-      toast({
-        title: "CNPJ obrigatório",
-        description: "Informe o CNPJ da transportadora.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const resultado = await buscarPorCnpj(cnpjBusca);
-      if (!resultado) {
-        toast({
-          title: "Transportadora não encontrada",
-          description: "Nenhuma empresa encontrada com este CNPJ na plataforma.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro na busca",
-        description: "Ocorreu um erro ao buscar a transportadora.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -159,7 +121,6 @@ const TabelasFrete = () => {
       <Tabs defaultValue="tabelas" className="space-y-4">
         <TabsList>
           <TabsTrigger value="tabelas">Tabelas de Frete</TabsTrigger>
-          <TabsTrigger value="buscar">Buscar Transportadora</TabsTrigger>
           <TabsTrigger value="simulador">Simulador de Frete</TabsTrigger>
         </TabsList>
 
@@ -264,96 +225,6 @@ const TabelasFrete = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="buscar" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Buscar Transportadora na Plataforma</CardTitle>
-              <CardDescription>
-                Pesquise por CNPJ para encontrar transportadoras cadastradas e suas tabelas de frete públicas
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Input 
-                    placeholder="Digite o CNPJ da transportadora..." 
-                    value={cnpjBusca} 
-                    onChange={e => setCnpjBusca(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleBuscarTransportadora} disabled={buscando}>
-                  <Search className="h-4 w-4 mr-2" />
-                  {buscando ? 'Buscando...' : 'Buscar'}
-                </Button>
-                {transportadoraEncontrada && (
-                  <Button variant="outline" onClick={limparBusca}>
-                    Limpar
-                  </Button>
-                )}
-              </div>
-
-              {transportadoraEncontrada && (
-                <Card className="border-green-200 bg-green-50 dark:bg-green-900/10">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Check className="h-5 w-5 text-green-600" />
-                      <span className="font-semibold text-green-800 dark:text-green-400">Transportadora Encontrada</span>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <p><strong>Razão Social:</strong> {transportadoraEncontrada.razao_social}</p>
-                      <p><strong>CNPJ:</strong> {transportadoraEncontrada.cnpj}</p>
-                      <p>
-                        <strong>Tabelas Públicas:</strong>{' '}
-                        {transportadoraEncontrada.tem_tabelas_frete ? (
-                          <Badge variant="default">{tabelasTransportadora.length} disponíveis</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">Nenhuma tabela pública</span>
-                        )}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {tabelasTransportadora.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Tabelas de Frete Disponíveis:</h4>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Faixas</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tabelasTransportadora.map(tabela => (
-                        <TableRow key={tabela.id}>
-                          <TableCell className="font-medium">{tabela.nome}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              <Globe className="h-3 w-3 mr-1" />
-                              Pública
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{tabela.frete_faixas?.length || 0} faixas</TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm" onClick={() => navigate(`/tabela-frete/${tabela.id}`)}>
-                              <Eye className="h-4 w-4 mr-1" />
-                              Visualizar
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="simulador">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Formulário de Simulação */}
@@ -409,37 +280,38 @@ const TabelasFrete = () => {
               <CardContent>
                 {simulacao.resultado ? (
                   <div className="space-y-4">
-                    <div className="p-4 bg-muted rounded">
-                      <h4 className="font-semibold mb-2">Tabela Aplicada:</h4>
-                      <p className="text-sm">{simulacao.resultado.tabela_nome}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Valor Total</p>
+                        <p className="text-2xl font-bold">
+                          R$ {simulacao.resultado.valor_total.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Prazo</p>
+                        <p className="text-2xl font-bold">
+                          {simulacao.resultado.prazo_entrega} dias
+                        </p>
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Valor do Frete:</span>
-                        <span>R$ {simulacao.resultado.valor_frete.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Valor do Pedágio:</span>
-                        <span>R$ {simulacao.resultado.valor_pedagio.toFixed(2)}</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between font-semibold text-lg">
-                          <span>Valor Total:</span>
-                          <span>R$ {simulacao.resultado.valor_total.toFixed(2)}</span>
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Prazo de entrega: D+{simulacao.resultado.prazo_entrega} dias
+                      <p className="text-sm"><strong>Tabela:</strong> {simulacao.resultado.tabela_nome}</p>
+                      <p className="text-sm"><strong>Faixa:</strong> {simulacao.resultado.faixa_aplicada?.distancia_min} - {simulacao.resultado.faixa_aplicada?.distancia_max} km</p>
+                    </div>
+
+                    <div className="border-t pt-4 space-y-2">
+                      <p className="font-medium">Detalhamento:</p>
+                      <div className="text-sm space-y-1 text-muted-foreground">
+                        <p>Valor base: R$ {simulacao.resultado.valor_frete.toFixed(2)}</p>
+                        <p>Pedágio: R$ {simulacao.resultado.valor_pedagio.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center space-y-4 py-8">
-                    <Calculator className="h-16 w-16 mx-auto text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      Preencha os dados acima e clique em "Calcular Frete" para ver o resultado.
-                    </p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Preencha os dados e calcule o frete</p>
                   </div>
                 )}
               </CardContent>
