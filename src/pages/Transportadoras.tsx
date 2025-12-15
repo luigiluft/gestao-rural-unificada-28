@@ -36,12 +36,8 @@ export default function Transportadoras() {
     cnpj: "",
     contato: "",
     email: "",
-    especialidade: "",
-    regiao_atendimento: "",
-    valor_km: "",
-    valor_minimo: "",
     ativo: true,
-    is_propria: false,
+    is_propria: false, // Local UI only - not saved to database
     usarMesmoCnpj: false
   })
 
@@ -71,12 +67,7 @@ export default function Transportadoras() {
       cnpj: cnpjFinal,
       contato: formData.contato || null,
       email: formData.email || null,
-      especialidade: formData.especialidade || null,
-      regiao_atendimento: formData.regiao_atendimento || null,
-      valor_km: formData.valor_km ? parseFloat(formData.valor_km) : null,
-      valor_minimo: formData.valor_minimo ? parseFloat(formData.valor_minimo) : null,
       ativo: formData.ativo,
-      is_propria: formData.is_propria,
       cliente_id: selectedCliente?.id
     }
 
@@ -99,13 +90,9 @@ export default function Transportadoras() {
       cnpj: transportadora.cnpj,
       contato: transportadora.contato || "",
       email: transportadora.email || "",
-      especialidade: transportadora.especialidade || "",
-      regiao_atendimento: transportadora.regiao_atendimento || "",
-      valor_km: transportadora.valor_km?.toString() || "",
-      valor_minimo: transportadora.valor_minimo?.toString() || "",
       ativo: transportadora.ativo,
-      is_propria: transportadora.is_propria || false,
-      usarMesmoCnpj: transportadora.is_propria && cnpjIgual
+      is_propria: cnpjIgual, // Infer from CNPJ match
+      usarMesmoCnpj: cnpjIgual
     })
     setDialogOpen(true)
   }
@@ -124,10 +111,6 @@ export default function Transportadoras() {
       cnpj: "",
       contato: "",
       email: "",
-      especialidade: "",
-      regiao_atendimento: "",
-      valor_km: "",
-      valor_minimo: "",
       ativo: true,
       is_propria: false,
       usarMesmoCnpj: false
@@ -173,11 +156,8 @@ export default function Transportadoras() {
               <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>CNPJ</TableHead>
-              <TableHead>Tipo</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Especialidade</TableHead>
-              <TableHead>Região</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -192,15 +172,8 @@ export default function Transportadoras() {
                     </div>
                   </TableCell>
                   <TableCell>{transportadora.cnpj}</TableCell>
-                  <TableCell>
-                    <Badge variant={transportadora.is_propria ? "default" : "outline"}>
-                      {transportadora.is_propria ? "Própria" : "Terceira"}
-                    </Badge>
-                  </TableCell>
                   <TableCell>{transportadora.contato || "-"}</TableCell>
                   <TableCell>{transportadora.email || "-"}</TableCell>
-                  <TableCell>{transportadora.especialidade || "-"}</TableCell>
-                  <TableCell>{transportadora.regiao_atendimento || "-"}</TableCell>
                   <TableCell>
                     <Badge variant={transportadora.ativo ? "default" : "secondary"}>
                       {transportadora.ativo ? "Ativa" : "Inativa"}
@@ -334,44 +307,6 @@ export default function Transportadoras() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="especialidade">Especialidade</Label>
-                <Input
-                  id="especialidade"
-                  value={formData.especialidade}
-                  onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
-                  placeholder="Ex: Cargas frigoríficas"
-                />
-              </div>
-              <div>
-                <Label htmlFor="regiao">Região de Atendimento</Label>
-                <Input
-                  id="regiao"
-                  value={formData.regiao_atendimento}
-                  onChange={(e) => setFormData({ ...formData, regiao_atendimento: e.target.value })}
-                  placeholder="Ex: Sul, Sudeste"
-                />
-              </div>
-              <div>
-                <Label htmlFor="valor_km">Valor por KM (R$)</Label>
-                <Input
-                  id="valor_km"
-                  type="number"
-                  step="0.01"
-                  value={formData.valor_km}
-                  onChange={(e) => setFormData({ ...formData, valor_km: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="valor_minimo">Valor Mínimo (R$)</Label>
-                <Input
-                  id="valor_minimo"
-                  type="number"
-                  step="0.01"
-                  value={formData.valor_minimo}
-                  onChange={(e) => setFormData({ ...formData, valor_minimo: e.target.value })}
                 />
               </div>
             </div>
