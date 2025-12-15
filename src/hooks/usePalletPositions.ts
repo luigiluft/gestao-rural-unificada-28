@@ -21,48 +21,27 @@ export const usePalletPositions = (depositoId?: string) => {
   return useQuery({
     queryKey: ["pallet-positions", depositoId],
     queryFn: async () => {
-      // First, get pallet_positions with storage_positions filter
+      // Simplified query to avoid timeout - fetch pallet_positions with essential joins only
       let query = supabase
         .from("pallet_positions")
         .select(`
-          *,
+          id,
+          pallet_id,
+          posicao_id,
+          status,
+          alocado_em,
+          observacoes,
           entrada_pallets (
             id,
             numero_pallet,
             descricao,
             peso_total,
-            entrada_id,
-            entradas (
-              id,
-              deposito_id,
-              numero_nfe,
-              user_id
-            ),
-            entrada_pallet_itens (
-              id,
-              quantidade,
-              is_avaria,
-              entrada_itens (
-                id,
-                produto_id,
-                nome_produto,
-                lote,
-                data_validade,
-                unidade_comercial,
-                produtos (
-                  id,
-                  nome,
-                  codigo,
-                  unidade_medida
-                )
-              )
-            )
+            entrada_id
           ),
           storage_positions!inner (
             id,
             codigo,
-            deposito_id,
-            ativo
+            deposito_id
           )
         `)
         .eq("status", "alocado");
@@ -79,10 +58,67 @@ export const usePalletPositions = (depositoId?: string) => {
         throw error;
       }
       
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // Fetch additional data for pallets in separate query
+      const palletIds = data.map(d => d.pallet_id).filter(Boolean);
+      
+      if (palletIds.length === 0) {
+        return data;
+      }
+
+      // Fetch pallet items separately to avoid complex nested query
+      const { data: palletItems, error: itemsError } = await supabase
+        .from("entrada_pallet_itens")
+        .select(`
+          id,
+          pallet_id,
+          quantidade,
+          is_avaria,
+          entrada_itens (
+            id,
+            produto_id,
+            nome_produto,
+            lote,
+            data_validade,
+            unidade_comercial,
+            produtos (
+              id,
+              nome,
+              codigo,
+              unidade_medida
+            )
+          )
+        `)
+        .in("pallet_id", palletIds);
+
+      if (itemsError) {
+        console.error("Erro ao buscar pallet items:", itemsError);
+      }
+
+      // Merge items into pallets
+      const itemsByPalletId = (palletItems || []).reduce((acc, item) => {
+        if (!acc[item.pallet_id]) {
+          acc[item.pallet_id] = [];
+        }
+        acc[item.pallet_id].push(item);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      // Add items to each pallet position
+      const enrichedData = data.map(position => ({
+        ...position,
+        entrada_pallets: position.entrada_pallets ? {
+          ...position.entrada_pallets,
+          entrada_pallet_itens: itemsByPalletId[position.pallet_id] || []
+        } : null
+      }));
+      
       // Filter out any results that don't have the required nested data
-      const validData = (data || []).filter(item => 
+      const validData = enrichedData.filter(item => 
         item.entrada_pallets && 
-        item.entrada_pallets.entradas &&
         item.entrada_pallets.entrada_pallet_itens?.length > 0
       );
       
@@ -98,51 +134,30 @@ export const usePalletPositionsAvariados = (depositoId?: string) => {
   return useQuery({
     queryKey: ["pallet-positions-avariados", depositoId],
     queryFn: async () => {
+      // Simplified query to avoid timeout
       let query = supabase
         .from("pallet_positions")
         .select(`
-          *,
-          entrada_pallets!inner (
+          id,
+          pallet_id,
+          posicao_id,
+          status,
+          alocado_em,
+          observacoes,
+          entrada_pallets (
             id,
             numero_pallet,
             descricao,
             peso_total,
-            entrada_id,
-            entradas!inner (
-              id,
-              deposito_id,
-              numero_nfe,
-              user_id
-            ),
-            entrada_pallet_itens!inner (
-              id,
-              quantidade,
-              is_avaria,
-              entrada_itens (
-                id,
-                produto_id,
-                nome_produto,
-                lote,
-                data_validade,
-                unidade_comercial,
-                produtos (
-                  id,
-                  nome,
-                  codigo,
-                  unidade_medida
-                )
-              )
-            )
+            entrada_id
           ),
           storage_positions!inner (
             id,
             codigo,
-            deposito_id,
-            ativo
+            deposito_id
           )
         `)
-        .eq("status", "alocado")
-        .eq("entrada_pallets.entrada_pallet_itens.is_avaria", true);
+        .eq("status", "alocado");
 
       // Filtrar por deposito_id via storage_positions
       if (depositoId) {
@@ -152,7 +167,68 @@ export const usePalletPositionsAvariados = (depositoId?: string) => {
       const { data, error } = await query.order("alocado_em", { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // Fetch pallet items that have avaria
+      const palletIds = data.map(d => d.pallet_id).filter(Boolean);
+      
+      if (palletIds.length === 0) {
+        return [];
+      }
+
+      const { data: palletItems, error: itemsError } = await supabase
+        .from("entrada_pallet_itens")
+        .select(`
+          id,
+          pallet_id,
+          quantidade,
+          is_avaria,
+          entrada_itens (
+            id,
+            produto_id,
+            nome_produto,
+            lote,
+            data_validade,
+            unidade_comercial,
+            produtos (
+              id,
+              nome,
+              codigo,
+              unidade_medida
+            )
+          )
+        `)
+        .in("pallet_id", palletIds)
+        .eq("is_avaria", true);
+
+      if (itemsError) throw itemsError;
+      
+      // Only return positions that have avaria items
+      const palletIdsWithAvaria = new Set((palletItems || []).map(item => item.pallet_id));
+      
+      const itemsByPalletId = (palletItems || []).reduce((acc, item) => {
+        if (!acc[item.pallet_id]) {
+          acc[item.pallet_id] = [];
+        }
+        acc[item.pallet_id].push(item);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      // Filter to only positions with avaria and enrich with items
+      const enrichedData = data
+        .filter(position => palletIdsWithAvaria.has(position.pallet_id))
+        .map(position => ({
+          ...position,
+          entrada_pallets: position.entrada_pallets ? {
+            ...position.entrada_pallets,
+            entrada_pallet_itens: itemsByPalletId[position.pallet_id] || []
+          } : null
+        }));
+      
+      return enrichedData;
     },
     enabled: true,
   });
