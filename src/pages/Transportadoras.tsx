@@ -21,6 +21,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { useTransportadoras, useCreateTransportadora, useUpdateTransportadora, useDeleteTransportadora } from "@/hooks/useTransportadoras"
 import { LoadingState } from "@/components/ui/loading-state"
 import { useCliente } from "@/contexts/ClienteContext"
@@ -40,7 +41,8 @@ export default function Transportadoras() {
     valor_km: "",
     valor_minimo: "",
     ativo: true,
-    is_propria: false
+    is_propria: false,
+    usarMesmoCnpj: false
   })
 
   const { data: transportadoras, isLoading } = useTransportadoras(selectedCliente?.id)
@@ -53,12 +55,20 @@ export default function Transportadoras() {
     t.cnpj.includes(searchTerm)
   )
 
+  // Normaliza CNPJ removendo pontuação para comparação
+  const normalizeCnpj = (cnpj: string) => cnpj?.replace(/[^\d]/g, "") || ""
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Se usar mesmo CNPJ, usa o da empresa selecionada
+    const cnpjFinal = formData.is_propria && formData.usarMesmoCnpj 
+      ? (selectedCliente?.cpf_cnpj || formData.cnpj)
+      : formData.cnpj
+
     const data = {
       nome: formData.nome,
-      cnpj: formData.cnpj,
+      cnpj: cnpjFinal,
       contato: formData.contato || null,
       email: formData.email || null,
       especialidade: formData.especialidade || null,
@@ -80,6 +90,9 @@ export default function Transportadoras() {
   }
 
   const handleEdit = (transportadora: any) => {
+    // Verifica se o CNPJ da transportadora é igual ao da empresa para pré-ativar toggle
+    const cnpjIgual = normalizeCnpj(transportadora.cnpj) === normalizeCnpj(selectedCliente?.cpf_cnpj || "")
+    
     setEditingId(transportadora.id)
     setFormData({
       nome: transportadora.nome,
@@ -91,7 +104,8 @@ export default function Transportadoras() {
       valor_km: transportadora.valor_km?.toString() || "",
       valor_minimo: transportadora.valor_minimo?.toString() || "",
       ativo: transportadora.ativo,
-      is_propria: transportadora.is_propria || false
+      is_propria: transportadora.is_propria || false,
+      usarMesmoCnpj: transportadora.is_propria && cnpjIgual
     })
     setDialogOpen(true)
   }
@@ -115,7 +129,8 @@ export default function Transportadoras() {
       valor_km: "",
       valor_minimo: "",
       ativo: true,
-      is_propria: false
+      is_propria: false,
+      usarMesmoCnpj: false
     })
   }
 
@@ -242,7 +257,16 @@ export default function Transportadoras() {
                 <Label htmlFor="tipo">Tipo *</Label>
                 <Select
                   value={formData.is_propria ? "propria" : "terceira"}
-                  onValueChange={(value) => setFormData({ ...formData, is_propria: value === "propria" })}
+                  onValueChange={(value) => {
+                    const isPropria = value === "propria"
+                    setFormData({ 
+                      ...formData, 
+                      is_propria: isPropria,
+                      // Limpa toggle e CNPJ se mudar para terceira
+                      usarMesmoCnpj: isPropria ? formData.usarMesmoCnpj : false,
+                      cnpj: !isPropria && formData.usarMesmoCnpj ? "" : formData.cnpj
+                    })
+                  }}
                 >
                   <SelectTrigger id="tipo">
                     <SelectValue />
@@ -253,6 +277,28 @@ export default function Transportadoras() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.is_propria && selectedCliente?.cpf_cnpj && (
+                <div className="col-span-2 flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="space-y-1">
+                    <Label htmlFor="usarMesmoCnpj">Usar mesmo CNPJ da empresa</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedCliente?.razao_social} - {selectedCliente?.cpf_cnpj}
+                    </p>
+                  </div>
+                  <Switch
+                    id="usarMesmoCnpj"
+                    checked={formData.usarMesmoCnpj}
+                    onCheckedChange={(checked) => {
+                      setFormData({
+                        ...formData,
+                        usarMesmoCnpj: checked,
+                        cnpj: checked ? (selectedCliente?.cpf_cnpj || "") : ""
+                      })
+                    }}
+                  />
+                </div>
+              )}
 
               <div className="col-span-2">
                 <Label htmlFor="nome">Nome *</Label>
@@ -267,8 +313,9 @@ export default function Transportadoras() {
                 <Label htmlFor="cnpj">CNPJ *</Label>
                 <Input
                   id="cnpj"
-                  value={formData.cnpj}
+                  value={formData.is_propria && formData.usarMesmoCnpj ? (selectedCliente?.cpf_cnpj || "") : formData.cnpj}
                   onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                  disabled={formData.is_propria && formData.usarMesmoCnpj}
                   required
                 />
               </div>
