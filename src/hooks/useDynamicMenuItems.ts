@@ -312,26 +312,26 @@ export const useDynamicMenuItems = () => {
     const cadastroStructure = {
       // Páginas diretas
       directPages: [
-        'perfil',
-        'empresas',
         'usuarios',
         'funcionarios',
-        'locais-entrega',
         'franqueados',
         'produtores',
         'contratos',
         'contratos-franquias'
       ],
+      // Submenu Geral
+      geralPages: ['perfil', 'empresas'],
       // Submenu WMS
       wmsPages: ['franquias'],
       // Submenu TMS
-      tmsPages: ['tabelas-frete', 'transportadoras', 'motoristas', 'veiculos'],
+      tmsPages: ['tabelas-frete', 'transportadoras', 'motoristas', 'veiculos', 'locais-entrega'],
       // Submenu ERP
       erpPages: ['configurar-impostos', 'catalogo', 'perfis-funcionarios', 'subcontas', 'fornecedores', 'clientes']
     }
     
     const allCadastroPages = [
       ...cadastroStructure.directPages,
+      ...cadastroStructure.geralPages,
       ...cadastroStructure.wmsPages,
       ...cadastroStructure.tmsPages,
       ...cadastroStructure.erpPages
@@ -349,7 +349,7 @@ export const useDynamicMenuItems = () => {
       'rastreamento-wms'
     ]
 
-    // Páginas do TMS
+    // Páginas do TMS (sem veiculos, motoristas, transportadoras, tabelas-frete - ficam só em Cadastro)
     const tmsPages = [
       'remessas',
       'ctes',
@@ -358,10 +358,6 @@ export const useDynamicMenuItems = () => {
       'proof-of-delivery',
       'comprovantes',
       'ocorrencias',
-      'veiculos',
-      'motoristas',
-      'transportadoras',
-      'tabelas-frete',
       'tracking'
     ]
 
@@ -507,6 +503,26 @@ export const useDynamicMenuItems = () => {
           cadastroSubItems.push({ path: `/${page}`, label, icon })
         }
       })
+
+      // Submenu Geral dentro de Cadastro
+      const geralNestedItems: MenuItem[] = []
+      cadastroStructure.geralPages.forEach(page => {
+        const pageViewPermission = `${page}.view`
+        if (!permissions.includes(pageViewPermission as any)) return
+        const label = menuLabels[page as keyof typeof menuLabels]
+        const icon = iconMap[page as keyof typeof iconMap]
+        if (label && icon) {
+          geralNestedItems.push({ path: `/${page}`, label, icon })
+        }
+      })
+      if (geralNestedItems.length > 0) {
+        cadastroSubItems.push({
+          path: '/cadastro-geral',
+          label: 'Geral',
+          icon: FolderOpen,
+          subItems: geralNestedItems
+        })
+      }
 
       // Submenu WMS dentro de Cadastro
       const wmsNestedItems: MenuItem[] = []
