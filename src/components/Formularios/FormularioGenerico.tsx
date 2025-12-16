@@ -269,6 +269,8 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           tipo_complemento: dadosSaida.tipo_complemento || null,
           // Campo de transferência
           destinatario_transferencia_id: dadosSaida.destinatario_transferencia_id || null,
+          // Campo para cliente destinatário (venda B2B) - CRITICAL para fluxo interno
+          cliente_destinatario_id: dadosSaida.cliente_destinatario_id || null,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
