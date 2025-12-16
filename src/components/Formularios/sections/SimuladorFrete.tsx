@@ -7,6 +7,7 @@ import { useCalcularFreteMultiplasTabelas } from "@/hooks/useCalcularFreteMultip
 import { useProfile } from "@/hooks/useProfile"
 import { useLocaisEntregaUnificados } from "@/hooks/useLocaisEntregaUnificados"
 import { useAuth } from "@/contexts/AuthContext"
+import { useCliente } from "@/contexts/ClienteContext"
 import { Loader2, Calculator, MapPin, Building2, Tractor, MapPinned, PenLine } from "lucide-react"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
@@ -49,6 +50,7 @@ export function SimuladorFrete({
 }: SimuladorFreteProps) {
   const { user } = useAuth()
   const { data: profile } = useProfile()
+  const { selectedCliente } = useCliente()
   
   // Buscar locais de entrega unificados do cliente destinatário
   const targetClienteId = produtorDestinatarioId
@@ -158,14 +160,14 @@ export function SimuladorFrete({
       return
     }
 
-    if (!profile?.user_id) {
-      toast.error("Faça login para calcular frete")
+    if (!selectedCliente?.id) {
+      toast.error("Selecione uma empresa para calcular frete")
       return
     }
 
     try {
       const resultadosCalculo = await calcularFreteTodasTabelas(
-        profile.user_id,
+        selectedCliente.id,
         parseFloat(distancia),
         pesoTotal
       )
