@@ -97,13 +97,21 @@ const NovaTabelaFrete = () => {
   const transportadoraSelecionada = transportadorasAtivas.find(t => t.id === transportadoraId);
   const isPropria = transportadoraSelecionada && 
     normalizeCnpj(transportadoraSelecionada.cnpj) === normalizeCnpj(selectedCliente?.cpf_cnpj || "");
+  
+  // Verificar se a transportadora tem CNPJ próprio (diferente da empresa)
+  // Para tornar pública: precisa ser própria E ter CNPJ próprio (diferente da empresa principal)
+  const hasOwnCnpj = transportadoraSelecionada && 
+    normalizeCnpj(transportadoraSelecionada.cnpj) !== normalizeCnpj(selectedCliente?.cpf_cnpj || "");
+  
+  // Pode tornar pública apenas se for dono da transportadora E ela tiver CNPJ próprio
+  const canMakePublic = isPropria === false && hasOwnCnpj;
 
-  // Reset publica quando trocar para transportadora terceira
+  // Reset publica quando não pode tornar pública
   useEffect(() => {
-    if (!isPropria) {
+    if (!canMakePublic) {
       form.setValue("publica", false);
     }
-  }, [isPropria, form]);
+  }, [canMakePublic, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!selectedCliente) {
@@ -335,7 +343,7 @@ const NovaTabelaFrete = () => {
                 )}
               />
 
-              {isPropria && (
+              {canMakePublic && (
                 <FormField
                   control={form.control}
                   name="publica"
