@@ -5180,6 +5180,7 @@ export type Database = {
           data_inicio_janela: string | null
           data_saida: string
           deposito_id: string
+          destinatario_transferencia_id: string | null
           fazenda_id: string | null
           finalidade_nfe: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino: string | null
@@ -5234,6 +5235,7 @@ export type Database = {
           data_inicio_janela?: string | null
           data_saida: string
           deposito_id: string
+          destinatario_transferencia_id?: string | null
           fazenda_id?: string | null
           finalidade_nfe?: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino?: string | null
@@ -5288,6 +5290,7 @@ export type Database = {
           data_inicio_janela?: string | null
           data_saida?: string
           deposito_id?: string
+          destinatario_transferencia_id?: string | null
           fazenda_id?: string | null
           finalidade_nfe?: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino?: string | null
@@ -5348,6 +5351,13 @@ export type Database = {
             columns: ["deposito_id"]
             isOneToOne: false
             referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_destinatario_transferencia_id_fkey"
+            columns: ["destinatario_transferencia_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
