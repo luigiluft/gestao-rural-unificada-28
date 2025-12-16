@@ -941,7 +941,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       destinatario_cpf_cnpj: clienteDestino.cpf_cnpj,
       destinatario_nome: clienteDestino.razao_social,
       valor_total: saida.valor_total || 0,
-      status_aprovacao: 'pendente',
+      status_aprovacao: 'aguardando_conferencia',
       tipo_recebimento: 'edi_interno',
       saida_origem_id: saida.id,
       documento_fluxo_id: fluxo.id,
