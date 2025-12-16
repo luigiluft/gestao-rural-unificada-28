@@ -794,8 +794,34 @@ async function processarFluxoDocumentoInterno(supabase: any, userId: string, sai
 }
 
 async function detectarDestinatarioInterno(supabase: any, data: any) {
-  // Se é transferência, já temos o cliente destino
+  console.log('🔍 Detectando destinatário interno com dados:', {
+    cliente_destinatario_id: data.cliente_destinatario_id,
+    destinatario_transferencia_id: data.destinatario_transferencia_id,
+    produtor_destinatario_id: data.produtor_destinatario_id,
+    finalidade_nfe: data.finalidade_nfe
+  })
+  
+  // 1. PRIORITY: Se cliente_destinatario_id está definido (venda B2B), buscar diretamente
+  if (data.cliente_destinatario_id) {
+    console.log('✅ Buscando cliente pelo cliente_destinatario_id:', data.cliente_destinatario_id)
+    const { data: clienteDestino, error } = await supabase
+      .from('clientes')
+      .select('*, cliente_depositos(*)')
+      .eq('id', data.cliente_destinatario_id)
+      .eq('ativo', true)
+      .single()
+    
+    if (error) {
+      console.error('❌ Erro ao buscar cliente destinatário:', error)
+    } else if (clienteDestino) {
+      console.log('✅ Cliente destinatário encontrado:', clienteDestino.razao_social)
+      return clienteDestino
+    }
+  }
+  
+  // 2. Se é transferência, já temos o cliente destino
   if (data.finalidade_nfe === 'transferencia' && data.destinatario_transferencia_id) {
+    console.log('🔄 Transferência - buscando cliente destino:', data.destinatario_transferencia_id)
     const { data: clienteDestino } = await supabase
       .from('clientes')
       .select('*, cliente_depositos(*)')
@@ -805,12 +831,13 @@ async function detectarDestinatarioInterno(supabase: any, data: any) {
     return clienteDestino
   }
   
-  // Buscar pelo CPF/CNPJ do destinatário se existir
+  // 3. Buscar pelo CPF/CNPJ do destinatário se existir
   const cpfCnpjDestino = data.destinatario_cpf_cnpj || data.produtor_destinatario_cpf_cnpj
   
   if (!cpfCnpjDestino) {
     // Tentar buscar pelo produtor_destinatario_id se for um profile com cpf_cnpj
     if (data.produtor_destinatario_id) {
+      console.log('🔍 Buscando profile do produtor_destinatario_id:', data.produtor_destinatario_id)
       const { data: produtor } = await supabase
         .from('profiles')
         .select('cpf_cnpj')
@@ -818,6 +845,7 @@ async function detectarDestinatarioInterno(supabase: any, data: any) {
         .single()
       
       if (produtor?.cpf_cnpj) {
+        console.log('📋 Profile encontrado com CPF/CNPJ:', produtor.cpf_cnpj)
         const { data: clienteDestino } = await supabase
           .from('clientes')
           .select('*, cliente_depositos(*)')
@@ -825,14 +853,19 @@ async function detectarDestinatarioInterno(supabase: any, data: any) {
           .eq('ativo', true)
           .maybeSingle()
         
+        if (clienteDestino) {
+          console.log('✅ Cliente encontrado por CPF/CNPJ do profile:', clienteDestino.razao_social)
+        }
         return clienteDestino
       }
     }
+    console.log('ℹ️ Nenhum identificador de cliente encontrado')
     return null
   }
   
-  // Limpar CPF/CNPJ para comparação
+  // 4. Limpar CPF/CNPJ para comparação
   const cpfCnpjLimpo = cpfCnpjDestino.replace(/\D/g, '')
+  console.log('🔍 Buscando cliente por CPF/CNPJ:', cpfCnpjLimpo)
   
   // Buscar cliente pelo CPF/CNPJ
   const { data: clienteDestino } = await supabase
@@ -841,6 +874,10 @@ async function detectarDestinatarioInterno(supabase: any, data: any) {
     .or(`cpf_cnpj.eq.${cpfCnpjLimpo},cpf_cnpj.eq.${cpfCnpjDestino}`)
     .eq('ativo', true)
     .maybeSingle()
+  
+  if (clienteDestino) {
+    console.log('✅ Cliente encontrado por CPF/CNPJ:', clienteDestino.razao_social)
+  }
   
   return clienteDestino
 }

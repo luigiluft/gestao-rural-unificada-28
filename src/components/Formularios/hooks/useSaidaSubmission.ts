@@ -23,6 +23,16 @@ interface DadosSaida {
   frete_destino?: string
   valor_frete_calculado?: number
   prazo_entrega_calculado?: number
+  // Cliente destinatário para vendas B2B
+  cliente_destinatario_id?: string
+  // Campos de operação fiscal
+  finalidade_nfe?: string
+  nfe_referenciada_chave?: string
+  cfop?: string
+  gera_financeiro?: boolean
+  movimenta_estoque?: string
+  tipo_complemento?: string
+  destinatario_transferencia_id?: string
 }
 
 export function useSaidaSubmission() {
@@ -85,6 +95,16 @@ export function useSaidaSubmission() {
         frete_origem: dados.frete_origem || null,
         frete_destino: dados.frete_destino || null,
         valor_frete_calculado: dados.valor_frete_calculado || null,
+        // CRITICAL: Incluir cliente_destinatario_id para fluxo interno B2B
+        cliente_destinatario_id: dados.cliente_destinatario_id || null,
+        // Campos de operação fiscal
+        finalidade_nfe: dados.finalidade_nfe || 'normal',
+        nfe_referenciada_chave: dados.nfe_referenciada_chave || null,
+        cfop: dados.cfop || null,
+        gera_financeiro: dados.gera_financeiro ?? true,
+        movimenta_estoque: dados.movimenta_estoque || 'saida',
+        tipo_complemento: dados.tipo_complemento || null,
+        destinatario_transferencia_id: dados.destinatario_transferencia_id || null,
         itens: itens.map(item => ({
           user_id: user!.id,
           produto_id: item.produto_id,
