@@ -18,13 +18,13 @@ export const useCalcularFreteMultiplasTabelas = () => {
   const [calculando, setCalculando] = useState(false)
 
   const calcularFreteTodasTabelas = async (
-    franqueado_id: string,
+    cliente_id: string,
     distancia: number,
     peso: number
   ): Promise<ResultadoFreteTabela[]> => {
     setCalculando(true)
     try {
-      // Buscar TODAS as tabelas ativas do franqueado
+      // Buscar TODAS as tabelas ativas do cliente
       const { data: tabelas, error } = await supabase
         .from("tabelas_frete")
         .select(`
@@ -37,7 +37,7 @@ export const useCalcularFreteMultiplasTabelas = () => {
           frete_faixas (*)
         `)
         .eq("ativo", true)
-        .eq("franqueado_id", franqueado_id)
+        .eq("cliente_id", cliente_id)
         .order("nome")
 
       if (error) throw error
