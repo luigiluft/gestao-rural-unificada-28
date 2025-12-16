@@ -5168,6 +5168,7 @@ export type Database = {
       saidas: {
         Row: {
           cfop: string | null
+          cliente_destinatario_id: string | null
           cliente_filial_destino_id: string | null
           cliente_filial_origem_id: string | null
           cliente_origem_id: string | null
@@ -5223,6 +5224,7 @@ export type Database = {
         }
         Insert: {
           cfop?: string | null
+          cliente_destinatario_id?: string | null
           cliente_filial_destino_id?: string | null
           cliente_filial_origem_id?: string | null
           cliente_origem_id?: string | null
@@ -5278,6 +5280,7 @@ export type Database = {
         }
         Update: {
           cfop?: string | null
+          cliente_destinatario_id?: string | null
           cliente_filial_destino_id?: string | null
           cliente_filial_origem_id?: string | null
           cliente_origem_id?: string | null
@@ -5332,6 +5335,13 @@ export type Database = {
           viagem_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "saidas_cliente_destinatario_id_fkey"
+            columns: ["cliente_destinatario_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "saidas_cliente_origem_id_fkey"
             columns: ["cliente_origem_id"]
