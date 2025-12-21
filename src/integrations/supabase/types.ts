@@ -2250,6 +2250,7 @@ export type Database = {
           versao_aplicativo: string | null
           versao_nfe: string | null
           versao_processo: string | null
+          viagem_id: string | null
           xml_content: string | null
         }
         Insert: {
@@ -2388,6 +2389,7 @@ export type Database = {
           versao_aplicativo?: string | null
           versao_nfe?: string | null
           versao_processo?: string | null
+          viagem_id?: string | null
           xml_content?: string | null
         }
         Update: {
@@ -2526,6 +2528,7 @@ export type Database = {
           versao_aplicativo?: string | null
           versao_nfe?: string | null
           versao_processo?: string | null
+          viagem_id?: string | null
           xml_content?: string | null
         }
         Relationships: [
@@ -2548,6 +2551,13 @@ export type Database = {
             columns: ["saida_origem_id"]
             isOneToOne: false
             referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_viagem_id_fkey"
+            columns: ["viagem_id"]
+            isOneToOne: false
+            referencedRelation: "viagens"
             referencedColumns: ["id"]
           },
         ]
