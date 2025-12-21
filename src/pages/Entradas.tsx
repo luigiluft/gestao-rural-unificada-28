@@ -172,9 +172,9 @@ export default function Entradas() {
     const userCpfCnpjLimpo = profile.cpf_cnpj.replace(/\D/g, '');
     const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
     
-    // Cliente can approve if they are the destinatario AND status allows approval
+    // Cliente can approve if they are the destinatario AND status is aguardando_transporte (before transport starts)
     const isDestinatario = destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
-    const statusAguardando = entrada.status_aprovacao === 'aguardando_conferencia';
+    const statusAguardando = entrada.status_aprovacao === 'aguardando_transporte';
     
     return isDestinatario && statusAguardando;
   };
