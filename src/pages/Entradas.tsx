@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEntradas } from "@/hooks/useEntradas";
 import { useProducerEntradas } from "@/hooks/useProducerEntradas";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCliente } from "@/contexts/ClienteContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useProfile } from "@/hooks/useProfile";
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
@@ -152,31 +153,36 @@ export default function Entradas() {
   } = isCliente ? clienteQuery : adminFranqueadoQuery;
   const { user } = useAuth();
   const { data: profile } = useProfile();
+  const { selectedCliente, availableClientes } = useCliente();
   
   // Helper function to check if cliente can delete entrada
   const canClienteDeleteEntrada = (entrada: any) => {
-    if (!isCliente || !profile?.cpf_cnpj) return false;
+    if (!isCliente) return false;
     
-    const userCpfCnpjLimpo = profile.cpf_cnpj.replace(/\D/g, '');
-    const emitenteCnpjLimpo = entrada.emitente_cnpj?.replace(/\D/g, '') || '';
+    // Check if any of user's clientes matches emitente or destinatario
     const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
+    const emitenteCnpjLimpo = entrada.emitente_cnpj?.replace(/\D/g, '') || '';
     
-    // Cliente can delete if their CPF/CNPJ matches emitente or destinatario
-    return emitenteCnpjLimpo === userCpfCnpjLimpo || destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
+    return availableClientes.some(cliente => {
+      const clienteCpfCnpjLimpo = cliente.cpf_cnpj?.replace(/\D/g, '') || '';
+      return clienteCpfCnpjLimpo === emitenteCnpjLimpo || clienteCpfCnpjLimpo === destinatarioCpfCnpjLimpo;
+    });
   };
 
   // Helper function to check if cliente can approve/reject entrada (is the destinatario)
   const canClienteApproveEntrada = (entrada: any) => {
-    if (!isCliente || !profile?.cpf_cnpj) return false;
+    if (!isCliente) return false;
     
-    const userCpfCnpjLimpo = profile.cpf_cnpj.replace(/\D/g, '');
     const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
-    
-    // Cliente can approve if they are the destinatario AND status is aguardando_transporte (before transport starts)
-    const isDestinatario = destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
     const statusAguardando = entrada.status_aprovacao === 'aguardando_transporte';
     
-    return isDestinatario && statusAguardando;
+    if (!statusAguardando) return false;
+    
+    // Check if any of user's clientes is the destinatario
+    return availableClientes.some(cliente => {
+      const clienteCpfCnpjLimpo = cliente.cpf_cnpj?.replace(/\D/g, '') || '';
+      return clienteCpfCnpjLimpo === destinatarioCpfCnpjLimpo;
+    });
   };
 
   // Function to approve/reject entrada
