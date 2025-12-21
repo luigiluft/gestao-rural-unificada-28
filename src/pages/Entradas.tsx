@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download, PackageCheck } from "lucide-react";
+import { Plus, Eye, Edit, MoreHorizontal, Trash2, Package, Save, ChevronLeft, ChevronRight, GripVertical, Download, PackageCheck, Check, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,6 +163,53 @@ export default function Entradas() {
     
     // Cliente can delete if their CPF/CNPJ matches emitente or destinatario
     return emitenteCnpjLimpo === userCpfCnpjLimpo || destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
+  };
+
+  // Helper function to check if cliente can approve/reject entrada (is the destinatario)
+  const canClienteApproveEntrada = (entrada: any) => {
+    if (!isCliente || !profile?.cpf_cnpj) return false;
+    
+    const userCpfCnpjLimpo = profile.cpf_cnpj.replace(/\D/g, '');
+    const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
+    
+    // Cliente can approve if they are the destinatario AND status allows approval
+    const isDestinatario = destinatarioCpfCnpjLimpo === userCpfCnpjLimpo;
+    const statusAguardando = entrada.status_aprovacao === 'aguardando_conferencia';
+    
+    return isDestinatario && statusAguardando;
+  };
+
+  // Function to approve/reject entrada
+  const handleApproveRejectEntrada = async (entradaId: string, aprovado: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('entradas')
+        .update({
+          status_aprovacao: aprovado ? 'confirmado' : 'rejeitado',
+          data_aprovacao: new Date().toISOString(),
+          aprovado_por: user?.id
+        })
+        .eq('id', entradaId);
+
+      if (error) throw error;
+
+      toast({
+        title: aprovado ? "Entrada aprovada" : "Entrada rejeitada",
+        description: aprovado 
+          ? "A entrada foi confirmada com sucesso."
+          : "A entrada foi rejeitada."
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["entradas"] });
+      queryClient.invalidateQueries({ queryKey: ["producer-entradas"] });
+    } catch (error) {
+      console.error('Erro ao processar entrada:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao processar entrada.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Pagination logic
@@ -821,6 +868,30 @@ export default function Entradas() {
               >
                 <Trash2 className="h-3 w-3" />
               </Button>}
+
+            {/* Botões de aprovar/rejeitar para destinatários */}
+            {canClienteApproveEntrada(entrada) && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  onClick={() => handleApproveRejectEntrada(entrada.id, true)}
+                  title="Aprovar entrada"
+                >
+                  <Check className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleApproveRejectEntrada(entrada.id, false)}
+                  title="Rejeitar entrada"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </>
+            )}
           </div>;
       // Extended fields - simplified to prevent TypeScript errors
       default:
