@@ -521,6 +521,8 @@ async function approveSaida(supabase: any, userId: string, data: any) {
 async function allocateToViagem(supabase: any, userId: string, data: any) {
   const { viagemId, saidaId } = data
   
+  console.log('📦 Alocando saída à viagem:', { saidaId, viagemId })
+  
   const { data: saida, error } = await supabase
     .from('saidas')
     .update({
@@ -533,6 +535,24 @@ async function allocateToViagem(supabase: any, userId: string, data: any) {
     .single()
 
   if (error) throw error
+  
+  // Vincular entradas relacionadas (via documento_fluxo ou saida_origem_id) à viagem
+  // Isso permite sincronizar o status da entrada com a viagem
+  const { data: entradasRelacionadas, error: entradaError } = await supabase
+    .from('entradas')
+    .update({
+      viagem_id: viagemId,
+      updated_at: new Date().toISOString()
+    })
+    .eq('saida_origem_id', saidaId)
+    .select('id')
+  
+  if (entradaError) {
+    console.error('⚠️ Erro ao vincular entradas à viagem:', entradaError)
+  } else if (entradasRelacionadas?.length > 0) {
+    console.log('✅ Entradas vinculadas à viagem:', entradasRelacionadas.length)
+  }
+  
   return saida
 }
 
@@ -941,7 +961,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       destinatario_cpf_cnpj: clienteDestino.cpf_cnpj,
       destinatario_nome: clienteDestino.razao_social,
       valor_total: saida.valor_total || 0,
-      status_aprovacao: 'aguardando_conferencia',
+      status_aprovacao: 'aguardando_transporte',
       tipo_recebimento: 'edi_interno',
       saida_origem_id: saida.id,
       documento_fluxo_id: fluxo.id,

@@ -175,6 +175,22 @@ async function createViagemWithRemessas(supabase: any, userId: string, data: any
     await supabase.from('viagens').delete().eq('id', viagem.id)
     throw saidasError
   }
+  
+  // Vincular entradas relacionadas (via saida_origem_id) à viagem
+  const { data: entradasVinculadas, error: entradasError } = await supabase
+    .from('entradas')
+    .update({
+      viagem_id: viagem.id,
+      updated_at: new Date().toISOString()
+    })
+    .in('saida_origem_id', remessasIds)
+    .select('id')
+  
+  if (entradasError) {
+    console.error('⚠️ Erro ao vincular entradas à viagem:', entradasError)
+  } else if (entradasVinculadas?.length > 0) {
+    console.log('✅ Entradas vinculadas à viagem:', entradasVinculadas.length)
+  }
 
   return viagem
 }
@@ -217,6 +233,8 @@ async function updateViagemData(supabase: any, userId: string, data: any) {
 }
 
 async function iniciarViagem(supabase: any, userId: string, viagemId: string) {
+  console.log('🚀 Iniciando viagem:', viagemId)
+  
   const { data: viagem, error } = await supabase
     .from('viagens')
     .update({
@@ -229,10 +247,29 @@ async function iniciarViagem(supabase: any, userId: string, viagemId: string) {
     .single()
 
   if (error) throw error
+  
+  // Atualizar status das entradas vinculadas para "em_transferencia"
+  const { data: entradasAtualizadas, error: entradaError } = await supabase
+    .from('entradas')
+    .update({
+      status_aprovacao: 'em_transferencia',
+      updated_at: new Date().toISOString()
+    })
+    .eq('viagem_id', viagemId)
+    .select('id')
+  
+  if (entradaError) {
+    console.error('⚠️ Erro ao atualizar status das entradas:', entradaError)
+  } else if (entradasAtualizadas?.length > 0) {
+    console.log('✅ Entradas atualizadas para em_transferencia:', entradasAtualizadas.length)
+  }
+  
   return viagem
 }
 
 async function finalizarViagem(supabase: any, userId: string, viagemId: string) {
+  console.log('🏁 Finalizando viagem:', viagemId)
+  
   // Buscar motorista do usuário atual
   const { data: motorista, error: motoristaError } = await supabase
     .from('motoristas')
@@ -269,6 +306,23 @@ async function finalizarViagem(supabase: any, userId: string, viagemId: string) 
     .single()
 
   if (updateError) throw updateError
+  
+  // Atualizar status das entradas vinculadas para "aguardando_conferencia"
+  const { data: entradasAtualizadas, error: entradaError } = await supabase
+    .from('entradas')
+    .update({
+      status_aprovacao: 'aguardando_conferencia',
+      updated_at: new Date().toISOString()
+    })
+    .eq('viagem_id', viagemId)
+    .select('id')
+  
+  if (entradaError) {
+    console.error('⚠️ Erro ao atualizar status das entradas:', entradaError)
+  } else if (entradasAtualizadas?.length > 0) {
+    console.log('✅ Entradas atualizadas para aguardando_conferencia:', entradasAtualizadas.length)
+  }
+  
   return viagemAtualizada
 }
 
