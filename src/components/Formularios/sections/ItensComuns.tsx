@@ -320,7 +320,7 @@ export function ItensComunsSection({
               )}
 
               {/* Quantidade - 1 coluna */}
-              <div className={`col-span-12 md:col-span-1 space-y-1 ${tipo === 'saida' ? 'md:col-span-2' : ''}`}>
+              <div className="col-span-12 md:col-span-2 space-y-1">
                 <Label className="text-xs font-medium">Qtd</Label>
                 <Input
                   type="number"
@@ -335,7 +335,7 @@ export function ItensComunsSection({
               </div>
 
               {/* Unidade - 1 coluna */}
-              <div className={`col-span-12 md:col-span-1 space-y-1 ${tipo === 'saida' ? 'md:col-span-2' : ''}`}>
+              <div className="col-span-12 md:col-span-1 space-y-1">
                 <Label className="text-xs font-medium">Unidade</Label>
                 {tipo === 'saida' ? (
                   <Input
@@ -358,24 +358,21 @@ export function ItensComunsSection({
                 )}
               </div>
 
-
-              {/* Valor Unit. - 2 colunas (apenas para entrada) */}
-              {tipo === 'entrada' && (
-                <div className="col-span-12 md:col-span-2 space-y-1">
-                  <Label className="text-xs font-medium">Valor Unit.</Label>
-                  <Input
-                    type="number"
-                    placeholder="0,00"
-                    step="0.01"
-                    value={novoItem.valorUnitario || ''}
-                    onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
-                    className="w-full"
-                  />
-                </div>
-              )}
+              {/* Valor Unit. - 2 colunas (para entrada e saída) */}
+              <div className="col-span-12 md:col-span-2 space-y-1">
+                <Label className="text-xs font-medium">Valor Unit.</Label>
+                <Input
+                  type="number"
+                  placeholder="0,00"
+                  step="0.01"
+                  value={novoItem.valorUnitario || ''}
+                  onChange={(e) => onNovoItemChange('valorUnitario', parseFloat(e.target.value) || 0)}
+                  className="w-full"
+                />
+              </div>
 
               {/* Ação - 1 coluna */}
-              <div className={`col-span-12 md:col-span-1 space-y-1 ${tipo === 'saida' ? 'md:col-span-5' : ''}`}>
+              <div className="col-span-12 md:col-span-1 space-y-1">
                 <Label className="text-xs font-medium">Ação</Label>
                 <Button 
                   onClick={onAdicionarItem} 
@@ -398,9 +395,8 @@ export function ItensComunsSection({
                 <TableHead>Produto</TableHead>
                 {tipo === 'entrada' && <TableHead>Lote</TableHead>}
                 <TableHead>Quantidade</TableHead>
-                
-                {tipo === 'entrada' && <TableHead>Valor Unit.</TableHead>}
-                {tipo === 'entrada' && <TableHead>Valor Total</TableHead>}
+                <TableHead>Valor Unit.</TableHead>
+                <TableHead>Valor Total</TableHead>
                 <TableHead className="w-[50px]">Ação</TableHead>
               </TableRow>
             </TableHeader>
@@ -414,9 +410,8 @@ export function ItensComunsSection({
                   </TableCell>
                   {tipo === 'entrada' && <TableCell>{item.lote}</TableCell>}
                   <TableCell>{item.quantidade} {item.unidade}</TableCell>
-                  
-                  {tipo === 'entrada' && <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>}
-                  {tipo === 'entrada' && <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>}
+                  <TableCell>R$ {(item.valorUnitario || 0).toFixed(2)}</TableCell>
+                  <TableCell>R$ {(item.valorTotal || 0).toFixed(2)}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -432,7 +427,7 @@ export function ItensComunsSection({
           </Table>
         )}
 
-        {itens.length > 0 && tipo === 'entrada' && (
+        {itens.length > 0 && (
           <div className="flex justify-end">
             <div className="text-lg font-semibold">
               Total: R$ {calcularValorTotal().toFixed(2)}
