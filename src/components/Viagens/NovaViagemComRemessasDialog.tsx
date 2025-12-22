@@ -51,10 +51,11 @@ export const NovaViagemComRemessasDialog = ({
     }
   });
 
-  // Gera número da viagem automaticamente
+  // Gera número da viagem automaticamente usando timestamp para garantir unicidade
   useEffect(() => {
     if (open) {
-      const ultimoNumero = viagens.reduce((max, viagem) => {
+      // Usar timestamp para garantir número único mesmo se viagens não forem visíveis por RLS
+      const baseNumero = viagens.reduce((max, viagem) => {
         const match = viagem.numero?.match(/V(\d+)/);
         if (match) {
           const num = parseInt(match[1], 10);
@@ -63,7 +64,9 @@ export const NovaViagemComRemessasDialog = ({
         return max;
       }, 0);
       
-      const proximoNumero = `V${String(ultimoNumero + 1).padStart(3, '0')}`;
+      // Adiciona timestamp parcial para evitar colisões quando viagens não são visíveis
+      const timestamp = Date.now().toString().slice(-4);
+      const proximoNumero = `V${String(baseNumero + 1).padStart(3, '0')}-${timestamp}`;
       form.setValue('numero', proximoNumero);
     }
   }, [open, viagens, form]);
