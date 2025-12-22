@@ -26,11 +26,12 @@ export const useViagemComRemessas = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
-      // Get user's franquia (deposito)
-      const { data: franquia, error: franquiaError } = await supabase
-        .from('franquias')
-        .select('id')
-        .eq('master_franqueado_id', user.id)
+      // Get user's franquia via franquia_usuarios
+      const { data: franquiaUsuario, error: franquiaError } = await supabase
+        .from('franquia_usuarios')
+        .select('franquia_id')
+        .eq('user_id', user.id)
+        .eq('ativo', true)
         .maybeSingle();
         
       if (franquiaError) {
@@ -38,18 +39,21 @@ export const useViagemComRemessas = () => {
         throw franquiaError;
       }
       
-      if (!franquia) {
-        // Fallback: get any active franquia for admin users
-        const { data: fallbackFranquia } = await supabase
+      let depositoId = franquiaUsuario?.franquia_id;
+      
+      if (!depositoId) {
+        // Fallback: check if user is master franqueado
+        const { data: franquiaMaster } = await supabase
           .from('franquias')
           .select('id')
-          .eq('ativo', true)
-          .limit(1)
+          .eq('master_franqueado_id', user.id)
           .maybeSingle();
           
-        if (!fallbackFranquia) {
-          throw new Error('Nenhuma franquia encontrada');
-        }
+        depositoId = franquiaMaster?.id;
+      }
+      
+      if (!depositoId) {
+        throw new Error('Nenhuma franquia encontrada para o usuário');
       }
 
       // Get remessas details for statistics
@@ -73,7 +77,7 @@ export const useViagemComRemessas = () => {
         observacoes: viagemData.observacoes || null,
         motorista_id: viagemData.motorista_id || null,
         status: 'planejada',
-        deposito_id: franquia?.id || '',
+        deposito_id: depositoId,
         user_id: user.id,
         distancia_total: 0,
         distancia_percorrida: 0,
