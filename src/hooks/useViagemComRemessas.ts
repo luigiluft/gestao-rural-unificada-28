@@ -25,41 +25,11 @@ export const useViagemComRemessas = () => {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-      
-      // Get user's franquia via franquia_usuarios
-      const { data: franquiaUsuario, error: franquiaError } = await supabase
-        .from('franquia_usuarios')
-        .select('franquia_id')
-        .eq('user_id', user.id)
-        .eq('ativo', true)
-        .maybeSingle();
-        
-      if (franquiaError) {
-        console.error('❌ useViagemComRemessas: Error fetching franquia:', franquiaError)
-        throw franquiaError;
-      }
-      
-      let depositoId = franquiaUsuario?.franquia_id;
-      
-      if (!depositoId) {
-        // Fallback: check if user is master franqueado
-        const { data: franquiaMaster } = await supabase
-          .from('franquias')
-          .select('id')
-          .eq('master_franqueado_id', user.id)
-          .maybeSingle();
-          
-        depositoId = franquiaMaster?.id;
-      }
-      
-      if (!depositoId) {
-        throw new Error('Nenhuma franquia encontrada para o usuário');
-      }
 
-      // Get remessas details for statistics
+      // Get remessas details for statistics AND deposito_id
       const { data: remessas, error: remessasError } = await supabase
         .from('saidas')
-        .select('valor_total')
+        .select('valor_total, deposito_id')
         .in('id', remessasIds);
 
       if (remessasError) {
@@ -67,7 +37,24 @@ export const useViagemComRemessas = () => {
         throw remessasError;
       }
 
-      const valorTotal = remessas?.reduce((acc, r) => acc + (r.valor_total || 0), 0) || 0;
+      if (!remessas || remessas.length === 0) {
+        throw new Error('Nenhuma remessa encontrada');
+      }
+
+      // Use deposito_id from remessas - all remessas should be from the same deposito
+      const depositoId = remessas[0].deposito_id;
+      
+      if (!depositoId) {
+        throw new Error('Remessa sem depósito definido');
+      }
+
+      // Validate all remessas are from the same deposito
+      const allSameDeposito = remessas.every(r => r.deposito_id === depositoId);
+      if (!allSameDeposito) {
+        throw new Error('Todas as remessas devem ser do mesmo depósito');
+      }
+
+      const valorTotal = remessas.reduce((acc, r) => acc + (r.valor_total || 0), 0);
 
       const viagemDataComplete = {
         numero: viagemData.numero,
