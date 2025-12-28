@@ -750,18 +750,77 @@ async function processarFluxoDocumentoInterno(supabase: any, userId: string, sai
   
   console.log('✅ Destinatário interno encontrado:', destinatarioInterno.razao_social)
   
-  // Buscar cliente origem (quem está emitindo a saída)
+  // Buscar cliente origem (quem está emitindo a saída) - NÃO bloquear se não encontrar
   const { data: clienteOrigem } = await supabase
     .from('cliente_usuarios')
     .select('cliente_id, clientes(id, razao_social, cpf_cnpj)')
     .eq('user_id', userId)
     .eq('ativo', true)
     .limit(1)
-    .single()
+    .maybeSingle()
   
-  if (!clienteOrigem?.clientes) {
-    console.log('ℹ️ Usuário não tem cliente associado, pulando fluxo interno')
-    return null
+  // Obter dados do cliente origem de várias fontes possíveis
+  let clienteOrigemId = clienteOrigem?.clientes?.id || null
+  let clienteOrigemNome = clienteOrigem?.clientes?.razao_social || null
+  
+  // Se não encontrou cliente_usuarios, tentar buscar via franquia_usuarios
+  if (!clienteOrigemId) {
+    console.log('🔍 Buscando cliente origem via franquia_usuarios...')
+    const { data: franquiaUsuario } = await supabase
+      .from('franquia_usuarios')
+      .select('franquia_id, franquias(id, nome, cnpj)')
+      .eq('user_id', userId)
+      .eq('ativo', true)
+      .limit(1)
+      .maybeSingle()
+    
+    if (franquiaUsuario?.franquias?.cnpj) {
+      // Buscar cliente pelo CNPJ da franquia
+      const { data: clientePorCnpj } = await supabase
+        .from('clientes')
+        .select('id, razao_social')
+        .eq('cpf_cnpj', franquiaUsuario.franquias.cnpj.replace(/\D/g, ''))
+        .eq('ativo', true)
+        .maybeSingle()
+      
+      if (clientePorCnpj) {
+        clienteOrigemId = clientePorCnpj.id
+        clienteOrigemNome = clientePorCnpj.razao_social
+        console.log('✅ Cliente origem encontrado via franquia:', clienteOrigemNome)
+      }
+    }
+  }
+  
+  // Se ainda não encontrou, tentar criar um registro baseado nos dados da saída
+  if (!clienteOrigemId && saida.deposito_id) {
+    console.log('🔍 Buscando cliente origem via deposito_id...')
+    const { data: franquia } = await supabase
+      .from('franquias')
+      .select('id, nome, cnpj')
+      .eq('id', saida.deposito_id)
+      .single()
+    
+    if (franquia?.cnpj) {
+      const { data: clientePorCnpj } = await supabase
+        .from('clientes')
+        .select('id, razao_social')
+        .eq('cpf_cnpj', franquia.cnpj.replace(/\D/g, ''))
+        .eq('ativo', true)
+        .maybeSingle()
+      
+      if (clientePorCnpj) {
+        clienteOrigemId = clientePorCnpj.id
+        clienteOrigemNome = clientePorCnpj.razao_social
+        console.log('✅ Cliente origem encontrado via depósito:', clienteOrigemNome)
+      }
+    }
+  }
+  
+  // Se AINDA não encontrou cliente origem, não bloquear - criar com o destinatário como referência
+  if (!clienteOrigemId) {
+    console.log('⚠️ Cliente origem não encontrado, mas continuando com fluxo interno...')
+    // Usar o próprio destinatário como referência temporária ou deixar null
+    // A entrada será criada mesmo assim para o destinatário poder receber
   }
   
   // Determinar tipo de fluxo
@@ -774,12 +833,25 @@ async function processarFluxoDocumentoInterno(supabase: any, userId: string, sai
     tipoFluxo = 'devolucao'
   }
   
-  // Criar registro de fluxo
+  // Criar registro de fluxo - só se tiver cliente_origem_id
+  if (!clienteOrigemId) {
+    console.log('⚠️ Não foi possível criar documento_fluxo sem cliente origem, mas entrada será criada')
+    // Criar entrada diretamente sem o fluxo
+    const entrada = await criarEntradaAutomatica(supabase, saida, destinatarioInterno, null, data)
+    
+    // Se o destinatário usa operador logístico, notificar WMS
+    if (destinatarioInterno.operador_logistico_id) {
+      await notificarWMSOperador(supabase, entrada, destinatarioInterno.operador_logistico_id)
+    }
+    
+    return null
+  }
+  
   const { data: fluxo, error: fluxoError } = await supabase
     .from('documento_fluxo')
     .insert({
       saida_id: saida.id,
-      cliente_origem_id: clienteOrigem.clientes.id,
+      cliente_origem_id: clienteOrigemId,
       cliente_destino_id: destinatarioInterno.id,
       tipo_fluxo: tipoFluxo,
       chave_nfe: data.chave_nfe || null,
