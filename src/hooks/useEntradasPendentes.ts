@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useDepositoFilter } from "./useDepositoFilter"
+import { useCliente } from "@/contexts/ClienteContext"
+import { useUserRole } from "./useUserRole"
 
 interface DateRange {
   from?: Date
@@ -10,14 +12,16 @@ interface DateRange {
 
 export const useEntradasPendentes = (dateRange?: DateRange) => {
   const { depositoId, shouldFilter } = useDepositoFilter()
+  const { availableClientes } = useCliente()
+  const { isCliente } = useUserRole()
 
   return useQuery({
-    queryKey: ["entradas-pendentes", dateRange, depositoId],
+    queryKey: ["entradas-pendentes", dateRange, depositoId, isCliente, availableClientes?.map(c => c.id)],
     staleTime: 30000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
     queryFn: async () => {
       try {
-        console.log('🔍 Fetching entradas pendentes...')
+        console.log('🔍 Fetching entradas pendentes...', { isCliente, depositoId, shouldFilter })
         let query = supabase
           .from("entradas")
           .select(`
@@ -37,8 +41,21 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
           query = query.lte("data_entrada", dateRange.to.toISOString().split('T')[0])
         }
 
-        // Apply deposit filter if needed
-        if (shouldFilter && depositoId) {
+        // Para clientes: buscar entradas onde são destinatários (pelo cliente_id)
+        if (isCliente && availableClientes && availableClientes.length > 0) {
+          const clienteIds = availableClientes.map(c => c.id)
+          console.log('🏢 Filtrando entradas para clientes:', clienteIds)
+          query = query.in("cliente_id", clienteIds)
+          
+          // Se tem filtro de depósito ativo, aplicar também
+          if (shouldFilter && depositoId) {
+            console.log('🏭 Aplicando filtro de depósito para cliente:', depositoId)
+            query = query.eq("deposito_id", depositoId)
+          }
+        } 
+        // Para franqueados/operadores: filtrar por depósito
+        else if (shouldFilter && depositoId) {
+          console.log('🏭 Filtrando por depósito (franqueado):', depositoId)
           query = query.eq("deposito_id", depositoId)
         }
         
