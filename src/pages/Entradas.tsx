@@ -250,8 +250,13 @@ export default function Entradas() {
     category: "Básico"
   }, {
     key: "emitente_cnpj",
-    label: "CNPJ/CPF",
+    label: "CNPJ Emitente",
     visible: false,
+    category: "Básico"
+  }, {
+    key: "cliente_nome",
+    label: "Cliente",
+    visible: true,
     category: "Básico"
   }, {
     key: "data_emissao",
@@ -742,6 +747,8 @@ export default function Entradas() {
         return entrada.entrada_itens?.length || 0;
       case "deposito_nome":
         return entrada.franquias?.nome || "N/A";
+      case "cliente_nome":
+        return entrada.clientes?.razao_social || entrada.clientes?.nome_fantasia || entrada.destinatario_nome || "N/A";
       case "status_aprovacao":
         return <StatusBadge status={entrada.status_aprovacao || 'aguardando_transporte'} />;
       case "valor_total":

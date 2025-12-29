@@ -21,7 +21,8 @@ export const useEntradas = (dateRange?: { from?: Date; to?: Date }) => {
           entrada_itens(
             *,
             produtos(nome, unidade_medida)
-          )
+          ),
+          clientes(id, razao_social, nome_fantasia, cpf_cnpj)
         `)
 
       // Apply date filters if provided
