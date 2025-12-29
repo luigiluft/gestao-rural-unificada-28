@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
 
 import { useProfile, useFazendas } from "@/hooks/useProfile"
-import { useClientesParaSaida } from "@/hooks/useClientesParaSaida"
 import { ClienteDestinatarioSelector } from "../components/ClienteDestinatarioSelector"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
@@ -31,7 +30,6 @@ interface DadosSaidaProps {
 export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoMopp }: DadosSaidaProps) {
   const { user } = useAuth()
   const { data: profile } = useProfile()
-  const { data: clientesParaSaida = [] } = useClientesParaSaida()
   const diasUteisExpedicao = useDiasUteisExpedicao()
   const horariosRetirada = useHorariosRetirada()
   const janelaEntregaDias = useJanelaEntregaDias()
@@ -78,9 +76,8 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
     }
   }, [depositos, dados.depositoId])
 
-  // Get the target producer ID for farms
-  const targetClienteId = isCliente ? user?.id : dados.produtor_destinatario
-  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(targetClienteId)
+  // Get the fazendas for the client (deprecated produtor_destinatario - usamos cliente_destinatario_id)
+  const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(isCliente ? user?.id : undefined)
 
   // Hook para horários disponíveis
   const { data: horariosDisponiveis = [] } = useHorariosDisponiveis(
@@ -211,23 +208,12 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
             />
           )}
 
-          {/* Só mostrar seleção de produtor para usuários com acesso a franquias */}
+          {/* Para franqueados: selecionar cliente destinatário via useClientesParaSaida */}
           {hasFranchiseAccess && (
-            <div className="space-y-2">
-              <Label htmlFor="produtor_destinatario">Produtor Destinatário *</Label>
-              <Select value={dados.produtor_destinatario} onValueChange={(value) => handleChange('produtor_destinatario', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o produtor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientesParaSaida?.map((cliente) => (
-                    <SelectItem key={cliente.user_id} value={cliente.user_id}>
-                      {cliente.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ClienteDestinatarioSelector
+              value={dados.cliente_destinatario_id}
+              onChange={(clienteId) => handleChange('cliente_destinatario_id', clienteId)}
+            />
           )}
         </div>
 

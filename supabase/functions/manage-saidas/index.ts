@@ -1036,7 +1036,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       status_aprovacao: 'aguardando_transporte',
       tipo_recebimento: 'edi_interno',
       saida_origem_id: saida.id,
-      documento_fluxo_id: fluxo.id,
+      documento_fluxo_id: fluxo?.id || null,
       natureza_operacao: naturezaOperacao,
       observacoes: `Documento recebido automaticamente via EDI interno - Saída: ${saida.id}`
     })
@@ -1077,11 +1077,13 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
     }
   }
   
-  // Atualizar fluxo com entrada criada
-  await supabase
-    .from('documento_fluxo')
-    .update({ entrada_id: entrada.id })
-    .eq('id', fluxo.id)
+  // Atualizar fluxo com entrada criada (somente se fluxo existir)
+  if (fluxo?.id) {
+    await supabase
+      .from('documento_fluxo')
+      .update({ entrada_id: entrada.id })
+      .eq('id', fluxo.id)
+  }
   
   return entrada
 }
