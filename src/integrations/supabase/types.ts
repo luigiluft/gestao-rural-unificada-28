@@ -6091,6 +6091,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_table_preferences: {
+        Row: {
+          column_order: Json | null
+          column_widths: Json | null
+          columns: Json | null
+          created_at: string
+          id: string
+          records_per_page: number | null
+          table_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          column_order?: Json | null
+          column_widths?: Json | null
+          columns?: Json | null
+          created_at?: string
+          id?: string
+          records_per_page?: number | null
+          table_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          column_order?: Json | null
+          column_widths?: Json | null
+          columns?: Json | null
+          created_at?: string
+          id?: string
+          records_per_page?: number | null
+          table_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       veiculos: {
         Row: {
           ano: number | null
