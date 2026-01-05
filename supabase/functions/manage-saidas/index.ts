@@ -103,6 +103,50 @@ async function createSaida(supabase: any, userId: string, data: any) {
     tipo_complemento: data.tipo_complemento
   })
 
+  // 🔧 PARTE 1: Identificar e gravar cliente_origem_id automaticamente
+  let clienteOrigemId = data.cliente_origem_id || null
+  
+  if (!clienteOrigemId) {
+    console.log('🔍 Buscando cliente_origem_id automaticamente...')
+    
+    // Tentar via cliente_usuarios
+    const { data: clienteUsuario } = await supabase
+      .from('cliente_usuarios')
+      .select('cliente_id')
+      .eq('user_id', userId)
+      .eq('ativo', true)
+      .limit(1)
+      .maybeSingle()
+    
+    if (clienteUsuario?.cliente_id) {
+      clienteOrigemId = clienteUsuario.cliente_id
+      console.log('✅ Cliente origem encontrado via cliente_usuarios:', clienteOrigemId)
+    } else if (data.deposito_id) {
+      // Tentar via franquia -> cliente (pelo CNPJ)
+      const { data: franquia } = await supabase
+        .from('franquias')
+        .select('cnpj')
+        .eq('id', data.deposito_id)
+        .single()
+      
+      if (franquia?.cnpj) {
+        const cnpjLimpo = franquia.cnpj.replace(/\D/g, '')
+        const { data: cliente } = await supabase
+          .from('clientes')
+          .select('id')
+          .or(`cpf_cnpj.eq.${cnpjLimpo},cpf_cnpj.eq.${franquia.cnpj}`)
+          .eq('ativo', true)
+          .limit(1)
+          .maybeSingle()
+        
+        if (cliente?.id) {
+          clienteOrigemId = cliente.id
+          console.log('✅ Cliente origem encontrado via franquia/depósito:', clienteOrigemId)
+        }
+      }
+    }
+  }
+
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
 
@@ -111,6 +155,7 @@ async function createSaida(supabase: any, userId: string, data: any) {
   const saidaData = {
     user_id: userId,
     ...saidaFields,
+    cliente_origem_id: clienteOrigemId, // 🔧 Gravar cliente_origem_id
     peso_total: pesoTotal,
     status: 'separacao_pendente',
     status_aprovacao_produtor: userId === data.produtor_destinatario_id ? 'nao_aplicavel' : 'pendente',
@@ -983,6 +1028,75 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
     .select('*, produtos(id, nome, codigo, unidade_medida)')
     .eq('saida_id', saida.id)
   
+  // 🔧 PARTE 2: Buscar dados COMPLETOS do cliente origem (emitente)
+  let clienteOrigemData: any = null
+  
+  if (saida.cliente_origem_id) {
+    console.log('🔍 Buscando dados completos do cliente origem:', saida.cliente_origem_id)
+    const { data: clienteOrigem } = await supabase
+      .from('clientes')
+      .select(`
+        id, razao_social, nome_fantasia, cpf_cnpj, inscricao_estadual,
+        endereco_fiscal, numero_fiscal, complemento_fiscal, bairro_fiscal,
+        cidade_fiscal, estado_fiscal, cep_fiscal, telefone_comercial
+      `)
+      .eq('id', saida.cliente_origem_id)
+      .single()
+    
+    if (clienteOrigem) {
+      clienteOrigemData = clienteOrigem
+      console.log('✅ Dados do emitente encontrados:', clienteOrigem.razao_social)
+    }
+  }
+  
+  // Fallback: buscar via franquia/depósito se não encontrou cliente_origem_id
+  if (!clienteOrigemData && saida.deposito_id) {
+    console.log('🔍 Buscando dados do emitente via depósito:', saida.deposito_id)
+    const { data: franquia } = await supabase
+      .from('franquias')
+      .select('id, nome, cnpj, razao_social, inscricao_estadual, endereco, numero, complemento, bairro, cidade, estado, cep, telefone')
+      .eq('id', saida.deposito_id)
+      .single()
+    
+    if (franquia?.cnpj) {
+      // Primeiro tentar buscar cliente pelo CNPJ para dados mais completos
+      const cnpjLimpo = franquia.cnpj.replace(/\D/g, '')
+      const { data: clientePorCnpj } = await supabase
+        .from('clientes')
+        .select(`
+          id, razao_social, nome_fantasia, cpf_cnpj, inscricao_estadual,
+          endereco_fiscal, numero_fiscal, complemento_fiscal, bairro_fiscal,
+          cidade_fiscal, estado_fiscal, cep_fiscal, telefone_comercial
+        `)
+        .or(`cpf_cnpj.eq.${cnpjLimpo},cpf_cnpj.eq.${franquia.cnpj}`)
+        .eq('ativo', true)
+        .limit(1)
+        .maybeSingle()
+      
+      if (clientePorCnpj) {
+        clienteOrigemData = clientePorCnpj
+        console.log('✅ Dados do emitente encontrados via cliente/CNPJ:', clientePorCnpj.razao_social)
+      } else {
+        // Usar dados da própria franquia
+        clienteOrigemData = {
+          razao_social: franquia.razao_social || franquia.nome,
+          nome_fantasia: franquia.nome,
+          cpf_cnpj: franquia.cnpj,
+          inscricao_estadual: franquia.inscricao_estadual,
+          endereco_fiscal: franquia.endereco,
+          numero_fiscal: franquia.numero,
+          complemento_fiscal: franquia.complemento,
+          bairro_fiscal: franquia.bairro,
+          cidade_fiscal: franquia.cidade,
+          estado_fiscal: franquia.estado,
+          cep_fiscal: franquia.cep,
+          telefone_comercial: franquia.telefone
+        }
+        console.log('✅ Dados do emitente obtidos da franquia:', franquia.nome)
+      }
+    }
+  }
+  
   // Determinar depósito de destino
   let depositoDestinoId = null
   if (clienteDestino.operador_logistico_id) {
@@ -1018,7 +1132,17 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
     naturezaOperacao = 'Recebimento de devolução'
   }
   
-  // Criar entrada
+  // Montar endereço completo do emitente
+  const enderecoCompletoEmitente = clienteOrigemData ? 
+    [
+      clienteOrigemData.endereco_fiscal,
+      clienteOrigemData.numero_fiscal,
+      clienteOrigemData.bairro_fiscal,
+      clienteOrigemData.cidade_fiscal,
+      clienteOrigemData.estado_fiscal
+    ].filter(Boolean).join(', ') : null
+  
+  // Criar entrada com TODOS os dados do emitente
   const { data: entrada, error: entradaError } = await supabase
     .from('entradas')
     .insert({
@@ -1028,10 +1152,27 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       data_entrada: new Date().toISOString().split('T')[0],
       numero_nfe: saida.numero_nfe || `INT-${saida.id.substring(0, 8)}`,
       chave_nfe: saida.chave_nfe || null,
-      emitente_cnpj: data.cliente_origem_cnpj || '',
-      emitente_nome: data.cliente_origem_nome || 'Fornecedor Interno',
+      
+      // 🔧 Dados COMPLETOS do emitente
+      emitente_nome: clienteOrigemData?.razao_social || 'Fornecedor Interno',
+      emitente_nome_fantasia: clienteOrigemData?.nome_fantasia || null,
+      emitente_cnpj: clienteOrigemData?.cpf_cnpj || '',
+      emitente_ie: clienteOrigemData?.inscricao_estadual || null,
+      emitente_logradouro: clienteOrigemData?.endereco_fiscal || null,
+      emitente_numero: clienteOrigemData?.numero_fiscal || null,
+      emitente_complemento: clienteOrigemData?.complemento_fiscal || null,
+      emitente_bairro: clienteOrigemData?.bairro_fiscal || null,
+      emitente_municipio: clienteOrigemData?.cidade_fiscal || null,
+      emitente_uf: clienteOrigemData?.estado_fiscal || null,
+      emitente_cep: clienteOrigemData?.cep_fiscal || null,
+      emitente_telefone: clienteOrigemData?.telefone_comercial || null,
+      emitente_endereco: enderecoCompletoEmitente,
+      
+      // Dados do destinatário
       destinatario_cpf_cnpj: clienteDestino.cpf_cnpj,
       destinatario_nome: clienteDestino.razao_social,
+      
+      // Outros campos
       valor_total: saida.valor_total || 0,
       status_aprovacao: 'aguardando_transporte',
       tipo_recebimento: 'edi_interno',
@@ -1048,7 +1189,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
     throw entradaError
   }
   
-  console.log('✅ Entrada automática criada:', entrada.id)
+  console.log('✅ Entrada automática criada:', entrada.id, 'com emitente:', clienteOrigemData?.razao_social || 'N/A')
   
   // Criar itens da entrada
   if (saidaItens && saidaItens.length > 0) {
