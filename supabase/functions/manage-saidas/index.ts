@@ -1025,7 +1025,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
   // Buscar itens da saída
   const { data: saidaItens } = await supabase
     .from('saida_itens')
-    .select('*, produtos(id, nome, codigo, unidade_medida)')
+    .select('*, produtos(id, nome, codigo, unidade_medida, preco_unitario)')
     .eq('saida_id', saida.id)
   
   // 🔧 PARTE 2: Buscar dados COMPLETOS do cliente origem (emitente)
@@ -1097,6 +1097,34 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
     }
   }
   
+  // 🔧 PARTE 2B: Buscar dados da transportadora se existir
+  let transportadoraData: any = null
+  if (saida.transportadora_id) {
+    console.log('🚚 Buscando dados da transportadora:', saida.transportadora_id)
+    const { data: transportadora } = await supabase
+      .from('transportadoras')
+      .select('razao_social, cnpj, endereco, cidade, estado')
+      .eq('id', saida.transportadora_id)
+      .single()
+    
+    if (transportadora) {
+      transportadoraData = transportadora
+      console.log('✅ Dados da transportadora encontrados:', transportadora.razao_social)
+    }
+  }
+  
+  // 🔧 PARTE 3: Calcular totais dos itens
+  let valorProdutos = 0
+  let quantidadeVolumes = 0
+  
+  if (saidaItens && saidaItens.length > 0) {
+    for (const item of saidaItens) {
+      valorProdutos += (item.quantidade || 0) * (item.valor_unitario || 0)
+      quantidadeVolumes += item.quantidade || 0
+    }
+    console.log('📊 Totais calculados - Valor produtos:', valorProdutos, 'Volumes:', quantidadeVolumes)
+  }
+  
   // Determinar depósito de destino
   let depositoDestinoId = null
   if (clienteDestino.operador_logistico_id) {
@@ -1142,7 +1170,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       clienteOrigemData.estado_fiscal
     ].filter(Boolean).join(', ') : null
   
-  // Criar entrada com TODOS os dados do emitente
+  // Criar entrada com TODOS os dados mapeados da saída
   const { data: entrada, error: entradaError } = await supabase
     .from('entradas')
     .insert({
@@ -1152,6 +1180,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       data_entrada: new Date().toISOString().split('T')[0],
       numero_nfe: saida.numero_nfe || `INT-${saida.id.substring(0, 8)}`,
       chave_nfe: saida.chave_nfe || null,
+      serie: saida.serie_nfe || null,
       
       // 🔧 Dados COMPLETOS do emitente
       emitente_nome: clienteOrigemData?.razao_social || 'Fornecedor Interno',
@@ -1168,12 +1197,45 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       emitente_telefone: clienteOrigemData?.telefone_comercial || null,
       emitente_endereco: enderecoCompletoEmitente,
       
-      // Dados do destinatário
-      destinatario_cpf_cnpj: clienteDestino.cpf_cnpj,
-      destinatario_nome: clienteDestino.razao_social,
+      // 🔧 Dados COMPLETOS do destinatário
+      destinatario_nome: clienteDestino.razao_social || null,
+      destinatario_cpf_cnpj: clienteDestino.cpf_cnpj || null,
+      destinatario_ie: clienteDestino.inscricao_estadual || null,
+      destinatario_logradouro: clienteDestino.endereco_fiscal || null,
+      destinatario_numero: clienteDestino.numero_fiscal || null,
+      destinatario_complemento: clienteDestino.complemento_fiscal || null,
+      destinatario_bairro: clienteDestino.bairro_fiscal || null,
+      destinatario_municipio: clienteDestino.cidade_fiscal || null,
+      destinatario_uf: clienteDestino.estado_fiscal || null,
+      destinatario_cep: clienteDestino.cep_fiscal || null,
+      destinatario_telefone: clienteDestino.telefone_comercial || null,
+      
+      // 🔧 Dados da transportadora
+      transportadora_nome: transportadoraData?.razao_social || null,
+      transportadora_cnpj: transportadoraData?.cnpj || null,
+      transportadora_endereco: transportadoraData?.endereco || null,
+      transportadora_municipio: transportadoraData?.cidade || null,
+      transportadora_uf: transportadoraData?.estado || null,
+      
+      // 🔧 Dados de transporte (veículo/motorista)
+      veiculo_placa: saida.placa_veiculo || null,
+      nome_motorista: saida.nome_motorista || null,
+      
+      // 🔧 Pesos
+      peso_bruto: saida.peso_total || null,
+      peso_liquido: saida.peso_total || null,
+      
+      // 🔧 Valores e quantidades
+      valor_total: saida.valor_total || valorProdutos || 0,
+      valor_produtos: valorProdutos || null,
+      valor_frete: saida.valor_frete_calculado || null,
+      quantidade_volumes: quantidadeVolumes || null,
+      
+      // 🔧 Datas
+      dh_emissao: saida.data_saida ? new Date(saida.data_saida).toISOString() : null,
+      dh_saida_entrada: new Date().toISOString(),
       
       // Outros campos
-      valor_total: saida.valor_total || 0,
       status_aprovacao: 'aguardando_transporte',
       tipo_recebimento: 'edi_interno',
       saida_origem_id: saida.id,
