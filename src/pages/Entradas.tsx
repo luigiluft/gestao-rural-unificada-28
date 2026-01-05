@@ -17,6 +17,7 @@ import { FormularioEntrada } from "@/components/Entradas/FormularioEntrada";
 import { useToast } from "@/hooks/use-toast";
 import { useEntradas } from "@/hooks/useEntradas";
 import { useProducerEntradas } from "@/hooks/useProducerEntradas";
+import { useTablePreferences } from "@/hooks/useTablePreferences";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCliente } from "@/contexts/ClienteContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -225,8 +226,8 @@ export default function Entradas() {
   const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
   const paginatedEntradas = entradas?.slice(startIndex, endIndex) || [];
 
-  // Column visibility and width state with localStorage persistence
-  const [columns, setColumns] = useState<ColumnConfig[]>([
+  // Default columns configuration
+  const defaultColumns: ColumnConfig[] = [
   // Basic Info
   {
     key: "numero_nfe",
@@ -507,10 +508,33 @@ export default function Entradas() {
     label: "Obs. Franqueado",
     visible: false,
     category: "Sistema"
-  }]);
+  }];
 
-  // Column widths state
+  // Use table preferences hook for persistence in database
+  const { 
+    preferences: savedPreferences, 
+    isLoading: isLoadingPreferences,
+    savePreferences,
+    resetPreferences,
+    isSaving 
+  } = useTablePreferences({
+    tableName: 'entradas',
+    defaultColumns,
+    defaultRecordsPerPage: 10
+  })
+
+  // Column visibility and width state
+  const [columns, setColumns] = useState<ColumnConfig[]>(defaultColumns);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+
+  // Load saved preferences when they arrive
+  useEffect(() => {
+    if (savedPreferences && !isLoadingPreferences) {
+      setColumns(savedPreferences.columns)
+      setColumnWidths(savedPreferences.columnWidths)
+      setRecordsPerPage(savedPreferences.recordsPerPage)
+    }
+  }, [savedPreferences, isLoadingPreferences])
 
   // Resize functionality
   const [isResizing, setIsResizing] = useState(false);
@@ -521,50 +545,22 @@ export default function Entradas() {
     coordinateGetter: sortableKeyboardCoordinates
   }));
 
-  // Load saved table view on component mount
-  useEffect(() => {
-    const savedView = localStorage.getItem('entradas-table-view');
-    if (savedView) {
-      try {
-        const {
-          columns: savedColumns,
-          columnWidths: savedWidths,
-          recordsPerPage: savedRecordsPerPage,
-          columnOrder
-        } = JSON.parse(savedView);
-        if (savedColumns) {
-          // If we have a saved column order, apply it
-          if (columnOrder && Array.isArray(columnOrder)) {
-            const orderedColumns = columnOrder.map((key: string) => savedColumns.find((col: ColumnConfig) => col.key === key)).filter(Boolean);
-
-            // Add any new columns that weren't in the saved order
-            const newColumns = savedColumns.filter((col: ColumnConfig) => !columnOrder.includes(col.key));
-            setColumns([...orderedColumns, ...newColumns]);
-          } else {
-            setColumns(savedColumns);
-          }
-        }
-        if (savedWidths) setColumnWidths(savedWidths);
-        if (savedRecordsPerPage) setRecordsPerPage(savedRecordsPerPage);
-      } catch (error) {
-        console.error('Error loading saved table view:', error);
-      }
-    }
-  }, []);
-
-  // Save table view function
+  // Save table view function - now saves to database
   const saveTableView = () => {
-    const viewConfig = {
+    savePreferences({
       columns,
       columnWidths,
-      recordsPerPage,
-      columnOrder: columns.map(col => col.key)
-    };
-    localStorage.setItem('entradas-table-view', JSON.stringify(viewConfig));
-    toast({
-      title: "Visualização salva",
-      description: "As configurações da tabela foram salvas com sucesso."
-    });
+      columnOrder: columns.map(col => col.key),
+      recordsPerPage
+    })
+  };
+
+  // Reset to default function
+  const handleResetDefault = () => {
+    setColumns(defaultColumns)
+    setColumnWidths({})
+    setRecordsPerPage(10)
+    resetPreferences()
   };
 
   // Export to CSV function
@@ -995,15 +991,10 @@ export default function Entradas() {
                 ...col,
                 visible
               } : col));
-            }} onResetDefault={() => {
-              setColumns(prev => prev.map(col => ({
-                ...col,
-                visible: ["numero_nfe", "serie", "emitente_nome", "data_emissao", "itens_count", "status_aprovacao", "valor_total", "actions"].includes(col.key)
-              })));
-            }} />
-              <Button variant="outline" size="sm" onClick={saveTableView} className="gap-2">
+            }} onResetDefault={handleResetDefault} />
+              <Button variant="outline" size="sm" onClick={saveTableView} disabled={isSaving} className="gap-2">
                 <Save className="h-4 w-4" />
-                Salvar Visualização
+                {isSaving ? 'Salvando...' : 'Salvar Visualização'}
               </Button>
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
                 <Download className="h-4 w-4" />
