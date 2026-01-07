@@ -528,18 +528,22 @@ export default function Entradas() {
     defaultRecordsPerPage: 10
   })
 
+  // Track if initial preferences have been loaded
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+
   // Column visibility and width state
   const [columns, setColumns] = useState<ColumnConfig[]>(defaultColumns);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
 
-  // Load saved preferences when they arrive
+  // Load saved preferences ONLY on initial load (not on every re-fetch)
   useEffect(() => {
-    if (savedPreferences && !isLoadingPreferences) {
+    if (savedPreferences && !isLoadingPreferences && !preferencesLoaded) {
       setColumns(savedPreferences.columns)
       setColumnWidths(savedPreferences.columnWidths)
       setRecordsPerPage(savedPreferences.recordsPerPage)
+      setPreferencesLoaded(true)
     }
-  }, [savedPreferences, isLoadingPreferences])
+  }, [savedPreferences, isLoadingPreferences, preferencesLoaded])
 
   // Resize functionality
   const [isResizing, setIsResizing] = useState(false);
@@ -565,6 +569,7 @@ export default function Entradas() {
     setColumns(defaultColumns)
     setColumnWidths({})
     setRecordsPerPage(10)
+    setPreferencesLoaded(false) // Allow reload of preferences after reset
     resetPreferences()
   };
 
