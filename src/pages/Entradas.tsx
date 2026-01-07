@@ -38,6 +38,10 @@ const StatusBadge = ({
   status: string;
 }) => {
   const statusConfig = {
+    'pendente_aprovacao': {
+      label: 'Pendente Aprovação',
+      variant: 'outline' as const
+    },
     'aguardando_transporte': {
       label: 'Aguardando Transporte',
       variant: 'secondary' as const
@@ -175,9 +179,10 @@ export default function Entradas() {
     if (!isCliente) return false;
     
     const destinatarioCpfCnpjLimpo = entrada.destinatario_cpf_cnpj?.replace(/\D/g, '') || '';
-    const statusAguardando = entrada.status_aprovacao === 'aguardando_transporte';
+    // Only show approve/reject buttons for entries with status pendente_aprovacao
+    const statusPendente = entrada.status_aprovacao === 'pendente_aprovacao';
     
-    if (!statusAguardando) return false;
+    if (!statusPendente) return false;
     
     // Check if any of user's clientes is the destinatario
     return availableClientes.some(cliente => {
@@ -192,7 +197,7 @@ export default function Entradas() {
       const { error } = await supabase
         .from('entradas')
         .update({
-          status_aprovacao: aprovado ? 'confirmado' : 'rejeitado',
+          status_aprovacao: aprovado ? 'aguardando_transporte' : 'rejeitado',
           data_aprovacao: new Date().toISOString(),
           aprovado_por: user?.id
         })
