@@ -9,6 +9,8 @@ import { Plus, Trash2 } from "lucide-react"
 import { ItemGenerico, FormularioTipo } from "../types/formulario.types"
 import { useProductLatestPrice } from "@/hooks/useProductLatestPrice"
 import { useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
 interface ItensComunsProps {
   tipo: FormularioTipo
@@ -47,6 +49,44 @@ export function ItensComunsSection({
   console.log('tipo:', tipo)
   console.log('novoItem no render:', novoItem)
   console.log('depositoId:', depositoId)
+  
+  // Buscar quantidades reservadas em saídas pendentes/separação para descontar do disponível
+  const { data: quantidadesReservadas = [] } = useQuery({
+    queryKey: ["quantidades-reservadas-saida", depositoId],
+    queryFn: async () => {
+      if (!depositoId) return []
+      
+      const { data, error } = await supabase
+        .from("saida_itens")
+        .select(`
+          produto_id,
+          quantidade,
+          saidas!inner(
+            status,
+            deposito_id
+          )
+        `)
+        .eq("saidas.deposito_id", depositoId)
+        .in("saidas.status", ["separacao_pendente", "separado"])
+      
+      if (error) {
+        console.error("Erro ao buscar quantidades reservadas:", error)
+        return []
+      }
+      
+      // Agrupar por produto_id
+      const agrupado: Record<string, number> = {}
+      data?.forEach((item: any) => {
+        const prodId = item.produto_id
+        if (!agrupado[prodId]) agrupado[prodId] = 0
+        agrupado[prodId] += item.quantidade || 0
+      })
+      
+      console.log("📦 Quantidades reservadas em separação:", agrupado)
+      return Object.entries(agrupado).map(([produto_id, quantidade]) => ({ produto_id, quantidade }))
+    },
+    enabled: tipo === 'saida' && !!depositoId,
+  })
   
   // Buscar preço mais recente quando produto estiver selecionado
   const { data: latestPrice, isLoading: loadingPrice } = useProductLatestPrice(
@@ -105,20 +145,22 @@ export function ItensComunsSection({
           return acc
         }, {} as Record<string, any>)
         
-        // Calcular quantidade disponível descontando o que já está no carrinho
+        // Calcular quantidade disponível descontando o que já está no carrinho E saídas em separação
         const produtosComQuantidadeAtualizada = Object.values(agrupados).map((produto: any) => {
           const quantidadeUsadaNoCarrinho = calcularQuantidadeUsadaNoCarrinho(produto.id)
-          const quantidadeDisponivel = Math.max(0, produto.quantidade_total - quantidadeUsadaNoCarrinho)
+          const quantidadeReservadaSaida = quantidadesReservadas.find((r: any) => r.produto_id === produto.id)?.quantidade || 0
+          const quantidadeDisponivel = Math.max(0, produto.quantidade_total - quantidadeUsadaNoCarrinho - quantidadeReservadaSaida)
           
           return {
             ...produto,
             quantidade_total: quantidadeDisponivel,
             quantidade_original: produto.quantidade_total,
-            quantidade_carrinho: quantidadeUsadaNoCarrinho
+            quantidade_carrinho: quantidadeUsadaNoCarrinho,
+            quantidade_reservada: quantidadeReservadaSaida
           }
         }).filter((produto: any) => produto.quantidade_total > 0) // Ocultar produtos sem estoque disponível
         
-        console.log('Produtos disponíveis para saída (atualizado):', produtosComQuantidadeAtualizada)
+        console.log('Produtos disponíveis para saída (atualizado, com reservas descontadas):', produtosComQuantidadeAtualizada)
         return produtosComQuantidadeAtualizada
       }
       

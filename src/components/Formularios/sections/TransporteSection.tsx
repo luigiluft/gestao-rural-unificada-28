@@ -3,14 +3,17 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DadosSaida } from "../types/formulario.types"
+import { DadosSaida, ItemGenerico } from "../types/formulario.types"
 import { useTransportadoras } from "@/hooks/useTransportadoras"
 import { useCliente } from "@/contexts/ClienteContext"
-import { Truck, Building2, DollarSign } from "lucide-react"
+import { Truck, Building2, DollarSign, Settings2 } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface TransporteSectionProps {
   dados: DadosSaida
   onDadosChange: (dados: DadosSaida) => void
+  itens?: ItemGenerico[]
+  produtosInfo?: Array<{ id: string; package_capacity?: number; containers_per_package?: number }>
 }
 
 const MODALIDADES_FRETE = [
@@ -20,9 +23,59 @@ const MODALIDADES_FRETE = [
   { value: '9', label: '9 - Sem Frete' }
 ]
 
-export function TransporteSection({ dados, onDadosChange }: TransporteSectionProps) {
+export function TransporteSection({ dados, onDadosChange, itens = [], produtosInfo = [] }: TransporteSectionProps) {
   const { selectedCliente } = useCliente()
   const { data: transportadoras = [] } = useTransportadoras(selectedCliente?.id)
+  const [multiplicadorPesoBruto, setMultiplicadorPesoBruto] = useState(1.2)
+
+  // Calcular quantidade de volumes e pesos automaticamente a partir dos itens
+  useEffect(() => {
+    if (itens.length === 0) return
+
+    let totalVolumes = 0
+    let totalPesoLiquido = 0
+
+    itens.forEach(item => {
+      const produto = produtosInfo.find(p => p.id === item.produto_id)
+      const packageCapacity = produto?.package_capacity || 10 // default 10kg
+      
+      // Quantidade de volumes = quantidade / package_capacity
+      const volumes = Math.ceil(item.quantidade / packageCapacity)
+      totalVolumes += volumes
+      
+      // Peso líquido = quantidade total (assumindo unidade em kg)
+      totalPesoLiquido += item.quantidade || 0
+    })
+
+    const totalPesoBruto = totalPesoLiquido * multiplicadorPesoBruto
+
+    // Atualizar somente se os valores mudaram significativamente
+    if (
+      dados.quantidade_volumes !== totalVolumes ||
+      Math.abs((dados.peso_liquido || 0) - totalPesoLiquido) > 0.001 ||
+      Math.abs((dados.peso_bruto || 0) - totalPesoBruto) > 0.001
+    ) {
+      onDadosChange({
+        ...dados,
+        quantidade_volumes: totalVolumes,
+        peso_liquido: totalPesoLiquido,
+        peso_bruto: totalPesoBruto
+      })
+    }
+  }, [itens, produtosInfo, multiplicadorPesoBruto])
+
+  // Atualizar peso bruto quando multiplicador muda
+  const handleMultiplicadorChange = (value: string) => {
+    const mult = parseFloat(value) || 1.2
+    setMultiplicadorPesoBruto(mult)
+    
+    if (dados.peso_liquido) {
+      onDadosChange({
+        ...dados,
+        peso_bruto: dados.peso_liquido * mult
+      })
+    }
+  }
 
   const handleModalidadeChange = (value: string) => {
     const modalidade = value as '0' | '1' | '2' | '9'
@@ -53,10 +106,20 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
 
   const handleValorChange = (field: 'valor_frete' | 'valor_seguro' | 'peso_bruto' | 'peso_liquido', value: string) => {
     const numValue = parseFloat(value) || 0
-    onDadosChange({
-      ...dados,
-      [field]: numValue
-    })
+    
+    // Se peso líquido muda, recalcular peso bruto
+    if (field === 'peso_liquido') {
+      onDadosChange({
+        ...dados,
+        peso_liquido: numValue,
+        peso_bruto: numValue * multiplicadorPesoBruto
+      })
+    } else {
+      onDadosChange({
+        ...dados,
+        [field]: numValue
+      })
+    }
   }
 
   const handleQuantidadeVolumesChange = (value: string) => {
@@ -187,8 +250,9 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
           <div className="flex items-center gap-2 mb-3">
             <Truck className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Volumes e Peso</span>
+            <span className="text-xs text-muted-foreground ml-auto">(calculado automaticamente dos itens)</span>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantidade_volumes">Qtd. Volumes</Label>
               <Input
@@ -199,18 +263,7 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
                 placeholder="0"
                 value={dados.quantidade_volumes || ''}
                 onChange={(e) => handleQuantidadeVolumesChange(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="peso_bruto">Peso Bruto (kg)</Label>
-              <Input
-                id="peso_bruto"
-                type="number"
-                step="0.001"
-                min="0"
-                placeholder="0,000"
-                value={dados.peso_bruto || ''}
-                onChange={(e) => handleValorChange('peso_bruto', e.target.value)}
+                className="bg-muted/30"
               />
             </div>
             <div className="space-y-2">
@@ -223,6 +276,36 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
                 placeholder="0,000"
                 value={dados.peso_liquido || ''}
                 onChange={(e) => handleValorChange('peso_liquido', e.target.value)}
+                className="bg-muted/30"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="peso_bruto">Peso Bruto (kg)</Label>
+              <Input
+                id="peso_bruto"
+                type="number"
+                step="0.001"
+                min="0"
+                placeholder="0,000"
+                value={dados.peso_bruto || ''}
+                onChange={(e) => handleValorChange('peso_bruto', e.target.value)}
+                className="bg-muted/30"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="multiplicador" className="flex items-center gap-1">
+                <Settings2 className="h-3 w-3" />
+                Multiplicador
+              </Label>
+              <Input
+                id="multiplicador"
+                type="number"
+                step="0.1"
+                min="1"
+                max="2"
+                placeholder="1.2"
+                value={multiplicadorPesoBruto}
+                onChange={(e) => handleMultiplicadorChange(e.target.value)}
               />
             </div>
           </div>
@@ -233,6 +316,7 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Valores</span>
+            <span className="text-xs text-muted-foreground ml-auto">(calculado no simulador de frete abaixo)</span>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -245,6 +329,7 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
                 placeholder="0,00"
                 value={dados.valor_frete || ''}
                 onChange={(e) => handleValorChange('valor_frete', e.target.value)}
+                className="bg-muted/30"
               />
             </div>
             <div className="space-y-2">
@@ -257,6 +342,7 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
                 placeholder="0,00"
                 value={dados.valor_seguro || ''}
                 onChange={(e) => handleValorChange('valor_seguro', e.target.value)}
+                className="bg-muted/30"
               />
             </div>
           </div>

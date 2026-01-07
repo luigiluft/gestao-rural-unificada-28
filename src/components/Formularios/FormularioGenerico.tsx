@@ -362,6 +362,12 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           <TransporteSection
             dados={dados as DadosSaida}
             onDadosChange={setDados}
+            itens={itens}
+            produtosInfo={estoque.map((e: any) => ({
+              id: e.produto_id,
+              package_capacity: e.produtos?.package_capacity || 10,
+              containers_per_package: e.produtos?.containers_per_package || 1
+            }))}
           />
         </>
       )}
