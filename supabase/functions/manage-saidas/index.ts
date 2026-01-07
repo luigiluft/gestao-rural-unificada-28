@@ -147,6 +147,29 @@ async function createSaida(supabase: any, userId: string, data: any) {
     }
   }
 
+  // 🔧 PARTE 1B: Buscar dados COMPLETOS do cliente destinatário
+  let clienteDestinatarioData: any = null
+  
+  if (data.cliente_destinatario_id) {
+    console.log('🔍 Buscando dados completos do cliente destinatário:', data.cliente_destinatario_id)
+    const { data: clienteDestino, error: clienteError } = await supabase
+      .from('clientes')
+      .select(`
+        id, razao_social, nome_fantasia, cpf_cnpj, inscricao_estadual,
+        endereco_fiscal, numero_fiscal, complemento_fiscal, bairro_fiscal,
+        cidade_fiscal, estado_fiscal, cep_fiscal, telefone_comercial, email_comercial
+      `)
+      .eq('id', data.cliente_destinatario_id)
+      .single()
+    
+    if (clienteError) {
+      console.error('⚠️ Erro ao buscar cliente destinatário:', clienteError)
+    } else if (clienteDestino) {
+      clienteDestinatarioData = clienteDestino
+      console.log('✅ Dados do destinatário encontrados:', clienteDestino.razao_social)
+    }
+  }
+
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
 
@@ -159,6 +182,19 @@ async function createSaida(supabase: any, userId: string, data: any) {
     peso_total: pesoTotal,
     status: 'separacao_pendente',
     status_aprovacao_produtor: userId === data.produtor_destinatario_id ? 'nao_aplicavel' : 'pendente',
+    // 🔧 GRAVAR DADOS COMPLETOS DO DESTINATÁRIO
+    destinatario_nome: clienteDestinatarioData?.razao_social || null,
+    destinatario_cpf_cnpj: clienteDestinatarioData?.cpf_cnpj || null,
+    destinatario_ie: clienteDestinatarioData?.inscricao_estadual || null,
+    destinatario_logradouro: clienteDestinatarioData?.endereco_fiscal || null,
+    destinatario_numero: clienteDestinatarioData?.numero_fiscal || null,
+    destinatario_complemento: clienteDestinatarioData?.complemento_fiscal || null,
+    destinatario_bairro: clienteDestinatarioData?.bairro_fiscal || null,
+    destinatario_municipio: clienteDestinatarioData?.cidade_fiscal || null,
+    destinatario_uf: clienteDestinatarioData?.estado_fiscal || null,
+    destinatario_cep: clienteDestinatarioData?.cep_fiscal || null,
+    destinatario_telefone: clienteDestinatarioData?.telefone_comercial || null,
+    destinatario_email: clienteDestinatarioData?.email_comercial || null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
