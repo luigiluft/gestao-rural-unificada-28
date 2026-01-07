@@ -78,63 +78,83 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { exportToCSV } from "@/utils/csvExport";
 
-// Default columns configuration
-const defaultColumns: ColumnConfig[] = [{
-  key: "id",
-  label: "ID",
-  visible: true,
-  category: "Identificação"
-}, {
-  key: "origem",
-  label: "Origem",
-  visible: true,
-  category: "Identificação"
-}, {
-  key: "criadoPor",
-  label: "Criado por",
-  visible: true,
-  category: "Identificação"
-}, {
-  key: "destinatario",
-  label: "Destinatário",
-  visible: true,
-  category: "Destino"
-}, {
-  key: "produtos",
-  label: "Produtos",
-  visible: true,
-  category: "Produtos"
-}, {
-  key: "data",
-  label: "Data",
-  visible: true,
-  category: "Data"
-}, {
-  key: "tipo",
-  label: "Tipo",
-  visible: true,
-  category: "Classificação"
-}, {
-  key: "status",
-  label: "Status",
-  visible: true,
-  category: "Status"
-}, {
-  key: "aprovacao",
-  label: "Aprovação",
-  visible: true,
-  category: "Status"
-}, {
-  key: "valorTotal",
-  label: "Valor Total",
-  visible: true,
-  category: "Financeiro"
-}, {
-  key: "acoes",
-  label: "Ações",
-  visible: true,
-  category: "Ações"
-}];
+// Default columns configuration - 53 columns matching Entradas
+const defaultColumns: ColumnConfig[] = [
+  // Básico
+  { key: "id", label: "ID", visible: true, category: "Básico" },
+  { key: "numero_nfe", label: "NFe", visible: false, category: "Básico" },
+  { key: "serie_nfe", label: "Série", visible: false, category: "Básico" },
+  { key: "chave_nfe", label: "Chave", visible: false, category: "Básico" },
+  { key: "natureza_operacao", label: "Operação", visible: false, category: "Básico" },
+  { key: "cfop", label: "CFOP", visible: false, category: "Básico" },
+  { key: "finalidade_nfe", label: "Finalidade", visible: false, category: "Básico" },
+  { key: "origem", label: "Origem", visible: true, category: "Básico" },
+  { key: "criadoPor", label: "Criado por", visible: true, category: "Básico" },
+  { key: "deposito", label: "Depósito", visible: true, category: "Básico" },
+  { key: "produtos", label: "Produtos", visible: true, category: "Básico" },
+  { key: "status", label: "Status", visible: true, category: "Básico" },
+  { key: "aprovacao", label: "Aprovação", visible: true, category: "Básico" },
+  { key: "acoes", label: "Ações", visible: true, category: "Básico" },
+  // Emitente
+  { key: "emitente_nome", label: "Nome", visible: false, category: "Emitente" },
+  { key: "emitente_nome_fantasia", label: "Nome Fantasia", visible: false, category: "Emitente" },
+  { key: "emitente_cnpj", label: "CNPJ", visible: false, category: "Emitente" },
+  { key: "emitente_ie", label: "IE", visible: false, category: "Emitente" },
+  { key: "emitente_logradouro", label: "Endereço", visible: false, category: "Emitente" },
+  { key: "emitente_municipio", label: "Município", visible: false, category: "Emitente" },
+  { key: "emitente_uf", label: "UF", visible: false, category: "Emitente" },
+  { key: "emitente_cep", label: "CEP", visible: false, category: "Emitente" },
+  { key: "emitente_telefone", label: "Telefone", visible: false, category: "Emitente" },
+  // Destinatário
+  { key: "destinatario", label: "Destinatário", visible: true, category: "Destinatário" },
+  { key: "destinatario_cpf_cnpj", label: "CPF/CNPJ", visible: false, category: "Destinatário" },
+  { key: "destinatario_ie", label: "IE", visible: false, category: "Destinatário" },
+  { key: "destinatario_logradouro", label: "Endereço", visible: false, category: "Destinatário" },
+  { key: "destinatario_municipio", label: "Município", visible: false, category: "Destinatário" },
+  { key: "destinatario_uf", label: "UF", visible: false, category: "Destinatário" },
+  { key: "destinatario_cep", label: "CEP", visible: false, category: "Destinatário" },
+  { key: "destinatario_telefone", label: "Telefone", visible: false, category: "Destinatário" },
+  // Entrega
+  { key: "entrega_nome", label: "Local Entrega", visible: false, category: "Entrega" },
+  { key: "entrega_logradouro", label: "Endereço", visible: false, category: "Entrega" },
+  { key: "entrega_municipio", label: "Município", visible: false, category: "Entrega" },
+  { key: "entrega_uf", label: "UF", visible: false, category: "Entrega" },
+  { key: "entrega_cep", label: "CEP", visible: false, category: "Entrega" },
+  // Transporte
+  { key: "modalidade_frete", label: "Modalidade Frete", visible: false, category: "Transporte" },
+  { key: "transportadora_nome", label: "Transportadora", visible: false, category: "Transporte" },
+  { key: "transportadora_cnpj", label: "CNPJ Transp.", visible: false, category: "Transporte" },
+  { key: "placa_veiculo", label: "Placa", visible: false, category: "Transporte" },
+  { key: "uf_veiculo", label: "UF Veículo", visible: false, category: "Transporte" },
+  { key: "nome_motorista", label: "Motorista", visible: false, category: "Transporte" },
+  { key: "cpf_motorista", label: "CPF Motorista", visible: false, category: "Transporte" },
+  { key: "telefone_motorista", label: "Tel. Motorista", visible: false, category: "Transporte" },
+  // Valores
+  { key: "valor_produtos", label: "Valor Produtos", visible: false, category: "Valores" },
+  { key: "valor_frete", label: "Valor Frete", visible: false, category: "Valores" },
+  { key: "valor_seguro", label: "Valor Seguro", visible: false, category: "Valores" },
+  { key: "valor_desconto", label: "Valor Desconto", visible: false, category: "Valores" },
+  { key: "valor_outras_despesas", label: "Outras Despesas", visible: false, category: "Valores" },
+  { key: "valorTotal", label: "Valor Total", visible: true, category: "Valores" },
+  // Pesos/Volumes
+  { key: "quantidade_volumes", label: "Qtd. Volumes", visible: false, category: "Pesos/Volumes" },
+  { key: "peso_bruto", label: "Peso Bruto", visible: false, category: "Pesos/Volumes" },
+  { key: "peso_liquido", label: "Peso Líquido", visible: false, category: "Pesos/Volumes" },
+  // Datas
+  { key: "data", label: "Data Saída", visible: true, category: "Datas" },
+  { key: "data_inicio_janela", label: "Início Janela", visible: false, category: "Datas" },
+  { key: "data_fim_janela", label: "Fim Janela", visible: false, category: "Datas" },
+  { key: "data_aprovacao_produtor", label: "Data Aprovação", visible: false, category: "Datas" },
+  { key: "created_at", label: "Criado em", visible: false, category: "Datas" },
+  { key: "updated_at", label: "Atualizado em", visible: false, category: "Datas" },
+  // Classificação
+  { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
+  { key: "gera_financeiro", label: "Gera Financeiro", visible: false, category: "Classificação" },
+  { key: "movimenta_estoque", label: "Movimenta Estoque", visible: false, category: "Classificação" },
+  // Sistema
+  { key: "observacoes", label: "Observações", visible: false, category: "Sistema" },
+  { key: "observacoes_aprovacao", label: "Obs. Aprovação", visible: false, category: "Sistema" },
+];
 
 // Sortable header component
 const SortableTableHead = ({
@@ -246,143 +266,224 @@ const Saidas = () => {
   // Get visible columns in order
   const visibleColumns = tableState.columns.filter(col => col.visible);
 
-  // Column content mapping
+  // Column content mapping - 53 columns
   const renderColumnContent = (columnKey: string, saida: any) => {
     switch (columnKey) {
       case "id":
-        return <div className="w-full max-w-full">
-            <div className="font-medium truncate">
-              SAI{saida.id.slice(-3).toUpperCase()}
-            </div>
-          </div>;
+        return <div className="font-medium truncate">SAI{saida.id.slice(-3).toUpperCase()}</div>;
+      case "numero_nfe":
+        return <div className="truncate">{saida.numero_nfe || "-"}</div>;
+      case "serie_nfe":
+        return <div className="truncate">{saida.serie_nfe || "-"}</div>;
+      case "chave_nfe":
+        return <div className="truncate font-mono text-xs">{saida.chave_nfe || "-"}</div>;
+      case "natureza_operacao":
+        return <div className="truncate">{saida.natureza_operacao || "-"}</div>;
+      case "cfop":
+        return <div className="truncate">{saida.cfop || "-"}</div>;
+      case "finalidade_nfe":
+        return <div className="truncate">{saida.finalidade_nfe || "-"}</div>;
       case "origem":
-        return <div className="w-full max-w-full">
-            {saida.criado_por_franqueado ? <Badge variant="secondary" className="text-xs">
-                Franqueado
-              </Badge> : <Badge variant="outline" className="text-xs">
-                Própria
-              </Badge>}
-          </div>;
+        return saida.criado_por_franqueado 
+          ? <Badge variant="secondary" className="text-xs">Franqueado</Badge> 
+          : <Badge variant="outline" className="text-xs">Própria</Badge>;
       case "criadoPor":
-        return <div className="w-full max-w-full">
-            <div className="truncate">
-              {saida.criado_por_franqueado ? profilesData?.criadores[saida.user_id]?.nome || "Carregando..." : "Própria"}
-            </div>
-          </div>;
-      case "destinatario":
-        return <div className="w-full max-w-full">
-            <div className="truncate">
-              {profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || "Carregando..."}
-            </div>
-          </div>;
+        return <div className="truncate">
+          {saida.criado_por_franqueado ? profilesData?.criadores[saida.user_id]?.nome || "Carregando..." : "Própria"}
+        </div>;
+      case "deposito":
+        return <div className="truncate">{saida.franquias?.nome || "-"}</div>;
       case "produtos":
-        return <div className="w-full max-w-full">
-            <div className="flex flex-col gap-1">
-              {saida.saida_itens?.slice(0, 2).map((item: any, idx: number) => <div key={idx} className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
-                    <Package className="w-3 h-3 text-primary" />
-                  </div>
-                  <span className="text-sm truncate">
-                    {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
-                  </span>
-                </div>)}
-              {(saida.saida_itens?.length || 0) > 2 && <span className="text-xs text-muted-foreground">
-                  +{(saida.saida_itens?.length || 0) - 2} mais
-                </span>}
+        return <div className="flex flex-col gap-1">
+          {saida.saida_itens?.slice(0, 2).map((item: any, idx: number) => (
+            <div key={idx} className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center">
+                <Package className="w-3 h-3 text-primary" />
+              </div>
+              <span className="text-sm truncate">
+                {item.produtos?.nome || "Nome não disponível"} ({item.quantidade || 0} {item.produtos?.unidade_medida || "un"})
+              </span>
             </div>
-          </div>;
-      case "data":
-        return <div className="w-full max-w-full">
-            <div className="truncate">
-              {new Date(saida.data_saida).toLocaleDateString('pt-BR')}
-            </div>
-          </div>;
-      case "tipo":
-        return <div className="w-full max-w-full">
-            <Badge variant="outline" className="truncate">
-              {saida.tipo_saida || "Não definido"}
-            </Badge>
-          </div>;
+          ))}
+          {(saida.saida_itens?.length || 0) > 2 && (
+            <span className="text-xs text-muted-foreground">+{(saida.saida_itens?.length || 0) - 2} mais</span>
+          )}
+        </div>;
       case "status":
-        return <div className="w-full max-w-full">
-            <Badge variant={getStatusColor(saida.status || "separacao_pendente") as "default" | "secondary" | "outline" | "destructive"} className="truncate">
-              {saida.status === 'separacao_pendente' ? 'Separação Pendente' : saida.status === 'separado' ? 'Separado' : saida.status === 'expedido' ? 'Expedido' : saida.status === 'entregue' ? 'Entregue' : saida.status || "Separação Pendente"}
-            </Badge>
-          </div>;
+        return <Badge variant={getStatusColor(saida.status || "separacao_pendente") as any} className="truncate">
+          {saida.status === 'separacao_pendente' ? 'Separação Pendente' : saida.status === 'separado' ? 'Separado' : saida.status === 'expedido' ? 'Expedido' : saida.status === 'entregue' ? 'Entregue' : saida.status || "Separação Pendente"}
+        </Badge>;
       case "aprovacao":
-        return <div className="w-full max-w-full">
-            <div className="flex items-center gap-2">
-              <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as "default" | "secondary" | "outline" | "destructive"} className="truncate">
-                {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' : saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' : saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
-              </Badge>
-               {userProfile?.role === 'cliente' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && <div className="flex gap-1 ml-2">
-                   <Button size="sm" variant="outline" className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100" onClick={() => handleApproval(saida.id, true)} disabled={aprovarSaida.isPending} title="Aprovar saída">
-                     <Check className="w-3 h-3" />
-                   </Button>
-                   <Button size="sm" variant="outline" className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100" onClick={() => handleApproval(saida.id, false)} disabled={aprovarSaida.isPending} title="Reprovar saída">
-                     <X className="w-3 h-3" />
-                   </Button>
-                 </div>}
+        return <div className="flex items-center gap-2">
+          <Badge variant={getApprovalStatusColor(saida.status_aprovacao_produtor || "aprovado") as any} className="truncate">
+            {saida.status_aprovacao_produtor === 'aprovado' ? 'Aprovado' : saida.status_aprovacao_produtor === 'reprovado' ? 'Reprovado' : saida.status_aprovacao_produtor === 'pendente' ? 'Pendente' : 'Aprovado'}
+          </Badge>
+          {userProfile?.role === 'cliente' && saida.criado_por_franqueado && saida.status_aprovacao_produtor === 'pendente' && (
+            <div className="flex gap-1 ml-2">
+              <Button size="sm" variant="outline" className="h-6 px-2 text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100" onClick={() => handleApproval(saida.id, true)} disabled={aprovarSaida.isPending} title="Aprovar saída">
+                <Check className="w-3 h-3" />
+              </Button>
+              <Button size="sm" variant="outline" className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100" onClick={() => handleApproval(saida.id, false)} disabled={aprovarSaida.isPending} title="Reprovar saída">
+                <X className="w-3 h-3" />
+              </Button>
             </div>
-          </div>;
+          )}
+        </div>;
+      // Emitente
+      case "emitente_nome":
+        return <div className="truncate">{saida.emitente_nome || "-"}</div>;
+      case "emitente_nome_fantasia":
+        return <div className="truncate">{saida.emitente_nome_fantasia || "-"}</div>;
+      case "emitente_cnpj":
+        return <div className="truncate font-mono text-xs">{saida.emitente_cnpj || "-"}</div>;
+      case "emitente_ie":
+        return <div className="truncate">{saida.emitente_ie || "-"}</div>;
+      case "emitente_logradouro":
+        return <div className="truncate">{saida.emitente_logradouro || "-"}</div>;
+      case "emitente_municipio":
+        return <div className="truncate">{saida.emitente_municipio || "-"}</div>;
+      case "emitente_uf":
+        return <div className="truncate">{saida.emitente_uf || "-"}</div>;
+      case "emitente_cep":
+        return <div className="truncate">{saida.emitente_cep || "-"}</div>;
+      case "emitente_telefone":
+        return <div className="truncate">{saida.emitente_telefone || "-"}</div>;
+      // Destinatário
+      case "destinatario":
+        return <div className="truncate">{profilesData?.destinatarios[saida.produtor_destinatario_id]?.nome || saida.destinatario_nome || "-"}</div>;
+      case "destinatario_cpf_cnpj":
+        return <div className="truncate font-mono text-xs">{saida.destinatario_cpf_cnpj || "-"}</div>;
+      case "destinatario_ie":
+        return <div className="truncate">{saida.destinatario_ie || "-"}</div>;
+      case "destinatario_logradouro":
+        return <div className="truncate">{saida.destinatario_logradouro || "-"}</div>;
+      case "destinatario_municipio":
+        return <div className="truncate">{saida.destinatario_municipio || "-"}</div>;
+      case "destinatario_uf":
+        return <div className="truncate">{saida.destinatario_uf || "-"}</div>;
+      case "destinatario_cep":
+        return <div className="truncate">{saida.destinatario_cep || "-"}</div>;
+      case "destinatario_telefone":
+        return <div className="truncate">{saida.destinatario_telefone || "-"}</div>;
+      // Entrega
+      case "entrega_nome":
+        return <div className="truncate">{saida.entrega_nome || "-"}</div>;
+      case "entrega_logradouro":
+        return <div className="truncate">{saida.entrega_logradouro || "-"}</div>;
+      case "entrega_municipio":
+        return <div className="truncate">{saida.entrega_municipio || "-"}</div>;
+      case "entrega_uf":
+        return <div className="truncate">{saida.entrega_uf || "-"}</div>;
+      case "entrega_cep":
+        return <div className="truncate">{saida.entrega_cep || "-"}</div>;
+      // Transporte
+      case "modalidade_frete":
+        const modalidadeMap: Record<string, string> = { '0': 'CIF', '1': 'FOB', '2': 'Terceiros', '9': 'Sem Frete' };
+        return <div className="truncate">{modalidadeMap[saida.modalidade_frete] || saida.modalidade_frete || "-"}</div>;
+      case "transportadora_nome":
+        return <div className="truncate">{saida.transportadora_nome || saida.transportadoras?.nome || "-"}</div>;
+      case "transportadora_cnpj":
+        return <div className="truncate font-mono text-xs">{saida.transportadora_cnpj || "-"}</div>;
+      case "placa_veiculo":
+        return <div className="truncate font-mono">{saida.placa_veiculo || "-"}</div>;
+      case "uf_veiculo":
+        return <div className="truncate">{saida.uf_veiculo || "-"}</div>;
+      case "nome_motorista":
+        return <div className="truncate">{saida.nome_motorista || "-"}</div>;
+      case "cpf_motorista":
+        return <div className="truncate font-mono text-xs">{saida.cpf_motorista || "-"}</div>;
+      case "telefone_motorista":
+        return <div className="truncate">{saida.telefone_motorista || "-"}</div>;
+      // Valores
+      case "valor_produtos":
+        return <div className="truncate font-medium">{formatCurrency(saida.valor_produtos)}</div>;
+      case "valor_frete":
+        return <div className="truncate">{formatCurrency(saida.valor_frete)}</div>;
+      case "valor_seguro":
+        return <div className="truncate">{formatCurrency(saida.valor_seguro)}</div>;
+      case "valor_desconto":
+        return <div className="truncate">{formatCurrency(saida.valor_desconto)}</div>;
+      case "valor_outras_despesas":
+        return <div className="truncate">{formatCurrency(saida.valor_outras_despesas)}</div>;
       case "valorTotal":
-        return <div className="w-full max-w-full">
-            <div className="font-medium truncate">
-              {formatCurrency(saida.valor_total)}
-            </div>
-          </div>;
+        return <div className="truncate font-medium">{formatCurrency(saida.valor_total)}</div>;
+      // Pesos/Volumes
+      case "quantidade_volumes":
+        return <div className="truncate">{saida.quantidade_volumes ?? "-"}</div>;
+      case "peso_bruto":
+        return <div className="truncate">{saida.peso_bruto ? `${saida.peso_bruto.toFixed(2)} kg` : "-"}</div>;
+      case "peso_liquido":
+        return <div className="truncate">{saida.peso_liquido ? `${saida.peso_liquido.toFixed(2)} kg` : "-"}</div>;
+      // Datas
+      case "data":
+        return <div className="truncate">{new Date(saida.data_saida).toLocaleDateString('pt-BR')}</div>;
+      case "data_inicio_janela":
+        return <div className="truncate">{saida.data_inicio_janela ? new Date(saida.data_inicio_janela).toLocaleDateString('pt-BR') : "-"}</div>;
+      case "data_fim_janela":
+        return <div className="truncate">{saida.data_fim_janela ? new Date(saida.data_fim_janela).toLocaleDateString('pt-BR') : "-"}</div>;
+      case "data_aprovacao_produtor":
+        return <div className="truncate">{saida.data_aprovacao_produtor ? new Date(saida.data_aprovacao_produtor).toLocaleDateString('pt-BR') : "-"}</div>;
+      case "created_at":
+        return <div className="truncate">{new Date(saida.created_at).toLocaleDateString('pt-BR')}</div>;
+      case "updated_at":
+        return <div className="truncate">{new Date(saida.updated_at).toLocaleDateString('pt-BR')}</div>;
+      // Classificação
+      case "tipo":
+        return <Badge variant="outline" className="truncate">{saida.tipo_saida || "Não definido"}</Badge>;
+      case "gera_financeiro":
+        return <div className="truncate">{saida.gera_financeiro ? "Sim" : "Não"}</div>;
+      case "movimenta_estoque":
+        return <div className="truncate">{saida.movimenta_estoque || "-"}</div>;
+      // Sistema
+      case "observacoes":
+        return <div className="truncate">{saida.observacoes || "-"}</div>;
+      case "observacoes_aprovacao":
+        return <div className="truncate">{saida.observacoes_aprovacao || "-"}</div>;
+      // Ações
       case "acoes":
-        return <div className="w-full max-w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Abrir menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Eye className="mr-2 h-4 w-4" />
-                  Visualizar
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(saida.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Deletar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>;
+        return <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Abrir menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Eye className="mr-2 h-4 w-4" />
+              Visualizar
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(saida.id)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Deletar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>;
       default:
         return null;
     }
   };
+  
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "entregue":
-        return "default";
+      case "entregue": return "default";
       case "expedido":
-      case "separado":
-        return "secondary";
-      case "separacao_pendente":
-        return "outline";
-      default:
-        return "outline";
+      case "separado": return "secondary";
+      case "separacao_pendente": return "outline";
+      default: return "outline";
     }
   };
+  
   const getApprovalStatusColor = (status: string) => {
     switch (status) {
-      case "aprovado":
-        return "default";
-      case "reprovado":
-        return "destructive";
-      case "pendente":
-        return "secondary";
-      default:
-        return "outline";
+      case "aprovado": return "default";
+      case "reprovado": return "destructive";
+      case "pendente": return "secondary";
+      default: return "outline";
     }
   };
   const handleApproval = async (saidaId: string, aprovado: boolean) => {
