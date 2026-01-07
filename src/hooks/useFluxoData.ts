@@ -42,6 +42,8 @@ interface PalletPendenteItem {
 
 interface FluxoData {
   produto: string;
+  pendenteAprovacao: number;
+  aprovado: number;
   aCaminho: number;
   noDeposito: number;
   emSeparacao: number;
@@ -62,29 +64,40 @@ export const useFluxoData = (
     
     const produtoMap = new Map<string, FluxoData>();
 
-    // Processar entradas (A Caminho - incluindo produtos ainda não alocados)
+    // Processar entradas por status de aprovação
     entradas.forEach(entrada => {
-      // Produtos em trânsito
-      if (entrada?.status_aprovacao === 'planejamento' ||
-          entrada?.status_aprovacao === 'aguardando_transporte' || 
-          entrada?.status_aprovacao === 'em_transferencia' ||
-          entrada?.status_aprovacao === 'aguardando_conferencia') {
-        entrada?.entrada_itens?.forEach(item => {
-          if (item?.produto_id && typeof item?.quantidade === 'number') {
-            const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
-            const current = produtoMap.get(produtoNome) || {
-              produto: produtoNome,
-              aCaminho: 0,
-              noDeposito: 0,
-              emSeparacao: 0,
-              expedido: 0,
-              entregue: 0,
-            };
-            current.aCaminho += item.quantidade;
-            produtoMap.set(produtoNome, current);
+      entrada?.entrada_itens?.forEach(item => {
+        if (item?.produto_id && typeof item?.quantidade === 'number') {
+          const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
+          const current = produtoMap.get(produtoNome) || {
+            produto: produtoNome,
+            pendenteAprovacao: 0,
+            aprovado: 0,
+            aCaminho: 0,
+            noDeposito: 0,
+            emSeparacao: 0,
+            expedido: 0,
+            entregue: 0,
+          };
+
+          // Status de aprovação
+          if (entrada?.status_aprovacao === 'pendente') {
+            current.pendenteAprovacao += item.quantidade;
+          } else if (entrada?.status_aprovacao === 'aprovado') {
+            current.aprovado += item.quantidade;
           }
-        });
-      }
+          
+          // Produtos em trânsito
+          if (entrada?.status_aprovacao === 'planejamento' ||
+              entrada?.status_aprovacao === 'aguardando_transporte' || 
+              entrada?.status_aprovacao === 'em_transferencia' ||
+              entrada?.status_aprovacao === 'aguardando_conferencia') {
+            current.aCaminho += item.quantidade;
+          }
+          
+          produtoMap.set(produtoNome, current);
+        }
+      });
     });
 
     // Processar produtos em pallets pendentes (A Caminho)
@@ -93,6 +106,8 @@ export const useFluxoData = (
         const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
         const current = produtoMap.get(produtoNome) || {
           produto: produtoNome,
+          pendenteAprovacao: 0,
+          aprovado: 0,
           aCaminho: 0,
           noDeposito: 0,
           emSeparacao: 0,
@@ -110,6 +125,8 @@ export const useFluxoData = (
         const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
         const current = produtoMap.get(produtoNome) || {
           produto: produtoNome,
+          pendenteAprovacao: 0,
+          aprovado: 0,
           aCaminho: 0,
           noDeposito: 0,
           emSeparacao: 0,
@@ -128,6 +145,8 @@ export const useFluxoData = (
           const produtoNome = item.produtos?.nome || `Produto ${item.produto_id.slice(0, 8)}`;
           const current = produtoMap.get(produtoNome) || {
             produto: produtoNome,
+            pendenteAprovacao: 0,
+            aprovado: 0,
             aCaminho: 0,
             noDeposito: 0,
             emSeparacao: 0,
@@ -151,6 +170,8 @@ export const useFluxoData = (
     // Converter Map para Array e filtrar produtos com alguma quantidade
     const result = Array.from(produtoMap.values())
       .filter(item => 
+        item.pendenteAprovacao > 0 ||
+        item.aprovado > 0 ||
         item.aCaminho > 0 || 
         item.noDeposito > 0 || 
         item.emSeparacao > 0 || 
@@ -159,7 +180,7 @@ export const useFluxoData = (
       )
       .map(item => ({
         ...item,
-        total: item.aCaminho + item.noDeposito + item.emSeparacao + item.expedido + item.entregue
+        total: item.pendenteAprovacao + item.aprovado + item.aCaminho + item.noDeposito + item.emSeparacao + item.expedido + item.entregue
       }))
       .sort((a, b) => b.total - a.total) // Ordenar por quantidade total (maior para menor)
       .slice(0, 20); // Limitar a 20 produtos para melhor visualização
