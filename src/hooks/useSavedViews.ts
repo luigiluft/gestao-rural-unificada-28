@@ -8,6 +8,7 @@ import type { Json } from "@/integrations/supabase/types"
 export interface SavedView {
   id: string
   user_id: string
+  table_name: string
   name: string
   description?: string
   columns: ColumnConfig[]
@@ -20,6 +21,7 @@ export interface SavedView {
 }
 
 export interface CreateViewInput {
+  tableName: string
   name: string
   description?: string
   columns: ColumnConfig[]
@@ -29,14 +31,14 @@ export interface CreateViewInput {
   isDefault?: boolean
 }
 
-export function useSavedViews() {
+export function useSavedViews(tableName: string) {
   const { user } = useAuth()
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  // Fetch all saved views for the user
+  // Fetch saved views for the user filtered by table
   const { data: savedViews = [], isLoading } = useQuery({
-    queryKey: ["saved-views", user?.id],
+    queryKey: ["saved-views", user?.id, tableName],
     queryFn: async () => {
       if (!user?.id) return []
 
@@ -44,6 +46,7 @@ export function useSavedViews() {
         .from("user_saved_views")
         .select("*")
         .eq("user_id", user.id)
+        .eq("table_name", tableName)
         .order("created_at", { ascending: false })
 
       if (error) {
@@ -81,6 +84,7 @@ export function useSavedViews() {
         .from("user_saved_views")
         .insert({
           user_id: user.id,
+          table_name: input.tableName,
           name: input.name,
           description: input.description,
           columns: input.columns as unknown as Json,

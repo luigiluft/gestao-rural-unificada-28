@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 interface SavedViewsSelectorProps {
+  tableName: string
   currentColumns: ColumnConfig[]
   currentColumnWidths: Record<string, number>
   currentRecordsPerPage: number
@@ -31,6 +32,7 @@ interface SavedViewsSelectorProps {
 }
 
 export function SavedViewsSelector({
+  tableName,
   currentColumns,
   currentColumnWidths,
   currentRecordsPerPage,
@@ -39,7 +41,7 @@ export function SavedViewsSelector({
   onApplyView,
   onClearView
 }: SavedViewsSelectorProps) {
-  const { savedViews, isLoading, createView, updateView, deleteView, applyViewToColumns, isCreating } = useSavedViews()
+  const { savedViews, isLoading, createView, updateView, deleteView, applyViewToColumns, isCreating } = useSavedViews(tableName)
   const [isOpen, setIsOpen] = useState(false)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
   const [newViewName, setNewViewName] = useState("")
@@ -52,6 +54,7 @@ export function SavedViewsSelector({
     if (!newViewName.trim()) return
 
     const input: CreateViewInput = {
+      tableName,
       name: newViewName.trim(),
       columns: currentColumns,
       columnWidths: currentColumnWidths,
@@ -94,6 +97,7 @@ export function SavedViewsSelector({
 
     updateView({
       id: activeView.id,
+      tableName,
       name: activeView.name,
       description: activeView.description,
       columns: currentColumns,
@@ -123,7 +127,7 @@ export function SavedViewsSelector({
         <PopoverContent className="w-72 p-0" align="end">
           <div className="p-3 border-b">
             <h4 className="font-medium text-sm">Visualizações Salvas</h4>
-            <p className="text-xs text-muted-foreground">Compartilhadas entre Entradas e Saídas</p>
+            <p className="text-xs text-muted-foreground">Específicas para esta tabela</p>
           </div>
 
           <ScrollArea className="max-h-[300px]">
