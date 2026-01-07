@@ -1090,6 +1090,7 @@ export default function Entradas() {
               } : col));
             }} onResetDefault={handleResetDefault} />
               <SavedViewsSelector
+                tableName="entradas"
                 currentColumns={columns}
                 currentColumnWidths={columnWidths}
                 currentRecordsPerPage={recordsPerPage}

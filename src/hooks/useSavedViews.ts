@@ -44,7 +44,7 @@ export function useSavedViews(tableName: string) {
 
       const { data, error } = await supabase
         .from("user_saved_views")
-        .select("*")
+        .select("id, user_id, table_name, name, description, columns, column_widths, column_order, records_per_page, is_default, created_at, updated_at")
         .eq("user_id", user.id)
         .eq("table_name", tableName)
         .order("created_at", { ascending: false })

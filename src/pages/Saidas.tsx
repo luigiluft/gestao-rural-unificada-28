@@ -847,6 +847,7 @@ const Saidas = () => {
             <div className="flex flex-col sm:flex-row gap-3">
               <ColumnVisibilityControl columns={columns} onVisibilityChange={handleColumnVisibilityChange} onResetDefault={handleResetDefault} />
               <SavedViewsSelector
+                tableName="saidas"
                 currentColumns={columns}
                 currentColumnWidths={columnWidths}
                 currentRecordsPerPage={recordsPerPage}
