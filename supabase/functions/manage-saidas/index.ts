@@ -122,11 +122,29 @@ async function mkEnt(sb: any, s: any, dt: any, fl: any, d: any) {
   const { data: u } = await sb.from('cliente_usuarios').select('user_id').eq('cliente_id', dt.id).eq('ativo', true).limit(1).single()
   const ui = u?.user_id || s.user_id
   const nt = d.finalidade_nfe === 'transferencia' ? 'Transferência' : d.finalidade_nfe === 'remessa' ? 'Remessa' : d.finalidade_nfe === 'devolucao' ? 'Devolução' : 'Compra'
-  const { data: en, error } = await sb.from('entradas').insert({ user_id: ui, deposito_id: dp, cliente_id: dt.id, data_entrada: new Date().toISOString().split('T')[0], numero_nfe: s.numero_nfe || `INT-${s.id.substring(0, 8)}`, chave_nfe: s.chave_nfe, serie: s.serie_nfe,
-    emitente_nome: og?.razao_social || 'Fornecedor', emitente_nome_fantasia: og?.nome_fantasia, emitente_cnpj: og?.cpf_cnpj || '', emitente_ie: og?.inscricao_estadual, emitente_logradouro: og?.endereco_fiscal, emitente_numero: og?.numero_fiscal, emitente_complemento: og?.complemento_fiscal, emitente_bairro: og?.bairro_fiscal, emitente_municipio: og?.cidade_fiscal, emitente_uf: og?.estado_fiscal, emitente_cep: og?.cep_fiscal, emitente_telefone: og?.telefone_comercial,
-    destinatario_nome: dt.razao_social, destinatario_cpf_cnpj: dt.cpf_cnpj, destinatario_ie: dt.inscricao_estadual, destinatario_logradouro: dt.endereco_fiscal, destinatario_numero: dt.numero_fiscal, destinatario_complemento: dt.complemento_fiscal, destinatario_bairro: dt.bairro_fiscal, destinatario_municipio: dt.cidade_fiscal, destinatario_uf: dt.estado_fiscal, destinatario_cep: dt.cep_fiscal, destinatario_telefone: dt.telefone_comercial,
-    peso_bruto: s.peso_total, peso_liquido: s.peso_total, valor_total: s.valor_total || vp, valor_produtos: s.valor_produtos || vp, valor_frete: s.valor_frete, valor_seguro: s.valor_seguro, quantidade_volumes: qv,
-    status_aprovacao: 'pendente_aprovacao', tipo_recebimento: 'edi_interno', saida_origem_id: s.id, documento_fluxo_id: fl?.id, natureza_operacao: nt, observacoes: `EDI - Saída: ${s.id}` }).select().single()
+  const entradaData = {
+    user_id: ui, deposito_id: dp, cliente_id: dt.id, data_entrada: new Date().toISOString().split('T')[0], 
+    numero_nfe: s.numero_nfe || `INT-${s.id.substring(0, 8)}`, chave_nfe: s.chave_nfe || null, serie: s.serie_nfe || null,
+    emitente_nome: og?.razao_social || 'Fornecedor', emitente_nome_fantasia: og?.nome_fantasia || null, 
+    emitente_cnpj: og?.cpf_cnpj || '', emitente_ie: og?.inscricao_estadual || null, 
+    emitente_logradouro: og?.endereco_fiscal || null, emitente_numero: og?.numero_fiscal || null, 
+    emitente_complemento: og?.complemento_fiscal || null, emitente_bairro: og?.bairro_fiscal || null, 
+    emitente_municipio: og?.cidade_fiscal || null, emitente_uf: og?.estado_fiscal || null, 
+    emitente_cep: og?.cep_fiscal || null, emitente_telefone: og?.telefone_comercial || null,
+    destinatario_nome: dt.razao_social || null, destinatario_cpf_cnpj: dt.cpf_cnpj || null, 
+    destinatario_ie: dt.inscricao_estadual || null, destinatario_logradouro: dt.endereco_fiscal || null, 
+    destinatario_numero: dt.numero_fiscal || null, destinatario_complemento: dt.complemento_fiscal || null, 
+    destinatario_bairro: dt.bairro_fiscal || null, destinatario_municipio: dt.cidade_fiscal || null, 
+    destinatario_uf: dt.estado_fiscal || null, destinatario_cep: dt.cep_fiscal || null, 
+    destinatario_telefone: dt.telefone_comercial || null,
+    peso_bruto: s.peso_total || 0, peso_liquido: s.peso_total || 0, 
+    valor_total: s.valor_total || vp, valor_produtos: s.valor_produtos || vp, 
+    valor_frete: s.valor_frete || 0, valor_seguro: s.valor_seguro || 0, quantidade_volumes: qv,
+    status_aprovacao: 'pendente_aprovacao', tipo_recebimento: 'edi_interno', 
+    saida_origem_id: s.id, documento_fluxo_id: fl?.id || null, natureza_operacao: nt, 
+    observacoes: `EDI - Saída: ${s.id}`
+  }
+  const { data: en, error } = await sb.from('entradas').insert(entradaData).select().single()
   if (error) throw error
   if (its?.length) await sb.from('entrada_itens').insert(its.map((i: any) => ({ entrada_id: en.id, user_id: ui, produto_id: i.produto_id, nome_produto: i.produtos?.nome || 'Produto', codigo_produto: i.produtos?.codigo, unidade_comercial: i.produtos?.unidade_medida || 'UN', quantidade: i.quantidade, valor_unitario: i.valor_unitario || 0, lote: i.lote, valor_total: (i.quantidade||0) * (i.valor_unitario||0) })))
   if (fl?.id) await sb.from('documento_fluxo').update({ entrada_id: en.id }).eq('id', fl.id)
