@@ -240,6 +240,11 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         const janelaEntregaDias = dadosSaida.janela_entrega_dias || 3 // Default 3 dias
         const dataFimJanela = dataInicioJanela ? calculateDeliveryWindowEnd(dataInicioJanela, janelaEntregaDias) : null
 
+        // Calcular valor total dos produtos automaticamente
+        const valorProdutos = itens.reduce((sum, item) => 
+          sum + ((item.quantidade || 0) * (item.valorUnitario || 0)), 0
+        )
+
         const saidaData = {
           user_id: user?.id,
           data_saida: dadosSaida.data_saida,
@@ -278,6 +283,14 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           modalidade_frete: dadosSaida.modalidade_frete || '0',
           transportadora_id: dadosSaida.transportadora_id || null,
           usar_transportadora_propria: dadosSaida.usar_transportadora_propria ?? true,
+          // Campos de valores financeiros - AGORA INCLUÍDOS
+          valor_produtos: valorProdutos,
+          valor_frete: dadosSaida.valor_frete || 0,
+          valor_seguro: dadosSaida.valor_seguro || 0,
+          // Campos de volumes e peso
+          quantidade_volumes: dadosSaida.quantidade_volumes || 0,
+          peso_bruto: dadosSaida.peso_bruto || 0,
+          peso_liquido: dadosSaida.peso_liquido || 0,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
