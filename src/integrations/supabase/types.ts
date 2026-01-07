@@ -296,6 +296,7 @@ export type Database = {
           regime_tributario: string | null
           telefone_comercial: string | null
           tipo_cliente: string
+          tipo_empresa: string | null
           tms_habilitado: boolean | null
           transportadora_padrao_id: string | null
           updated_at: string
@@ -332,6 +333,7 @@ export type Database = {
           regime_tributario?: string | null
           telefone_comercial?: string | null
           tipo_cliente: string
+          tipo_empresa?: string | null
           tms_habilitado?: boolean | null
           transportadora_padrao_id?: string | null
           updated_at?: string
@@ -368,6 +370,7 @@ export type Database = {
           regime_tributario?: string | null
           telefone_comercial?: string | null
           tipo_cliente?: string
+          tipo_empresa?: string | null
           tms_habilitado?: boolean | null
           transportadora_padrao_id?: string | null
           updated_at?: string
