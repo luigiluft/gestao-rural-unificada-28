@@ -159,6 +159,8 @@ const defaultColumns: ColumnConfig[] = [
   { key: "tipo", label: "Tipo", visible: true, category: "Classificação" },
   { key: "gera_financeiro", label: "Gera Financeiro", visible: false, category: "Classificação" },
   { key: "movimenta_estoque", label: "Movimenta Estoque", visible: false, category: "Classificação" },
+  // Rastreabilidade
+  { key: "entrada_gerada", label: "Entrada Gerada", visible: true, category: "Rastreabilidade" },
   // Sistema
   { key: "observacoes", label: "Observações", visible: false, category: "Sistema" },
   { key: "observacoes_aprovacao", label: "Obs. Aprovação", visible: false, category: "Sistema" },
@@ -520,6 +522,21 @@ const Saidas = () => {
         return <div className="truncate">{saida.gera_financeiro ? "Sim" : "Não"}</div>;
       case "movimenta_estoque":
         return <div className="truncate">{saida.movimenta_estoque || "-"}</div>;
+      // Rastreabilidade
+      case "entrada_gerada":
+        if (!saida.entrada_gerada_id && !saida.entrada_gerada) return <span className="text-muted-foreground">-</span>;
+        const entradaId = saida.entrada_gerada_id;
+        const entradaNumero = saida.entrada_gerada?.numero_nfe || `ENT${entradaId?.slice(-3).toUpperCase()}`;
+        return (
+          <Badge 
+            variant="outline" 
+            className="cursor-pointer hover:bg-accent font-mono text-xs"
+            onClick={() => navigate(`/entradas?highlight=${entradaId}`)}
+            title={`Clique para ver a entrada ${entradaNumero}`}
+          >
+            {entradaNumero}
+          </Badge>
+        );
       // Sistema
       case "observacoes":
         return <div className="truncate">{saida.observacoes || "-"}</div>;
