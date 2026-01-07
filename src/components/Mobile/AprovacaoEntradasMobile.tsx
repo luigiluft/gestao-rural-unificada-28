@@ -65,6 +65,7 @@ export default function AprovacaoEntradasMobile() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
+      'pendente_aprovacao': { label: 'Pendente Aprovação', variant: 'outline' as const, icon: AlertTriangle },
       'aguardando_transporte': { label: 'Aguardando Transporte', variant: 'secondary' as const, icon: Clock },
       'em_transferencia': { label: 'Em Transferência', variant: 'default' as const, icon: Truck },
       'aguardando_conferencia': { label: 'Aguardando Conferência', variant: 'outline' as const, icon: Eye },
@@ -85,6 +86,7 @@ export default function AprovacaoEntradasMobile() {
 
   const getNextStatus = (currentStatus: string) => {
     const statusFlow = {
+      'pendente_aprovacao': 'aguardando_transporte',
       'aguardando_transporte': 'em_transferencia',
       'em_transferencia': 'aguardando_conferencia',
       'aguardando_conferencia': 'conferencia_completa',
@@ -95,6 +97,7 @@ export default function AprovacaoEntradasMobile() {
 
   const getNextStatusLabel = (currentStatus: string) => {
     const statusLabels = {
+      'pendente_aprovacao': 'Aprovar Entrada',
       'aguardando_transporte': 'Em Transferência',
       'em_transferencia': 'Aguardando Conferência',
       'aguardando_conferencia': 'Realizar Conferência',
@@ -332,9 +335,13 @@ export default function AprovacaoEntradasMobile() {
         </p>
       </div>
 
-      <Tabs defaultValue="aguardando_transporte" className="space-y-4">
+      <Tabs defaultValue="pendente_aprovacao" className="space-y-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <TabsList className="inline-flex h-9 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground min-w-max">
+            <TabsTrigger value="pendente_aprovacao" className="text-xs px-3 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              <span>Pendente ({entradasPorStatus.pendente_aprovacao?.length || 0})</span>
+            </TabsTrigger>
             <TabsTrigger value="aguardando_transporte" className="text-xs px-3 flex items-center gap-1">
               <Clock className="h-3 w-3" />
               <span>Transporte ({entradasPorStatus.aguardando_transporte?.length || 0})</span>

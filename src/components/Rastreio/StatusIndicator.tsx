@@ -11,8 +11,10 @@ export const StatusIndicator = ({ status, type, className }: StatusIndicatorProp
   const getStatusConfig = () => {
     if (type === "entrada") {
       switch (status) {
+        case "pendente_aprovacao":
+          return { label: "Pendente Aprovação", variant: "outline" as const }
         case "aguardando_transporte":
-          return { label: "Aguardando Transporte", variant: "outline" as const }
+          return { label: "Aguardando Transporte", variant: "secondary" as const }
         case "em_transferencia":
           return { label: "Em Trânsito", variant: "default" as const }
         case "planejamento":

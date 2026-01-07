@@ -71,6 +71,11 @@ export default function AprovacaoEntradas() {
   }, []);
   const getStatusBadge = (status: string) => {
     const statusConfig = {
+      'pendente_aprovacao': {
+        label: 'Pendente Aprovação',
+        variant: 'outline' as const,
+        icon: AlertTriangle
+      },
       'aguardando_transporte': {
         label: 'Aguardando Transporte',
         variant: 'secondary' as const,
@@ -104,6 +109,7 @@ export default function AprovacaoEntradas() {
     // Se WMS está desabilitado, pular planejamento e ir direto para confirmado
     if (!isWmsMode) {
       const statusFlowSimple = {
+        'pendente_aprovacao': 'aguardando_transporte',
         'aguardando_transporte': 'em_transferencia',
         'em_transferencia': 'aguardando_conferencia',
         'aguardando_conferencia': 'confirmado'  // Pula planejamento
@@ -113,6 +119,7 @@ export default function AprovacaoEntradas() {
     
     // Fluxo normal com WMS (inclui planejamento de pallets)
     const statusFlow = {
+      'pendente_aprovacao': 'aguardando_transporte',
       'aguardando_transporte': 'em_transferencia',
       'em_transferencia': 'aguardando_conferencia',
       'aguardando_conferencia': 'planejamento',
@@ -125,6 +132,7 @@ export default function AprovacaoEntradas() {
     // Labels simplificados quando WMS está desabilitado
     if (!isWmsMode) {
       const statusLabelsSimple = {
+        'pendente_aprovacao': 'Aprovar Entrada',
         'aguardando_transporte': 'Marcar como Em Transferência',
         'em_transferencia': 'Marcar como Aguardando Conferência',
         'aguardando_conferencia': 'Realizar Conferência e Confirmar Entrada'
@@ -134,6 +142,7 @@ export default function AprovacaoEntradas() {
     
     // Labels normais com WMS
     const statusLabels = {
+      'pendente_aprovacao': 'Aprovar Entrada',
       'aguardando_transporte': 'Marcar como Em Transferência',
       'em_transferencia': 'Marcar como Aguardando Conferência',
       'aguardando_conferencia': 'Realizar Conferência',
@@ -376,6 +385,7 @@ export default function AprovacaoEntradas() {
   // Helper functions for empty states
   const getEmptyStateIcon = (status: string) => {
     const icons = {
+      'pendente_aprovacao': AlertTriangle,
       'aguardando_transporte': Clock,
       'em_transferencia': Truck,
       'aguardando_conferencia': Eye,
@@ -385,7 +395,8 @@ export default function AprovacaoEntradas() {
   };
   const getEmptyStateDescription = (status: string) => {
     const descriptions = {
-      'aguardando_transporte': 'Não há produtos aguardando transporte no momento. Novos pedidos aparecerão aqui quando criados.',
+      'pendente_aprovacao': 'Não há entradas pendentes de aprovação. Novas entradas aparecerão aqui quando saídas forem criadas para você.',
+      'aguardando_transporte': 'Não há produtos aguardando transporte no momento. Entradas aprovadas aparecerão aqui.',
       'em_transferencia': 'Nenhum produto está em transferência. Os pedidos aparecerão aqui quando estiverem a caminho do depósito.',
       'aguardando_conferencia': 'Não há produtos aguardando conferência. Produtos em transferência aparecerão aqui quando chegarem.',
       'planejamento': 'Não há produtos em planejamento. Produtos conferidos aparecerão aqui para planejamento de pallets.'
@@ -442,19 +453,23 @@ export default function AprovacaoEntradas() {
         </Alert>
       )}
 
-      <Tabs defaultValue="aguardando_transporte" className="space-y-4">
-        <TabsList className={`grid w-full ${isWmsMode ? 'grid-cols-4' : 'grid-cols-3'}`}>
+      <Tabs defaultValue="pendente_aprovacao" className="space-y-4">
+        <TabsList className={`grid w-full ${isWmsMode ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          <TabsTrigger value="pendente_aprovacao" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Pendente ({entradasPorStatus.pendente_aprovacao?.length || 0})
+          </TabsTrigger>
           <TabsTrigger value="aguardando_transporte" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Aguardando Transporte ({entradasPorStatus.aguardando_transporte?.length || 0})
+            Transporte ({entradasPorStatus.aguardando_transporte?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="em_transferencia" className="flex items-center gap-2">
             <Truck className="h-4 w-4" />
-            Em Transferência ({entradasPorStatus.em_transferencia?.length || 0})
+            Transferência ({entradasPorStatus.em_transferencia?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="aguardando_conferencia" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
-            Aguardando Conferência ({entradasPorStatus.aguardando_conferencia?.length || 0})
+            Conferência ({entradasPorStatus.aguardando_conferencia?.length || 0})
           </TabsTrigger>
           {/* Aba de Planejamento só aparece quando WMS está habilitado */}
           {isWmsMode && (
@@ -465,7 +480,7 @@ export default function AprovacaoEntradas() {
           )}
         </TabsList>
 
-        {['aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', ...(isWmsMode ? ['planejamento'] : [])].map(status => {
+        {['pendente_aprovacao', 'aguardando_transporte', 'em_transferencia', 'aguardando_conferencia', ...(isWmsMode ? ['planejamento'] : [])].map(status => {
         const statusEntradas = entradasPorStatus[status] || [];
         return <TabsContent key={status} value={status} className="space-y-4">
               {statusEntradas.length === 0 ? <EmptyState title="Nenhum pedido de recebimento" description={getEmptyStateDescription(status)} /> : <div className="grid gap-4">

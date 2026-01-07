@@ -6723,6 +6723,7 @@ export type Database = {
         | "consumidor"
       comprovante_status: "pendente" | "em_andamento" | "entregue" | "cancelado"
       entrada_status:
+        | "pendente_aprovacao"
         | "aguardando_transporte"
         | "em_transferencia"
         | "aguardando_conferencia"
@@ -6967,6 +6968,7 @@ export const Constants = {
       ],
       comprovante_status: ["pendente", "em_andamento", "entregue", "cancelado"],
       entrada_status: [
+        "pendente_aprovacao",
         "aguardando_transporte",
         "em_transferencia",
         "aguardando_conferencia",

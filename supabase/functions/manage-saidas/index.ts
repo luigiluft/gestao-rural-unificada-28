@@ -1236,7 +1236,7 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       dh_saida_entrada: new Date().toISOString(),
       
       // Outros campos
-      status_aprovacao: 'aguardando_transporte',
+      status_aprovacao: 'pendente_aprovacao',
       tipo_recebimento: 'edi_interno',
       saida_origem_id: saida.id,
       documento_fluxo_id: fluxo?.id || null,
