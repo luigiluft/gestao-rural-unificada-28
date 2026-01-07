@@ -61,16 +61,26 @@ export const useNotifications = () => {
         }
       }
 
-      // Check if user has franchise associations (for deposit-based operations)
-      const { data: franquiaUsuarios } = await supabase
-        .from("franquia_usuarios")
-        .select("franquia_id")
+      // Check if user has deposit associations via cliente_depositos
+      const { data: clienteDepositos } = await supabase
+        .from("cliente_depositos")
+        .select("franquia_id, cliente_id")
+        .eq("ativo", true)
+        .limit(50)
+      
+      // Filter to user's client deposits
+      const { data: clienteUsuarios } = await supabase
+        .from("cliente_usuarios")
+        .select("cliente_id")
         .eq("user_id", user.id)
         .eq("ativo", true)
       
-      const hasFranchiseAccess = isAdmin || (franquiaUsuarios && franquiaUsuarios.length > 0)
-      const canAccessWMS = isAdmin || wmsHabilitado || hasFranchiseAccess
-      const canAccessTMS = isAdmin || tmsHabilitado || hasFranchiseAccess
+      const userClienteIds = clienteUsuarios?.map(cu => cu.cliente_id) || []
+      const userDepositos = clienteDepositos?.filter(cd => userClienteIds.includes(cd.cliente_id)) || []
+      
+      const hasDepositAccess = isAdmin || userDepositos.length > 0
+      const canAccessWMS = isAdmin || wmsHabilitado || hasDepositAccess
+      const canAccessTMS = isAdmin || tmsHabilitado || hasDepositAccess
 
       let recebimento = 0
       let estoque = 0
@@ -96,8 +106,8 @@ export const useNotifications = () => {
           // Apply deposit filter if selected
           if (shouldFilter && depositoId) {
             entradasQuery = entradasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             entradasQuery = entradasQuery.in("deposito_id", franquiaIds)
           }
 
@@ -150,8 +160,8 @@ export const useNotifications = () => {
             if (positionIds.length > 0) {
               posicoesQuery = posicoesQuery.in("posicao_id", positionIds)
             }
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             const { data: positions } = await supabase
               .from("storage_positions")
               .select("id")
@@ -182,8 +192,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             pendingPalletsQuery = pendingPalletsQuery.eq("entradas.deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             pendingPalletsQuery = pendingPalletsQuery.in("entradas.deposito_id", franquiaIds)
           }
 
@@ -207,8 +217,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             separacaoQuery = separacaoQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             separacaoQuery = separacaoQuery.in("deposito_id", franquiaIds)
           }
 
@@ -225,8 +235,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             saidasQuery = saidasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             saidasQuery = saidasQuery.in("deposito_id", franquiaIds)
           }
 
@@ -244,8 +254,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             remessasQuery = remessasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             remessasQuery = remessasQuery.in("deposito_id", franquiaIds)
           }
 
@@ -262,8 +272,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             viagensQuery = viagensQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             viagensQuery = viagensQuery.in("deposito_id", franquiaIds)
           }
 
@@ -281,7 +291,7 @@ export const useNotifications = () => {
         suporte = suporteCount || 0
 
         // SUBCONTAS: For admins and users with franchise access - recent pending invites
-        if (isAdmin || hasFranchiseAccess) {
+        if (isAdmin || hasDepositAccess) {
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
           
           let subcountQuery = supabase
@@ -307,8 +317,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             divergenciasQuery = divergenciasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             divergenciasQuery = divergenciasQuery.in("deposito_id", franquiaIds)
           }
 
@@ -325,8 +335,8 @@ export const useNotifications = () => {
 
           if (shouldFilter && depositoId) {
             ocorrenciasQuery = ocorrenciasQuery.eq("deposito_id", depositoId)
-          } else if (!isAdmin && franquiaUsuarios && franquiaUsuarios.length > 0) {
-            const franquiaIds = franquiaUsuarios.map(f => f.franquia_id)
+          } else if (!isAdmin && userDepositos.length > 0) {
+            const franquiaIds = userDepositos.map(d => d.franquia_id)
             ocorrenciasQuery = ocorrenciasQuery.in("deposito_id", franquiaIds)
           }
 

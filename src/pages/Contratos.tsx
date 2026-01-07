@@ -25,21 +25,33 @@ export default function Contratos() {
   const { user } = useAuth()
   const [franquiaId, setFranquiaId] = useState<string | undefined>()
 
-  // Para clientes, buscar a franquia deles
+  // Para clientes, buscar a franquia deles via cliente_depositos
   useEffect(() => {
     const fetchFranquia = async () => {
       if (!isCliente || !user?.id) return
       
-      const { data } = await supabase
-        .from('franquia_usuarios')
-        .select('franquia_id')
+      // Primeiro buscar o cliente do usuário
+      const { data: clienteUsuario } = await supabase
+        .from('cliente_usuarios')
+        .select('cliente_id')
         .eq('user_id', user.id)
         .eq('ativo', true)
         .limit(1)
         .single()
       
-      if (data) {
-        setFranquiaId(data.franquia_id)
+      if (!clienteUsuario) return
+      
+      // Depois buscar os depósitos do cliente
+      const { data: deposito } = await supabase
+        .from('cliente_depositos')
+        .select('franquia_id')
+        .eq('cliente_id', clienteUsuario.cliente_id)
+        .eq('ativo', true)
+        .limit(1)
+        .single()
+      
+      if (deposito) {
+        setFranquiaId(deposito.franquia_id)
       }
     }
 
