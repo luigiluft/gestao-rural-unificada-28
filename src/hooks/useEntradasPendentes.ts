@@ -31,7 +31,7 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
               produtos(nome, unidade_medida)
             )
           `)
-          .in("status_aprovacao", ["aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
+          .in("status_aprovacao", ["pendente_aprovacao", "aguardando_transporte", "em_transferencia", "aguardando_conferencia", "planejamento"])
           
         // Apply date filters if provided
         if (dateRange?.from) {
@@ -170,6 +170,7 @@ export const useAtualizarStatusEntrada = () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
       
       const statusMessages = {
+        'aguardando_transporte': 'Entrada aprovada - aguardando transporte',
         'em_transferencia': 'Entrada marcada como em transferência',
         'aguardando_conferencia': 'Entrada aguardando conferência',
         'planejamento': 'Conferência realizada - Entrada em planejamento',

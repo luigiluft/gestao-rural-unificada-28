@@ -61,8 +61,9 @@ const statusMappings: Record<string, {
   "warning": { variant: "warning", icon: AlertTriangle },
   
   // Entry statuses
+  "pendente_aprovacao": { variant: "warning", icon: Clock, label: "Pendente Aprovação" },
   "aguardando_aprovacao": { variant: "pending", icon: Clock, label: "Aguardando Aprovação" },
-  "aguardando_transporte": { variant: "pending", icon: Clock, label: "Aguardando Aprovação" },
+  "aguardando_transporte": { variant: "info", icon: Clock, label: "Aguardando Transporte" },
   "aprovado": { variant: "success", icon: CheckCircle, label: "Aprovado" },
   "confirmado": { variant: "success", icon: CheckCircle, label: "Confirmado" },
   "rejeitado": { variant: "error", icon: XCircle, label: "Rejeitado" },
