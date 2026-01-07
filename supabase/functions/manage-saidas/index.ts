@@ -222,8 +222,17 @@ async function createSaida(supabase: any, userId: string, data: any) {
     }
   }
 
-  // Calculate total weight
+  // Calculate total weight and product value
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
+  const valorProdutos = data.itens.reduce((sum: number, item: any) => {
+    return sum + ((item.quantidade || 0) * (item.preco_unitario || 0))
+  }, 0)
+  
+  // Get freight and insurance values from form data (if provided)
+  const valorFrete = data.valor_frete || 0
+  const valorSeguro = data.valor_seguro || 0
+  
+  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro })
 
   // 🔧 PARTE 1C: Processar dados de TRANSPORTE/FRETE
   let transportadoraData: any = null
@@ -309,6 +318,10 @@ async function createSaida(supabase: any, userId: string, data: any) {
     destinatario_email: clienteDestinatarioData?.email_comercial || null,
     // 🔧 GRAVAR DADOS DA TRANSPORTADORA
     ...transportadoraData,
+    // 🔧 GRAVAR VALORES FINANCEIROS
+    valor_produtos: valorProdutos,
+    valor_frete: valorFrete,
+    valor_seguro: valorSeguro,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
@@ -1368,8 +1381,11 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       transportadora_uf: transportadoraData?.estado || null,
       
       // 🔧 Dados de transporte (veículo/motorista)
+      placa_veiculo: saida.placa_veiculo || null,
+      uf_veiculo: saida.uf_veiculo || null,
       veiculo_placa: saida.placa_veiculo || null,
       nome_motorista: saida.nome_motorista || null,
+      modalidade_frete: saida.modalidade_frete || null,
       
       // 🔧 Pesos
       peso_bruto: saida.peso_total || null,
@@ -1377,8 +1393,9 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       
       // 🔧 Valores e quantidades
       valor_total: saida.valor_total || valorProdutos || 0,
-      valor_produtos: valorProdutos || null,
-      valor_frete: saida.valor_frete_calculado || null,
+      valor_produtos: saida.valor_produtos || valorProdutos || null,
+      valor_frete: saida.valor_frete || saida.valor_frete_calculado || null,
+      valor_seguro: saida.valor_seguro || null,
       quantidade_volumes: quantidadeVolumes || null,
       
       // 🔧 Datas

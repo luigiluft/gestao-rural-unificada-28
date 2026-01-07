@@ -108,6 +108,10 @@ export interface DadosSaida extends DadosGenericosBase {
   modalidade_frete?: '0' | '1' | '2' | '9'  // 0=Emitente, 1=Destinatário, 2=Terceiros, 9=Sem Frete
   transportadora_id?: string
   usar_transportadora_propria?: boolean
+  // Campos de valores financeiros
+  valor_produtos?: number
+  valor_frete?: number
+  valor_seguro?: number
 }
 
 export interface FormularioGenericoProps {
