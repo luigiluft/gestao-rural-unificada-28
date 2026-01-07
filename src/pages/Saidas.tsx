@@ -79,7 +79,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { exportToCSV } from "@/utils/csvExport";
 
-// Default columns configuration - 53 columns matching Entradas
+// Default columns configuration - unified with Entradas
 const defaultColumns: ColumnConfig[] = [
   // Básico
   { key: "id", label: "ID", visible: true, category: "Básico" },
@@ -91,8 +91,11 @@ const defaultColumns: ColumnConfig[] = [
   { key: "finalidade_nfe", label: "Finalidade", visible: false, category: "Básico" },
   { key: "origem", label: "Origem", visible: true, category: "Básico" },
   { key: "criadoPor", label: "Criado por", visible: true, category: "Básico" },
+  { key: "cliente_nome", label: "Cliente", visible: false, category: "Básico" },
+  { key: "data_emissao", label: "Data Emissão", visible: false, category: "Básico" },
   { key: "deposito", label: "Depósito", visible: true, category: "Básico" },
   { key: "produtos", label: "Produtos", visible: true, category: "Básico" },
+  { key: "itens_count", label: "Itens", visible: false, category: "Básico" },
   { key: "status", label: "Status", visible: true, category: "Básico" },
   { key: "aprovacao", label: "Aprovação", visible: true, category: "Básico" },
   { key: "acoes", label: "Ações", visible: true, category: "Básico" },
@@ -143,9 +146,13 @@ const defaultColumns: ColumnConfig[] = [
   { key: "peso_liquido", label: "Peso Líquido", visible: false, category: "Pesos/Volumes" },
   // Datas
   { key: "data", label: "Data Saída", visible: true, category: "Datas" },
+  { key: "dh_emissao", label: "DH Emissão", visible: false, category: "Datas" },
+  { key: "dh_saida_entrada", label: "DH Saída/Entrada", visible: false, category: "Datas" },
+  { key: "data_recebimento", label: "Data Recebimento", visible: false, category: "Datas" },
+  { key: "data_aprovacao", label: "Data Aprovação", visible: false, category: "Datas" },
   { key: "data_inicio_janela", label: "Início Janela", visible: false, category: "Datas" },
   { key: "data_fim_janela", label: "Fim Janela", visible: false, category: "Datas" },
-  { key: "data_aprovacao_produtor", label: "Data Aprovação", visible: false, category: "Datas" },
+  { key: "data_aprovacao_produtor", label: "Data Aprov. Produtor", visible: false, category: "Datas" },
   { key: "created_at", label: "Criado em", visible: false, category: "Datas" },
   { key: "updated_at", label: "Atualizado em", visible: false, category: "Datas" },
   // Classificação
@@ -155,6 +162,9 @@ const defaultColumns: ColumnConfig[] = [
   // Sistema
   { key: "observacoes", label: "Observações", visible: false, category: "Sistema" },
   { key: "observacoes_aprovacao", label: "Obs. Aprovação", visible: false, category: "Sistema" },
+  { key: "ambiente", label: "Ambiente", visible: false, category: "Sistema" },
+  { key: "protocolo_autorizacao", label: "Protocolo", visible: false, category: "Sistema" },
+  { key: "informacoes_adicionais", label: "Info. Adicionais", visible: false, category: "Sistema" },
 ];
 
 // Sortable header component
