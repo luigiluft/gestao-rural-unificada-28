@@ -6283,6 +6283,7 @@ export type Database = {
           is_default: boolean | null
           name: string
           records_per_page: number | null
+          table_name: string
           updated_at: string | null
           user_id: string
         }
@@ -6296,6 +6297,7 @@ export type Database = {
           is_default?: boolean | null
           name: string
           records_per_page?: number | null
+          table_name?: string
           updated_at?: string | null
           user_id: string
         }
@@ -6309,6 +6311,7 @@ export type Database = {
           is_default?: boolean | null
           name?: string
           records_per_page?: number | null
+          table_name?: string
           updated_at?: string | null
           user_id?: string
         }
