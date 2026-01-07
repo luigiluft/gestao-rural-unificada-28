@@ -278,6 +278,18 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           modalidade_frete: dadosSaida.modalidade_frete || '0',
           transportadora_id: dadosSaida.transportadora_id || null,
           usar_transportadora_propria: dadosSaida.usar_transportadora_propria ?? true,
+          // Campos de valores financeiros
+          valor_frete: dadosSaida.valor_frete || 0,
+          valor_seguro: dadosSaida.valor_seguro || 0,
+          valor_desconto: dadosSaida.valor_desconto || 0,
+          outras_despesas: dadosSaida.outras_despesas || 0,
+          // Campos de volumes e peso
+          quantidade_volumes: dadosSaida.quantidade_volumes || 0,
+          peso_bruto: dadosSaida.peso_bruto || 0,
+          peso_liquido: dadosSaida.peso_liquido || 0,
+          // Campos de NFe
+          numero_nfe: dadosSaida.numero_nfe || null,
+          serie_nfe: dadosSaida.serie_nfe || null,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,

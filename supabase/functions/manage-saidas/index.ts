@@ -224,18 +224,25 @@ async function createSaida(supabase: any, userId: string, data: any) {
 
   // Calculate total weight and product value
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
+  // 🔧 FIX: usar valor_unitario (frontend) OU preco_unitario (fallback)
   const valorProdutos = data.itens.reduce((sum: number, item: any) => {
-    return sum + ((item.quantidade || 0) * (item.preco_unitario || 0))
+    const precoUnit = item.valor_unitario || item.preco_unitario || 0
+    return sum + ((item.quantidade || 0) * precoUnit)
   }, 0)
   
-  // Get freight, insurance, volumes and weight values from form data (if provided)
+  // Get freight, insurance, discount, other expenses, volumes and weight values from form data
   const valorFrete = data.valor_frete || 0
   const valorSeguro = data.valor_seguro || 0
+  const valorDesconto = data.valor_desconto || 0
+  const outrasDespesas = data.outras_despesas || 0
   const quantidadeVolumes = data.quantidade_volumes || 0
   const pesoBruto = data.peso_bruto || 0
   const pesoLiquido = data.peso_liquido || 0
   
-  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro, quantidadeVolumes, pesoBruto, pesoLiquido })
+  // 🔧 Calcular valor_total corretamente
+  const valorTotal = valorProdutos + valorFrete + valorSeguro + outrasDespesas - valorDesconto
+  
+  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro, valorDesconto, outrasDespesas, valorTotal, quantidadeVolumes, pesoBruto, pesoLiquido })
 
   // 🔧 PARTE 1C: Processar dados de TRANSPORTE/FRETE
   let transportadoraData: any = null
@@ -325,9 +332,14 @@ async function createSaida(supabase: any, userId: string, data: any) {
     valor_produtos: valorProdutos,
     valor_frete: valorFrete,
     valor_seguro: valorSeguro,
+    valor_desconto: valorDesconto,
+    valor_total: valorTotal,
     quantidade_volumes: quantidadeVolumes,
     peso_bruto: pesoBruto,
     peso_liquido: pesoLiquido,
+    // 🔧 GRAVAR DADOS NFE (número, série)
+    numero_nfe: data.numero_nfe || null,
+    serie_nfe: data.serie_nfe || null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
