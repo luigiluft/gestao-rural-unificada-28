@@ -5181,6 +5181,7 @@ export type Database = {
       saidas: {
         Row: {
           cfop: string | null
+          chave_nfe: string | null
           cliente_destinatario_id: string | null
           cliente_filial_destino_id: string | null
           cliente_filial_origem_id: string | null
@@ -5207,6 +5208,29 @@ export type Database = {
           destinatario_telefone: string | null
           destinatario_transferencia_id: string | null
           destinatario_uf: string | null
+          emitente_bairro: string | null
+          emitente_cep: string | null
+          emitente_cnpj: string | null
+          emitente_complemento: string | null
+          emitente_email: string | null
+          emitente_ie: string | null
+          emitente_logradouro: string | null
+          emitente_municipio: string | null
+          emitente_nome: string | null
+          emitente_nome_fantasia: string | null
+          emitente_numero: string | null
+          emitente_telefone: string | null
+          emitente_uf: string | null
+          entrega_bairro: string | null
+          entrega_cep: string | null
+          entrega_cnpj: string | null
+          entrega_complemento: string | null
+          entrega_logradouro: string | null
+          entrega_municipio: string | null
+          entrega_nome: string | null
+          entrega_numero: string | null
+          entrega_telefone: string | null
+          entrega_uf: string | null
           fazenda_id: string | null
           finalidade_nfe: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino: string | null
@@ -5217,20 +5241,27 @@ export type Database = {
           janela_entrega_dias: number | null
           janela_horario: string | null
           local_entrega_id: string | null
+          modalidade_frete: string | null
           mopp_motorista: string | null
           movimenta_estoque: string | null
+          natureza_operacao: string | null
           nfe_referenciada_chave: string | null
           nfe_referenciada_data: string | null
           nome_motorista: string | null
+          numero_nfe: string | null
           observacoes: string | null
           observacoes_aprovacao: string | null
+          peso_bruto: number | null
+          peso_liquido: number | null
           peso_total: number | null
           placa_veiculo: string | null
           prioridade_calculada: number | null
           prioridade_ultima_atualizacao: string | null
           produtor_destinatario_id: string | null
+          quantidade_volumes: number | null
           saida_origem_id: string | null
           scores_fatores: Json | null
+          serie_nfe: string | null
           status: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor: string | null
           tags: Json | null
@@ -5241,14 +5272,27 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
             | null
           tipo_saida: string
+          transportadora_cnpj: string | null
+          transportadora_endereco: string | null
+          transportadora_id: string | null
+          transportadora_ie: string | null
+          transportadora_municipio: string | null
+          transportadora_nome: string | null
+          transportadora_uf: string | null
           updated_at: string
           user_id: string
+          valor_desconto: number | null
+          valor_frete: number | null
           valor_frete_calculado: number | null
+          valor_outras_despesas: number | null
+          valor_produtos: number | null
+          valor_seguro: number | null
           valor_total: number | null
           viagem_id: string | null
         }
         Insert: {
           cfop?: string | null
+          chave_nfe?: string | null
           cliente_destinatario_id?: string | null
           cliente_filial_destino_id?: string | null
           cliente_filial_origem_id?: string | null
@@ -5275,6 +5319,29 @@ export type Database = {
           destinatario_telefone?: string | null
           destinatario_transferencia_id?: string | null
           destinatario_uf?: string | null
+          emitente_bairro?: string | null
+          emitente_cep?: string | null
+          emitente_cnpj?: string | null
+          emitente_complemento?: string | null
+          emitente_email?: string | null
+          emitente_ie?: string | null
+          emitente_logradouro?: string | null
+          emitente_municipio?: string | null
+          emitente_nome?: string | null
+          emitente_nome_fantasia?: string | null
+          emitente_numero?: string | null
+          emitente_telefone?: string | null
+          emitente_uf?: string | null
+          entrega_bairro?: string | null
+          entrega_cep?: string | null
+          entrega_cnpj?: string | null
+          entrega_complemento?: string | null
+          entrega_logradouro?: string | null
+          entrega_municipio?: string | null
+          entrega_nome?: string | null
+          entrega_numero?: string | null
+          entrega_telefone?: string | null
+          entrega_uf?: string | null
           fazenda_id?: string | null
           finalidade_nfe?: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino?: string | null
@@ -5285,20 +5352,27 @@ export type Database = {
           janela_entrega_dias?: number | null
           janela_horario?: string | null
           local_entrega_id?: string | null
+          modalidade_frete?: string | null
           mopp_motorista?: string | null
           movimenta_estoque?: string | null
+          natureza_operacao?: string | null
           nfe_referenciada_chave?: string | null
           nfe_referenciada_data?: string | null
           nome_motorista?: string | null
+          numero_nfe?: string | null
           observacoes?: string | null
           observacoes_aprovacao?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
           peso_total?: number | null
           placa_veiculo?: string | null
           prioridade_calculada?: number | null
           prioridade_ultima_atualizacao?: string | null
           produtor_destinatario_id?: string | null
+          quantidade_volumes?: number | null
           saida_origem_id?: string | null
           scores_fatores?: Json | null
+          serie_nfe?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           tags?: Json | null
@@ -5309,14 +5383,27 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
             | null
           tipo_saida: string
+          transportadora_cnpj?: string | null
+          transportadora_endereco?: string | null
+          transportadora_id?: string | null
+          transportadora_ie?: string | null
+          transportadora_municipio?: string | null
+          transportadora_nome?: string | null
+          transportadora_uf?: string | null
           updated_at?: string
           user_id: string
+          valor_desconto?: number | null
+          valor_frete?: number | null
           valor_frete_calculado?: number | null
+          valor_outras_despesas?: number | null
+          valor_produtos?: number | null
+          valor_seguro?: number | null
           valor_total?: number | null
           viagem_id?: string | null
         }
         Update: {
           cfop?: string | null
+          chave_nfe?: string | null
           cliente_destinatario_id?: string | null
           cliente_filial_destino_id?: string | null
           cliente_filial_origem_id?: string | null
@@ -5343,6 +5430,29 @@ export type Database = {
           destinatario_telefone?: string | null
           destinatario_transferencia_id?: string | null
           destinatario_uf?: string | null
+          emitente_bairro?: string | null
+          emitente_cep?: string | null
+          emitente_cnpj?: string | null
+          emitente_complemento?: string | null
+          emitente_email?: string | null
+          emitente_ie?: string | null
+          emitente_logradouro?: string | null
+          emitente_municipio?: string | null
+          emitente_nome?: string | null
+          emitente_nome_fantasia?: string | null
+          emitente_numero?: string | null
+          emitente_telefone?: string | null
+          emitente_uf?: string | null
+          entrega_bairro?: string | null
+          entrega_cep?: string | null
+          entrega_cnpj?: string | null
+          entrega_complemento?: string | null
+          entrega_logradouro?: string | null
+          entrega_municipio?: string | null
+          entrega_nome?: string | null
+          entrega_numero?: string | null
+          entrega_telefone?: string | null
+          entrega_uf?: string | null
           fazenda_id?: string | null
           finalidade_nfe?: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino?: string | null
@@ -5353,20 +5463,27 @@ export type Database = {
           janela_entrega_dias?: number | null
           janela_horario?: string | null
           local_entrega_id?: string | null
+          modalidade_frete?: string | null
           mopp_motorista?: string | null
           movimenta_estoque?: string | null
+          natureza_operacao?: string | null
           nfe_referenciada_chave?: string | null
           nfe_referenciada_data?: string | null
           nome_motorista?: string | null
+          numero_nfe?: string | null
           observacoes?: string | null
           observacoes_aprovacao?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
           peso_total?: number | null
           placa_veiculo?: string | null
           prioridade_calculada?: number | null
           prioridade_ultima_atualizacao?: string | null
           produtor_destinatario_id?: string | null
+          quantidade_volumes?: number | null
           saida_origem_id?: string | null
           scores_fatores?: Json | null
+          serie_nfe?: string | null
           status?: Database["public"]["Enums"]["saida_status"] | null
           status_aprovacao_produtor?: string | null
           tags?: Json | null
@@ -5377,9 +5494,21 @@ export type Database = {
             | Database["public"]["Enums"]["tipo_movimentacao_saida"]
             | null
           tipo_saida?: string
+          transportadora_cnpj?: string | null
+          transportadora_endereco?: string | null
+          transportadora_id?: string | null
+          transportadora_ie?: string | null
+          transportadora_municipio?: string | null
+          transportadora_nome?: string | null
+          transportadora_uf?: string | null
           updated_at?: string
           user_id?: string
+          valor_desconto?: number | null
+          valor_frete?: number | null
           valor_frete_calculado?: number | null
+          valor_outras_despesas?: number | null
+          valor_produtos?: number | null
+          valor_seguro?: number | null
           valor_total?: number | null
           viagem_id?: string | null
         }
@@ -5438,6 +5567,13 @@ export type Database = {
             columns: ["saida_origem_id"]
             isOneToOne: false
             referencedRelation: "saidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_transportadora_id_fkey"
+            columns: ["transportadora_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
             referencedColumns: ["id"]
           },
           {

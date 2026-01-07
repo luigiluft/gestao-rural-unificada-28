@@ -103,8 +103,9 @@ async function createSaida(supabase: any, userId: string, data: any) {
     tipo_complemento: data.tipo_complemento
   })
 
-  // 🔧 PARTE 1: Identificar e gravar cliente_origem_id automaticamente
+  // 🔧 PARTE 1: Identificar e gravar cliente_origem_id e dados do emitente automaticamente
   let clienteOrigemId = data.cliente_origem_id || null
+  let clienteEmitenteData: any = null
   
   if (!clienteOrigemId) {
     console.log('🔍 Buscando cliente_origem_id automaticamente...')
@@ -147,6 +148,57 @@ async function createSaida(supabase: any, userId: string, data: any) {
     }
   }
 
+  // 🔧 PARTE 1A: Buscar dados COMPLETOS do emitente (cliente origem)
+  if (clienteOrigemId) {
+    console.log('🔍 Buscando dados completos do emitente:', clienteOrigemId)
+    const { data: clienteEmitente, error: emitenteError } = await supabase
+      .from('clientes')
+      .select(`
+        id, razao_social, nome_fantasia, cpf_cnpj, inscricao_estadual,
+        endereco_fiscal, numero_fiscal, complemento_fiscal, bairro_fiscal,
+        cidade_fiscal, estado_fiscal, cep_fiscal, telefone_comercial, email_comercial
+      `)
+      .eq('id', clienteOrigemId)
+      .single()
+    
+    if (emitenteError) {
+      console.error('⚠️ Erro ao buscar cliente emitente:', emitenteError)
+    } else if (clienteEmitente) {
+      clienteEmitenteData = clienteEmitente
+      console.log('✅ Dados do emitente encontrados:', clienteEmitente.razao_social)
+    }
+  } else if (data.deposito_id) {
+    // Fallback: buscar dados da franquia como emitente
+    console.log('🔍 Buscando dados do emitente via franquia:', data.deposito_id)
+    const { data: franquia } = await supabase
+      .from('franquias')
+      .select(`
+        id, nome, razao_social, cnpj, inscricao_estadual,
+        endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email
+      `)
+      .eq('id', data.deposito_id)
+      .single()
+    
+    if (franquia) {
+      clienteEmitenteData = {
+        razao_social: franquia.razao_social || franquia.nome,
+        nome_fantasia: franquia.nome,
+        cpf_cnpj: franquia.cnpj,
+        inscricao_estadual: franquia.inscricao_estadual,
+        endereco_fiscal: franquia.endereco,
+        numero_fiscal: franquia.numero,
+        complemento_fiscal: franquia.complemento,
+        bairro_fiscal: franquia.bairro,
+        cidade_fiscal: franquia.cidade,
+        estado_fiscal: franquia.estado,
+        cep_fiscal: franquia.cep,
+        telefone_comercial: franquia.telefone,
+        email_comercial: franquia.email
+      }
+      console.log('✅ Dados do emitente obtidos da franquia:', franquia.nome)
+    }
+  }
+
   // 🔧 PARTE 1B: Buscar dados COMPLETOS do cliente destinatário
   let clienteDestinatarioData: any = null
   
@@ -180,8 +232,24 @@ async function createSaida(supabase: any, userId: string, data: any) {
     ...saidaFields,
     cliente_origem_id: clienteOrigemId, // 🔧 Gravar cliente_origem_id
     peso_total: pesoTotal,
+    peso_bruto: pesoTotal,
+    peso_liquido: pesoTotal,
     status: 'separacao_pendente',
     status_aprovacao_produtor: userId === data.produtor_destinatario_id ? 'nao_aplicavel' : 'pendente',
+    // 🔧 GRAVAR DADOS COMPLETOS DO EMITENTE
+    emitente_nome: clienteEmitenteData?.razao_social || null,
+    emitente_nome_fantasia: clienteEmitenteData?.nome_fantasia || null,
+    emitente_cnpj: clienteEmitenteData?.cpf_cnpj || null,
+    emitente_ie: clienteEmitenteData?.inscricao_estadual || null,
+    emitente_logradouro: clienteEmitenteData?.endereco_fiscal || null,
+    emitente_numero: clienteEmitenteData?.numero_fiscal || null,
+    emitente_complemento: clienteEmitenteData?.complemento_fiscal || null,
+    emitente_bairro: clienteEmitenteData?.bairro_fiscal || null,
+    emitente_municipio: clienteEmitenteData?.cidade_fiscal || null,
+    emitente_uf: clienteEmitenteData?.estado_fiscal || null,
+    emitente_cep: clienteEmitenteData?.cep_fiscal || null,
+    emitente_telefone: clienteEmitenteData?.telefone_comercial || null,
+    emitente_email: clienteEmitenteData?.email_comercial || null,
     // 🔧 GRAVAR DADOS COMPLETOS DO DESTINATÁRIO
     destinatario_nome: clienteDestinatarioData?.razao_social || null,
     destinatario_cpf_cnpj: clienteDestinatarioData?.cpf_cnpj || null,
