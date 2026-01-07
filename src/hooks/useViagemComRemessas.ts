@@ -7,6 +7,9 @@ interface ViagemData {
   previsao_inicio: string;
   observacoes?: string;
   motorista_id?: string;
+  veiculo_id?: string;
+  placa_veiculo?: string;
+  uf_veiculo?: string;
 }
 
 interface CreateViagemComRemessasParams {
@@ -63,6 +66,9 @@ export const useViagemComRemessas = () => {
         data_fim: null, // Será extraído da foto do comprovante
         observacoes: viagemData.observacoes || null,
         motorista_id: viagemData.motorista_id || null,
+        veiculo_id: viagemData.veiculo_id || null,
+        placa_veiculo: viagemData.placa_veiculo || null,
+        uf_veiculo: viagemData.uf_veiculo || null,
         status: 'planejada',
         deposito_id: depositoId,
         user_id: user.id,
@@ -86,17 +92,33 @@ export const useViagemComRemessas = () => {
         throw viagemError;
       }
 
-      // Update saidas to link them to the viagem
+      // Update saidas to link them to the viagem with vehicle info
       const { error: updateError } = await supabase
         .from('saidas')
         .update({ 
-          viagem_id: newViagem.id
+          viagem_id: newViagem.id,
+          placa_veiculo: viagemData.placa_veiculo || null,
+          uf_veiculo: viagemData.uf_veiculo || null
         })
         .in('id', remessasIds);
 
       if (updateError) {
         console.error('❌ useViagemComRemessas: Error updating saidas:', updateError)
         throw updateError;
+      }
+      
+      // Update entradas linked to these saidas with vehicle info
+      const { error: entradasError } = await supabase
+        .from('entradas')
+        .update({ 
+          viagem_id: newViagem.id,
+          placa_veiculo: viagemData.placa_veiculo || null,
+          uf_veiculo: viagemData.uf_veiculo || null
+        })
+        .in('saida_origem_id', remessasIds);
+
+      if (entradasError) {
+        console.error('⚠️ useViagemComRemessas: Error updating entradas:', entradasError)
       }
       
       console.log('✅ useViagemComRemessas: Viagem created and remessas allocated successfully:', newViagem)
