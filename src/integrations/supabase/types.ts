@@ -5194,7 +5194,19 @@ export type Database = {
           data_inicio_janela: string | null
           data_saida: string
           deposito_id: string
+          destinatario_bairro: string | null
+          destinatario_cep: string | null
+          destinatario_complemento: string | null
+          destinatario_cpf_cnpj: string | null
+          destinatario_email: string | null
+          destinatario_ie: string | null
+          destinatario_logradouro: string | null
+          destinatario_municipio: string | null
+          destinatario_nome: string | null
+          destinatario_numero: string | null
+          destinatario_telefone: string | null
           destinatario_transferencia_id: string | null
+          destinatario_uf: string | null
           fazenda_id: string | null
           finalidade_nfe: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino: string | null
@@ -5250,7 +5262,19 @@ export type Database = {
           data_inicio_janela?: string | null
           data_saida: string
           deposito_id: string
+          destinatario_bairro?: string | null
+          destinatario_cep?: string | null
+          destinatario_complemento?: string | null
+          destinatario_cpf_cnpj?: string | null
+          destinatario_email?: string | null
+          destinatario_ie?: string | null
+          destinatario_logradouro?: string | null
+          destinatario_municipio?: string | null
+          destinatario_nome?: string | null
+          destinatario_numero?: string | null
+          destinatario_telefone?: string | null
           destinatario_transferencia_id?: string | null
+          destinatario_uf?: string | null
           fazenda_id?: string | null
           finalidade_nfe?: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino?: string | null
@@ -5306,7 +5330,19 @@ export type Database = {
           data_inicio_janela?: string | null
           data_saida?: string
           deposito_id?: string
+          destinatario_bairro?: string | null
+          destinatario_cep?: string | null
+          destinatario_complemento?: string | null
+          destinatario_cpf_cnpj?: string | null
+          destinatario_email?: string | null
+          destinatario_ie?: string | null
+          destinatario_logradouro?: string | null
+          destinatario_municipio?: string | null
+          destinatario_nome?: string | null
+          destinatario_numero?: string | null
+          destinatario_telefone?: string | null
           destinatario_transferencia_id?: string | null
+          destinatario_uf?: string | null
           fazenda_id?: string | null
           finalidade_nfe?: Database["public"]["Enums"]["finalidade_nfe"] | null
           frete_destino?: string | null
