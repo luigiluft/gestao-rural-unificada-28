@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useDepositoFilter } from "./useDepositoFilter"
-import { useUserRole } from "./useUserRole"
+import { useCliente } from "@/contexts/ClienteContext"
 
 export interface EstoqueItem {
   produto_id: string
@@ -22,15 +22,12 @@ export interface EstoqueItem {
 }
 
 export const useEstoque = () => {
-  const { depositoId, shouldFilter } = useDepositoFilter()
+  const { depositoId, shouldFilter, clienteDepositoId } = useDepositoFilter()
+  const { selectedCliente } = useCliente()
   
   return useQuery({
-    queryKey: ["estoque", depositoId],
+    queryKey: ["estoque", depositoId, clienteDepositoId, selectedCliente?.id],
     queryFn: async (): Promise<EstoqueItem[]> => {
-      // Identificar usuário atual e possível franqueado master (para herdar visibilidade)
-      const { data: authData } = await supabase.auth.getUser()
-      const uid = authData.user?.id
-
       // Buscar estoque agregado via RPC existente
       const { data: estoque, error } = await supabase
         .rpc("get_estoque_from_movimentacoes")
@@ -44,109 +41,13 @@ export const useEstoque = () => {
         franquias: item.franquia_nome ? { nome: item.franquia_nome } : null
       }))
 
-      // Apply deposit filter if needed (for operador role)
+      // Aplicar filtro de depósito se necessário
       if (shouldFilter && depositoId) {
         estoqueFormatado = estoqueFormatado.filter((item: any) => item.deposito_id === depositoId)
       }
 
-      // Se não houver usuário autenticado ou não há dados, retornar diretamente
-      if (!uid || estoqueFormatado.length === 0) {
-        return estoqueFormatado
-      }
-
-      // Verificar se é subconta e obter o usuário pai
-      const { data: hierarchy } = await supabase
-        .from("user_hierarchy")
-        .select("parent_user_id")
-        .eq("child_user_id", uid)
-        .maybeSingle()
-
-      let allowedDepositos: string[] = []
-
-      if (hierarchy?.parent_user_id) {
-        // Buscar role do usuário pai
-        const { data: parentProfile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("user_id", hierarchy.parent_user_id)
-          .single()
-
-        const parentRole = parentProfile?.role
-        
-        // Check if parent has franchise access
-        const { data: franquiaUsuarios } = await supabase
-          .from("franquia_usuarios")
-          .select("franquia_id")
-          .eq("user_id", hierarchy.parent_user_id)
-          .eq("ativo", true)
-        
-        if (franquiaUsuarios && franquiaUsuarios.length > 0) {
-          allowedDepositos = franquiaUsuarios.map((f) => f.franquia_id)
-        } else if (parentRole === 'cliente') {
-          // For client subaccounts: check cliente_depositos
-          const { data: clienteUsuario } = await supabase
-            .from("cliente_usuarios")
-            .select("cliente_id")
-            .eq("user_id", hierarchy.parent_user_id)
-            .eq("ativo", true)
-            .maybeSingle()
-          
-          if (clienteUsuario?.cliente_id) {
-            const { data: depositos } = await supabase
-              .from("cliente_depositos")
-              .select("franquia_id")
-              .eq("cliente_id", clienteUsuario.cliente_id)
-              .eq("ativo", true)
-            
-            allowedDepositos = (depositos || []).map((d) => d.franquia_id)
-          }
-        }
-      } else {
-        // Para contas master: verificar se é franqueado ou produtor
-        const { data: userProfile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("user_id", uid)
-          .single()
-
-        // Check if user has franchise access via franquia_usuarios
-        const { data: franquiaUsuarios } = await supabase
-          .from("franquia_usuarios")
-          .select("franquia_id")
-          .eq("user_id", uid)
-          .eq("ativo", true)
-        
-        if (franquiaUsuarios && franquiaUsuarios.length > 0) {
-          allowedDepositos = franquiaUsuarios.map((f) => f.franquia_id)
-        } else if (userProfile?.role === 'cliente') {
-          // For clients: check cliente_depositos
-          const { data: clienteUsuario } = await supabase
-            .from("cliente_usuarios")
-            .select("cliente_id")
-            .eq("user_id", uid)
-            .eq("ativo", true)
-            .maybeSingle()
-          
-          if (clienteUsuario?.cliente_id) {
-            const { data: depositos } = await supabase
-              .from("cliente_depositos")
-              .select("franquia_id")
-              .eq("cliente_id", clienteUsuario.cliente_id)
-              .eq("ativo", true)
-            
-            allowedDepositos = (depositos || []).map((d) => d.franquia_id)
-          }
-        }
-      }
-
-      // Se encontrou depósitos permitidos, filtrar o estoque
-      if (allowedDepositos.length > 0) {
-        return estoqueFormatado.filter((item: any) => allowedDepositos.includes(item.deposito_id))
-      }
-
       return estoqueFormatado
     },
-    // Force refetch every time the component mounts
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   })
