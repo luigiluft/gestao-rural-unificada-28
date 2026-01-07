@@ -75,7 +75,11 @@ export function useFormularioLogic({ tipo, nfData }: UseFormularioLogicProps) {
         cfop: '',
         gera_financeiro: true,
         movimenta_estoque: 'saida',
-        tipo_complemento: ''
+        tipo_complemento: '',
+        // Campos de transporte
+        modalidade_frete: '0',
+        transportadora_id: '',
+        usar_transportadora_propria: true
       } as DadosSaida
     }
   }

@@ -10,6 +10,7 @@ import { ItensComunsSection } from "./sections/ItensComuns"
 import { SimuladorFrete } from "./sections/SimuladorFrete"
 import { AgendamentoSection } from "./sections/AgendamentoSection"
 import { DetalhesEntregaSection } from "./sections/DetalhesEntrega"
+import { TransporteSection } from "./sections/TransporteSection"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { useCriarReserva } from "@/hooks/useReservasHorario"
@@ -271,6 +272,10 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           destinatario_transferencia_id: dadosSaida.destinatario_transferencia_id || null,
           // Campo para cliente destinatário (venda B2B) - CRITICAL para fluxo interno
           cliente_destinatario_id: dadosSaida.cliente_destinatario_id || null,
+          // Campos de transporte
+          modalidade_frete: dadosSaida.modalidade_frete || '0',
+          transportadora_id: dadosSaida.transportadora_id || null,
+          usar_transportadora_propria: dadosSaida.usar_transportadora_propria ?? true,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
@@ -353,6 +358,10 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             onDadosChange={setDados}
             pesoTotal={calcularPesoTotal()}
             pesoMinimoMopp={pesoMinimoMopp}
+          />
+          <TransporteSection
+            dados={dados as DadosSaida}
+            onDadosChange={setDados}
           />
         </>
       )}
