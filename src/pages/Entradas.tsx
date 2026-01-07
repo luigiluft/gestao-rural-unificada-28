@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ColumnVisibilityControl, type ColumnConfig } from "@/components/Entradas/ColumnVisibilityControl";
+import { SavedViewsSelector } from "@/components/ui/saved-views-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -534,6 +535,9 @@ export default function Entradas() {
   // Column visibility and width state
   const [columns, setColumns] = useState<ColumnConfig[]>(defaultColumns);
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  
+  // Active saved view
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
 
   // Load saved preferences ONLY on initial load (not on every re-fetch)
   useEffect(() => {
@@ -544,6 +548,19 @@ export default function Entradas() {
       setPreferencesLoaded(true)
     }
   }, [savedPreferences, isLoadingPreferences, preferencesLoaded])
+  
+  // Handler for applying a saved view
+  const handleApplyView = (newColumns: ColumnConfig[], newColumnWidths: Record<string, number>, newRecordsPerPage: number, viewId: string) => {
+    setColumns(newColumns);
+    setColumnWidths(newColumnWidths);
+    setRecordsPerPage(newRecordsPerPage);
+    setActiveViewId(viewId);
+  };
+  
+  // Handler for clearing active view
+  const handleClearView = () => {
+    setActiveViewId(null);
+  };
 
   // Resize functionality
   const [isResizing, setIsResizing] = useState(false);
@@ -1002,10 +1019,15 @@ export default function Entradas() {
                 visible
               } : col));
             }} onResetDefault={handleResetDefault} />
-              <Button variant="outline" size="sm" onClick={saveTableView} disabled={isSaving} className="gap-2">
-                <Save className="h-4 w-4" />
-                {isSaving ? 'Salvando...' : 'Salvar Visualização'}
-              </Button>
+              <SavedViewsSelector
+                currentColumns={columns}
+                currentColumnWidths={columnWidths}
+                currentRecordsPerPage={recordsPerPage}
+                defaultColumns={defaultColumns}
+                activeViewId={activeViewId}
+                onApplyView={handleApplyView}
+                onClearView={handleClearView}
+              />
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
                 <Download className="h-4 w-4" />
                 Exportar CSV

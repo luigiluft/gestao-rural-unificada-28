@@ -6272,8 +6272,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_views: {
+        Row: {
+          column_order: Json
+          column_widths: Json | null
+          columns: Json
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          records_per_page: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          column_order: Json
+          column_widths?: Json | null
+          columns: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          records_per_page?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          column_order?: Json
+          column_widths?: Json | null
+          columns?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          records_per_page?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_table_preferences: {
         Row: {
+          active_view_id: string | null
           column_order: Json | null
           column_widths: Json | null
           columns: Json | null
@@ -6285,6 +6328,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_view_id?: string | null
           column_order?: Json | null
           column_widths?: Json | null
           columns?: Json | null
@@ -6296,6 +6340,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_view_id?: string | null
           column_order?: Json | null
           column_widths?: Json | null
           columns?: Json | null
@@ -6306,7 +6351,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_table_preferences_active_view_id_fkey"
+            columns: ["active_view_id"]
+            isOneToOne: false
+            referencedRelation: "user_saved_views"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       veiculos: {
         Row: {

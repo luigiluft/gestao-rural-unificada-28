@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ColumnVisibilityControl, ColumnConfig } from "@/components/Entradas/ColumnVisibilityControl";
+import { SavedViewsSelector } from "@/components/ui/saved-views-selector";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DateRangeFilter, DateRange } from "@/components/ui/date-range-filter";
 import { TablePageLayout } from "@/components/ui/table-page-layout";
-import { useTableState } from "@/hooks/useTableState";
+import { useTablePreferences } from "@/hooks/useTablePreferences";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 
@@ -212,19 +213,94 @@ const Saidas = () => {
     toast
   } = useToast();
 
-  // Use unified table state
-  const tableState = useTableState({
-    storageKey: 'saidas-table-config',
-    defaultColumns: defaultColumns,
+  // Use table preferences hook for persistence in database
+  const { 
+    preferences: savedPreferences, 
+    isLoading: isLoadingPreferences,
+    savePreferences,
+    resetPreferences,
+    isSaving 
+  } = useTablePreferences({
+    tableName: 'saidas',
+    defaultColumns,
     defaultRecordsPerPage: 25
   });
+
+  // State management
+  const [columns, setColumns] = useState<ColumnConfig[]>(defaultColumns);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const [recordsPerPage, setRecordsPerPage] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [activeViewId, setActiveViewId] = useState<string | null>(null);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+
+  // Load saved preferences on initial load
+  useEffect(() => {
+    if (savedPreferences && !isLoadingPreferences && !preferencesLoaded) {
+      setColumns(savedPreferences.columns);
+      setColumnWidths(savedPreferences.columnWidths);
+      setRecordsPerPage(savedPreferences.recordsPerPage);
+      setPreferencesLoaded(true);
+    }
+  }, [savedPreferences, isLoadingPreferences, preferencesLoaded]);
+
+  // Handler for applying a saved view
+  const handleApplyView = (newColumns: ColumnConfig[], newColumnWidths: Record<string, number>, newRecordsPerPage: number, viewId: string) => {
+    setColumns(newColumns);
+    setColumnWidths(newColumnWidths);
+    setRecordsPerPage(newRecordsPerPage);
+    setActiveViewId(viewId);
+  };
+
+  // Handler for clearing active view
+  const handleClearView = () => {
+    setActiveViewId(null);
+  };
+
+  // Column visibility change handler
+  const handleColumnVisibilityChange = (columnKey: string, visible: boolean) => {
+    setColumns(prev => prev.map(col => 
+      col.key === columnKey ? { ...col, visible } : col
+    ));
+  };
+
+  // Reset to default
+  const handleResetDefault = () => {
+    setColumns(defaultColumns);
+    setColumnWidths({});
+    setRecordsPerPage(25);
+    setPreferencesLoaded(false);
+    setActiveViewId(null);
+    resetPreferences();
+  };
+
+  // Column resize handler
+  const handleMouseDown = (columnKey: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = columnWidths[columnKey] || 120;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = Math.max(80, startWidth + (e.clientX - startX));
+      setColumnWidths(prev => ({ ...prev, [columnKey]: newWidth }));
+    };
+    
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   // Data fetching
   const {
     data: saidas = [],
     isLoading,
     refetch
-  } = useSaidas(tableState.dateRange);
+  } = useSaidas(dateRange);
   const {
     data: profilesData,
     isLoading: isLoadingProfiles,
@@ -234,14 +310,14 @@ const Saidas = () => {
 
   // Calculate pagination
   const totalRecords = saidas.length;
-  const totalPages = Math.ceil(totalRecords / tableState.recordsPerPage);
-  const startIndex = (tableState.currentPage - 1) * tableState.recordsPerPage;
-  const endIndex = Math.min(startIndex + tableState.recordsPerPage, totalRecords);
+  const totalPages = Math.ceil(totalRecords / recordsPerPage);
+  const startIndex = (currentPage - 1) * recordsPerPage;
+  const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
   const paginatedSaidas = saidas.slice(startIndex, endIndex);
 
   // Reset to first page when data changes
   useEffect(() => {
-    tableState.setCurrentPage(1);
+    setCurrentPage(1);
   }, [saidas]);
 
   // Sensors for drag and drop
@@ -256,15 +332,15 @@ const Saidas = () => {
       over
     } = event;
     if (active.id !== over?.id) {
-      const oldIndex = tableState.columns.findIndex(col => col.key === active.id);
-      const newIndex = tableState.columns.findIndex(col => col.key === over?.id);
-      const newColumns = arrayMove(tableState.columns, oldIndex, newIndex);
-      tableState.handleColumnReorder(newColumns);
+      const oldIndex = columns.findIndex(col => col.key === active.id);
+      const newIndex = columns.findIndex(col => col.key === over?.id);
+      const newColumns = arrayMove(columns, oldIndex, newIndex);
+      setColumns(newColumns);
     }
   };
 
   // Get visible columns in order
-  const visibleColumns = tableState.columns.filter(col => col.visible);
+  const visibleColumns = columns.filter(col => col.visible);
 
   // Column content mapping - 53 columns
   const renderColumnContent = (columnKey: string, saida: any) => {
@@ -695,7 +771,7 @@ const Saidas = () => {
       
       exportToCSV({
         data: saidas,
-        columns: tableState.columns.filter(col => col.key !== 'acoes'), // Exclude actions from export
+        columns: columns.filter(col => col.key !== 'acoes'),
         filename,
         customFormatters
       });
@@ -750,7 +826,7 @@ const Saidas = () => {
       {/* Filter Section */}
       <div className="flex-shrink-0 bg-background">
         <div className="p-6 border-b">
-          <DateRangeFilter dateRange={tableState.dateRange} onDateRangeChange={tableState.setDateRange} />
+          <DateRangeFilter dateRange={dateRange} onDateRangeChange={setDateRange} />
         </div>
       </div>
 
@@ -759,11 +835,16 @@ const Saidas = () => {
         <div className="px-6 py-4">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-3">
-              <ColumnVisibilityControl columns={tableState.columns} onVisibilityChange={tableState.handleColumnVisibilityChange} onResetDefault={tableState.resetToDefault} />
-              <Button variant="outline" size="sm" onClick={tableState.saveTableView} className="gap-2">
-                <Save className="h-4 w-4" />
-                Salvar Visualização
-              </Button>
+              <ColumnVisibilityControl columns={columns} onVisibilityChange={handleColumnVisibilityChange} onResetDefault={handleResetDefault} />
+              <SavedViewsSelector
+                currentColumns={columns}
+                currentColumnWidths={columnWidths}
+                currentRecordsPerPage={recordsPerPage}
+                defaultColumns={defaultColumns}
+                activeViewId={activeViewId}
+                onApplyView={handleApplyView}
+                onClearView={handleClearView}
+              />
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
                 <Download className="h-4 w-4" />
                 Exportar CSV
@@ -772,7 +853,7 @@ const Saidas = () => {
             
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Registros por página:</span>
-              <Select value={tableState.recordsPerPage.toString()} onValueChange={value => tableState.setRecordsPerPage(Number(value))}>
+              <Select value={recordsPerPage.toString()} onValueChange={value => setRecordsPerPage(Number(value))}>
                 <SelectTrigger className="w-20">
                   <SelectValue />
                 </SelectTrigger>
@@ -803,9 +884,9 @@ const Saidas = () => {
                       <TableRow>
                         <SortableContext items={visibleColumns.map(col => col.key)} strategy={horizontalListSortingStrategy}>
                           {visibleColumns.map((column, index) => {
-                        const width = tableState.columnWidths[column.key] || 120;
+                        const width = columnWidths[column.key] || 120;
                         const isLastColumn = index === visibleColumns.length - 1;
-                        return <SortableTableHeader key={column.key} column={column} width={width} isLastColumn={isLastColumn} onMouseDown={tableState.handleMouseDown} />;
+                        return <SortableTableHeader key={column.key} column={column} width={width} isLastColumn={isLastColumn} onMouseDown={handleMouseDown} />;
                       })}
                         </SortableContext>
                       </TableRow>
@@ -815,7 +896,7 @@ const Saidas = () => {
                           {visibleColumns.map(column => {
                       const content = renderColumnContent(column.key, saida);
                       const isAction = column.key === "actions";
-                      const width = tableState.columnWidths[column.key] || 120;
+                      const width = columnWidths[column.key] || 120;
                       return <TableCell key={column.key} className="text-xs lg:text-sm whitespace-nowrap px-2 overflow-hidden" style={{
                         width: `${width}px`,
                         minWidth: `${width}px`,
@@ -844,14 +925,14 @@ const Saidas = () => {
                 Mostrando {startIndex + 1}-{endIndex} de {totalRecords} registros
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => tableState.setCurrentPage(prev => Math.max(1, prev - 1))} disabled={tableState.currentPage === 1} className="gap-1">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="gap-1">
                   <ChevronLeft className="h-4 w-4" />
                   Anterior
                 </Button>
                 <span className="text-sm">
-                  Página {tableState.currentPage} de {totalPages}
+                  Página {currentPage} de {totalPages}
                 </span>
-                <Button variant="outline" size="sm" onClick={() => tableState.setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={tableState.currentPage === totalPages} className="gap-1">
+                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="gap-1">
                   Próxima
                   <ChevronRight className="h-4 w-4" />
                 </Button>
