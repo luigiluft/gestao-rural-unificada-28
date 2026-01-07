@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FluxoData {
   produto: string;
+  pendenteAprovacao: number;
+  aprovado: number;
   aCaminho: number;
   noDeposito: number;
   emSeparacao: number;
@@ -94,6 +96,20 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
               <Tooltip content={<CustomTooltip />} />
               <Legend verticalAlign="top" height={36} />
               
+              <Bar 
+                dataKey="pendenteAprovacao" 
+                stackId="fluxo" 
+                fill="#ef4444" 
+                name="Pendente Aprovação"
+                radius={[0, 0, 0, 0]}
+              />
+              <Bar 
+                dataKey="aprovado" 
+                stackId="fluxo" 
+                fill="#22c55e" 
+                name="Aprovado"
+                radius={[0, 0, 0, 0]}
+              />
               <Bar 
                 dataKey="aCaminho" 
                 stackId="fluxo" 
