@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface FluxoData {
   produto: string;
   pendenteAprovacao: number;
-  aprovado: number;
   aCaminho: number;
   noDeposito: number;
   emSeparacao: number;
@@ -104,10 +103,10 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
                 radius={[0, 0, 0, 0]}
               />
               <Bar 
-                dataKey="aprovado" 
+                dataKey="aCaminho" 
                 stackId="fluxo" 
-                fill="#22c55e" 
-                name="Aprovado"
+                fill="#2563eb" 
+                name="A Caminho"
                 radius={[0, 0, 0, 0]}
               />
               <Bar 
