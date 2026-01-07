@@ -112,6 +112,10 @@ export interface DadosSaida extends DadosGenericosBase {
   valor_produtos?: number
   valor_frete?: number
   valor_seguro?: number
+  // Campos de volumes e peso
+  quantidade_volumes?: number
+  peso_bruto?: number
+  peso_liquido?: number
 }
 
 export interface FormularioGenericoProps {
