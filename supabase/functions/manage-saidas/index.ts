@@ -337,6 +337,10 @@ async function createSaida(supabase: any, userId: string, data: any) {
     quantidade_volumes: quantidadeVolumes,
     peso_bruto: pesoBruto,
     peso_liquido: pesoLiquido,
+    // 🔧 GRAVAR CAMPOS NFe
+    numero_nfe: data.numero_nfe || null,
+    serie_nfe: data.serie_nfe || '1',
+    chave_nfe: data.chave_nfe || null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }

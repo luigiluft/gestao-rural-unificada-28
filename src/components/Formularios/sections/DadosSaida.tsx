@@ -1,5 +1,6 @@
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
@@ -19,6 +20,7 @@ import { useDiasUteisExpedicao, useHorariosRetirada, useJanelaEntregaDias } from
 import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-window"
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
+import { useProximoNumeroNfe } from "@/hooks/useProximoNumeroNfe"
 
 interface DadosSaidaProps {
   dados: DadosSaida
@@ -36,6 +38,10 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const [franquiaCoords, setFranquiaCoords] = useState<Coordinates | null>(null)
   const [fazendaCoords, setFazendaCoords] = useState<Coordinates | null>(null)
   const [franquiaNome, setFranquiaNome] = useState<string>('')
+
+  // Hook para buscar próximo número NFe baseado na série
+  const serieAtual = dados.serie_nfe || '1'
+  const { data: proximoNumeroNfe } = useProximoNumeroNfe(serieAtual, dados.depositoId)
 
   // Hooks condicionais baseados no papel do usuário
   const { data: depositosProdutor = [] } = useDepositosDisponiveis(
@@ -75,6 +81,20 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
       handleChange('depositoId', depositos[0].deposito_id)
     }
   }, [depositos, dados.depositoId])
+
+  // Atualizar número NFe quando mudar série ou quando carregar próximo número
+  useEffect(() => {
+    if (proximoNumeroNfe && proximoNumeroNfe !== dados.numero_nfe) {
+      onDadosChange({ ...dados, numero_nfe: proximoNumeroNfe })
+    }
+  }, [proximoNumeroNfe])
+
+  // Inicializar série padrão
+  useEffect(() => {
+    if (!dados.serie_nfe) {
+      onDadosChange({ ...dados, serie_nfe: '1' })
+    }
+  }, [])
 
   // Get the fazendas for the client (deprecated produtor_destinatario - usamos cliente_destinatario_id)
   const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(isCliente ? user?.id : undefined)
@@ -176,6 +196,42 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Campos NFe */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="numero_nfe">Nº NFe</Label>
+            <Input
+              id="numero_nfe"
+              value={dados.numero_nfe || ''}
+              disabled
+              className="bg-muted"
+              placeholder="Gerado automaticamente"
+            />
+            <p className="text-xs text-muted-foreground">Número sequencial automático</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="serie_nfe">Série</Label>
+            <Input
+              id="serie_nfe"
+              value={dados.serie_nfe || '1'}
+              onChange={(e) => handleChange('serie_nfe', e.target.value)}
+              placeholder="1"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="chave_nfe">Chave NFe</Label>
+            <Input
+              id="chave_nfe"
+              value={dados.chave_nfe || ''}
+              onChange={(e) => handleChange('chave_nfe', e.target.value)}
+              placeholder="44 dígitos"
+              maxLength={44}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div className="space-y-2">
