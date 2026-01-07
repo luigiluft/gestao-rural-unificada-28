@@ -21,6 +21,8 @@ import { formatDeliveryWindowComplete, parseLocalDate } from "@/lib/delivery-win
 import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
 import { useProximoNumeroNfe } from "@/hooks/useProximoNumeroNfe"
+import { useChaveNFeAutomatica } from "@/hooks/useChaveNFeAutomatica"
+import { CheckCircle } from "lucide-react"
 
 interface DadosSaidaProps {
   dados: DadosSaida
@@ -42,6 +44,14 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   // Hook para buscar próximo número NFe baseado na série
   const serieAtual = dados.serie_nfe || '1'
   const { data: proximoNumeroNfe } = useProximoNumeroNfe(serieAtual, dados.depositoId)
+
+  // Hook para gerar chave NFe automaticamente
+  const { chave: chaveGerada, valido: chaveValida } = useChaveNFeAutomatica({
+    depositoId: dados.depositoId,
+    serie: serieAtual,
+    numeroNfe: dados.numero_nfe || '',
+    enabled: !!dados.depositoId && !!dados.numero_nfe
+  })
 
   // Hooks condicionais baseados no papel do usuário
   const { data: depositosProdutor = [] } = useDepositosDisponiveis(
@@ -95,6 +105,13 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
       onDadosChange({ ...dados, serie_nfe: '1' })
     }
   }, [])
+
+  // Atualizar chave NFe quando for gerada automaticamente
+  useEffect(() => {
+    if (chaveGerada && chaveValida && chaveGerada !== dados.chave_nfe) {
+      onDadosChange({ ...dados, chave_nfe: chaveGerada })
+    }
+  }, [chaveGerada, chaveValida])
 
   // Get the fazendas for the client (deprecated produtor_destinatario - usamos cliente_destinatario_id)
   const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(isCliente ? user?.id : undefined)
@@ -225,10 +242,16 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
             <Input
               id="chave_nfe"
               value={dados.chave_nfe || ''}
-              onChange={(e) => handleChange('chave_nfe', e.target.value)}
-              placeholder="44 dígitos"
-              maxLength={44}
+              disabled
+              className="bg-muted font-mono text-xs"
+              placeholder="Gerada automaticamente"
             />
+            {chaveValida && (
+              <p className="text-xs text-green-600 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Gerada automaticamente
+              </p>
+            )}
           </div>
         </div>
 
