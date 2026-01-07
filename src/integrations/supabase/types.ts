@@ -6296,6 +6296,61 @@ export type Database = {
       }
     }
     Views: {
+      franquia_usuarios_backup: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          created_by: string | null
+          franquia_id: string | null
+          id: string | null
+          papel: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          franquia_id?: string | null
+          id?: string | null
+          papel?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          franquia_id?: string | null
+          id?: string | null
+          papel?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franquia_usuarios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "franquia_usuarios_franquia_id_fkey"
+            columns: ["franquia_id"]
+            isOneToOne: false
+            referencedRelation: "franquias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franquia_usuarios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_franquias_summary: {
         Row: {
           franquia_ids: string[] | null
