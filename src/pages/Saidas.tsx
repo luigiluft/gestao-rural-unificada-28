@@ -676,6 +676,21 @@ const Saidas = () => {
         // Não falhar crítico
       }
 
+      // 4.5. Deletar saida_item_referencias (referências de itens a pallets/posições)
+      if (saidaItens && saidaItens.length > 0) {
+        const saidaItensIds = saidaItens.map(item => item.id);
+        console.log('STEP 4.5: Deletando saida_item_referencias para itens:', saidaItensIds.length);
+        const {
+          data: deletedReferencias,
+          error: referenciasError
+        } = await supabase.from('saida_item_referencias').delete().in('saida_item_id', saidaItensIds).select();
+        console.log('Referências deletadas:', deletedReferencias?.length || 0, 'registros');
+        if (referenciasError) {
+          console.error('Erro ao deletar referências:', referenciasError);
+          // Não falhar crítico
+        }
+      }
+
       // 5. Deletar saida_itens
       console.log('STEP 5: Deletando saida_itens para:', saidaToDelete);
       const {
