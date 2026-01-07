@@ -225,8 +225,52 @@ async function createSaida(supabase: any, userId: string, data: any) {
   // Calculate total weight
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
 
+  // 🔧 PARTE 1C: Processar dados de TRANSPORTE/FRETE
+  let transportadoraData: any = null
+  
+  console.log('🚛 Processando dados de transporte:', {
+    modalidade_frete: data.modalidade_frete,
+    transportadora_id: data.transportadora_id,
+    usar_transportadora_propria: data.usar_transportadora_propria
+  })
+  
+  // Determinar dados da transportadora
+  if (data.modalidade_frete === '0' && data.usar_transportadora_propria) {
+    // Usar mesmo CNPJ da empresa emitente
+    transportadoraData = {
+      transportadora_nome: clienteEmitenteData?.razao_social || null,
+      transportadora_cnpj: clienteEmitenteData?.cpf_cnpj || null,
+      transportadora_ie: clienteEmitenteData?.inscricao_estadual || null,
+      transportadora_endereco: clienteEmitenteData?.endereco_fiscal || null,
+      transportadora_municipio: clienteEmitenteData?.cidade_fiscal || null,
+      transportadora_uf: clienteEmitenteData?.estado_fiscal || null
+    }
+    console.log('✅ Transportadora própria (mesmo CNPJ da empresa):', transportadoraData.transportadora_cnpj)
+  } else if (data.transportadora_id) {
+    // Buscar dados da transportadora cadastrada
+    const { data: transportadora, error: transpError } = await supabase
+      .from('transportadoras')
+      .select('id, nome, cnpj, contato, email')
+      .eq('id', data.transportadora_id)
+      .single()
+    
+    if (transpError) {
+      console.error('⚠️ Erro ao buscar transportadora:', transpError)
+    } else if (transportadora) {
+      transportadoraData = {
+        transportadora_nome: transportadora.nome,
+        transportadora_cnpj: transportadora.cnpj,
+        transportadora_ie: null,
+        transportadora_endereco: null,
+        transportadora_municipio: null,
+        transportadora_uf: null
+      }
+      console.log('✅ Transportadora terceirizada encontrada:', transportadora.nome)
+    }
+  }
+
   // Create saida data excluding itens and reserva_id
-  const { itens, reserva_id, ...saidaFields } = data
+  const { itens, reserva_id, usar_transportadora_propria, ...saidaFields } = data
   const saidaData = {
     user_id: userId,
     ...saidaFields,
@@ -263,6 +307,8 @@ async function createSaida(supabase: any, userId: string, data: any) {
     destinatario_cep: clienteDestinatarioData?.cep_fiscal || null,
     destinatario_telefone: clienteDestinatarioData?.telefone_comercial || null,
     destinatario_email: clienteDestinatarioData?.email_comercial || null,
+    // 🔧 GRAVAR DADOS DA TRANSPORTADORA
+    ...transportadoraData,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }
