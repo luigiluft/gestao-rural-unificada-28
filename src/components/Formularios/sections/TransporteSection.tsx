@@ -1,11 +1,12 @@
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida } from "../types/formulario.types"
 import { useTransportadoras } from "@/hooks/useTransportadoras"
 import { useCliente } from "@/contexts/ClienteContext"
-import { Truck, Building2 } from "lucide-react"
+import { Truck, Building2, DollarSign } from "lucide-react"
 
 interface TransporteSectionProps {
   dados: DadosSaida
@@ -47,6 +48,14 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
     onDadosChange({
       ...dados,
       transportadora_id: transportadoraId
+    })
+  }
+
+  const handleValorChange = (field: 'valor_frete' | 'valor_seguro', value: string) => {
+    const numValue = parseFloat(value) || 0
+    onDadosChange({
+      ...dados,
+      [field]: numValue
     })
   }
 
@@ -164,6 +173,40 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
             </p>
           </div>
         )}
+
+        {/* Valores de Frete e Seguro */}
+        <div className="pt-2 border-t">
+          <div className="flex items-center gap-2 mb-3">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Valores</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="valor_frete">Valor do Frete (R$)</Label>
+              <Input
+                id="valor_frete"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={dados.valor_frete || ''}
+                onChange={(e) => handleValorChange('valor_frete', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="valor_seguro">Valor do Seguro (R$)</Label>
+              <Input
+                id="valor_seguro"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={dados.valor_seguro || ''}
+                onChange={(e) => handleValorChange('valor_seguro', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

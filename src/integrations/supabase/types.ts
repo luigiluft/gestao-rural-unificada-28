@@ -2221,6 +2221,7 @@ export type Database = {
           transportadora_municipio: string | null
           transportadora_nome: string | null
           transportadora_uf: string | null
+          uf_veiculo: string | null
           updated_at: string
           user_id: string
           valor_bc_icms: number | null
@@ -2360,6 +2361,7 @@ export type Database = {
           transportadora_municipio?: string | null
           transportadora_nome?: string | null
           transportadora_uf?: string | null
+          uf_veiculo?: string | null
           updated_at?: string
           user_id: string
           valor_bc_icms?: number | null
@@ -2499,6 +2501,7 @@ export type Database = {
           transportadora_municipio?: string | null
           transportadora_nome?: string | null
           transportadora_uf?: string | null
+          uf_veiculo?: string | null
           updated_at?: string
           user_id?: string
           valor_bc_icms?: number | null
@@ -5279,6 +5282,7 @@ export type Database = {
           transportadora_municipio: string | null
           transportadora_nome: string | null
           transportadora_uf: string | null
+          uf_veiculo: string | null
           updated_at: string
           user_id: string
           valor_desconto: number | null
@@ -5390,6 +5394,7 @@ export type Database = {
           transportadora_municipio?: string | null
           transportadora_nome?: string | null
           transportadora_uf?: string | null
+          uf_veiculo?: string | null
           updated_at?: string
           user_id: string
           valor_desconto?: number | null
@@ -5501,6 +5506,7 @@ export type Database = {
           transportadora_municipio?: string | null
           transportadora_nome?: string | null
           transportadora_uf?: string | null
+          uf_veiculo?: string | null
           updated_at?: string
           user_id?: string
           valor_desconto?: number | null
