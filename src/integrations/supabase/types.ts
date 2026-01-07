@@ -5224,6 +5224,7 @@ export type Database = {
           emitente_numero: string | null
           emitente_telefone: string | null
           emitente_uf: string | null
+          entrada_gerada_id: string | null
           entrega_bairro: string | null
           entrega_cep: string | null
           entrega_cnpj: string | null
@@ -5336,6 +5337,7 @@ export type Database = {
           emitente_numero?: string | null
           emitente_telefone?: string | null
           emitente_uf?: string | null
+          entrada_gerada_id?: string | null
           entrega_bairro?: string | null
           entrega_cep?: string | null
           entrega_cnpj?: string | null
@@ -5448,6 +5450,7 @@ export type Database = {
           emitente_numero?: string | null
           emitente_telefone?: string | null
           emitente_uf?: string | null
+          entrada_gerada_id?: string | null
           entrega_bairro?: string | null
           entrega_cep?: string | null
           entrega_cnpj?: string | null
@@ -5552,6 +5555,13 @@ export type Database = {
             columns: ["destinatario_transferencia_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saidas_entrada_gerada_id_fkey"
+            columns: ["entrada_gerada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas"
             referencedColumns: ["id"]
           },
           {

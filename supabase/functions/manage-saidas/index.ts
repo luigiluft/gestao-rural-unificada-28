@@ -1461,6 +1461,18 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       .eq('id', fluxo.id)
   }
   
+  // 🔗 RASTREABILIDADE: Atualizar saída com referência à entrada gerada
+  const { error: updateSaidaError } = await supabase
+    .from('saidas')
+    .update({ entrada_gerada_id: entrada.id })
+    .eq('id', saida.id)
+  
+  if (updateSaidaError) {
+    console.error('⚠️ Erro ao atualizar saída com entrada_gerada_id:', updateSaidaError)
+  } else {
+    console.log('✅ Saída atualizada com entrada_gerada_id:', entrada.id)
+  }
+  
   return entrada
 }
 

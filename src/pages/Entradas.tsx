@@ -543,6 +543,13 @@ export default function Entradas() {
     visible: false,
     category: "Datas"
   },
+  // Rastreabilidade
+  {
+    key: "saida_origem",
+    label: "Saída Origem",
+    visible: true,
+    category: "Rastreabilidade"
+  },
   // Sistema
   {
     key: "created_at",
@@ -848,6 +855,19 @@ export default function Entradas() {
         return entrada.valor_total ? `R$ ${Number(entrada.valor_total).toLocaleString('pt-BR', {
           minimumFractionDigits: 2
         })}` : "N/A";
+      case "saida_origem":
+        if (!entrada.saida_origem_id) return <span className="text-muted-foreground">-</span>;
+        const saidaNumero = `SAID${entrada.saida_origem_id.slice(-3).toUpperCase()}`;
+        return (
+          <Badge 
+            variant="outline" 
+            className="cursor-pointer hover:bg-accent font-mono text-xs"
+            onClick={() => navigate(`/saidas?highlight=${entrada.saida_origem_id}`)}
+            title={`Clique para ver a saída ${saidaNumero}`}
+          >
+            {saidaNumero}
+          </Badge>
+        );
       case "actions":
         return <div className="flex gap-1">
             <Button variant="ghost" size="sm" onClick={() => {
