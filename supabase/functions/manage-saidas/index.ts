@@ -228,11 +228,14 @@ async function createSaida(supabase: any, userId: string, data: any) {
     return sum + ((item.quantidade || 0) * (item.preco_unitario || 0))
   }, 0)
   
-  // Get freight and insurance values from form data (if provided)
+  // Get freight, insurance, volumes and weight values from form data (if provided)
   const valorFrete = data.valor_frete || 0
   const valorSeguro = data.valor_seguro || 0
+  const quantidadeVolumes = data.quantidade_volumes || 0
+  const pesoBruto = data.peso_bruto || 0
+  const pesoLiquido = data.peso_liquido || 0
   
-  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro })
+  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro, quantidadeVolumes, pesoBruto, pesoLiquido })
 
   // 🔧 PARTE 1C: Processar dados de TRANSPORTE/FRETE
   let transportadoraData: any = null
@@ -318,10 +321,13 @@ async function createSaida(supabase: any, userId: string, data: any) {
     destinatario_email: clienteDestinatarioData?.email_comercial || null,
     // 🔧 GRAVAR DADOS DA TRANSPORTADORA
     ...transportadoraData,
-    // 🔧 GRAVAR VALORES FINANCEIROS
+    // 🔧 GRAVAR VALORES FINANCEIROS E VOLUMES
     valor_produtos: valorProdutos,
     valor_frete: valorFrete,
     valor_seguro: valorSeguro,
+    quantidade_volumes: quantidadeVolumes,
+    peso_bruto: pesoBruto,
+    peso_liquido: pesoLiquido,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }

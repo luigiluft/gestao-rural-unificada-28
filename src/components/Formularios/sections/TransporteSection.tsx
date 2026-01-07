@@ -51,11 +51,19 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
     })
   }
 
-  const handleValorChange = (field: 'valor_frete' | 'valor_seguro', value: string) => {
+  const handleValorChange = (field: 'valor_frete' | 'valor_seguro' | 'peso_bruto' | 'peso_liquido', value: string) => {
     const numValue = parseFloat(value) || 0
     onDadosChange({
       ...dados,
       [field]: numValue
+    })
+  }
+
+  const handleQuantidadeVolumesChange = (value: string) => {
+    const numValue = parseInt(value) || 0
+    onDadosChange({
+      ...dados,
+      quantidade_volumes: numValue
     })
   }
 
@@ -173,6 +181,52 @@ export function TransporteSection({ dados, onDadosChange }: TransporteSectionPro
             </p>
           </div>
         )}
+
+        {/* Volumes e Peso */}
+        <div className="pt-2 border-t">
+          <div className="flex items-center gap-2 mb-3">
+            <Truck className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Volumes e Peso</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="quantidade_volumes">Qtd. Volumes</Label>
+              <Input
+                id="quantidade_volumes"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="0"
+                value={dados.quantidade_volumes || ''}
+                onChange={(e) => handleQuantidadeVolumesChange(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="peso_bruto">Peso Bruto (kg)</Label>
+              <Input
+                id="peso_bruto"
+                type="number"
+                step="0.001"
+                min="0"
+                placeholder="0,000"
+                value={dados.peso_bruto || ''}
+                onChange={(e) => handleValorChange('peso_bruto', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="peso_liquido">Peso Líquido (kg)</Label>
+              <Input
+                id="peso_liquido"
+                type="number"
+                step="0.001"
+                min="0"
+                placeholder="0,000"
+                value={dados.peso_liquido || ''}
+                onChange={(e) => handleValorChange('peso_liquido', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Valores de Frete e Seguro */}
         <div className="pt-2 border-t">
