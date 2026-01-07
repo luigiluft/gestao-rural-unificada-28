@@ -116,6 +116,10 @@ export interface DadosSaida extends DadosGenericosBase {
   quantidade_volumes?: number
   peso_bruto?: number
   peso_liquido?: number
+  // Campos NFe
+  numero_nfe?: string
+  serie_nfe?: string
+  chave_nfe?: string
 }
 
 export interface FormularioGenericoProps {

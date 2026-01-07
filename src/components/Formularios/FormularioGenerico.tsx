@@ -291,6 +291,10 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           quantidade_volumes: dadosSaida.quantidade_volumes || 0,
           peso_bruto: dadosSaida.peso_bruto || 0,
           peso_liquido: dadosSaida.peso_liquido || 0,
+          // Campos NFe
+          numero_nfe: dadosSaida.numero_nfe || null,
+          serie_nfe: dadosSaida.serie_nfe || '1',
+          chave_nfe: dadosSaida.chave_nfe || null,
           itens: itens.map(item => ({
             user_id: user?.id,
             produto_id: item.produto_id,
