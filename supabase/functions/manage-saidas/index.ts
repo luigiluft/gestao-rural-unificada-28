@@ -224,9 +224,14 @@ async function createSaida(supabase: any, userId: string, data: any) {
 
   // Calculate total weight and product value
   const pesoTotal = data.itens.reduce((sum: number, item: any) => sum + (item.quantidade || 0), 0)
-  const valorProdutos = data.itens.reduce((sum: number, item: any) => {
-    return sum + ((item.quantidade || 0) * (item.preco_unitario || 0))
+  
+  // Usar valor_produtos do frontend se fornecido, senão calcular
+  // Frontend pode passar como valor_unitario ou preco_unitario
+  const valorProdutosCalculado = data.itens.reduce((sum: number, item: any) => {
+    const precoUnit = item.preco_unitario || item.valor_unitario || 0
+    return sum + ((item.quantidade || 0) * precoUnit)
   }, 0)
+  const valorProdutos = data.valor_produtos || valorProdutosCalculado
   
   // Get freight, insurance, volumes and weight values from form data (if provided)
   const valorFrete = data.valor_frete || 0
@@ -235,7 +240,10 @@ async function createSaida(supabase: any, userId: string, data: any) {
   const pesoBruto = data.peso_bruto || 0
   const pesoLiquido = data.peso_liquido || 0
   
-  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro, quantidadeVolumes, pesoBruto, pesoLiquido })
+  // Calcular valor total = produtos + frete + seguro
+  const valorTotal = valorProdutos + valorFrete + valorSeguro
+  
+  console.log('💰 Valores calculados:', { valorProdutos, valorFrete, valorSeguro, valorTotal, quantidadeVolumes, pesoBruto, pesoLiquido })
 
   // 🔧 PARTE 1C: Processar dados de TRANSPORTE/FRETE
   let transportadoraData: any = null
@@ -325,6 +333,7 @@ async function createSaida(supabase: any, userId: string, data: any) {
     valor_produtos: valorProdutos,
     valor_frete: valorFrete,
     valor_seguro: valorSeguro,
+    valor_total: valorTotal,
     quantidade_volumes: quantidadeVolumes,
     peso_bruto: pesoBruto,
     peso_liquido: pesoLiquido,
