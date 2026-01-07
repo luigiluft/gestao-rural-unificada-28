@@ -88,9 +88,10 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   // Auto-select deposit if only one available
   useEffect(() => {
     if (depositos.length === 1 && !dados.depositoId) {
-      handleChange('depositoId', depositos[0].deposito_id)
+      console.log('🏭 Auto-selecionando depósito único:', depositos[0].deposito_id)
+      onDadosChange({ ...dados, depositoId: depositos[0].deposito_id })
     }
-  }, [depositos, dados.depositoId])
+  }, [depositos.length, dados.depositoId, onDadosChange])
 
   // Atualizar número NFe quando mudar série ou quando carregar próximo número
   useEffect(() => {
