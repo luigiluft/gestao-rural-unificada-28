@@ -110,13 +110,6 @@ export const FluxoChart = ({ data }: FluxoChartProps) => {
                 radius={[0, 0, 0, 0]}
               />
               <Bar 
-                dataKey="aCaminho" 
-                stackId="fluxo" 
-                fill="#2563eb" 
-                name="A Caminho"
-                radius={[0, 0, 0, 0]}
-              />
-              <Bar 
                 dataKey="noDeposito" 
                 stackId="fluxo" 
                 fill="#059669" 
