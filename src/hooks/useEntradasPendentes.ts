@@ -41,16 +41,32 @@ export const useEntradasPendentes = (dateRange?: DateRange) => {
           query = query.lte("data_entrada", dateRange.to.toISOString().split('T')[0])
         }
 
-        // Para clientes: buscar entradas onde são destinatários (pelo cliente_id)
+        // Para clientes: buscar entradas pelos depósitos vinculados ao cliente
         if (isCliente && availableClientes && availableClientes.length > 0) {
           const clienteIds = availableClientes.map(c => c.id)
-          console.log('🏢 Filtrando entradas para clientes:', clienteIds)
-          query = query.in("cliente_id", clienteIds)
+          console.log('🏢 Buscando depósitos vinculados aos clientes:', clienteIds)
           
-          // Se tem filtro de depósito ativo, aplicar também
+          // Buscar os depósitos vinculados a esses clientes
+          const { data: clienteDepositos } = await supabase
+            .from("cliente_depositos")
+            .select("franquia_id")
+            .in("cliente_id", clienteIds)
+            .eq("ativo", true)
+          
+          const depositoIdsDoCliente = [...new Set(clienteDepositos?.map(cd => cd.franquia_id) || [])]
+          console.log('🏭 Depósitos do cliente:', depositoIdsDoCliente)
+          
           if (shouldFilter && depositoId) {
-            console.log('🏭 Aplicando filtro de depósito para cliente:', depositoId)
+            // Se tem filtro específico de depósito, usar apenas esse
+            console.log('🏭 Aplicando filtro de depósito específico:', depositoId)
             query = query.eq("deposito_id", depositoId)
+          } else if (depositoIdsDoCliente.length > 0) {
+            // Sem filtro específico, buscar por todos os depósitos do cliente
+            query = query.in("deposito_id", depositoIdsDoCliente)
+          } else {
+            // Cliente sem depósitos vinculados - retornar vazio
+            console.log('⚠️ Cliente sem depósitos vinculados')
+            return []
           }
         } 
         // Para franqueados/operadores: filtrar por depósito
