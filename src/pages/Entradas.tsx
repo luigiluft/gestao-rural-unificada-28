@@ -232,10 +232,15 @@ export default function Entradas() {
   const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
   const paginatedEntradas = entradas?.slice(startIndex, endIndex) || [];
 
-  // Default columns configuration
+  // Default columns configuration - unified with Saidas
   const defaultColumns: ColumnConfig[] = [
-  // Basic Info
+  // Básico
   {
+    key: "id",
+    label: "ID",
+    visible: false,
+    category: "Básico"
+  }, {
     key: "numero_nfe",
     label: "NFe",
     visible: true,
@@ -248,6 +253,31 @@ export default function Entradas() {
   }, {
     key: "chave_nfe",
     label: "Chave",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "natureza_operacao",
+    label: "Operação",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "cfop",
+    label: "CFOP",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "finalidade_nfe",
+    label: "Finalidade",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "origem",
+    label: "Origem",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "criadoPor",
+    label: "Criado por",
     visible: false,
     category: "Básico"
   }, {
@@ -276,11 +306,6 @@ export default function Entradas() {
     visible: false,
     category: "Básico"
   }, {
-    key: "natureza_operacao",
-    label: "Operação",
-    visible: false,
-    category: "Básico"
-  }, {
     key: "itens_count",
     label: "Itens",
     visible: true,
@@ -296,6 +321,11 @@ export default function Entradas() {
     visible: true,
     category: "Básico"
   }, {
+    key: "aprovacao",
+    label: "Aprovação",
+    visible: false,
+    category: "Básico"
+  }, {
     key: "valor_total",
     label: "Valor",
     visible: true,
@@ -304,6 +334,21 @@ export default function Entradas() {
     key: "actions",
     label: "Ações",
     visible: true,
+    category: "Básico"
+  }, {
+    key: "tipo",
+    label: "Tipo",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "gera_financeiro",
+    label: "Gera Financeiro",
+    visible: false,
+    category: "Básico"
+  }, {
+    key: "movimenta_estoque",
+    label: "Movimenta Estoque",
+    visible: false,
     category: "Básico"
   },
   // Emitente
@@ -492,6 +537,11 @@ export default function Entradas() {
     label: "Data Aprovação",
     visible: false,
     category: "Datas"
+  }, {
+    key: "data_aprovacao_produtor",
+    label: "Data Aprov. Produtor",
+    visible: false,
+    category: "Datas"
   },
   // Sistema
   {
@@ -512,6 +562,26 @@ export default function Entradas() {
   }, {
     key: "observacoes_franqueado",
     label: "Obs. Franqueado",
+    visible: false,
+    category: "Sistema"
+  }, {
+    key: "observacoes_aprovacao",
+    label: "Obs. Aprovação",
+    visible: false,
+    category: "Sistema"
+  }, {
+    key: "ambiente",
+    label: "Ambiente",
+    visible: false,
+    category: "Sistema"
+  }, {
+    key: "protocolo_autorizacao",
+    label: "Protocolo",
+    visible: false,
+    category: "Sistema"
+  }, {
+    key: "informacoes_adicionais",
+    label: "Info. Adicionais",
     visible: false,
     category: "Sistema"
   }];
