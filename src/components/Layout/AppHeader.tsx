@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Search, Bell, ChevronDown, Settings, HelpCircle, Building2 } from "lucide-react"
+import { Search, Bell, ChevronDown, Settings, HelpCircle, Building2, Warehouse } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +19,7 @@ import { getRoleLabel } from "@/utils/roleTranslations"
 import { useCliente } from "@/contexts/ClienteContext"
 import { useClientes } from "@/hooks/useClientes"
 import { useFranquia } from "@/contexts/FranquiaContext"
+import { useDeposito } from "@/contexts/DepositoContext"
 import { useUserRole } from "@/hooks/useUserRole"
 
 export function AppHeader() {
@@ -29,6 +30,7 @@ export function AppHeader() {
   const { selectedCliente, setSelectedCliente, availableClientes } = useCliente()
   const { data: clientes } = useClientes()
   const { selectedFranquia, setSelectedFranquia, availableFranquias } = useFranquia()
+  const { selectedDeposito, setSelectedDeposito, availableDepositos } = useDeposito()
   
   // Get role label from the userRole
   const roleLabel = userRole ? getRoleLabel(userRole, false, true) : getRoleLabel('cliente', false, true)
@@ -123,13 +125,65 @@ export function AppHeader() {
           </>
         )}
 
-        {/* Depósito selector - for cliente roles */}
-        {isCliente && availableFranquias.length > 0 && (
+        {/* Depósito selector - para clientes usa DepositoContext */}
+        {isCliente && availableDepositos.length > 0 && (
           <>
             <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Building2 className="h-3.5 w-3.5" />
+              <Warehouse className="h-3.5 w-3.5" />
               <span>Depósito:</span>
+              {availableDepositos.length === 1 ? (
+                <Badge variant="outline" className="font-normal">
+                  {availableDepositos[0].nome}
+                </Badge>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
+                      {selectedDeposito?.nome || availableDepositos[0].nome}
+                      <ChevronDown className="ml-1 h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64 bg-card z-50">
+                    <DropdownMenuLabel>Selecione o Depósito</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {availableDepositos.map((deposito) => (
+                      <DropdownMenuItem
+                        key={deposito.id}
+                        onClick={() => setSelectedDeposito(deposito)}
+                        className={selectedDeposito?.id === deposito.id ? "bg-primary/10" : ""}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">{deposito.nome}</span>
+                          {deposito.tipo_regime && (
+                            <span className="text-xs text-muted-foreground">
+                              {deposito.tipo_regime === 'armazem_geral' ? 'Armazém Geral' : 'Filial'}
+                            </span>
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+            
+            {/* Info badge quando "Todos" está selecionado */}
+            {selectedDeposito?.id === 'ALL' && (
+              <Badge variant="secondary" className="text-xs">
+                Visão consolidada de todos os depósitos
+              </Badge>
+            )}
+          </>
+        )}
+
+        {/* Franquia selector - para não-clientes (admin, franqueados) */}
+        {!isCliente && availableFranquias.length > 0 && (
+          <>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Warehouse className="h-3.5 w-3.5" />
+              <span>Franquia:</span>
               {availableFranquias.length === 1 ? (
                 <Badge variant="outline" className="font-normal">
                   {availableFranquias[0].nome}
@@ -143,7 +197,7 @@ export function AppHeader() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64 bg-card z-50">
-                    <DropdownMenuLabel>Selecione o Depósito</DropdownMenuLabel>
+                    <DropdownMenuLabel>Selecione a Franquia</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {availableFranquias.map((franquia) => (
                       <DropdownMenuItem
@@ -165,13 +219,6 @@ export function AppHeader() {
                 </DropdownMenu>
               )}
             </div>
-            
-            {/* Info badge quando "Todos" está selecionado */}
-            {selectedFranquia?.id === 'ALL' && (
-              <Badge variant="secondary" className="text-xs">
-                WMS/TMS ocultos (visão consolidada)
-              </Badge>
-            )}
           </>
         )}
       </div>
