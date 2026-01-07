@@ -86,20 +86,34 @@ export const useProdutosAvariados = () => {
         `)
         .eq("is_avaria", true)
 
-      // If not admin, filter by deposito_id based on user's franchise access
+      // If not admin, filter by deposito_id based on user's cliente_depositos access
       if (!isAdmin) {
-        // Check if user has franchise access via franquia_usuarios
-        const { data: franquiaUsuarios } = await supabase
-          .from("franquia_usuarios")
-          .select("franquia_id")
+        // Get user's client associations
+        const { data: clienteUsuarios } = await supabase
+          .from("cliente_usuarios")
+          .select("cliente_id")
           .eq("user_id", user.id)
           .eq("ativo", true)
         
-        if (franquiaUsuarios && franquiaUsuarios.length > 0) {
-          const depositoIds = franquiaUsuarios.map(f => f.franquia_id)
-          query = query.in("entrada_pallets.entradas.deposito_id", depositoIds)
+        const clienteIds = clienteUsuarios?.map(cu => cu.cliente_id) || []
+        
+        if (clienteIds.length > 0) {
+          // Get deposits for these clients
+          const { data: clienteDepositos } = await supabase
+            .from("cliente_depositos")
+            .select("franquia_id")
+            .in("cliente_id", clienteIds)
+            .eq("ativo", true)
+          
+          if (clienteDepositos && clienteDepositos.length > 0) {
+            const depositoIds = clienteDepositos.map(d => d.franquia_id)
+            query = query.in("entrada_pallets.entradas.deposito_id", depositoIds)
+          } else {
+            // For clients without deposit access, filter by user_id
+            query = query.eq("entrada_pallets.entradas.user_id", user.id)
+          }
         } else {
-          // For clients without franchise access, filter by user_id
+          // For users without client access, filter by user_id
           query = query.eq("entrada_pallets.entradas.user_id", user.id)
         }
       }

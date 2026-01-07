@@ -103,17 +103,27 @@ export default function Usuarios() {
 
       let allProfiles = (response.data ?? []) as ProfileRow[];
       
-      // Se não for admin, filtrar apenas usuários de suas franquias
+      // Se não for admin, filtrar apenas usuários de suas franquias via cliente_depositos
       if (!isAdmin && currentUserFranquias.length > 0) {
         const franquiaIds = currentUserFranquias.map(f => f.id);
         
-        // Buscar usuários associados às franquias do operador
-        const { data: franquiaUsers } = await supabase
-          .from('franquia_usuarios')
-          .select('user_id')
-          .in('franquia_id', franquiaIds);
+        // Buscar clientes com depósitos nas franquias
+        const { data: clienteDepositos } = await supabase
+          .from('cliente_depositos')
+          .select('cliente_id')
+          .in('franquia_id', franquiaIds)
+          .eq('ativo', true);
         
-        const allowedUserIds = new Set(franquiaUsers?.map(fu => fu.user_id) || []);
+        const clienteIds = [...new Set(clienteDepositos?.map(cd => cd.cliente_id) || [])];
+        
+        // Buscar usuários desses clientes
+        const { data: clienteUsuarios } = await supabase
+          .from('cliente_usuarios')
+          .select('user_id')
+          .in('cliente_id', clienteIds)
+          .eq('ativo', true);
+        
+        const allowedUserIds = new Set(clienteUsuarios?.map(cu => cu.user_id) || []);
         allProfiles = allProfiles.filter(p => allowedUserIds.has(p.user_id));
       }
 

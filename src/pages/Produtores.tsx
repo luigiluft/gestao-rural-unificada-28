@@ -67,13 +67,13 @@ export default function Produtores() {
     }
   }, []);
 
-  // Fetch franqueados for the dropdown
+  // Fetch empresa masters for the dropdown (users who own clientes)
   const { data: franqueados } = useQuery({
-    queryKey: ["franqueados-for-invite"],
+    queryKey: ["empresa-masters-for-invite"],
     queryFn: async () => {
-      // Get users who have franchise associations (masters)
-      const { data: franquiaUsers, error } = await supabase
-        .from("franquia_usuarios")
+      // Get all master users from cliente_usuarios
+      const { data: clienteUsuarios, error } = await supabase
+        .from("cliente_usuarios")
         .select("user_id")
         .eq("papel", "master")
         .eq("ativo", true);
@@ -81,7 +81,7 @@ export default function Produtores() {
       if (error) throw error;
       
       // Get unique user IDs
-      const uniqueUserIds = [...new Set((franquiaUsers || []).map(fu => fu.user_id))];
+      const uniqueUserIds = [...new Set((clienteUsuarios || []).map(cu => cu.user_id))];
       
       if (uniqueUserIds.length === 0) return [];
       

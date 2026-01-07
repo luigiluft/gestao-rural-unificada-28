@@ -10,13 +10,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Building2, User, MapPin, Users, Map } from "lucide-react";
+import { Trash2, Edit, Building2, MapPin, Map } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { WarehouseLayoutDesigner, type WarehouseLayout } from "@/components/Franquias/WarehouseLayoutDesigner";
 import { FranquiaWizard } from "@/components/Franquias/FranquiaWizard";
 import { useCreateStoragePosition, useBulkCreateStoragePositions } from "@/hooks/useStoragePositions";
-import { GerenciarUsuariosFranquia } from "@/components/Franquias/GerenciarUsuariosFranquia";
+
 import { WarehouseMapViewer } from "@/components/WMS/WarehouseMapViewer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -65,9 +65,7 @@ const Franquias = () => {
   const [editingFranquia, setEditingFranquia] = useState<Franquia | null>(null);
   const [layoutDialogOpen, setLayoutDialogOpen] = useState(false);
   const [selectedLayout, setSelectedLayout] = useState<any>(null);
-  const [usuariosDialogOpen, setUsuariosDialogOpen] = useState(false);
   const [selectedFranquiaId, setSelectedFranquiaId] = useState<string>("");
-  const [massModeOpen, setMassModeOpen] = useState(false);
   const createPosition = useCreateStoragePosition();
   const bulkCreatePositions = useBulkCreateStoragePositions();
   
@@ -261,22 +259,8 @@ const Franquias = () => {
         if (error) throw error;
         franquiaId = result.id;
 
-        // Inserir registro em franquia_usuarios se for franquia com master (admin/operador)
-        if (data.formData.tipo_deposito === 'franquia' && data.formData.master_franqueado_id) {
-          const { error: franquiaUsuarioError } = await supabase
-            .from("franquia_usuarios")
-            .insert({
-              franquia_id: franquiaId,
-              user_id: data.formData.master_franqueado_id,
-              papel: 'master',
-              ativo: true,
-            });
-
-          if (franquiaUsuarioError) {
-            console.error("Error creating franquia_usuarios record:", franquiaUsuarioError);
-            throw franquiaUsuarioError;
-          }
-        }
+        // Nota: franquia_usuarios foi deprecado - a associação de usuários 
+        // agora é feita via cliente_usuarios -> cliente_depositos
 
         // AUTO-VINCULAR ao cliente se for cliente criando seu próprio depósito
         if (isCliente && selectedCliente?.id) {
@@ -442,12 +426,6 @@ const Franquias = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          {!isCliente && (
-            <Button variant="outline" onClick={() => setMassModeOpen(true)}>
-              <Users className="mr-2 h-4 w-4" />
-              Gestão em Massa
-            </Button>
-          )}
           <Button onClick={() => { setEditingFranquia(null); setDialogOpen(true); }}>
             <Building2 className="mr-2 h-4 w-4" />
             {isCliente ? "Novo Depósito" : "Novo Depósito"}
@@ -485,7 +463,7 @@ const Franquias = () => {
                   <TableHead>Localização</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>CNPJ</TableHead>
-                  {!isCliente && <TableHead className="text-center">Usuários</TableHead>}
+                  
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -536,21 +514,6 @@ const Franquias = () => {
                     <TableCell>
                       {franquia.cnpj || '—'}
                     </TableCell>
-                    {!isCliente && (
-                      <TableCell className="text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedFranquiaId(franquia.id)
-                            setUsuariosDialogOpen(true)
-                          }}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Gerenciar
-                        </Button>
-                      </TableCell>
-                    )}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button
@@ -618,20 +581,6 @@ const Franquias = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para gerenciar usuários por franquia */}
-      <GerenciarUsuariosFranquia
-        franquiaId={selectedFranquiaId}
-        massModeEnabled={false}
-        open={usuariosDialogOpen}
-        onOpenChange={setUsuariosDialogOpen}
-      />
-
-      {/* Dialog para gestão em massa de usuários */}
-      <GerenciarUsuariosFranquia
-        massModeEnabled={true}
-        open={massModeOpen}
-        onOpenChange={setMassModeOpen}
-      />
     </div>
   );
 };
