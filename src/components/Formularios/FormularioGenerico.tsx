@@ -137,6 +137,8 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
     const updatedDados = {
       ...dadosSaida,
       valor_frete_calculado: resultado.valor_total,
+      valor_frete: resultado.valor_total, // Preencher no bloco de transporte
+      valor_seguro: resultado.valor_seguro || 0, // Valor do seguro se disponível
       prazo_entrega_calculado: resultado.prazo_entrega,
       frete_origem: franquiaNome,
       frete_destino: fazendas.find(f => f.id === dadosSaida.fazenda_id)?.nome || '',
@@ -359,16 +361,6 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             pesoTotal={calcularPesoTotal()}
             pesoMinimoMopp={pesoMinimoMopp}
           />
-          <TransporteSection
-            dados={dados as DadosSaida}
-            onDadosChange={setDados}
-            itens={itens}
-            produtosInfo={estoque.map((e: any) => ({
-              id: e.produto_id,
-              package_capacity: e.produtos?.package_capacity || 10,
-              containers_per_package: e.produtos?.containers_per_package || 1
-            }))}
-          />
         </>
       )}
 
@@ -409,6 +401,20 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           onFazendaChange={(fazendaId) => setDados({ ...dadosSaida, fazenda_id: fazendaId })}
           produtorDestinatarioId={dadosSaida.cliente_destinatario_id || dadosSaida.produtor_destinatario}
           onFreteCalculado={handleFreteCalculado}
+        />
+      )}
+
+      {/* Transporte e Frete - após simulador */}
+      {tipo === 'saida' && (
+        <TransporteSection
+          dados={dados as DadosSaida}
+          onDadosChange={setDados}
+          itens={itens}
+          produtosInfo={estoque.map((e: any) => ({
+            id: e.produto_id,
+            package_capacity: e.produtos?.package_capacity || 10,
+            containers_per_package: e.produtos?.containers_per_package || 1
+          }))}
         />
       )}
 
