@@ -161,12 +161,14 @@ async function createViagemWithRemessas(supabase: any, userId: string, data: any
 
   if (viagemError) throw viagemError
 
-  // Update saidas to link to viagem
+  // Update saidas to link to viagem and add vehicle info
   const { error: saidasError } = await supabase
     .from('saidas')
     .update({ 
       viagem_id: viagem.id,
-      status: 'alocado_viagem'
+      status: 'alocado_viagem',
+      placa_veiculo: viagemData.placa_veiculo || null,
+      uf_veiculo: viagemData.uf_veiculo || null
     })
     .in('id', remessasIds)
 
@@ -176,11 +178,13 @@ async function createViagemWithRemessas(supabase: any, userId: string, data: any
     throw saidasError
   }
   
-  // Vincular entradas relacionadas (via saida_origem_id) à viagem
+  // Vincular entradas relacionadas (via saida_origem_id) à viagem e adicionar dados do veículo
   const { data: entradasVinculadas, error: entradasError } = await supabase
     .from('entradas')
     .update({
       viagem_id: viagem.id,
+      placa_veiculo: viagemData.placa_veiculo || null,
+      uf_veiculo: viagemData.uf_veiculo || null,
       updated_at: new Date().toISOString()
     })
     .in('saida_origem_id', remessasIds)
