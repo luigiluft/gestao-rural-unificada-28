@@ -298,44 +298,6 @@ export function OperacaoFiscalSection({ dados, onDadosChange }: OperacaoFiscalPr
           </div>
         )}
 
-        {/* Campos NFe: Número e Série */}
-        <div className="pt-4 border-t">
-          <div className="flex items-center gap-2 text-muted-foreground mb-3">
-            <FileText className="h-4 w-4" />
-            <span className="text-sm font-medium">Identificação da NF-e</span>
-          </div>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="numero_nfe">Número da NF-e</Label>
-              <Input
-                id="numero_nfe"
-                value={dados.numero_nfe || ''}
-                onChange={(e) => onDadosChange({ ...dados, numero_nfe: e.target.value.replace(/\D/g, '') })}
-                placeholder="000000001"
-                maxLength={9}
-              />
-              <p className="text-xs text-muted-foreground">
-                Número sequencial da nota fiscal (até 9 dígitos)
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="serie_nfe">Série da NF-e</Label>
-              <Input
-                id="serie_nfe"
-                value={dados.serie_nfe || ''}
-                onChange={(e) => onDadosChange({ ...dados, serie_nfe: e.target.value.replace(/\D/g, '') })}
-                placeholder="1"
-                maxLength={3}
-              />
-              <p className="text-xs text-muted-foreground">
-                Série da nota (1-999). Altere se precisar usar outra série.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Campo CFOP com Combobox */}
         <div className="space-y-2">
           <Label htmlFor="cfop">CFOP</Label>

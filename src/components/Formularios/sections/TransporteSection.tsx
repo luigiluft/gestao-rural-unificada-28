@@ -104,7 +104,7 @@ export function TransporteSection({ dados, onDadosChange, itens = [], produtosIn
     })
   }
 
-  const handleValorChange = (field: 'valor_frete' | 'valor_seguro' | 'valor_desconto' | 'outras_despesas' | 'peso_bruto' | 'peso_liquido', value: string) => {
+  const handleValorChange = (field: 'valor_frete' | 'valor_seguro' | 'peso_bruto' | 'peso_liquido', value: string) => {
     const numValue = parseFloat(value) || 0
     
     // Se peso líquido muda, recalcular peso bruto
@@ -316,9 +316,9 @@ export function TransporteSection({ dados, onDadosChange, itens = [], produtosIn
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Valores</span>
-            <span className="text-xs text-muted-foreground ml-auto">(calculado no simulador de frete)</span>
+            <span className="text-xs text-muted-foreground ml-auto">(calculado no simulador de frete abaixo)</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="valor_frete">Valor do Frete (R$)</Label>
               <Input
@@ -342,32 +342,6 @@ export function TransporteSection({ dados, onDadosChange, itens = [], produtosIn
                 placeholder="0,00"
                 value={dados.valor_seguro || ''}
                 onChange={(e) => handleValorChange('valor_seguro', e.target.value)}
-                className="bg-muted/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="valor_desconto">Desconto (R$)</Label>
-              <Input
-                id="valor_desconto"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0,00"
-                value={dados.valor_desconto || ''}
-                onChange={(e) => handleValorChange('valor_desconto', e.target.value)}
-                className="bg-muted/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="outras_despesas">Outras Despesas (R$)</Label>
-              <Input
-                id="outras_despesas"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0,00"
-                value={dados.outras_despesas || ''}
-                onChange={(e) => handleValorChange('outras_despesas', e.target.value)}
                 className="bg-muted/30"
               />
             </div>
