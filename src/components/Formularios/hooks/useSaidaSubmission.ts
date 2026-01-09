@@ -25,6 +25,10 @@ interface DadosSaida {
   prazo_entrega_calculado?: number
   // Cliente destinatário para vendas B2B
   cliente_destinatario_id?: string
+  // Local de entrega
+  local_entrega_id?: string
+  // Natureza da operação
+  natureza_operacao?: string
   // Campos de operação fiscal
   finalidade_nfe?: string
   nfe_referenciada_chave?: string
@@ -92,6 +96,24 @@ export function useSaidaSubmission() {
     }
   }
 
+  // Mapear finalidade_nfe para natureza_operacao
+  const mapFinalidadeToNatureza = (finalidade: string | undefined): string => {
+    switch (finalidade) {
+      case 'normal':
+        return 'VENDA DE MERCADORIA'
+      case 'devolucao':
+        return 'DEVOLUÇÃO DE MERCADORIA'
+      case 'remessa':
+        return 'REMESSA PARA ARMAZENAGEM'
+      case 'transferencia':
+        return 'TRANSFERÊNCIA DE MERCADORIA'
+      case 'complementar':
+        return 'NF-E COMPLEMENTAR'
+      default:
+        return 'VENDA DE MERCADORIA'
+    }
+  }
+
   const submitSaida = async (dados: DadosSaida, itens: SaidaItem[]) => {
     try {
       // 1. Validar dados
@@ -102,7 +124,10 @@ export function useSaidaSubmission() {
       const dataInicioJanela = parseLocalDate(dados.dataSaida);
       const dataFimJanela = calculateDeliveryWindowEnd(dataInicioJanela, janelaEntregaDias);
 
-      // 3. Preparar dados para a edge function - CONVERTENDO TODOS OS CAMPOS PARA SNAKE_CASE
+      // 3. Gerar natureza_operacao a partir da finalidade_nfe
+      const naturezaOperacao = dados.natureza_operacao || mapFinalidadeToNatureza(dados.finalidade_nfe)
+
+      // 4. Preparar dados para a edge function - CONVERTENDO TODOS OS CAMPOS PARA SNAKE_CASE
       const saidaData = {
         user_id: user!.id,
         deposito_id: dados.deposito.id,
@@ -122,8 +147,11 @@ export function useSaidaSubmission() {
         frete_origem: dados.frete_origem || null,
         frete_destino: dados.frete_destino || null,
         valor_frete_calculado: dados.valor_frete_calculado || null,
-        // CRITICAL: Incluir cliente_destinatario_id para fluxo interno B2B
+        // CRITICAL: Incluir cliente_destinatario_id e local_entrega_id
         cliente_destinatario_id: dados.cliente_destinatario_id || null,
+        local_entrega_id: dados.local_entrega_id || null,
+        // CRITICAL: Incluir natureza_operacao
+        natureza_operacao: naturezaOperacao,
         // Campos de operação fiscal
         finalidade_nfe: dados.finalidade_nfe || 'normal',
         nfe_referenciada_chave: dados.nfe_referenciada_chave || null,

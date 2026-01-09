@@ -22,6 +22,7 @@ import { useHorariosDisponiveis } from "@/hooks/useReservasHorario"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
 import { useProximoNumeroNfe } from "@/hooks/useProximoNumeroNfe"
 import { useChaveNFeAutomatica } from "@/hooks/useChaveNFeAutomatica"
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega"
 import { CheckCircle } from "lucide-react"
 
 interface DadosSaidaProps {
@@ -116,6 +117,9 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
 
   // Get the fazendas for the client (deprecated produtor_destinatario - usamos cliente_destinatario_id)
   const { data: fazendas = [], isLoading: loadingFazendas } = useFazendas(isCliente ? user?.id : undefined)
+
+  // Hook para buscar locais de entrega do cliente destinatário
+  const { data: locaisEntrega = [], isLoading: loadingLocais } = useLocaisEntrega(dados.cliente_destinatario_id)
 
   // Hook para horários disponíveis
   const { data: horariosDisponiveis = [] } = useHorariosDisponiveis(
@@ -294,6 +298,38 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
               value={dados.cliente_destinatario_id}
               onChange={(clienteId) => handleChange('cliente_destinatario_id', clienteId)}
             />
+          )}
+
+          {/* Seletor de local de entrega - aparece quando há cliente destinatário selecionado */}
+          {dados.cliente_destinatario_id && (
+            <div className="space-y-2">
+              <Label htmlFor="local_entrega_id">Local de Entrega</Label>
+              {loadingLocais ? (
+                <div className="h-10 flex items-center text-sm text-muted-foreground">
+                  Carregando locais...
+                </div>
+              ) : locaisEntrega.length === 0 ? (
+                <div className="h-10 flex items-center text-sm text-muted-foreground">
+                  Nenhum local cadastrado para este cliente
+                </div>
+              ) : (
+                <Select 
+                  value={dados.local_entrega_id || ''} 
+                  onValueChange={(value) => handleChange('local_entrega_id', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o local de entrega" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locaisEntrega.map((local) => (
+                      <SelectItem key={local.id} value={local.id}>
+                        {local.nome} - {local.cidade}/{local.estado}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           )}
         </div>
 
