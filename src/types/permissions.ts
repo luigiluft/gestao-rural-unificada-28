@@ -4,12 +4,13 @@
  * Backend e Frontend agora usam os mesmos nomes:
  * - 'admin' - Administrador
  * - 'cliente' - Cliente (todas as empresas)
- * - 'motorista' - Motorista
  * - 'consumidor' - Consumidor (marketplace)
+ * 
+ * Nota: Motorista agora é um "cargo" (permission template), não um role
  * 
  * Use getRoleLabel() de @/utils/roleTranslations para exibição na UI
  */
-export type UserRole = 'admin' | 'cliente' | 'motorista' | 'consumidor';
+export type UserRole = 'admin' | 'cliente' | 'consumidor';
 // All possible permissions for pages and actions
 export type PermissionCode = 
   | 'estoque.view' | 'estoque.manage' | 'entradas.manage' | 'saidas.manage' 

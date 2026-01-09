@@ -8,21 +8,18 @@ import { UserRole } from "@/types/permissions"
 export const ROLE_LABELS = {
   admin: 'Administrador',
   cliente: 'Cliente',
-  motorista: 'Motorista',
   consumidor: 'Consumidor'
 } as const
 
 export const ROLE_LABELS_PLURAL = {
   admin: 'Administradores',
   cliente: 'Clientes',
-  motorista: 'Motoristas',
   consumidor: 'Consumidores'
 } as const
 
 export const ROLE_LABELS_SHORT = {
   admin: 'Admin',
   cliente: 'Cliente',
-  motorista: 'Motorista',
   consumidor: 'Consumidor'
 } as const
 
