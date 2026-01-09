@@ -103,6 +103,11 @@ export const useCreateCliente = () => {
     mutationFn: async (data: Omit<Cliente, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'ativo'>) => {
       if (!user?.id) throw new Error("Usuário não autenticado")
       
+      // Validar que endereço é obrigatório
+      if (!data.endereco_fiscal || !data.cidade_fiscal || !data.estado_fiscal) {
+        throw new Error("Endereço fiscal é obrigatório (logradouro, cidade e estado)")
+      }
+      
       // Criar o cliente
       const { data: cliente, error: clienteError } = await supabase
         .from("clientes")
@@ -130,15 +135,43 @@ export const useCreateCliente = () => {
 
       if (vinculoError) throw vinculoError
       
+      // Criar local de entrega "Matriz" automaticamente
+      const endereco_completo = [
+        cliente.endereco_fiscal,
+        cliente.numero_fiscal,
+        cliente.complemento_fiscal
+      ].filter(Boolean).join(', ')
+
+      const { error: localError } = await supabase
+        .from("locais_entrega")
+        .insert({
+          nome: `Matriz - ${cliente.nome_fantasia || cliente.razao_social}`,
+          tipo_local: 'filial',
+          is_rural: false,
+          endereco: endereco_completo,
+          bairro: cliente.bairro_fiscal || '',
+          cidade: cliente.cidade_fiscal!,
+          estado: cliente.estado_fiscal!,
+          cep: cliente.cep_fiscal || '',
+          cliente_id: cliente.id,
+          ativo: true
+        })
+
+      if (localError) {
+        console.error("Erro ao criar local de entrega matriz:", localError)
+        // Não impede a criação do cliente, apenas loga o erro
+      }
+      
       return cliente
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] })
+      queryClient.invalidateQueries({ queryKey: ["locais-entrega"] })
       toast.success("Cliente criado com sucesso!")
     },
     onError: (error) => {
       console.error("Erro ao criar cliente:", error)
-      toast.error("Erro ao criar cliente")
+      toast.error(error instanceof Error ? error.message : "Erro ao criar cliente")
     }
   })
 }
