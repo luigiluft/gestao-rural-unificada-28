@@ -81,6 +81,7 @@ export interface DadosSaida extends DadosGenericosBase {
   produtor_destinatario: string
   fazenda_id: string
   placa_veiculo: string
+  uf_veiculo?: string
   nome_motorista: string
   telefone_motorista: string
   cpf_motorista: string
@@ -92,6 +93,14 @@ export interface DadosSaida extends DadosGenericosBase {
   frete_distancia?: number
   valor_frete_calculado?: number
   prazo_entrega_calculado?: number
+  // Campos de endereço de entrega
+  entrega_logradouro?: string
+  entrega_numero?: string
+  entrega_complemento?: string
+  entrega_bairro?: string
+  entrega_municipio?: string
+  entrega_uf?: string
+  entrega_cep?: string
   // Campos de operação fiscal
   finalidade_nfe?: 'normal' | 'devolucao' | 'remessa' | 'transferencia' | 'complementar'
   nfe_referenciada_chave?: string

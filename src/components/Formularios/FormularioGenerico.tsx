@@ -253,6 +253,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           deposito_id: dados.depositoId,
           status: 'separacao_pendente',
           placa_veiculo: dadosSaida.placa_veiculo || null,
+          uf_veiculo: dadosSaida.uf_veiculo || null,
           nome_motorista: dadosSaida.nome_motorista || null,
           telefone_motorista: dadosSaida.telefone_motorista || null,
           cpf_motorista: dadosSaida.cpf_motorista || null,
@@ -267,6 +268,14 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           data_inicio_janela: dataInicioJanela ? dataInicioJanela.toISOString().split('T')[0] : null,
           data_fim_janela: dataFimJanela ? dataFimJanela.toISOString().split('T')[0] : null,
           janela_entrega_dias: janelaEntregaDias,
+          // Campos de endereço de entrega
+          entrega_logradouro: dadosSaida.entrega_logradouro || null,
+          entrega_numero: dadosSaida.entrega_numero || null,
+          entrega_complemento: dadosSaida.entrega_complemento || null,
+          entrega_bairro: dadosSaida.entrega_bairro || null,
+          entrega_municipio: dadosSaida.entrega_municipio || null,
+          entrega_uf: dadosSaida.entrega_uf || null,
+          entrega_cep: dadosSaida.entrega_cep || null,
           // Campos de operação fiscal
           finalidade_nfe: dadosSaida.finalidade_nfe || 'normal',
           nfe_referenciada_chave: dadosSaida.nfe_referenciada_chave || null,
