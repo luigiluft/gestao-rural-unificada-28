@@ -33,6 +33,33 @@ interface DadosSaida {
   movimenta_estoque?: string
   tipo_complemento?: string
   destinatario_transferencia_id?: string
+  // Campos de transporte/motorista
+  placa_veiculo?: string
+  uf_veiculo?: string
+  nome_motorista?: string
+  cpf_motorista?: string
+  telefone_motorista?: string
+  // Campos de endereço de entrega
+  entrega_logradouro?: string
+  entrega_numero?: string
+  entrega_complemento?: string
+  entrega_bairro?: string
+  entrega_municipio?: string
+  entrega_uf?: string
+  entrega_cep?: string
+  // Campos de transporte/frete
+  modalidade_frete?: string
+  transportadora_id?: string
+  // Campos de volumes e peso
+  quantidade_volumes?: number
+  peso_bruto?: number
+  peso_liquido?: number
+  valor_frete?: number
+  valor_seguro?: number
+  // Campos NFe
+  numero_nfe?: string
+  serie_nfe?: string
+  chave_nfe?: string
 }
 
 export function useSaidaSubmission() {
@@ -105,6 +132,32 @@ export function useSaidaSubmission() {
         movimenta_estoque: dados.movimenta_estoque || 'saida',
         tipo_complemento: dados.tipo_complemento || null,
         destinatario_transferencia_id: dados.destinatario_transferencia_id || null,
+        // CRITICAL: Incluir campos de transporte/motorista
+        placa_veiculo: dados.placa_veiculo || null,
+        uf_veiculo: dados.uf_veiculo || null,
+        nome_motorista: dados.nome_motorista || null,
+        cpf_motorista: dados.cpf_motorista || null,
+        telefone_motorista: dados.telefone_motorista || null,
+        // CRITICAL: Incluir campos de endereço de entrega
+        entrega_logradouro: dados.entrega_logradouro || null,
+        entrega_numero: dados.entrega_numero || null,
+        entrega_complemento: dados.entrega_complemento || null,
+        entrega_bairro: dados.entrega_bairro || null,
+        entrega_municipio: dados.entrega_municipio || null,
+        entrega_uf: dados.entrega_uf || null,
+        entrega_cep: dados.entrega_cep || null,
+        // CRITICAL: Incluir campos de transporte/frete adicionais
+        modalidade_frete: dados.modalidade_frete || null,
+        transportadora_id: dados.transportadora_id || null,
+        quantidade_volumes: dados.quantidade_volumes || null,
+        peso_bruto: dados.peso_bruto || null,
+        peso_liquido: dados.peso_liquido || null,
+        valor_frete: dados.valor_frete || null,
+        valor_seguro: dados.valor_seguro || null,
+        // CRITICAL: Incluir campos NFe
+        numero_nfe: dados.numero_nfe || null,
+        serie_nfe: dados.serie_nfe || '1',
+        chave_nfe: dados.chave_nfe || null,
         itens: itens.map(item => ({
           user_id: user!.id,
           produto_id: item.produto_id,
