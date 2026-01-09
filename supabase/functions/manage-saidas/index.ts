@@ -1399,11 +1399,9 @@ async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino:
       transportadora_municipio: transportadoraData?.cidade || null,
       transportadora_uf: transportadoraData?.estado || null,
       
-      // 🔧 Dados de transporte (veículo/motorista)
-      placa_veiculo: saida.placa_veiculo || null,
-      uf_veiculo: saida.uf_veiculo || null,
+      // 🔧 Dados de transporte (veículo) - usando colunas que existem na tabela entradas
       veiculo_placa: saida.placa_veiculo || null,
-      nome_motorista: saida.nome_motorista || null,
+      uf_veiculo: saida.uf_veiculo || null,
       modalidade_frete: saida.modalidade_frete || null,
       
       // 🔧 Pesos
