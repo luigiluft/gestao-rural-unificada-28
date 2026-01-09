@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Trash2 } from "lucide-react"
 import { ItemGenerico, FormularioTipo } from "../types/formulario.types"
-import { useProductLatestPrice } from "@/hooks/useProductLatestPrice"
+import { useProductSalePrice } from "@/hooks/useProductSalePrice"
 import { useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
@@ -88,10 +88,9 @@ export function ItensComunsSection({
     enabled: tipo === 'saida' && !!depositoId,
   })
   
-  // Buscar preço mais recente quando produto estiver selecionado
-  const { data: latestPrice, isLoading: loadingPrice } = useProductLatestPrice(
-    novoItem.produto_id, 
-    depositoId
+  // Buscar preço de VENDA do produto (cliente_produtos) para saídas
+  const { data: salePrice, isLoading: loadingPrice } = useProductSalePrice(
+    tipo === 'saida' ? novoItem.produto_id : undefined
   )
 
   useEffect(() => {
@@ -100,13 +99,13 @@ export function ItensComunsSection({
     console.log('novoItem completo:', novoItem)
   }, [novoItem.produto_id])
 
-  // Aplicar preço automático quando disponível
+  // Aplicar preço de venda automático quando disponível (apenas para saídas)
   useEffect(() => {
-    if (tipo === 'saida' && latestPrice && novoItem.produto_id && !novoItem.valorUnitario) {
-      console.log('Aplicando preço automático:', latestPrice, 'para produto:', novoItem.produto_id)
-      onNovoItemChange('valorUnitario', latestPrice)
+    if (tipo === 'saida' && salePrice && novoItem.produto_id && !novoItem.valorUnitario) {
+      console.log('Aplicando preço de VENDA automático:', salePrice, 'para produto:', novoItem.produto_id)
+      onNovoItemChange('valorUnitario', salePrice)
     }
-  }, [latestPrice, novoItem.produto_id, tipo, onNovoItemChange, novoItem.valorUnitario])
+  }, [salePrice, novoItem.produto_id, tipo, onNovoItemChange, novoItem.valorUnitario])
 
   // Função para calcular quantidade já usada no carrinho por produto
   const calcularQuantidadeUsadaNoCarrinho = (produtoId: string) => {
