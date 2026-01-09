@@ -2,7 +2,6 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DadosSaida, ItemGenerico } from "../types/formulario.types"
 import { useTransportadoras } from "@/hooks/useTransportadoras"
@@ -10,7 +9,7 @@ import { useCliente } from "@/contexts/ClienteContext"
 import { useLocaisEntregaUnificados } from "@/hooks/useLocaisEntregaUnificados"
 import { useCalcularFreteMultiplasTabelas } from "@/hooks/useCalcularFreteMultiplasTabelas"
 import { calculateDistance } from "@/services/routingService"
-import { Truck, Building2, DollarSign, Settings2, Calculator, MapPin, Loader2 } from "lucide-react"
+import { Truck, DollarSign, Settings2, Calculator, MapPin, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import type { Coordinates } from "@/services/routingService"
@@ -119,16 +118,7 @@ export function TransporteFreteSectionUnified({
     onDadosChange({
       ...dados,
       modalidade_frete: modalidade,
-      transportadora_id: undefined,
-      usar_transportadora_propria: modalidade === '0' ? true : false
-    })
-  }
-
-  const handleTransportadoraPropriaChange = (checked: boolean) => {
-    onDadosChange({
-      ...dados,
-      usar_transportadora_propria: checked,
-      transportadora_id: checked ? undefined : dados.transportadora_id
+      transportadora_id: undefined
     })
   }
 
@@ -232,6 +222,10 @@ export function TransporteFreteSectionUnified({
 
   const handleSelecionarTabela = (resultado: any) => {
     setTabelaSelecionada(resultado.tabela_id)
+    
+    // Buscar transportadora associada à tabela selecionada
+    const transportadoraAssociada = transportadoras.find(t => t.nome === resultado.transportadora_nome)
+    
     onDadosChange({
       ...dados,
       valor_frete: resultado.valor_total,
@@ -239,7 +233,8 @@ export function TransporteFreteSectionUnified({
       prazo_entrega_calculado: resultado.prazo_entrega,
       frete_origem: franquiaNome,
       frete_destino: locaisEntrega.find(l => l.id === dados.local_entrega_id)?.nome || '',
-      frete_distancia: parseFloat(distancia)
+      frete_distancia: parseFloat(distancia),
+      transportadora_id: transportadoraAssociada?.id
     })
   }
 
@@ -251,10 +246,11 @@ export function TransporteFreteSectionUnified({
   }
 
   const transportadoraSelecionada = transportadoras.find(t => t.id === dados.transportadora_id)
-  const showTransportadoraSelector = 
-    (dados.modalidade_frete === '0' && !dados.usar_transportadora_propria) ||
-    dados.modalidade_frete === '2'
   
+  // Mostra seletor de transportadora manual apenas quando modalidade = Terceiros
+  const showTransportadoraSelector = dados.modalidade_frete === '2'
+  
+  // Mostra simulador de frete para CIF (modalidade 0) com tipo entrega e peso > 0
   const showSimuladorFrete = dados.tipo_saida === 'entrega_fazenda' && 
     dados.modalidade_frete === '0' && 
     pesoTotal > 0
@@ -288,31 +284,11 @@ export function TransporteFreteSectionUnified({
           </Select>
         </div>
 
-        {/* Toggle transportadora própria - apenas quando modalidade = 0 (Emitente) */}
+        {/* Info para modalidade CIF - usar simulador abaixo */}
         {dados.modalidade_frete === '0' && (
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <Label htmlFor="transportadora-propria" className="font-normal cursor-pointer">
-                Usar transportadora própria (mesmo CNPJ da empresa)
-              </Label>
-            </div>
-            <Switch
-              id="transportadora-propria"
-              checked={dados.usar_transportadora_propria ?? true}
-              onCheckedChange={handleTransportadoraPropriaChange}
-            />
-          </div>
-        )}
-
-        {/* Info quando usar transportadora própria */}
-        {dados.modalidade_frete === '0' && dados.usar_transportadora_propria && selectedCliente && (
           <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-sm">
-              <span className="font-medium">Transportadora:</span> {selectedCliente.razao_social}
-            </p>
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium">CNPJ:</span> {selectedCliente.cpf_cnpj}
+              Para frete CIF, utilize o simulador abaixo para calcular e selecionar a melhor transportadora.
             </p>
           </div>
         )}
@@ -457,7 +433,19 @@ export function TransporteFreteSectionUnified({
                       }`}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-sm">{resultado.tabela_nome}</span>
+                        <div>
+                          <span className="font-medium text-sm">{resultado.tabela_nome}</span>
+                          {resultado.transportadora_nome && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              via {resultado.transportadora_nome}
+                            </span>
+                          )}
+                          {resultado.is_propria && (
+                            <span className="text-xs bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded ml-2">
+                              Própria
+                            </span>
+                          )}
+                        </div>
                         <div className="flex gap-2">
                           {index === 0 && (
                             <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
@@ -470,11 +458,23 @@ export function TransporteFreteSectionUnified({
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Prazo: {resultado.prazo_entrega} dias úteis | Pedágio: {formatarMoeda(resultado.valor_pedagio)}
+                        Frete: {formatarMoeda(resultado.valor_frete)} | Pedágio: {formatarMoeda(resultado.valor_pedagio)} | Prazo: {resultado.prazo_entrega} dias
                       </p>
                     </button>
                   ))}
                 </div>
+              </div>
+            )}
+            
+            {/* Transportadora selecionada via simulador */}
+            {tabelaSelecionada && transportadoraSelecionada && dados.modalidade_frete === '0' && (
+              <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                <p className="text-sm">
+                  <span className="font-medium">Transportadora selecionada:</span> {transportadoraSelecionada.nome}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  CNPJ: {transportadoraSelecionada.cnpj}
+                </p>
               </div>
             )}
           </div>
