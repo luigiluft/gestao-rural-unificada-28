@@ -85,13 +85,13 @@ export function DadosSaidaSection({ dados, onDadosChange, pesoTotal, pesoMinimoM
   const hasFranchiseAccess = franquiasFranqueado && franquiasFranqueado.length > 0
   const requiredMopp = dados.tipo_saida === 'retirada_deposito' && pesoTotal >= pesoMinimoMopp
 
-  // Auto-select deposit if only one available
+  // Auto-select deposit if only one available - must run when depositos array is populated
   useEffect(() => {
     if (depositos.length === 1 && !dados.depositoId) {
       console.log('🏭 Auto-selecionando depósito único:', depositos[0].deposito_id)
       onDadosChange({ ...dados, depositoId: depositos[0].deposito_id })
     }
-  }, [depositos.length, dados.depositoId, onDadosChange])
+  }, [depositos, dados, onDadosChange])
 
   // Atualizar número NFe quando mudar série ou quando carregar próximo número
   useEffect(() => {
