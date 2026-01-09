@@ -271,6 +271,17 @@ useEffect(() => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="uf_veiculo">UF Veículo *</Label>
+                <Input
+                  id="uf_veiculo"
+                  value={dados.uf_veiculo || ''}
+                  onChange={(e) => handleChange('uf_veiculo', e.target.value.toUpperCase())}
+                  placeholder="SP"
+                  maxLength={2}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="nome_motorista">Nome do Motorista *</Label>
                 <Input
                   id="nome_motorista"
@@ -314,6 +325,142 @@ useEffect(() => {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Dados do endereço de entrega para entrega na fazenda */}
+        {dados.tipo_saida === 'entrega_fazenda' && dados.data_saida && (
+          <div className="space-y-4 pt-4 border-t">
+            <h4 className="font-medium text-sm">Endereço de Entrega</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="entrega_logradouro">Endereço</Label>
+                <Input
+                  id="entrega_logradouro"
+                  value={dados.entrega_logradouro || ''}
+                  onChange={(e) => handleChange('entrega_logradouro', e.target.value)}
+                  placeholder="Rua, Avenida, etc."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entrega_numero">Número</Label>
+                <Input
+                  id="entrega_numero"
+                  value={dados.entrega_numero || ''}
+                  onChange={(e) => handleChange('entrega_numero', e.target.value)}
+                  placeholder="S/N"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entrega_complemento">Complemento</Label>
+                <Input
+                  id="entrega_complemento"
+                  value={dados.entrega_complemento || ''}
+                  onChange={(e) => handleChange('entrega_complemento', e.target.value)}
+                  placeholder="Apto, Bloco, etc."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entrega_bairro">Bairro</Label>
+                <Input
+                  id="entrega_bairro"
+                  value={dados.entrega_bairro || ''}
+                  onChange={(e) => handleChange('entrega_bairro', e.target.value)}
+                  placeholder="Bairro"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entrega_municipio">Município</Label>
+                <Input
+                  id="entrega_municipio"
+                  value={dados.entrega_municipio || ''}
+                  onChange={(e) => handleChange('entrega_municipio', e.target.value)}
+                  placeholder="Cidade"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entrega_uf">UF</Label>
+                <Input
+                  id="entrega_uf"
+                  value={dados.entrega_uf || ''}
+                  onChange={(e) => handleChange('entrega_uf', e.target.value.toUpperCase())}
+                  placeholder="SP"
+                  maxLength={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="entrega_cep">CEP</Label>
+                <Input
+                  id="entrega_cep"
+                  value={dados.entrega_cep || ''}
+                  onChange={(e) => handleChange('entrega_cep', e.target.value)}
+                  placeholder="00000-000"
+                />
+              </div>
+            </div>
+
+            <h4 className="font-medium text-sm pt-4">Dados do Transporte</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="placa_veiculo_entrega">Placa do Veículo</Label>
+                <Input
+                  id="placa_veiculo_entrega"
+                  value={dados.placa_veiculo}
+                  onChange={(e) => handleChange('placa_veiculo', e.target.value.toUpperCase())}
+                  placeholder="ABC-1234"
+                  maxLength={8}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="uf_veiculo_entrega">UF Veículo</Label>
+                <Input
+                  id="uf_veiculo_entrega"
+                  value={dados.uf_veiculo || ''}
+                  onChange={(e) => handleChange('uf_veiculo', e.target.value.toUpperCase())}
+                  placeholder="SP"
+                  maxLength={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nome_motorista_entrega">Nome do Motorista</Label>
+                <Input
+                  id="nome_motorista_entrega"
+                  value={dados.nome_motorista}
+                  onChange={(e) => handleChange('nome_motorista', e.target.value)}
+                  placeholder="Nome completo"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="telefone_motorista_entrega">Telefone do Motorista</Label>
+                <Input
+                  id="telefone_motorista_entrega"
+                  value={dados.telefone_motorista}
+                  onChange={(e) => handleChange('telefone_motorista', e.target.value)}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cpf_motorista_entrega">CPF do Motorista</Label>
+                <Input
+                  id="cpf_motorista_entrega"
+                  value={dados.cpf_motorista}
+                  onChange={(e) => handleChange('cpf_motorista', e.target.value)}
+                  placeholder="000.000.000-00"
+                />
+              </div>
             </div>
           </div>
         )}
