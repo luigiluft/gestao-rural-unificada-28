@@ -113,6 +113,10 @@ export interface DadosSaida extends DadosGenericosBase {
   destinatario_transferencia_id?: string
   // Campo para cliente destinatário (venda B2B)
   cliente_destinatario_id?: string
+  // Campo para local de entrega
+  local_entrega_id?: string
+  // Campo para natureza da operação (gerado a partir da finalidade_nfe)
+  natureza_operacao?: string
   // Campos de transporte/frete
   modalidade_frete?: '0' | '1' | '2' | '9'  // 0=Emitente, 1=Destinatário, 2=Terceiros, 9=Sem Frete
   transportadora_id?: string
