@@ -475,7 +475,8 @@ async function createSaida(supabase: any, userId: string, data: any) {
     // 🔗 INTEGRAÇÃO NATIVA: Detectar se destinatário está cadastrado no sistema
     let documentoFluxo = null
     try {
-      documentoFluxo = await processarFluxoDocumentoInterno(supabase, userId, saida, data)
+      // Passar os itens inseridos diretamente para evitar problemas de timing/RLS
+      documentoFluxo = await processarFluxoDocumentoInterno(supabase, userId, saida, data, itensInseridos)
       if (documentoFluxo) {
         console.log('✅ Fluxo de documento interno criado:', documentoFluxo.id)
       }
@@ -964,8 +965,9 @@ async function createDevolucao(supabase: any, userId: string, data: any) {
 // INTEGRAÇÃO NATIVA DE DOCUMENTOS FISCAIS (EDI INTERNO)
 // ============================================================================
 
-async function processarFluxoDocumentoInterno(supabase: any, userId: string, saida: any, data: any) {
+async function processarFluxoDocumentoInterno(supabase: any, userId: string, saida: any, data: any, itensInseridos: any[] = []) {
   console.log('🔗 Verificando fluxo de documento interno para saída:', saida.id)
+  console.log('📦 Itens já inseridos recebidos:', itensInseridos.length)
   
   // Detectar destinatário interno
   const destinatarioInterno = await detectarDestinatarioInterno(supabase, data)
@@ -1063,8 +1065,8 @@ async function processarFluxoDocumentoInterno(supabase: any, userId: string, sai
   // Criar registro de fluxo - só se tiver cliente_origem_id
   if (!clienteOrigemId) {
     console.log('⚠️ Não foi possível criar documento_fluxo sem cliente origem, mas entrada será criada')
-    // Criar entrada diretamente sem o fluxo
-    const entrada = await criarEntradaAutomatica(supabase, saida, destinatarioInterno, null, data)
+    // Criar entrada diretamente sem o fluxo - passar itensInseridos
+    const entrada = await criarEntradaAutomatica(supabase, saida, destinatarioInterno, null, data, itensInseridos)
     
     // Se o destinatário usa operador logístico, notificar WMS
     if (destinatarioInterno.operador_logistico_id) {
@@ -1096,8 +1098,8 @@ async function processarFluxoDocumentoInterno(supabase: any, userId: string, sai
   
   console.log('✅ Documento fluxo criado:', fluxo.id)
   
-  // Criar entrada automática para o destinatário
-  const entrada = await criarEntradaAutomatica(supabase, saida, destinatarioInterno, fluxo, data)
+  // Criar entrada automática para o destinatário - passar itensInseridos
+  const entrada = await criarEntradaAutomatica(supabase, saida, destinatarioInterno, fluxo, data, itensInseridos)
   
   // Se o destinatário usa operador logístico, notificar WMS
   if (destinatarioInterno.operador_logistico_id) {
@@ -1201,14 +1203,45 @@ async function detectarDestinatarioInterno(supabase: any, data: any) {
   return clienteDestino
 }
 
-async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino: any, fluxo: any, data: any) {
+async function criarEntradaAutomatica(supabase: any, saida: any, clienteDestino: any, fluxo: any, data: any, itensInseridos: any[] = []) {
   console.log('📥 Criando entrada automática para cliente:', clienteDestino.razao_social)
+  console.log('📦 Itens recebidos diretamente:', itensInseridos.length)
   
-  // Buscar itens da saída
-  const { data: saidaItens } = await supabase
-    .from('saida_itens')
-    .select('*, produtos(id, nome, codigo, unidade_medida, preco_unitario)')
-    .eq('saida_id', saida.id)
+  // Usar itens passados diretamente se disponíveis, senão buscar do banco
+  let saidaItens = itensInseridos
+  
+  if (!saidaItens || saidaItens.length === 0) {
+    console.log('⚠️ Nenhum item passado, tentando buscar do banco...')
+    const { data: itensFromDb, error: itensError } = await supabase
+      .from('saida_itens')
+      .select('*, produtos(id, nome, codigo, unidade_medida, preco_unitario)')
+      .eq('saida_id', saida.id)
+    
+    if (itensError) {
+      console.error('❌ Erro ao buscar itens da saída:', itensError)
+    } else {
+      saidaItens = itensFromDb || []
+      console.log('📦 Itens encontrados no banco:', saidaItens.length)
+    }
+  }
+  
+  // Se ainda não tem itens, buscar os produtos para completar os dados
+  if (saidaItens.length > 0 && !saidaItens[0].produtos) {
+    console.log('🔍 Buscando dados dos produtos para os itens...')
+    for (const item of saidaItens) {
+      if (item.produto_id) {
+        const { data: produto } = await supabase
+          .from('produtos')
+          .select('id, nome, codigo, unidade_medida, preco_unitario')
+          .eq('id', item.produto_id)
+          .single()
+        
+        if (produto) {
+          item.produtos = produto
+        }
+      }
+    }
+  }
   
   // 🔧 PARTE 2: Buscar dados COMPLETOS do cliente origem (emitente)
   let clienteOrigemData: any = null
