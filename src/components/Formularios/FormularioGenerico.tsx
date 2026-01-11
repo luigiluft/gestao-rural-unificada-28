@@ -310,6 +310,12 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             onDadosChange={setDados}
           />
           
+          {/* 2. NFe e Observações - Logo após Operação Fiscal */}
+          <NFeObservacoesSection
+            dados={dados as DadosSaida}
+            onDadosChange={setDados}
+          />
+          
           {/* Transferência (condicional) */}
           {(dados as DadosSaida).finalidade_nfe === 'transferencia' && (
             <DestinatarioTransferenciaSection
@@ -318,13 +324,13 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
             />
           )}
           
-          {/* 2. Origem */}
+          {/* 3. Origem */}
           <OrigemSection
             dados={dados as DadosSaida}
             onDadosChange={setDados}
           />
           
-          {/* 3. Destinatário e Entrega */}
+          {/* 4. Destinatário e Entrega */}
           <DestinatarioEntregaSection
             dados={dados as DadosSaida}
             onDadosChange={setDados}
@@ -377,13 +383,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
         />
       )}
 
-      {/* 7. NFe e Observações (apenas saída) */}
-      {tipo === 'saida' && (
-        <NFeObservacoesSection
-          dados={dados as DadosSaida}
-          onDadosChange={setDados}
-        />
-      )}
+      {/* NFe e Observações já renderizado acima, após Operação Fiscal */}
 
       {/* Botões de ação */}
       <div className="flex gap-4 justify-end" data-tutorial="form-actions">
