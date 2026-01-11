@@ -42,6 +42,14 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
 
   const [franquiaCoords, setFranquiaCoords] = useState<Coordinates | null>(null)
   const [franquiaNome, setFranquiaNome] = useState<string>('')
+  const [franquiaEndereco, setFranquiaEndereco] = useState<{
+    endereco?: string
+    numero?: string
+    bairro?: string
+    cidade?: string
+    estado?: string
+    cep?: string
+  } | null>(null)
   
   const dadosSaida = dados as DadosSaida
   const isCliente = profile?.role === 'cliente'
@@ -74,21 +82,34 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
 
         if (response?.success && response.data) {
           const franquia = response.data
+          setFranquiaNome(franquia.nome)
+          
+          // Guardar endereço para geocodificação caso não tenha lat/lng
+          setFranquiaEndereco({
+            endereco: franquia.endereco,
+            numero: franquia.numero,
+            bairro: franquia.bairro,
+            cidade: franquia.cidade,
+            estado: franquia.estado,
+            cep: franquia.cep
+          })
+          
           if (franquia.latitude && franquia.longitude) {
             setFranquiaCoords({
               latitude: Number(franquia.latitude),
               longitude: Number(franquia.longitude)
             })
-            setFranquiaNome(franquia.nome)
           } else {
             setFranquiaCoords(null)
           }
         } else {
           setFranquiaCoords(null)
+          setFranquiaEndereco(null)
         }
       } catch (error) {
         console.error('Erro ao buscar coordenadas da franquia:', error)
         setFranquiaCoords(null)
+        setFranquiaEndereco(null)
       }
     }
 
@@ -341,6 +362,7 @@ export function FormularioGenerico({ tipo, onSubmit, onCancel, nfData }: Formula
           }))}
           franquiaCoords={franquiaCoords || undefined}
           franquiaNome={franquiaNome}
+          franquiaEndereco={franquiaEndereco || undefined}
           pesoTotal={calcularPesoTotal()}
         />
       )}

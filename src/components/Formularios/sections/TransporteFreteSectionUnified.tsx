@@ -9,10 +9,20 @@ import { useCliente } from "@/contexts/ClienteContext"
 import { useLocaisEntregaUnificados } from "@/hooks/useLocaisEntregaUnificados"
 import { useCalcularFreteMultiplasTabelas } from "@/hooks/useCalcularFreteMultiplasTabelas"
 import { calculateDistance } from "@/services/routingService"
-import { Truck, DollarSign, Settings2, Calculator, MapPin, Loader2 } from "lucide-react"
+import { Truck, DollarSign, Settings2, Calculator, MapPin, Loader2, Navigation } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { supabase } from "@/integrations/supabase/client"
 import type { Coordinates } from "@/services/routingService"
+
+interface FranquiaEndereco {
+  endereco?: string
+  numero?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
+  cep?: string
+}
 
 interface TransporteFreteSectionProps {
   dados: DadosSaida
@@ -21,6 +31,7 @@ interface TransporteFreteSectionProps {
   produtosInfo?: Array<{ id: string; package_capacity?: number; containers_per_package?: number }>
   franquiaCoords?: Coordinates
   franquiaNome?: string
+  franquiaEndereco?: FranquiaEndereco
   pesoTotal: number
 }
 
@@ -38,6 +49,7 @@ export function TransporteFreteSectionUnified({
   produtosInfo = [],
   franquiaCoords,
   franquiaNome,
+  franquiaEndereco,
   pesoTotal
 }: TransporteFreteSectionProps) {
   const { selectedCliente } = useCliente()
@@ -154,18 +166,99 @@ export function TransporteFreteSectionUnified({
     })
   }
 
+  // Geocodificar endereço via edge function
+  const geocodeAddress = async (endereco: {
+    endereco?: string
+    numero?: string
+    bairro?: string
+    cidade?: string
+    estado?: string
+    cep?: string
+  }): Promise<Coordinates | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode-address', {
+        body: endereco
+      })
+      
+      if (error) {
+        console.error('Erro ao geocodificar:', error)
+        return null
+      }
+      
+      if (data?.lat && data?.lng) {
+        return { latitude: data.lat, longitude: data.lng }
+      }
+      
+      return null
+    } catch (e) {
+      console.error('Erro ao geocodificar:', e)
+      return null
+    }
+  }
+
   // Simulador de frete functions
   const handleCalcularDistancia = async () => {
-    if (!franquiaCoords || !localCoords) {
-      toast.error("Coordenadas não disponíveis para calcular distância")
+    // Buscar local de entrega selecionado
+    const localSelecionado = locaisEntrega.find(l => l.id === dados.local_entrega_id)
+    
+    if (!localSelecionado) {
+      toast.error("Selecione um local de entrega primeiro")
       return
     }
 
     setIsCalculatingDistance(true)
+    
     try {
-      const distanciaCalculada = await calculateDistance(franquiaCoords, localCoords)
-      setDistancia(distanciaCalculada.toString())
-      toast.success("Distância calculada automaticamente!")
+      let origemCoords = franquiaCoords
+      let destinoCoords = localCoords
+      
+      // Se não tem coordenadas do depósito de origem, geocodificar
+      if (!origemCoords && franquiaEndereco) {
+        toast.info("Buscando coordenadas do depósito de origem...")
+        origemCoords = await geocodeAddress({
+          endereco: franquiaEndereco.endereco,
+          numero: franquiaEndereco.numero,
+          bairro: franquiaEndereco.bairro,
+          cidade: franquiaEndereco.cidade,
+          estado: franquiaEndereco.estado,
+          cep: franquiaEndereco.cep
+        })
+        
+        if (!origemCoords) {
+          toast.error("Não foi possível obter coordenadas do depósito de origem")
+          return
+        }
+      }
+      
+      // Se não tem coordenadas do destino, geocodificar
+      if (!destinoCoords && localSelecionado) {
+        toast.info("Buscando coordenadas do local de entrega...")
+        destinoCoords = await geocodeAddress({
+          endereco: localSelecionado.endereco,
+          cidade: localSelecionado.cidade,
+          estado: localSelecionado.estado,
+          cep: localSelecionado.cep
+        })
+        
+        if (!destinoCoords) {
+          toast.error("Não foi possível obter coordenadas do local de entrega. Verifique o endereço cadastrado.")
+          return
+        }
+        
+        // Atualizar state local com as coordenadas encontradas
+        setLocalCoords(destinoCoords)
+      }
+      
+      if (!origemCoords) {
+        toast.error("Não foi possível determinar as coordenadas do depósito de origem. Configure o endereço da franquia.")
+        return
+      }
+      
+      // Calcular distância
+      const distanciaCalculada = await calculateDistance(origemCoords, destinoCoords!)
+      const distanciaArredondada = Math.ceil(distanciaCalculada)
+      setDistancia(distanciaArredondada.toString())
+      toast.success(`Distância calculada: ${distanciaArredondada} km`)
     } catch (error: any) {
       console.error("Erro ao calcular distância:", error)
       toast.error(error.message || "Erro ao calcular distância")
@@ -364,23 +457,26 @@ export function TransporteFreteSectionUnified({
                     value={distancia}
                     onChange={(e) => setDistancia(e.target.value)}
                   />
-                  {franquiaCoords && localCoords && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={handleCalcularDistancia}
-                      disabled={isCalculatingDistance}
-                      title="Calcular distância automaticamente"
-                    >
-                      {isCalculatingDistance ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <MapPin className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCalcularDistancia}
+                    disabled={isCalculatingDistance || !dados.local_entrega_id}
+                    title={dados.local_entrega_id ? "Calcular distância automaticamente" : "Selecione um local de entrega primeiro"}
+                  >
+                    {isCalculatingDistance ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Navigation className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
+                {!franquiaCoords && franquiaEndereco && (
+                  <p className="text-xs text-muted-foreground">
+                    As coordenadas serão buscadas automaticamente pelo endereço
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">
