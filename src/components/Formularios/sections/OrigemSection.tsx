@@ -7,7 +7,7 @@ import { useProfile } from "@/hooks/useProfile"
 import { useAuth } from "@/contexts/AuthContext"
 import { useCliente } from "@/contexts/ClienteContext"
 import { useDepositosDisponiveis, useDepositosFranqueado, useTodasFranquias } from "@/hooks/useDepositosDisponiveis"
-import { useMemo, useEffect } from "react"
+import { useMemo, useEffect, useRef, useCallback } from "react"
 
 interface OrigemSectionProps {
   dados: DadosSaida
@@ -18,6 +18,10 @@ export function OrigemSection({ dados, onDadosChange }: OrigemSectionProps) {
   const { user } = useAuth()
   const { data: profile } = useProfile()
   const { selectedCliente } = useCliente()
+  
+  // Ref para manter referência atualizada dos dados
+  const dadosRef = useRef(dados)
+  dadosRef.current = dados
 
   // Hooks condicionais baseados no papel do usuário
   const { data: depositosProdutor = [] } = useDepositosDisponiveis(
@@ -50,12 +54,16 @@ export function OrigemSection({ dados, onDadosChange }: OrigemSectionProps) {
     return []
   }, [profile?.role, todasFranquias, franquiasFranqueado, depositosProdutor])
 
-  // Auto-select deposit if only one available
+  // Auto-select deposit if only one available - usando ref para evitar stale closure
   useEffect(() => {
-    if (depositos.length === 1 && !dados.depositoId) {
-      onDadosChange({ ...dados, depositoId: depositos[0].deposito_id })
+    if (depositos.length === 1) {
+      const depositoId = depositos[0].deposito_id
+      // Verificar usando ref para ter o valor mais atual
+      if (!dadosRef.current.depositoId) {
+        onDadosChange({ ...dadosRef.current, depositoId })
+      }
     }
-  }, [depositos, dados.depositoId])
+  }, [depositos, onDadosChange])
 
   const depositoSelecionado = depositos.find(d => d.deposito_id === dados.depositoId)
 
