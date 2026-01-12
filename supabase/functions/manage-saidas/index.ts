@@ -691,13 +691,80 @@ async function updateSaida(supabase: any, userId: string, data: any) {
 }
 
 async function deleteSaida(supabase: any, userId: string, saidaId: string) {
+  console.log('🗑️ Iniciando deleção da saída:', saidaId)
+  
+  // 1. Verificar se a saída existe
+  const { data: saida, error: checkError } = await supabase
+    .from('saidas')
+    .select('id, user_id')
+    .eq('id', saidaId)
+    .single()
+  
+  if (checkError || !saida) {
+    throw new Error('Saída não encontrada')
+  }
+  console.log('✅ Saída encontrada:', saida.id)
+  
+  // 2. Deletar saida_status_historico
+  console.log('STEP 1: Deletando saida_status_historico')
+  const { error: historicoError } = await supabase
+    .from('saida_status_historico')
+    .delete()
+    .eq('saida_id', saidaId)
+  if (historicoError) console.log('⚠️ Erro ao deletar histórico (não crítico):', historicoError.message)
+  
+  // 3. Buscar saida_itens para deletar referências
+  const { data: saidaItens } = await supabase
+    .from('saida_itens')
+    .select('id')
+    .eq('saida_id', saidaId)
+  
+  // 4. Deletar movimentações relacionadas
+  console.log('STEP 2: Deletando movimentações')
+  const { error: movError } = await supabase
+    .from('movimentacoes')
+    .delete()
+    .eq('referencia_id', saidaId)
+    .eq('referencia_tipo', 'saida')
+  if (movError) console.log('⚠️ Erro ao deletar movimentações (não crítico):', movError.message)
+  
+  // 5. Deletar saida_item_referencias
+  if (saidaItens && saidaItens.length > 0) {
+    const saidaItensIds = saidaItens.map((item: any) => item.id)
+    console.log('STEP 3: Deletando saida_item_referencias')
+    const { error: refError } = await supabase
+      .from('saida_item_referencias')
+      .delete()
+      .in('saida_item_id', saidaItensIds)
+    if (refError) console.log('⚠️ Erro ao deletar referências (não crítico):', refError.message)
+  }
+  
+  // 6. Deletar documento_fluxo relacionado
+  console.log('STEP 4: Deletando documento_fluxo')
+  const { error: fluxoError } = await supabase
+    .from('documento_fluxo')
+    .delete()
+    .eq('saida_id', saidaId)
+  if (fluxoError) console.log('⚠️ Erro ao deletar fluxo (não crítico):', fluxoError.message)
+  
+  // 7. Deletar saida_itens
+  console.log('STEP 5: Deletando saida_itens')
+  const { error: itensError } = await supabase
+    .from('saida_itens')
+    .delete()
+    .eq('saida_id', saidaId)
+  if (itensError) throw new Error(`Erro ao deletar itens: ${itensError.message}`)
+  
+  // 8. Finalmente, deletar a saída
+  console.log('STEP 6: Deletando saída principal')
   const { error } = await supabase
     .from('saidas')
     .delete()
     .eq('id', saidaId)
-    .eq('user_id', userId)
 
-  if (error) throw error
+  if (error) throw new Error(`Erro ao deletar saída: ${error.message}`)
+  
+  console.log('✅ Saída deletada com sucesso:', saidaId)
   return { id: saidaId }
 }
 
