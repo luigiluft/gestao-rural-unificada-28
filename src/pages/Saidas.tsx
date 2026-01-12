@@ -617,107 +617,30 @@ const Saidas = () => {
   const handleDeleteSaida = async () => {
     if (!saidaToDelete) return;
     try {
-      console.log('=== INICIANDO DELEÇÃO DA SAÍDA ===', saidaToDelete);
-      const {
-        data: saidaExists,
-        error: checkError
-      } = await supabase.from('saidas').select('id, user_id').eq('id', saidaToDelete).single();
-      if (checkError) {
-        console.error('Erro ao verificar saída:', checkError);
-        throw new Error(`Saída não encontrada: ${checkError.message}`);
+      console.log('=== INICIANDO DELEÇÃO DA SAÍDA VIA EDGE FUNCTION ===', saidaToDelete);
+      
+      // Usar edge function para deletar (usa service role key, sem problemas de RLS)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Usuário não autenticado');
       }
-      console.log('Saída encontrada:', saidaExists);
-
-      // 1. Deletar saida_status_historico primeiro (se existir)
-      console.log('STEP 1: Deletando saida_status_historico para:', saidaToDelete);
-      const {
-        data: deletedHistorico,
-        error: historicoDeleteError
-      } = await supabase.from('saida_status_historico').delete().eq('saida_id', saidaToDelete).select();
-      console.log('Histórico deletado:', deletedHistorico?.length || 0, 'registros');
-      if (historicoDeleteError) {
-        console.error('Erro ao deletar histórico:', historicoDeleteError);
-        // Não falhar se não conseguir deletar histórico
-      }
-
-      // 2. Buscar saida_itens
-      console.log('STEP 2: Buscando saida_itens para:', saidaToDelete);
-      const {
-        data: saidaItens,
-        error: fetchItensError
-      } = await supabase.from('saida_itens').select('id, produto_id, quantidade').eq('saida_id', saidaToDelete);
-      if (fetchItensError) {
-        console.error('Erro ao buscar itens:', fetchItensError);
-        throw new Error(`Erro ao buscar itens: ${fetchItensError.message}`);
-      }
-      console.log('Saída itens encontrados:', saidaItens?.length || 0);
-
-      // 3. Restaurar estoque (devolver as quantidades) - se necessário
-      if (saidaItens && saidaItens.length > 0) {
-        console.log('STEP 3: Restaurando estoque para itens deletados');
-        for (const item of saidaItens) {
-          if (item.produto_id && item.quantidade) {
-            console.log(`Item processado: ${item.quantidade} unidades do produto ${item.produto_id}`);
-            // Não é mais necessário atualizar o estoque manualmente
-            // O estoque será atualizado automaticamente quando as movimentações forem deletadas
-          }
+      
+      const response = await supabase.functions.invoke('manage-saidas', {
+        body: {
+          action: 'delete',
+          data: { id: saidaToDelete }
         }
+      });
+      
+      if (response.error) {
+        console.error('ERRO na edge function:', response.error);
+        throw new Error(response.error.message || 'Erro ao deletar saída');
       }
-
-      // 4. Deletar movimentações relacionadas
-      console.log('STEP 4: Deletando movimentações para:', saidaToDelete);
-      const {
-        data: deletedMovimentacoes,
-        error: movimentacoesError
-      } = await supabase.from('movimentacoes').delete().eq('referencia_id', saidaToDelete).eq('referencia_tipo', 'saida').select();
-      console.log('Movimentações deletadas:', deletedMovimentacoes?.length || 0, 'registros');
-      if (movimentacoesError) {
-        console.error('Erro ao deletar movimentações:', movimentacoesError);
-        // Não falhar crítico
+      
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Erro desconhecido ao deletar saída');
       }
-
-      // 4.5. Deletar saida_item_referencias (referências de itens a pallets/posições)
-      if (saidaItens && saidaItens.length > 0) {
-        const saidaItensIds = saidaItens.map(item => item.id);
-        console.log('STEP 4.5: Deletando saida_item_referencias para itens:', saidaItensIds.length);
-        const {
-          data: deletedReferencias,
-          error: referenciasError
-        } = await supabase.from('saida_item_referencias').delete().in('saida_item_id', saidaItensIds).select();
-        console.log('Referências deletadas:', deletedReferencias?.length || 0, 'registros');
-        if (referenciasError) {
-          console.error('Erro ao deletar referências:', referenciasError);
-          // Não falhar crítico
-        }
-      }
-
-      // 5. Deletar saida_itens
-      console.log('STEP 5: Deletando saida_itens para:', saidaToDelete);
-      const {
-        data: deletedItens,
-        error: itensDeleteError
-      } = await supabase.from('saida_itens').delete().eq('saida_id', saidaToDelete).select();
-      console.log('Saída itens deletados:', deletedItens?.length || 0, 'registros');
-      if (itensDeleteError) {
-        console.error('Erro ao deletar itens:', itensDeleteError);
-        throw new Error(`Erro ao deletar itens: ${itensDeleteError.message}`);
-      }
-
-      // 6. FINALMENTE, deletar a saída
-      console.log('STEP 6: Deletando saída principal:', saidaToDelete);
-      const {
-        data: deletedSaida,
-        error: saidaDeleteError
-      } = await supabase.from('saidas').delete().eq('id', saidaToDelete).select();
-      console.log('Saída principal deletada:', deletedSaida?.length || 0, 'registros');
-      if (saidaDeleteError) {
-        console.error('ERRO CRÍTICO ao deletar saída:', saidaDeleteError);
-        throw new Error(`ERRO ao deletar saída: ${saidaDeleteError.message}`);
-      }
-      if (!deletedSaida || deletedSaida.length === 0) {
-        console.error('NENHUMA SAÍDA FOI DELETADA - RLS bloqueou a operação');
-        throw new Error('Nenhuma saída foi deletada. As políticas de segurança impediram a operação.');
-      }
+      
       console.log('=== DELEÇÃO DA SAÍDA CONCLUÍDA COM SUCESSO ===');
       toast({
         title: "Saída deletada",
