@@ -185,6 +185,12 @@ export default function Separacao() {
                       <div className="font-semibold text-lg">
                         SAI{saida.id.slice(-6).toUpperCase()}
                       </div>
+                      {saida.numero_nfe && (
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <FileText className="h-3 w-3" />
+                          NFe {saida.numero_nfe}
+                        </Badge>
+                      )}
                       {saida.prioridade_calculada !== null && getPrioridadeBadge(saida.prioridade_calculada)}
                       {getStatusBadge(saida.status)}
                     </div>
