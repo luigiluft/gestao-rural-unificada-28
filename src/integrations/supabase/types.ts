@@ -6810,6 +6810,10 @@ export type Database = {
       }
       current_user_id: { Args: never; Returns: string }
       define_wave_positions: { Args: { p_wave_id: string }; Returns: Json }
+      delete_saida_completa: {
+        Args: { p_saida_id: string }
+        Returns: undefined
+      }
       diagnose_user_signup: { Args: { _email: string }; Returns: string }
       find_or_create_produto: {
         Args: {
