@@ -755,14 +755,23 @@ async function deleteSaida(supabase: any, userId: string, saidaId: string) {
     .eq('saida_id', saidaId)
   if (itensError) throw new Error(`Erro ao deletar itens: ${itensError.message}`)
   
-  // 8. Finalmente, deletar a saída
-  console.log('STEP 6: Deletando saída principal')
-  const { error } = await supabase
+  // 8. Finalmente, deletar a saída usando update para marcar como deletado
+  // ou usando uma query mais explícita
+  console.log('STEP 6: Deletando saída principal com id:', saidaId)
+  
+  // Tentar delete com select para retornar o registro deletado
+  const { data: deletedData, error } = await supabase
     .from('saidas')
     .delete()
     .eq('id', saidaId)
-
-  if (error) throw new Error(`Erro ao deletar saída: ${error.message}`)
+    .select('id')
+  
+  if (error) {
+    console.error('Erro detalhado ao deletar saída:', JSON.stringify(error))
+    throw new Error(`Erro ao deletar saída: ${error.message}`)
+  }
+  
+  console.log('Dados deletados:', JSON.stringify(deletedData))
   
   console.log('✅ Saída deletada com sucesso:', saidaId)
   return { id: saidaId }
