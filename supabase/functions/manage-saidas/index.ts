@@ -691,89 +691,32 @@ async function updateSaida(supabase: any, userId: string, data: any) {
 }
 
 async function deleteSaida(supabase: any, userId: string, saidaId: string) {
-  console.log('🗑️ Iniciando deleção da saída:', saidaId)
+  console.log('🗑️ Iniciando deleção da saída via RPC:', saidaId)
   
-  // 1. Verificar se a saída existe
+  // Verificar se a saída existe antes de deletar
   const { data: saida, error: checkError } = await supabase
     .from('saidas')
-    .select('id, user_id')
+    .select('id')
     .eq('id', saidaId)
     .single()
   
   if (checkError || !saida) {
     throw new Error('Saída não encontrada')
   }
-  console.log('✅ Saída encontrada:', saida.id)
   
-  // 2. Deletar saida_status_historico
-  console.log('STEP 1: Deletando saida_status_historico')
-  const { error: historicoError } = await supabase
-    .from('saida_status_historico')
-    .delete()
-    .eq('saida_id', saidaId)
-  if (historicoError) console.log('⚠️ Erro ao deletar histórico (não crítico):', historicoError.message)
+  console.log('✅ Saída encontrada, chamando RPC delete_saida_completa')
   
-  // 3. Buscar saida_itens para deletar referências
-  const { data: saidaItens } = await supabase
-    .from('saida_itens')
-    .select('id')
-    .eq('saida_id', saidaId)
-  
-  // 4. Deletar movimentações relacionadas
-  console.log('STEP 2: Deletando movimentações')
-  const { error: movError } = await supabase
-    .from('movimentacoes')
-    .delete()
-    .eq('referencia_id', saidaId)
-    .eq('referencia_tipo', 'saida')
-  if (movError) console.log('⚠️ Erro ao deletar movimentações (não crítico):', movError.message)
-  
-  // 5. Deletar saida_item_referencias
-  if (saidaItens && saidaItens.length > 0) {
-    const saidaItensIds = saidaItens.map((item: any) => item.id)
-    console.log('STEP 3: Deletando saida_item_referencias')
-    const { error: refError } = await supabase
-      .from('saida_item_referencias')
-      .delete()
-      .in('saida_item_id', saidaItensIds)
-    if (refError) console.log('⚠️ Erro ao deletar referências (não crítico):', refError.message)
-  }
-  
-  // 6. Deletar documento_fluxo relacionado
-  console.log('STEP 4: Deletando documento_fluxo')
-  const { error: fluxoError } = await supabase
-    .from('documento_fluxo')
-    .delete()
-    .eq('saida_id', saidaId)
-  if (fluxoError) console.log('⚠️ Erro ao deletar fluxo (não crítico):', fluxoError.message)
-  
-  // 7. Deletar saida_itens
-  console.log('STEP 5: Deletando saida_itens')
-  const { error: itensError } = await supabase
-    .from('saida_itens')
-    .delete()
-    .eq('saida_id', saidaId)
-  if (itensError) throw new Error(`Erro ao deletar itens: ${itensError.message}`)
-  
-  // 8. Finalmente, deletar a saída usando update para marcar como deletado
-  // ou usando uma query mais explícita
-  console.log('STEP 6: Deletando saída principal com id:', saidaId)
-  
-  // Tentar delete com select para retornar o registro deletado
-  const { data: deletedData, error } = await supabase
-    .from('saidas')
-    .delete()
-    .eq('id', saidaId)
-    .select('id')
+  // Usar a função RPC que executa diretamente no banco
+  const { error } = await supabase.rpc('delete_saida_completa', {
+    p_saida_id: saidaId
+  })
   
   if (error) {
-    console.error('Erro detalhado ao deletar saída:', JSON.stringify(error))
+    console.error('Erro ao deletar saída via RPC:', JSON.stringify(error))
     throw new Error(`Erro ao deletar saída: ${error.message}`)
   }
   
-  console.log('Dados deletados:', JSON.stringify(deletedData))
-  
-  console.log('✅ Saída deletada com sucesso:', saidaId)
+  console.log('✅ Saída deletada com sucesso via RPC:', saidaId)
   return { id: saidaId }
 }
 
